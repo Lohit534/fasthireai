@@ -24,39 +24,53 @@ export default function HistoryPage() {
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getUser().then(({ data: { user }, error }) => {
-      if (error || !user) {
-        toast.error("Please sign in to view history.");
-        router.push("/auth/login");
-        return;
-      }
-      
-      if (active) {
-        setAuthLoading(false);
-      }
 
-      // Fetch resumes directly from Supabase
-      supabase
-        .from("Resume")
-        .select("*")
-        .eq("userId", user.id)
-        .order("createdAt", { ascending: false })
-        .then(({ data, error: dbError }) => {
-          if (!active) return;
-          if (dbError) {
-            logger.error("Failed to query scans from Supabase", dbError);
-            toast.error("Could not load scans history.");
-          } else if (data) {
-            setResumes(data as any[]);
-          }
+    async function loadHistory() {
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        const user = data?.user;
+
+        if (error || !user) {
+          toast.error("Please sign in to view history.");
+          router.push("/auth/login");
+          return;
+        }
+
+        if (active) {
+          setAuthLoading(false);
+        }
+
+        // Fetch resumes directly from Supabase
+        const { data: dbData, error: dbError } = await supabase
+          .from("Resume")
+          .select("*")
+          .eq("userId", user.id)
+          .order("createdAt", { ascending: false });
+
+        if (!active) return;
+
+        if (dbError) {
+          logger.error("Failed to query scans from Supabase", dbError);
+          toast.error("Could not load scans history.");
+        } else if (dbData) {
+          setResumes(dbData as any[]);
+        }
+        setLoading(false);
+      } catch (err) {
+        logger.error("Unexpected error loading history:", err);
+        if (active) {
           setLoading(false);
-        });
-    });
+        }
+      }
+    }
+
+    loadHistory();
 
     return () => {
       active = false;
     };
   }, [router]);
+
 
   const handleSelectResume = (record: ResumeRecord) => {
     // Populate the Zustand store with history parameters

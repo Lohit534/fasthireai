@@ -17,14 +17,22 @@ export default function Navbar() {
 
   useEffect(() => {
     // Get current session
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-    });
+    async function getSessionUser() {
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (data?.user) {
+          setUser(data.user);
+        }
+      } catch (err) {
+        // Ignore fallback
+      }
+    }
+    getSessionUser();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setUser(session?.user ?? null);
-      setRefreshKey((prev) => prev + 1); // Trigger credits badge reload on auth state changes
+      setRefreshKey((prev: number) => prev + 1); // Trigger credits badge reload on auth state changes
     });
 
     return () => {

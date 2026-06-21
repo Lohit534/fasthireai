@@ -31,10 +31,10 @@ const prismaClientSingleton = () => {
   return new PrismaClient();
 };
 
-const realPrisma = globalThis.prismaGlobal ?? prismaClientSingleton();
+const realPrisma = (globalThis as any).prismaGlobal ?? prismaClientSingleton();
 
 if (process.env.NODE_ENV !== "production") {
-  globalThis.prismaGlobal = realPrisma;
+  (globalThis as any).prismaGlobal = realPrisma;
 }
 
 function createMockFallbackProxy(target: any, path: string[] = []): any {

@@ -43,14 +43,21 @@ export default function DashboardPage() {
 
   // 1. Auth Guard Client Verification
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user }, error }) => {
-      if (error || !user) {
-        toast.error("Please sign in to access the dashboard.");
+    async function checkAuth() {
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        if (error || !data?.user) {
+          toast.error("Please sign in to access the dashboard.");
+          router.push("/auth/login");
+        } else {
+          setAuthLoading(false);
+        }
+      } catch (err) {
+        toast.error("Authentication check failed.");
         router.push("/auth/login");
-      } else {
-        setAuthLoading(false);
       }
-    });
+    }
+    checkAuth();
   }, [router]);
 
   const handleOptimize = async () => {
