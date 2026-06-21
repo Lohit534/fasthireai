@@ -2,7 +2,7 @@
 title: FastHire-AI
 emoji: ⚡
 colorFrom: indigo
-colorTo: teal
+colorTo: blue
 sdk: docker
 pinned: false
 license: mit
