@@ -18,6 +18,7 @@ export function createClient(useServiceRole = false) {
       auth: {
         getUser: async () => ({ data: { user: mockUser }, error: null }),
         getSession: async () => ({ data: { session: { user: mockUser } }, error: null }),
+        exchangeCodeForSession: async (code: string) => ({ data: { session: { user: mockUser } }, error: null }),
       }
     } as any;
   }

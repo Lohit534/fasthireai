@@ -9,11 +9,13 @@ import ResumeInput from "@/components/ResumeInput";
 import JobDescriptionInput from "@/components/JobDescriptionInput";
 import ScoreCard from "@/components/ScoreCard";
 import OptimizedResume from "@/components/OptimizedResume";
+import BulletImprover from "@/components/BulletImprover";
 import KeywordBadges from "@/components/KeywordBadges";
 import DownloadButtons from "@/components/DownloadButtons";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ATSScore } from "@/types";
 import { Sparkles, Loader2, RefreshCw, BarChart, History } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -159,6 +161,38 @@ export default function DashboardPage() {
     toast.success("Workspace reset.");
   };
 
+  const handleReScoreBefore = async (newText: string) => {
+    try {
+      const res = await fetch("/api/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeText: newText, jobDescription }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBeforeScore(data);
+      }
+    } catch (err) {
+      console.error("Failed to re-score before resume:", err);
+    }
+  };
+
+  const handleReScoreAfter = async (newText: string) => {
+    try {
+      const res = await fetch("/api/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeText: newText, jobDescription }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAfterScore(data);
+      }
+    } catch (err) {
+      console.error("Failed to re-score after resume:", err);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -264,7 +298,7 @@ export default function DashboardPage() {
             )}
 
             {/* Scorecard, badges and downloads */}
-            {!optimizing && (optimizeResult || beforeScore) ? (
+            {!optimizing && (resumeText.trim() || optimizeResult || beforeScore) ? (
               <div className="space-y-6">
                 {/* PDF/DOCX Download buttons */}
                 {optimizeResult?.resumeId && (
@@ -284,13 +318,50 @@ export default function DashboardPage() {
                   />
                 )}
 
-                {/* Text View Card */}
-                {optimizeResult?.optimizedText && (
-                  <OptimizedResume
-                    text={optimizeResult.optimizedText}
-                    resumeId={optimizeResult.resumeId}
-                  />
-                )}
+                {/* Text View & Bullet Improver Tabs */}
+                <Tabs defaultValue="optimized-text" className="w-full space-y-4">
+                  <TabsList className="w-full flex border-b border-slate-200 bg-gray-100/60 p-1 rounded-xl">
+                    <TabsTrigger value="optimized-text" className="flex-1 py-2 font-bold text-xs">
+                      📝 Full Optimized Text
+                    </TabsTrigger>
+                    <TabsTrigger value="bullet-improver" className="flex-1 py-2 font-bold text-xs">
+                      ⚡ Bullet-by-Bullet Reviewer
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="optimized-text" className="outline-none">
+                    {optimizeResult?.optimizedText ? (
+                      <OptimizedResume
+                        text={optimizeResult.optimizedText}
+                        resumeId={optimizeResult.resumeId}
+                        onChange={(newText) => {
+                          setOptimizeResult((prev: any) => ({ ...prev, optimizedText: newText }));
+                          handleReScoreAfter(newText);
+                        }}
+                      />
+                    ) : (
+                      <div className="text-center p-8 bg-white border border-gray-200 rounded-2xl text-slate-400 text-xs italic">
+                        No optimized text available. Please optimize your resume first.
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="bullet-improver" className="outline-none">
+                    <BulletImprover
+                      resumeText={optimizeResult?.optimizedText || resumeText}
+                      jobDescription={jobDescription}
+                      onChange={(newText) => {
+                        if (optimizeResult?.optimizedText) {
+                          setOptimizeResult((prev: any) => ({ ...prev, optimizedText: newText }));
+                          handleReScoreAfter(newText);
+                        } else {
+                          setResumeText(newText);
+                          handleReScoreBefore(newText);
+                        }
+                      }}
+                    />
+                  </TabsContent>
+                </Tabs>
               </div>
             ) : (
               // Empty State

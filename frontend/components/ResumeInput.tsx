@@ -2,7 +2,9 @@
 
 import React, { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { countWords } from "@/lib/utils";
 import { FileText, Loader2, UploadCloud, X, AlertCircle } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -106,6 +108,14 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
             {isDragActive ? "Drop the resume here..." : "Drag & drop your resume file"}
           </p>
           <p className="text-xs text-slate-400 mt-1">Supports PDF or DOCX (Max 5MB)</p>
+          
+          <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+            <Link href="/dashboard/builder">
+              <Button size="sm" variant="outline" className="border-indigo-500/50 hover:bg-indigo-600 hover:text-white text-indigo-400 text-xs font-bold py-1.5 px-3 h-auto rounded-lg">
+                ⚡ Build Resume from Scratch
+              </Button>
+            </Link>
+          </div>
         </div>
       )}
 

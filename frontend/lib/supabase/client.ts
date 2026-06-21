@@ -17,6 +17,13 @@ export const createClient = () => {
         getSession: async () => ({ data: { session: { user: mockUser } }, error: null }),
         signUp: async (credentials: any) => ({ data: { user: mockUser }, error: null }),
         signInWithPassword: async (credentials: any) => ({ data: { user: mockUser }, error: null }),
+        signInWithOAuth: async (options: any) => {
+          // Simulate oauth login delay and redirection
+          setTimeout(() => {
+            window.location.href = "/dashboard";
+          }, 1000);
+          return { data: { provider: options.provider, url: "/dashboard" }, error: null };
+        },
         signOut: async () => ({ error: null }),
         onAuthStateChange: (callback: any) => {
           callback("SIGNED_IN", { user: mockUser });

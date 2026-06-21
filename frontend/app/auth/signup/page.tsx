@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { Loader2, KeyRound, Mail, User, AlertCircle, CheckCircle2, Briefcase } f
 import { toast } from "react-hot-toast";
 
 export default function SignupPage() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,12 +39,38 @@ export default function SignupPage() {
         throw authError;
       }
 
+      if (data?.session) {
+        toast.success("Successfully registered and logged in!");
+        router.push("/dashboard");
+        router.refresh();
+        return;
+      }
+
       setSuccess(true);
       toast.success("Registration successful!");
     } catch (err: any) {
       setError(err.message || "Failed to create account.");
       toast.error(err.message || "Registration failed.");
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (authError) {
+        throw authError;
+      }
+    } catch (err: any) {
+      setError(err.message || "Google sign-in failed.");
+      toast.error(err.message || "Google sign-in failed.");
       setLoading(false);
     }
   };
@@ -168,6 +196,39 @@ export default function SignupPage() {
                 )}
               </Button>
             </form>
+          )}
+
+          {!success && (
+            <>
+              {/* Separator */}
+              <div className="relative my-5">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-white px-3 text-slate-400 font-semibold">Or continue with</span>
+                </div>
+              </div>
+
+              {/* Google OAuth Button */}
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading}
+                onClick={handleGoogleLogin}
+                className="w-full border-gray-200 hover:bg-gray-50 text-slate-700 font-bold flex items-center justify-center gap-2 mb-4"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+                  <g transform="matrix(1, 0, 0, 1, 0, 0)">
+                    <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.58h3.29c1.92,-1.77 3.03,-4.38 3.03,-7.39c0,-0.71 -0.06,-1.42 -0.18,-2.09Z" fill="#4285f4" />
+                    <path d="M12,20.57c2.31,0 4.25,-0.77 5.67,-2.09l-3.29,-2.58c-0.91,0.61 -2.08,0.97 -3.38,0.97c-2.6,0 -4.8,-1.76 -5.59,-4.13H1.97v2.66c1.46,2.9 4.47,4.82 8.03,4.82Z" fill="#34a853" />
+                    <path d="M6.41,12.74c-0.2,-0.61 -0.31,-1.27 -0.31,-1.94c0,-0.67 0.11,-1.33 0.31,-1.94V6.2H1.97C1.29,7.56 0.9,9.09 0.9,10.7c0,1.61 0.39,3.14 1.07,4.5H6.41Z" fill="#fbbc05" />
+                    <path d="M12,6.13c1.26,0 2.39,0.43 3.28,1.28l2.46,-2.46c-1.48,-1.38 -3.42,-2.22 -5.74,-2.22c-3.56,0 -6.57,1.92 -8.03,4.82l4.44,3.45c0.79,-2.37 2.99,-4.13 5.59,-4.13Z" fill="#ea4335" />
+                  </g>
+                </svg>
+                Sign up with Google
+              </Button>
+            </>
           )}
 
           {!success && (

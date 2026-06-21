@@ -10,9 +10,10 @@ import { toast } from "react-hot-toast";
 interface OptimizedResumeProps {
   text: string;
   resumeId: string;
+  onChange?: (text: string) => void;
 }
 
-export default function OptimizedResume({ text: initialText, resumeId }: OptimizedResumeProps) {
+export default function OptimizedResume({ text: initialText, resumeId, onChange }: OptimizedResumeProps) {
   const [text, setText] = useState(initialText);
   const [isEditing, setIsEditing] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -61,6 +62,13 @@ export default function OptimizedResume({ text: initialText, resumeId }: Optimiz
     });
   };
 
+  const handleToggleEdit = () => {
+    if (isEditing) {
+      onChange?.(text);
+    }
+    setIsEditing(!isEditing);
+  };
+
   return (
     <Card className="border-slate-800 bg-slate-950/40 backdrop-blur-md relative overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between border-b border-slate-900 pb-4">
@@ -75,7 +83,7 @@ export default function OptimizedResume({ text: initialText, resumeId }: Optimiz
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={handleToggleEdit}
             className="border-slate-800 text-slate-300 hover:bg-slate-900 hover:text-white"
           >
             {isEditing ? (
