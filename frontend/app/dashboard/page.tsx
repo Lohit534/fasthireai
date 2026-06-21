@@ -16,8 +16,23 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { ATSScore } from "@/types";
-import { Sparkles, Loader2, RefreshCw, BarChart, History } from "lucide-react";
+import { 
+  Sparkles, 
+  Loader2, 
+  RefreshCw, 
+  BarChart, 
+  History, 
+  ArrowLeft, 
+  Check, 
+  ChevronRight,
+  TrendingUp,
+  Settings,
+  Cpu,
+  BookOpen
+} from "lucide-react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
 
@@ -42,6 +57,10 @@ export default function DashboardPage() {
   const [afterScore, setAfterScore] = useState<ATSScore | null>(null);
   const [optimizeResult, setOptimizeResult] = useState<any>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Core visual fields from Image 3
+  const [instructions, setInstructions] = useState("");
+  const [lengthOption, setLengthOption] = useState("Auto-detect");
 
   // 1. Auth Guard Client Verification
   useEffect(() => {
@@ -96,11 +115,16 @@ export default function DashboardPage() {
         setLoadingMessage("Computing final ATS score weights...");
       }, 7500);
 
-      // Perform POST call
+      // Perform POST call passing instructions & length option
       const response = await fetch("/api/optimize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText, jobDescription })
+        body: JSON.stringify({ 
+          resumeText, 
+          jobDescription,
+          instructions,
+          lengthOption
+        })
       });
 
       clearTimeout(t1);
@@ -155,6 +179,8 @@ export default function DashboardPage() {
 
   const handleReset = () => {
     resetStore();
+    setInstructions("");
+    setLengthOption("Auto-detect");
     setBeforeScore(null);
     setAfterScore(null);
     setOptimizeResult(null);
@@ -195,132 +221,132 @@ export default function DashboardPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-[#060713]">
         <div className="text-center space-y-2">
-          <Loader2 className="h-8 w-8 text-indigo-600 animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-medium">Verifying user credentials...</p>
+          <Loader2 className="h-8 w-8 text-violet-600 animate-spin mx-auto" />
+          <p className="text-xs text-slate-500 font-semibold">Verifying user credentials...</p>
         </div>
       </div>
     );
   }
 
+  // Check if we show the Results Workspace view
+  const hasResults = !optimizing && (optimizeResult || beforeScore);
+
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 text-slate-900">
-      <Navbar />
+    <div className="flex flex-col min-h-screen bg-[#060713] text-slate-100 font-sans select-text">
+      <Navbar refreshKey={refreshKey} />
 
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">AI Resume Optimizer</h1>
-            <p className="text-xs text-slate-500">
-              Paste details below to optimize your ATS keyword profiles.
-            </p>
+        
+        {/* Loading Progress overlays */}
+        {optimizing && (
+          <div className="fixed inset-0 bg-[#060713]/80 backdrop-blur-md z-50 flex items-center justify-center p-6">
+            <div className="max-w-md w-full bg-slate-950 border border-white/10 p-6 rounded-2xl space-y-4 shadow-2xl text-center">
+              <Loader2 className="h-10 w-10 text-violet-500 animate-spin mx-auto" />
+              <div className="space-y-1">
+                <h3 className="font-bold text-white text-base">Improving Your Resume</h3>
+                <p className="text-xs text-slate-400 font-medium">{loadingMessage}</p>
+              </div>
+              <div className="space-y-2">
+                <Progress value={progress} className="h-1.5 bg-slate-900 [&>div]:bg-violet-600 rounded-full" />
+                <span className="text-[10px] font-bold text-violet-400">{progress}% completed</span>
+              </div>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Link href="/dashboard/history">
-              <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100">
-                <History className="h-4.5 w-4.5 mr-2" />
-                View History
-              </Button>
-            </Link>
-            <Button
-              variant="outline"
-              onClick={handleReset}
-              disabled={optimizing}
-              className="border-slate-300 text-slate-700 hover:bg-slate-100"
+        )}
+
+        {/* Dynamic header routing toggle */}
+        {hasResults ? (
+          <div className="mb-6 flex justify-between items-center">
+            <button
+              onClick={() => {
+                setOptimizeResult(null);
+                setBeforeScore(null);
+                setAfterScore(null);
+              }}
+              className="flex items-center text-xs font-bold text-slate-400 hover:text-violet-400 transition-colors"
             >
-              <RefreshCw className="h-4.5 w-4.5 mr-2" />
-              Reset Inputs
-            </Button>
-          </div>
-        </div>
-
-        {/* Two-column layout grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-          
-          {/* Left Column: Editor Inputs */}
-          <div className="space-y-6">
-            <Card className="border-gray-200 bg-white shadow-sm rounded-2xl">
-              <CardContent className="p-6 space-y-6">
-                {/* Resume Input Component */}
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                    <BarChart className="h-4 w-4 text-indigo-500" />
-                    Candidate Resume
-                  </label>
-                  <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
-                </div>
-
-                {/* Job Description Input Component */}
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                    <Sparkles className="h-4 w-4 text-indigo-500" />
-                    Target Job Description
-                  </label>
-                  <JobDescriptionInput value={jobDescription} onChange={setJobDescription} disabled={optimizing} />
-                </div>
-
-                {/* Submit Optimization Trigger */}
-                <Button
-                  onClick={handleOptimize}
-                  disabled={optimizing}
-                  size="lg"
-                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold h-12 shadow-lg shadow-indigo-600/10 rounded-xl"
-                >
-                  {optimizing ? (
-                    <>
-                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                      Optimizing Resume...
-                    </>
-                  ) : (
-                    "Optimize My Resume"
-                  )}
+              <ArrowLeft className="h-4 w-4 mr-1.5" />
+              Back to Editor
+            </button>
+            <div className="flex gap-2">
+              <Link href="/dashboard/history">
+                <Button size="sm" variant="outline" className="border-white/5 text-slate-300 hover:bg-white/5 text-xs font-bold h-8 rounded-full">
+                  <History className="h-3.5 w-3.5 mr-1.5" />
+                  View History
                 </Button>
-              </CardContent>
-            </Card>
+              </Link>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleReset}
+                className="border-white/5 text-slate-300 hover:bg-white/5 text-xs font-bold h-8 rounded-full"
+              >
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                Reset
+              </Button>
+            </div>
           </div>
+        ) : (
+          /* Header Title Block (Image 3) */
+          <div className="text-center space-y-3 mb-10">
+            <h1 className="text-3xl md:text-4.5xl font-black text-white tracking-tight leading-none">
+              Improve Your Resume <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-indigo-400 bg-clip-text text-transparent">for Any Job</span>
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto font-medium leading-relaxed">
+              Paste your resume and the job you want. We improve it to match — automatically. Get 2 free resumes per month.
+            </p>
+            <div>
+              <Badge className="bg-[#00e699]/5 border border-[#00e699]/20 text-[#00e699] hover:bg-[#00e699]/5 px-3 py-1 text-[10px] rounded-full font-bold select-none">
+                +1 extra resume for each referral
+              </Badge>
+            </div>
+          </div>
+        )}
 
-          {/* Right Column: Results Section */}
-          <div className="space-y-6 lg:sticky lg:top-24">
+        {/* WORKSPACE CONTENT SECTION */}
+        {hasResults ? (
+          
+          /* RESULTS WORKSPACE ROW */
+          <div className="space-y-6">
             
-            {/* Optimization Progress Bar */}
-            {optimizing && (
-              <Card className="border-gray-200 bg-white shadow-md p-6 rounded-2xl">
-                <CardContent className="p-0 space-y-4">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-500 font-semibold">{loadingMessage}</span>
-                    <span className="text-indigo-600 font-black">{progress}%</span>
-                  </div>
-                  <Progress value={progress} className="h-2 bg-gray-100 [&>div]:bg-indigo-600 rounded-full" />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Scorecard, badges and downloads */}
-            {!optimizing && (resumeText.trim() || optimizeResult || beforeScore) ? (
-              <div className="space-y-6">
-                {/* PDF/DOCX Download buttons */}
+            {/* Top Row: score comparisons and downloads */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+              <div className="lg:col-span-8">
+                <ScoreCard before={beforeScore} after={afterScore} loading={optimizing} />
+              </div>
+              <div className="lg:col-span-4 flex flex-col justify-between gap-4">
                 {optimizeResult?.resumeId && (
-                  <div className="flex justify-end bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+                  <div className="flex flex-col justify-center items-center h-full bg-slate-950/40 border border-white/5 rounded-2xl p-6 shadow-sm">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">Export Tailored Document</span>
                     <DownloadButtons resumeId={optimizeResult.resumeId} />
                   </div>
                 )}
-
-                {/* Score Card Dashboard */}
-                <ScoreCard before={beforeScore} after={afterScore} loading={optimizing} />
-
-                {/* Keywords Badges */}
                 {afterScore && (
-                  <KeywordBadges
-                    added={optimizeResult?.keywordsAdded || []}
-                    missing={afterScore.missingKeywords}
-                  />
+                  <div className="flex-1 bg-slate-950/40 border border-white/5 rounded-2xl p-4">
+                    <KeywordBadges
+                      added={optimizeResult?.keywordsAdded || []}
+                      missing={afterScore.missingKeywords}
+                    />
+                  </div>
                 )}
+              </div>
+            </div>
 
-                {/* Text View & Bullet Improver Tabs */}
+            {/* Bottom Row: Edit & review workspace split */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              
+              {/* Left Pane: Current raw editor */}
+              <div className="lg:col-span-6 space-y-4">
+                <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">Candidate Current Text</h4>
+                <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
+              </div>
+
+              {/* Right Pane: Optimization tabs (Full text vs bullets review) */}
+              <div className="lg:col-span-6">
                 <Tabs defaultValue="optimized-text" className="w-full space-y-4">
-                  <TabsList className="w-full flex border-b border-slate-200 bg-gray-100/60 p-1 rounded-xl">
+                  <TabsList className="w-full flex border-b border-white/5 bg-[#0f1022] p-1 rounded-xl">
                     <TabsTrigger value="optimized-text" className="flex-1 py-2 font-bold text-xs">
                       📝 Full Optimized Text
                     </TabsTrigger>
@@ -340,7 +366,7 @@ export default function DashboardPage() {
                         }}
                       />
                     ) : (
-                      <div className="text-center p-8 bg-white border border-gray-200 rounded-2xl text-slate-400 text-xs italic">
+                      <div className="text-center p-8 bg-slate-950/20 border border-white/5 rounded-2xl text-slate-500 text-xs italic">
                         No optimized text available. Please optimize your resume first.
                       </div>
                     )}
@@ -363,21 +389,125 @@ export default function DashboardPage() {
                   </TabsContent>
                 </Tabs>
               </div>
-            ) : (
-              // Empty State
-              !optimizing && (
-                <div className="flex flex-col items-center justify-center border border-dashed border-gray-300 rounded-2xl p-12 text-center bg-gray-50 min-h-[460px]">
-                  <Sparkles className="h-10 w-10 text-indigo-400/80 mb-4 animate-pulse" />
-                  <h3 className="font-extrabold text-slate-800 text-lg">Results Workspace</h3>
-                  <p className="text-xs text-slate-500 max-w-sm mt-1.5 leading-relaxed font-medium">
-                    Upload your resume and enter the target job description to begin. Our AI will analyze ATS compatibility scores, extract missing keywords, and write optimized bullets here.
-                  </p>
-                </div>
-              )
-            )}
+
+            </div>
+
           </div>
 
-        </div>
+        ) : (
+
+          /* INPUTS EDITOR WORKSPACE (Image 3) */
+          <div className="space-y-6 max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+              
+              {/* Left Column: Your Resume Block */}
+              <div className="flex flex-col bg-[#0b0c1a]/60 border border-white/5 rounded-2xl p-6 space-y-4">
+                <div className="space-y-0.5">
+                  <h3 className="font-extrabold text-white text-sm">Your Resume</h3>
+                  <p className="text-[11px] text-slate-500 font-semibold">Paste text or upload a PDF</p>
+                </div>
+                <div className="flex-1 flex flex-col justify-between space-y-4">
+                  <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
+                </div>
+              </div>
+
+              {/* Right Column: Job Description Block */}
+              <div className="flex flex-col bg-[#0b0c1a]/60 border border-white/5 rounded-2xl p-6 space-y-4">
+                <div className="space-y-0.5">
+                  <h3 className="font-extrabold text-white text-sm">Job Description</h3>
+                  <p className="text-[11px] text-slate-500 font-semibold">Paste or fetch from a URL</p>
+                </div>
+                <div className="flex-1 flex flex-col justify-between space-y-4">
+                  <JobDescriptionInput value={jobDescription} onChange={setJobDescription} disabled={optimizing} />
+                </div>
+              </div>
+
+            </div>
+
+            {/* Custom Instructions */}
+            <div className="bg-[#0b0c1a]/60 border border-white/5 rounded-2xl p-6 space-y-3">
+              <div className="space-y-0.5">
+                <h3 className="font-extrabold text-white text-xs">Anything specific to add or change? <span className="text-slate-500 font-semibold">(optional)</span></h3>
+              </div>
+              <Input
+                placeholder="e.g. 'I led a team of 8 but forgot to add it' - 'Focus on Python and ML' - 'Switching from finance to tech' - 'Remove the 2022 gap'"
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                disabled={optimizing}
+                className="h-11 border-white/5 bg-[#070814] text-white focus:border-violet-500 focus:ring-violet-500 rounded-xl text-xs"
+              />
+            </div>
+
+            {/* Bottom Form Settings Row */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#0b0c1a]/60 border border-white/5 rounded-2xl p-6">
+              
+              {/* Length options */}
+              <div className="space-y-2">
+                <h4 className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Resume Length</h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {["Auto-detect", "1 Page", "2 Pages", "Academic CV"].map((option) => {
+                    const isActive = lengthOption === option;
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => setLengthOption(option)}
+                        className={`text-[10px] font-bold py-1.5 px-3 rounded-full border transition-all ${
+                          isActive
+                            ? "bg-violet-950/40 border-violet-500 text-violet-400"
+                            : "bg-transparent border-white/5 text-slate-400 hover:border-slate-700 hover:text-white"
+                        }`}
+                      >
+                        {option === "Auto-detect" ? "Auto-detect (Let AI decide)" : option}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Reset inputs button */}
+              <Button
+                variant="outline"
+                onClick={handleReset}
+                disabled={optimizing}
+                className="border-white/5 text-slate-400 hover:bg-white/5 hover:text-white text-xs font-bold rounded-full px-5 self-end md:self-auto h-8"
+              >
+                Reset inputs
+              </Button>
+            </div>
+
+            {/* Main Submit Optimization Trigger */}
+            <div className="pt-4 flex justify-center">
+              <Button
+                onClick={handleOptimize}
+                disabled={optimizing}
+                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-12 px-12 rounded-full shadow-lg shadow-violet-600/25 transition-all w-full sm:w-auto text-sm"
+              >
+                {optimizing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Improving Resume...
+                  </>
+                ) : (
+                  <>
+                    Improve My Resume →
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Dashboard Footer Feature badges */}
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 pt-6 text-[10px] text-slate-500 font-bold uppercase tracking-wider select-none">
+              <span className="flex items-center gap-1.5">🔍 ATS Keyword Analysis</span>
+              <span className="flex items-center gap-1.5">✍️ Smart Bullet Rewrites</span>
+              <span className="flex items-center gap-1.5">📄 Smart Page Length</span>
+              <span className="flex items-center gap-1.5">📊 Before/After Scoring</span>
+              <span className="flex items-center gap-1.5">⏱️ ~20 Second Results</span>
+            </div>
+
+          </div>
+        )}
+
       </main>
     </div>
   );

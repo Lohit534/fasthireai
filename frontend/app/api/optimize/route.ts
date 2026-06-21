@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Parse Request Body
     const body = await request.json();
-    const { resumeText, jobDescription, jobTitle, company } = body;
+    const { resumeText, jobDescription, instructions, lengthOption, jobTitle, company } = body;
 
     // 3. Input Validation
     if (!resumeText || typeof resumeText !== "string" || resumeText.trim().length < MIN_RESUME_CHARS) {
@@ -117,7 +117,9 @@ export async function POST(request: NextRequest) {
       resumeText,
       jobDescription,
       scoreBefore.missingKeywords,
-      scoreBefore.extractedSkills
+      scoreBefore.extractedSkills,
+      instructions || "",
+      lengthOption || "Auto-detect"
     );
     const aiResult = await callAI(prompt, resumeText);
 

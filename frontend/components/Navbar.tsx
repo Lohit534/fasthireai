@@ -1,22 +1,47 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
-import CreditBadge from "./CreditBadge";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Briefcase, LogOut, Key } from "lucide-react";
+import { 
+  Briefcase, 
+  LogOut, 
+  ChevronDown, 
+  Plus,
+  Compass,
+  History,
+  CreditCard,
+  HelpCircle,
+  MessageSquare,
+  Lock,
+  FileText,
+  User as UserIcon,
+  Sparkles,
+  DollarSign,
+  TrendingUp,
+  Settings,
+  Users
+} from "lucide-react";
+import { CreditInfo } from "@/types";
+import { toast } from "react-hot-toast";
 
-export default function Navbar() {
+interface NavbarProps {
+  refreshKey?: number;
+}
+
+export default function Navbar({ refreshKey = 0 }: NavbarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [credits, setCredits] = useState<CreditInfo | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Sync auth state
   useEffect(() => {
-    // Get current session
     async function getSessionUser() {
       try {
         const { data } = await supabase.auth.getUser();
@@ -29,10 +54,8 @@ export default function Navbar() {
     }
     getSessionUser();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setUser(session?.user ?? null);
-      setRefreshKey((prev: number) => prev + 1); // Trigger credits badge reload on auth state changes
     });
 
     return () => {
@@ -40,112 +63,271 @@ export default function Navbar() {
     };
   }, []);
 
+  // Fetch credits
+  useEffect(() => {
+    if (!user) return;
+    async function fetchCredits() {
+      try {
+        const res = await fetch("/api/credits");
+        if (res.ok) {
+          const data = await res.json();
+          setCredits(data);
+        }
+      } catch (err) {
+        // Silently catch
+      }
+    }
+    fetchCredits();
+  }, [user, refreshKey]);
+
+  // Click outside listener for profile dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    setIsDropdownOpen(false);
+    toast.success("Signed out successfully.");
     router.push("/");
     router.refresh();
   };
 
+  // Nav links definitions
+  const links = [
+    { label: "Optimize", href: "/dashboard" },
+    { label: "Resumes", href: "/dashboard" },
+    { label: "Job Tracker", href: "/dashboard" },
+    { label: "History", href: "/dashboard/history" },
+    { label: "Pricing", href: "/dashboard" },
+    { label: "Billing", href: "/dashboard" },
+  ];
+
+  // Calculations for credit percentage
+  const freeRemaining = credits?.freeRemaining ?? 1;
+  const freeUsed = credits?.freeUsed ?? 1;
+  const totalFree = 2;
+  const usedPercent = Math.min(100, Math.max(0, Math.round((freeUsed / totalFree) * 100)));
+
   return (
-    <nav className="border-b border-slate-800 bg-slate-950 text-slate-100 sticky top-0 z-50 backdrop-blur-md bg-opacity-80">
+    <nav className="border-b border-white/5 bg-[#060713]/80 text-slate-100 sticky top-0 z-50 backdrop-blur-md bg-opacity-80">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          {/* Left: Logo & Tagline */}
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2 group">
-              <Briefcase className="h-6 w-6 text-indigo-500 group-hover:text-emerald-500 transition-colors" />
-              <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent">
-                FastHire-AI
+        <div className="flex h-14 items-center justify-between">
+          
+          {/* Left: Brand logo */}
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center gap-2 group select-none">
+              <Briefcase className="h-5 w-5 text-violet-500 group-hover:text-violet-400 transition-colors" />
+              <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
+                FastHire
               </span>
             </Link>
-            <span className="hidden md:inline-block text-xs text-slate-400 border-l border-slate-800 pl-3">
-              From overlooked to shortlisted — in 30 seconds.
-            </span>
-          </div>
 
-          {/* Right: Actions (Desktop) */}
-          <div className="hidden md:flex items-center gap-4">
+            {/* Desktop Navigation Tabs */}
             {user && (
-              <div className="flex items-center gap-4">
-                <CreditBadge refreshKey={refreshKey} />
-                <span className="text-sm text-slate-300 max-w-[150px] truncate">
-                  {user.email}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="border-slate-800 text-slate-300 hover:bg-slate-900 hover:text-white"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
-                </Button>
+              <div className="hidden md:flex items-center gap-1.5 h-14">
+                {links.map((link) => {
+                  const isActive = pathname === link.href;
+                  return (
+                    <Link
+                      key={link.label}
+                      href={link.href}
+                      className={`relative flex items-center h-full px-3 text-xs font-bold transition-colors select-none ${
+                        isActive 
+                          ? "text-white" 
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      {link.label}
+                      {isActive && (
+                        <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-violet-500 rounded-full" />
+                      )}
+                    </Link>
+                  );
+                })}
               </div>
             )}
-            {!user && (
-              <div className="flex items-center gap-2">
-                <Link href="/auth/login">
-                  <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-slate-900">
-                    Sign In
-                  </Button>
+          </div>
+
+          {/* Right Section Actions */}
+          <div className="flex items-center gap-4">
+            {user ? (
+              <>
+                {/* Credit usage pill widget */}
+                <div className="hidden sm:flex items-center gap-2.5 bg-[#15172b]/50 border border-white/5 px-3 py-1.5 rounded-full select-none text-[11px] font-semibold text-slate-400">
+                  <div className="h-2 w-14 bg-slate-800 rounded-full overflow-hidden border border-white/5">
+                    <div 
+                      className="h-full bg-gradient-to-r from-violet-500 to-indigo-500" 
+                      style={{ width: `${usedPercent}%` }}
+                    />
+                  </div>
+                  <span>{usedPercent}% used - resets 10d left</span>
+                </div>
+
+                {/* Upgrade Button */}
+                <Button 
+                  size="sm" 
+                  onClick={() => toast.success("Pricing details matching in dashboard.")}
+                  className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-8 text-[11px] rounded-full px-4 shadow-lg shadow-violet-600/10"
+                >
+                  Upgrade
+                </Button>
+
+                {/* Profile circular avatar dropdown container */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="flex items-center gap-1.5 p-1 rounded-full hover:bg-white/5 transition-colors focus:outline-none"
+                  >
+                    <div className="h-7 w-7 rounded-full bg-violet-600 border border-violet-500/30 flex items-center justify-center text-white font-black text-xs select-none">
+                      {user.email ? user.email.charAt(0).toUpperCase() : "U"}
+                    </div>
+                    <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                  </button>
+
+                  {/* PROFILE DROPDOWN MENU DRAWER (Image 4) */}
+                  {isDropdownOpen && (
+                    <div className="absolute right-0 mt-2.5 w-[240px] bg-[#0c0d1b] border border-white/10 rounded-2xl shadow-2xl p-2.5 space-y-1.5 select-none animate-in fade-in slide-in-from-top-1 duration-150">
+                      
+                      {/* User title/credits summary */}
+                      <div className="px-2.5 py-2 border-b border-white/5">
+                        <div className="text-xs font-bold text-white truncate max-w-full">
+                          {user.email}
+                        </div>
+                        <div className="text-[10px] text-slate-500 font-semibold mt-0.5 uppercase tracking-wider">
+                          Free &bull; {freeRemaining} left
+                        </div>
+                      </div>
+
+                      {/* Main links list */}
+                      <div className="space-y-0.5">
+                        <Link 
+                          href="/dashboard" 
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                        >
+                          <Compass className="h-4 w-4 text-slate-400" />
+                          Optimize Resume
+                        </Link>
+                        <Link 
+                          href="/dashboard" 
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                        >
+                          <FileText className="h-4 w-4 text-slate-400" />
+                          My Resumes
+                        </Link>
+                        <Link 
+                          href="/dashboard" 
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                        >
+                          <Briefcase className="h-4 w-4 text-slate-400" />
+                          Job Tracker
+                        </Link>
+                        <Link 
+                          href="/dashboard" 
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                        >
+                          <Users className="h-4 w-4 text-slate-400" />
+                          Team Plan
+                        </Link>
+                        <Link 
+                          href="/dashboard" 
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                        >
+                          <DollarSign className="h-4 w-4 text-slate-400" />
+                          Pricing
+                        </Link>
+                        <Link 
+                          href="/dashboard" 
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                        >
+                          <CreditCard className="h-4 w-4 text-slate-400" />
+                          Billing &amp; Usage
+                        </Link>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="border-t border-white/5" />
+
+                      {/* Secondary list */}
+                      <div className="space-y-0.5">
+                        <button
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            toast.success("Help and support overlay loaded.");
+                          }}
+                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left"
+                        >
+                          <HelpCircle className="h-4 w-4 text-slate-400" />
+                          Help &amp; Support
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            toast.success("Feedback submitted!");
+                          }}
+                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left"
+                        >
+                          <MessageSquare className="h-4 w-4 text-slate-400" />
+                          Feedback
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            toast.success("Data preferences loaded.");
+                          }}
+                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left"
+                        >
+                          <Lock className="h-4 w-4 text-slate-400" />
+                          Data Preferences
+                        </button>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="border-t border-white/5" />
+
+                      {/* Exit door sign out */}
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors text-left"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Sign out
+                      </button>
+
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-3 select-none">
+                <Link href="/auth/login" className="text-xs font-bold text-slate-400 hover:text-white transition-colors">
+                  Pricing
                 </Link>
-                <Link href="/auth/signup">
-                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white">
-                    Sign Up
+                <Link href="/auth/login">
+                  <Button size="sm" className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-8 text-[11px] rounded-full px-5 shadow-lg shadow-violet-600/10">
+                    Get Started Free
                   </Button>
                 </Link>
               </div>
             )}
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center gap-2">
-            {user && <CreditBadge refreshKey={refreshKey} />}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-900 focus:outline-none"
-            >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
         </div>
       </div>
-
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-800 bg-slate-950 px-4 pt-2 pb-4 space-y-3">
-          {user ? (
-            <div className="space-y-3">
-              <div className="text-sm text-slate-400 px-3 truncate">{user.email}</div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  handleSignOut();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="w-full justify-start border-slate-800 text-slate-300 hover:bg-slate-900 hover:text-white"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-2 pt-2">
-              <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button variant="outline" className="w-full border-slate-800 text-slate-300">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/auth/signup" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button className="w-full bg-indigo-600 text-white">
-                  Sign Up
-                </Button>
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
     </nav>
   );
 }

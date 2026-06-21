@@ -2,7 +2,9 @@ export function buildOptimizationPrompt(
   resumeText: string,
   jobDescription: string,
   missingKeywords: string[],
-  extractedSkills: string[]
+  extractedSkills: string[],
+  instructions = "",
+  lengthOption = "Auto-detect"
 ): string {
   // Truncate input to respect tokens/size requirements
   const truncatedJd = jobDescription.slice(0, 2500);
@@ -10,6 +12,20 @@ export function buildOptimizationPrompt(
   
   // Select top 15 missing keywords
   const topMissingKeywords = missingKeywords.slice(0, 15);
+
+  let lengthDirective = "";
+  if (lengthOption === "1 Page") {
+    lengthDirective = "\n- **STRICT PAGE LIMIT**: Optimize the content to fit exactly on a single page. Remove wordy sentences and prioritize the top 3-4 bullets per job.";
+  } else if (lengthOption === "2 Pages") {
+    lengthDirective = "\n- **STRICT PAGE LIMIT**: Structure the content to span exactly 2 pages. Add formatting spacing or detail work items where appropriate.";
+  } else if (lengthOption === "Academic CV") {
+    lengthDirective = "\n- **ACADEMIC CV FORMAT**: Structure the document as a comprehensive academic CV. Retain detailed descriptions, research details, and publication lists.";
+  }
+  
+  let instructionsBlock = "";
+  if (instructions && instructions.trim()) {
+    instructionsBlock = `\n\n### USER CUSTOM INSTRUCTIONS:\nApply these specific changes or focus directives strictly: "${instructions.trim()}"`;
+  }
   
   return `You are a professional resume optimizer and ATS expert.
 Your goal is to optimize the Candidate's Resume to better align with the Job Description.
@@ -21,7 +37,7 @@ Your goal is to optimize the Candidate's Resume to better align with the Job Des
 3. **STRONG ACTION VERBS**: Rewrite weak or passive bullet points in the experience or project sections to start with strong action verbs (e.g., "automated", "refactored", "implemented", "scaled").
 4. **NO ARTIFICIAL QUANTIFICATION**: Add quantification (numbers, percentages, metrics) ONLY where it is clearly implied by the context. Do not invent arbitrary numbers (e.g., do not randomly change "improved speed" to "improved speed by 47%").
 5. **PRESERVE STRUCTURE**: Keep all original sections (Experience, Projects, Education, etc.) intact. Maintain the candidate's name and contact information.
-6. **BULLET SYMBOL**: Use the bullet character "•" (and only "•") for all bulleted list items. Do not use dashes or asterisks.
+6. **BULLET SYMBOL**: Use the bullet character "•" (and only "•") for all bulleted list items. Do not use dashes or asterisks. ${lengthDirective}
 7. **OUTPUT FORMAT**: You must respond ONLY with a raw JSON object matching the schema below. Do not wrap the JSON output in markdown code block fences (e.g., do not use \`\`\`json or \`\`\`). Your output must be directly parseable by JSON.parse().
 
 ### JSON SCHEMA:
@@ -34,7 +50,7 @@ Your goal is to optimize the Candidate's Resume to better align with the Job Des
 
 ### INPUT DATA:
 #### TARGET JOB DESCRIPTION (Truncated):
-${truncatedJd}
+${truncatedJd}${instructionsBlock}
 
 #### CANDIDATE CURRENT RESUME (Truncated):
 ${truncatedResume}

@@ -15,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-screen bg-gray-50 text-slate-900 flex flex-col antialiased font-sans">
+      <body className="min-h-screen bg-background text-foreground flex flex-col antialiased font-sans">
         <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
         {children}
       </body>
