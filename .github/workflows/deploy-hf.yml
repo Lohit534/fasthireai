@@ -1,0 +1,43 @@
+name: Deploy AI Service to HuggingFace
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ai-service/**'
+      - '.github/workflows/deploy-hf.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install HuggingFace Hub
+        run: pip install huggingface_hub
+
+      - name: Configure Git Author
+        run: |
+          git config --global user.email "deployer@fasthire.ai"
+          git config --global user.name "FastHire Deployer"
+
+      - name: Deploy to HuggingFace Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          cd ai-service
+          git init -b main
+          git add .
+          git commit -m "deploy: update microservice endpoints"
+          # Push using HuggingFace Token for authentication (replace YOUR_USERNAME with your HF account name)
+          git push https://YOUR_USERNAME:$HF_TOKEN@huggingface.co/spaces/YOUR_USERNAME/fasthire-ai main --force

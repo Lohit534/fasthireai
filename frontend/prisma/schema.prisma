@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  resumes   Resume[]
+  credit    Credit?
+}
+
+model Resume {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  originalText   String   @db.Text
+  jobDescription String   @db.Text
+  jobTitle       String?
+  company        String?
+  scoreBefore    Int
+  scoreAfter     Int
+  keywordsBefore Int
+  keywordsAfter  Int
+  impactBefore   Int
+  impactAfter    Int
+  optimizedText  String   @db.Text
+  keywordsAdded  String[]
+  pdfUrl         String?
+  docxUrl        String?
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Credit {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  freeUsed    Int      @default(0)
+  paidCredits Int      @default(0)
+  resetAt     DateTime @default(now())
+}

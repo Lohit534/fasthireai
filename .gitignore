@@ -1,0 +1,17 @@
+# Python local environment
+ai-service/__pycache__/
+ai-service/venv/
+ai-service/*.pyc
+
+# IDE configs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
