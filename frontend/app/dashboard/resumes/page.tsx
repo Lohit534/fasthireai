@@ -336,6 +336,7 @@ export default function ResumesPage() {
           userId: userId,
           originalText: defaultText,
           optimizedText: defaultText,
+          jobDescription: "",
           jobTitle: "Untitled Resume",
           company: "General Application",
           scoreBefore: 45,

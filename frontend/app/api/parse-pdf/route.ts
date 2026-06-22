@@ -3,6 +3,8 @@ import mammoth from "mammoth";
 import { countWords } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 
+export const runtime = "nodejs";
+
 export async function POST(request: NextRequest) {
   try {
     const pdf = require("pdf-parse");
