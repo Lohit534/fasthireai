@@ -8,10 +8,11 @@ import { toast } from "react-hot-toast";
 
 interface DownloadButtonsProps {
   resumeId: string;
+  text?: string;
   disabled?: boolean;
 }
 
-export default function DownloadButtons({ resumeId, disabled = false }: DownloadButtonsProps) {
+export default function DownloadButtons({ resumeId, text, disabled = false }: DownloadButtonsProps) {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [docxLoading, setDocxLoading] = useState(false);
 
@@ -30,7 +31,7 @@ export default function DownloadButtons({ resumeId, disabled = false }: Download
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ resumeId })
+        body: JSON.stringify({ resumeId, text })
       });
 
       if (!response.ok) {

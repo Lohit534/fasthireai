@@ -17,36 +17,42 @@ export async function POST(request: NextRequest) {
 
     // 2. Parse Request Body
     const body = await request.json();
-    const { resumeId } = body;
-    if (!resumeId) {
-      return NextResponse.json({ error: "Missing resumeId" }, { status: 400 });
+    const { resumeId, text } = body;
+    if (!resumeId && !text) {
+      return NextResponse.json({ error: "Missing resumeId or text content" }, { status: 400 });
     }
 
-    // 3. Fetch Resume and Verify Ownership
-    const admin = getAdminClient() as any;
-    const { data: resume, error: fetchErr } = await admin
-      .from("Resume")
-      .select("id, userId, optimizedText")
-      .eq("id", resumeId)
-      .maybeSingle();
+    let textToExport = text || "";
 
-    if (fetchErr) {
-      logger.error("Resume fetch error:", fetchErr.message);
-      return NextResponse.json({ error: "Database error fetching resume." }, { status: 500 });
-    }
+    if (!textToExport && resumeId) {
+      // 3. Fetch Resume and Verify Ownership (only if text not directly provided)
+      const admin = getAdminClient() as any;
+      const { data: resume, error: fetchErr } = await admin
+        .from("Resume")
+        .select("id, userId, optimizedText")
+        .eq("id", resumeId)
+        .maybeSingle();
 
-    if (!resume) {
-      return NextResponse.json({ error: "Resume not found" }, { status: 404 });
-    }
+      if (fetchErr) {
+        logger.error("Resume fetch error:", fetchErr.message);
+        return NextResponse.json({ error: "Database error fetching resume." }, { status: 500 });
+      }
 
-    if (resume.userId !== user.id) {
-      logger.warn(`User ${user.email} attempted to export unauthorized resume ${resumeId}`);
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      if (!resume) {
+        return NextResponse.json({ error: "Resume not found" }, { status: 404 });
+      }
+
+      if (resume.userId !== user.id) {
+        logger.warn(`User ${user.email} attempted to export unauthorized resume ${resumeId}`);
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      textToExport = resume.optimizedText || "";
     }
 
     // 4. Generate PDF Document
-    logger.info(`Generating PDF export for user ${user.email}, Resume ID ${resumeId}`);
-    const pdfBuffer = await generatePDF(resume.optimizedText);
+    logger.info(`Generating PDF export for user ${user.email}, Resume ID ${resumeId || "direct-text"}`);
+    const pdfBuffer = await generatePDF(textToExport);
 
     // 5. Return PDF download
     return new NextResponse(new Uint8Array(pdfBuffer), {

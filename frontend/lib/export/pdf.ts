@@ -168,16 +168,46 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
       </html>
     `;
 
-    const executablePath = await chromium.executablePath();
-    // Cast @sparticuz/chromium to any because the package types omit defaultViewport and headless settings
-    const chrom = chromium as any;
-    
-    browser = await puppeteer.launch({
-      args: chrom.args,
-      defaultViewport: chrom.defaultViewport,
-      executablePath: executablePath,
-      headless: chrom.headless === "true" || chrom.headless === true ? true : "shell" as any,
-    });
+    let executablePath = "";
+    let args = [];
+    let headless: any = "shell";
+
+    const isProd = process.env.NODE_ENV === "production" || !!process.env.VERCEL;
+
+    if (isProd) {
+      executablePath = await chromium.executablePath();
+      args = chromium.args;
+      headless = (chromium as any).headless === "true" || (chromium as any).headless === true ? true : "shell";
+    } else {
+      const fs = require("fs");
+      const localPaths = [
+        "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+        "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "/usr/bin/google-chrome"
+      ];
+      for (const p of localPaths) {
+        if (fs.existsSync(p)) {
+          executablePath = p;
+          break;
+        }
+      }
+      args = ["--no-sandbox", "--disable-setuid-sandbox"];
+      headless = true;
+    }
+
+    if (executablePath) {
+      browser = await puppeteer.launch({
+        args: args,
+        executablePath: executablePath,
+        headless: headless,
+      });
+    } else {
+      browser = await puppeteer.launch({
+        headless: true,
+      });
+    }
     
     const page = await browser.newPage();
     await page.setContent(htmlContent);

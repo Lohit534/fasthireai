@@ -154,18 +154,38 @@ export default function ResumesPage() {
     };
 
     if (lines.length > 0 && lines[0]) {
-      resume.name = lines[0];
+      resume.name = lines[0].replace(/^[#\s\-\*\_]+|[\#\s\-\*\_]+$/g, "").trim();
     }
 
     // Try finding the contact line
-    const contactLine = lines.find(l => l.includes("@") || l.includes("|"));
+    const contactLine = lines.find(l => l.includes("@") || l.includes("|") || l.toLowerCase().includes("email:") || l.toLowerCase().includes("phone:"));
     if (contactLine) {
-      const parts = contactLine.split("|").map(p => p.trim());
-      if (parts.length > 0) resume.email = parts[0] || "";
-      if (parts.length > 1) resume.phone = parts[1] || "";
-      if (parts.length > 2) resume.location = parts[2] || "";
-      if (parts.length > 3) resume.linkedin = parts[3] || "";
-      if (parts.length > 4) resume.website = parts[4] || "";
+      const cleanContactLine = contactLine.replace(/^[#\s\-\*\_]+|[\#\s\-\*\_]+$/g, "").trim();
+      const parts = cleanContactLine.split("|").map(p => p.trim());
+      parts.forEach(part => {
+        const lower = part.toLowerCase();
+        if (lower.startsWith("email:")) {
+          resume.email = part.substring(6).trim();
+        } else if (lower.startsWith("phone:")) {
+          resume.phone = part.substring(6).trim();
+        } else if (lower.startsWith("linkedin:")) {
+          resume.linkedin = part.substring(9).trim();
+        } else if (lower.startsWith("portfolio:")) {
+          resume.website = part.substring(10).trim();
+        } else if (lower.startsWith("website:")) {
+          resume.website = part.substring(8).trim();
+        } else if (part.includes("@")) {
+          resume.email = part;
+        } else if (part.includes("linkedin.com")) {
+          resume.linkedin = part;
+        } else if (/^\+?[\d\-\(\)\s]{9,18}$/.test(part)) {
+          resume.phone = part;
+        } else if ((part.includes(".") || part.includes("localhost")) && !resume.website) {
+          resume.website = part;
+        } else if (!resume.location && part.length < 50) {
+          resume.location = part;
+        }
+      });
     }
 
     // Parse Sections via simple state check
@@ -174,25 +194,28 @@ export default function ResumesPage() {
     let currentEdu: any = null;
     let currentProj: any = null;
 
-    for (let i = 2; i < lines.length; i++) {
+    for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
-      if (!line) continue;
+      if (!line || line === contactLine) continue;
 
-      const upper = line.toUpperCase();
-      if (upper === "PROFESSIONAL SUMMARY" || upper === "SUMMARY") {
+      // Clean the line for matching section headers
+      const cleanLine = line.replace(/^[#\s\-\*\_\u2022]+/, "").replace(/:$/, "").trim();
+      const upper = cleanLine.toUpperCase();
+
+      if (upper === "PROFESSIONAL SUMMARY" || upper === "SUMMARY" || upper === "ABOUT" || upper === "ABOUT ME") {
         currentSection = "summary";
         resume.summary = "";
         continue;
-      } else if (upper === "EXPERIENCE" || upper === "WORK EXPERIENCE") {
+      } else if (upper === "EXPERIENCE" || upper === "WORK EXPERIENCE" || upper === "PROFESSIONAL EXPERIENCE" || upper === "EMPLOYMENT HISTORY" || upper === "WORK HISTORY") {
         currentSection = "experience";
         continue;
-      } else if (upper === "EDUCATION") {
+      } else if (upper === "EDUCATION" || upper === "ACADEMIC BACKGROUND" || upper === "ACADEMICS") {
         currentSection = "education";
         continue;
-      } else if (upper === "PROJECTS") {
+      } else if (upper === "PROJECTS" || upper === "ACADEMIC PROJECTS" || upper === "PERSONAL PROJECTS") {
         currentSection = "projects";
         continue;
-      } else if (upper === "SKILLS" || upper === "TECHNICAL SKILLS") {
+      } else if (upper === "SKILLS" || upper === "TECHNICAL SKILLS" || upper === "CORE COMPETENCIES" || upper === "KEY SKILLS") {
         currentSection = "skills";
         continue;
       }
@@ -200,59 +223,69 @@ export default function ResumesPage() {
       if (currentSection === "summary") {
         resume.summary = (resume.summary ? resume.summary + "\n" : "") + line;
       } else if (currentSection === "experience") {
-        if (line.startsWith("•") || line.startsWith("-") || line.startsWith("*")) {
+        if (line.startsWith("•") || line.startsWith("-") || line.startsWith("*") && !line.endsWith("*")) {
           if (currentExp) {
-            const bullet = line.replace(/^[•\-*]\s*/, "");
+            const bullet = line.replace(/^[•\-*\u2022\s]+/, "");
             currentExp.bullets.push(bullet);
           }
+        } else if ((line.startsWith("*") && line.endsWith("*") || line.startsWith("_") && line.endsWith("_")) && currentExp) {
+          currentExp.date = line.replace(/^[\*\_]+|[\*\_]+$/g, "").trim();
         } else {
-          const parts = line.split(/\s{3,}/);
-          const headerParts = (parts[0] || "").split(" - ");
+          const parts = line.split(/\s{3,}| \| /);
+          const headerParts = (parts[0] || "").replace(/^\*\*|\*\*$/g, "").split(" - ");
           currentExp = {
             id: Math.random().toString(36).substr(2, 9),
-            company: headerParts[0] || "",
-            title: headerParts[1] || "",
-            date: parts[1] || "",
+            company: (headerParts[0] || "").replace(/^\*\*|\*\*$/g, "").trim(),
+            title: (headerParts[1] || "").replace(/^\*\*|\*\*$/g, "").trim(),
+            date: (parts[1] || "").replace(/^[\*\_]+|[\*\_]+$/g, "").trim(),
             bullets: []
           };
           resume.experience.push(currentExp);
         }
       } else if (currentSection === "education") {
-        const parts = line.split(/\s{3,}/);
-        const headerParts = (parts[0] || "").split(" - ");
-        const fieldParts = (headerParts[1] || "").split(" in ");
-        currentEdu = {
-          id: Math.random().toString(36).substr(2, 9),
-          school: headerParts[0] || "",
-          degree: fieldParts[0] || "",
-          field: fieldParts[1] || "",
-          date: parts[1] || "",
-          description: ""
-        };
-        resume.education.push(currentEdu);
+        if ((line.startsWith("*") && line.endsWith("*") || line.startsWith("_") && line.endsWith("_")) && currentEdu) {
+          currentEdu.date = line.replace(/^[\*\_]+|[\*\_]+$/g, "").trim();
+        } else {
+          const parts = line.split(/\s{3,}| \| /);
+          const headerParts = (parts[0] || "").replace(/^\*\*|\*\*$/g, "").split(" - ");
+          const degreeAndField = parts[1] || headerParts[1] || "";
+          const fieldParts = degreeAndField.split(" in ");
+          currentEdu = {
+            id: Math.random().toString(36).substr(2, 9),
+            school: (headerParts[0] || "").replace(/^\*\*|\*\*$/g, "").trim(),
+            degree: (fieldParts[0] || "").replace(/^\*\*|\*\*$/g, "").trim(),
+            field: (fieldParts[1] || "").replace(/^\*\*|\*\*$/g, "").trim(),
+            date: (parts[2] || "").replace(/^[\*\_]+|[\*\_]+$/g, "").trim(),
+            description: ""
+          };
+          resume.education.push(currentEdu);
+        }
       } else if (currentSection === "projects") {
-        const parts = line.split(/\s{3,}/);
-        const headerParts = (parts[0] || "").split(" - ");
-        currentProj = {
-          id: Math.random().toString(36).substr(2, 9),
-          name: headerParts[0] || "",
-          role: headerParts[1] || "",
-          date: parts[1] || "",
-          description: ""
-        };
-        resume.projects.push(currentProj);
+        if (line.startsWith("•") || line.startsWith("-") || line.startsWith("*") && !line.endsWith("*")) {
+          if (currentProj) {
+            const bullet = line.replace(/^[•\-*\u2022\s]+/, "");
+            currentProj.description = (currentProj.description ? currentProj.description + "\n" : "") + `- ${bullet}`;
+          }
+        } else if ((line.startsWith("*") && line.endsWith("*") || line.startsWith("_") && line.endsWith("_")) && currentProj) {
+          const meta = line.replace(/^[\*\_]+|[\*\_]+$/g, "").trim();
+          currentProj.description = (currentProj.description ? currentProj.description + "\n" : "") + meta;
+        } else {
+          const parts = line.split(/\s{3,}| \| /);
+          const headerParts = (parts[0] || "").replace(/^\*\*|\*\*$/g, "").split(" - ");
+          currentProj = {
+            id: Math.random().toString(36).substr(2, 9),
+            name: (headerParts[0] || "").replace(/^\*\*|\*\*$/g, "").trim(),
+            role: (headerParts[1] || "").replace(/^\*\*|\*\*$/g, "").trim(),
+            date: (parts[1] || "").replace(/^[\*\_]+|[\*\_]+$/g, "").trim(),
+            description: ""
+          };
+          resume.projects.push(currentProj);
+        }
       } else if (currentSection === "skills") {
-        const skillsList = line.split(",").map(s => s.trim()).filter(Boolean);
+        const cleanSkillLine = line.replace(/^\*\*Technical Skills:\*\*\s*|^\*\*Skills:\*\*\s*/i, "").trim();
+        const skillsList = cleanSkillLine.split(",").map(s => s.trim()).filter(Boolean);
         resume.skills = [...resume.skills, ...skillsList];
       }
-    }
-
-    // Prefill fallback values if sections are empty
-    if (resume.experience.length === 0) {
-      resume.experience = [{ id: "exp1", company: "Google", title: "Frontend Software Engineer", date: "2024 - Present", bullets: ["Built responsive SaaS pages and dashboards.", "Optimized client side bundle sizes by 30%."] }];
-    }
-    if (resume.education.length === 0) {
-      resume.education = [{ id: "edu1", school: "Stanford University", degree: "Bachelor of Science", field: "Computer Science", date: "2020 - 2024", description: "Graduated with honors." }];
     }
 
     return resume;
@@ -389,10 +422,11 @@ export default function ResumesPage() {
   const handleDownloadPDF = async (record: ResumeRecord) => {
     setActionLoading(`pdf-${record.id}`);
     try {
+      const text = editorData ? compileStructuredResume(editorData) : (record.optimizedText || record.originalText);
       const response = await fetch("/api/export/pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeId: record.id })
+        body: JSON.stringify({ resumeId: record.id, text })
       });
 
       if (!response.ok) {
@@ -404,6 +438,31 @@ export default function ResumesPage() {
       toast.success("PDF exported successfully!");
     } catch (err: any) {
       toast.error(err.message || "Failed to download PDF.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Download DOCX file
+  const handleDownloadDOCX = async (record: ResumeRecord) => {
+    setActionLoading(`docx-${record.id}`);
+    try {
+      const text = editorData ? compileStructuredResume(editorData) : (record.optimizedText || record.originalText);
+      const response = await fetch("/api/export/docx", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeId: record.id, text })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to export DOCX.");
+      }
+
+      const blob = await response.blob();
+      saveAs(blob, `${record.jobTitle?.replace(/\s+/g, "-") || "resume"}-optimized.docx`);
+      toast.success("DOCX exported successfully!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to download DOCX.");
     } finally {
       setActionLoading(null);
     }
@@ -854,18 +913,33 @@ export default function ResumesPage() {
               </div>
             </div>
 
-            <Button
-              onClick={() => handleDownloadPDF(editingResume)}
-              disabled={actionLoading === `pdf-${editingResume.id}`}
-              className="bg-violet-600 hover:bg-violet-500 text-white font-bold h-8 text-[11px] rounded-full px-5 flex items-center gap-1.5 shadow-lg shadow-violet-600/10"
-            >
-              {actionLoading === `pdf-${editingResume.id}` ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Download className="h-3.5 w-3.5" />
-              )}
-              Download
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => handleDownloadPDF(editingResume)}
+                disabled={actionLoading === `pdf-${editingResume.id}`}
+                className="bg-violet-600 hover:bg-violet-500 text-white font-bold h-8 text-[11px] rounded-full px-4 flex items-center gap-1.5 shadow-lg shadow-violet-600/10"
+              >
+                {actionLoading === `pdf-${editingResume.id}` ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
+                PDF
+              </Button>
+              <Button
+                onClick={() => handleDownloadDOCX(editingResume)}
+                disabled={actionLoading === `docx-${editingResume.id}`}
+                variant="outline"
+                className="border-slate-800 text-slate-300 hover:bg-slate-900 hover:text-white font-bold h-8 text-[11px] rounded-full px-4 flex items-center gap-1.5"
+              >
+                {actionLoading === `docx-${editingResume.id}` ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
+                Word (DOCX)
+              </Button>
+            </div>
           </header>
 
           {/* Split Columns Layout */}

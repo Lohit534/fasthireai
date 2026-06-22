@@ -24,7 +24,7 @@ export default function JobDescriptionInput({ value, onChange, disabled }: JobDe
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          className={`min-h-[220px] font-sans bg-slate-950/40 text-slate-100 placeholder-slate-500 focus:ring-indigo-500 rounded-xl resize-y pr-4 ${
+          className={`min-h-[220px] max-h-[380px] overflow-y-auto font-sans bg-slate-950/40 text-slate-100 placeholder-slate-500 focus:ring-indigo-500 rounded-xl resize-y pr-4 ${
             isOverLimit 
               ? "border-red-500 focus:border-red-500" 
               : "border-slate-800 focus:border-indigo-500"

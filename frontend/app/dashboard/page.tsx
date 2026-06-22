@@ -378,7 +378,7 @@ export default function DashboardPage() {
                 {optimizeResult?.resumeId && (
                   <div className="flex flex-col justify-center items-center h-full bg-slate-950/40 border border-white/5 rounded-2xl p-6 shadow-sm">
                     <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">Export Tailored Document</span>
-                    <DownloadButtons resumeId={optimizeResult.resumeId} />
+                    <DownloadButtons resumeId={optimizeResult.resumeId} text={optimizeResult.optimizedText} />
                   </div>
                 )}
                 {afterScore && (
