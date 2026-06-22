@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer, util
 import spacy
-import google.generativeai as genai
+from google import genai
 import os
 import re
 import json
@@ -34,8 +34,7 @@ nlp = spacy.load("en_core_web_sm")
 
 # Configure Gemini model connection
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
-genai.configure(api_key=GEMINI_KEY)
-gemini = genai.GenerativeModel("gemini-1.5-flash")
+client = genai.Client(api_key=GEMINI_KEY) if GEMINI_KEY else None
 
 ACTION_VERBS = {
     "achieved", "accelerated", "architected", "automated", "built", "coached", "created", "cut",
@@ -291,7 +290,7 @@ Respond with the exact JSON object now."""
 
 def call_gemini(prompt: str, raw_text: str) -> Dict[str, Any]:
     """Layer 3: Generates optimizations via Gemini 1.5 Flash"""
-    if not GEMINI_KEY:
+    if not client:
         return {
             "resume": raw_text,
             "keywordsAdded": [],
@@ -300,7 +299,10 @@ def call_gemini(prompt: str, raw_text: str) -> Dict[str, Any]:
         }
         
     try:
-        response = gemini.generate_content(prompt)
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=prompt,
+        )
         text = response.text
         if not text:
             raise ValueError("Empty generation block.")
