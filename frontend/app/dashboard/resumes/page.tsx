@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { ResumeRecord } from "@/types";
 import { logger } from "@/lib/logger";
 import { formatDate } from "@/lib/utils";
@@ -17,25 +18,68 @@ import {
   FileText, 
   Trash2, 
   Download, 
-  ExternalLink, 
-  AlertCircle,
-  Building,
+  Plus, 
+  Edit3,
   Calendar,
   Sparkles,
-  FileSpreadsheet
+  ChevronDown,
+  ChevronUp,
+  User as UserIcon,
+  Briefcase,
+  BookOpen,
+  FolderGit,
+  Wrench,
+  Check,
+  AlertCircle
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { saveAs } from "file-saver";
 
+// Structured Resume Form Types
+interface StructuredResume {
+  name: string;
+  email: string;
+  phone: string;
+  location: string;
+  linkedin: string;
+  website: string;
+  summary: string;
+  experience: { id: string; company: string; title: string; date: string; bullets: string[] }[];
+  education: { id: string; school: string; degree: string; field: string; date: string; description: string }[];
+  projects: { id: string; name: string; role: string; date: string; description: string }[];
+  skills: string[];
+}
+
 export default function ResumesPage() {
   const router = useRouter();
   const store = useResumeStore();
+  
+  // Resumes list state
   const [resumes, setResumes] = useState<ResumeRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [activePlan, setActivePlan] = useState("free");
+
+  // View state: list vs editor split screen
+  const [editingResume, setEditingResume] = useState<ResumeRecord | null>(null);
+  const [editorData, setEditorData] = useState<StructuredResume | null>(null);
+  const [tempTitle, setTempTitle] = useState("");
+  const [isTitleEditing, setIsTitleEditing] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  // Accordion collapsibles state in left column of Editor
+  const [collapsibles, setCollapsibles] = useState({
+    personal: true,
+    summary: true,
+    experience: true,
+    education: true,
+    projects: true,
+    skills: true
+  });
+
+  // Load initial list
   useEffect(() => {
     let active = true;
 
@@ -51,7 +95,10 @@ export default function ResumesPage() {
         }
 
         if (active) {
+          setUserId(user.id);
           setAuthLoading(false);
+          const plan = localStorage.getItem(`fastHire_plan_${user.id}`) || "free";
+          setActivePlan(plan);
         }
 
         const { data: dbData, error: dbError } = await supabase
@@ -66,7 +113,7 @@ export default function ResumesPage() {
           logger.error("Failed to query resumes from Supabase", dbError);
           toast.error("Could not load resumes.");
         } else if (dbData) {
-          setResumes(dbData as any[]);
+          setResumes(dbData as ResumeRecord[]);
         }
         setLoading(false);
       } catch (err) {
@@ -84,17 +131,262 @@ export default function ResumesPage() {
     };
   }, [router]);
 
-  const handleOpenWorkspace = (record: ResumeRecord) => {
-    store.setResumeText(record.optimizedText);
-    store.setJobDescription(record.jobDescription);
-    router.push("/dashboard");
-    toast.success("Loaded optimized resume into workspace!");
+  // Collapsible toggle helper
+  const toggleCollapsible = (key: keyof typeof collapsibles) => {
+    setCollapsibles(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleDownloadPDF = async (e: React.MouseEvent, record: ResumeRecord) => {
-    e.stopPropagation();
-    setActionLoading(`pdf-${record.id}`);
+  // Convert plain text resume details into structured format for editing
+  const parseResumeText = (text: string): StructuredResume => {
+    const lines = text.split(/\r?\n/).map(l => l.trim());
+    const resume: StructuredResume = {
+      name: "",
+      email: "",
+      phone: "",
+      location: "",
+      linkedin: "",
+      website: "",
+      summary: "",
+      experience: [],
+      education: [],
+      projects: [],
+      skills: []
+    };
 
+    if (lines.length > 0 && lines[0]) {
+      resume.name = lines[0];
+    }
+
+    // Try finding the contact line
+    const contactLine = lines.find(l => l.includes("@") || l.includes("|"));
+    if (contactLine) {
+      const parts = contactLine.split("|").map(p => p.trim());
+      if (parts.length > 0) resume.email = parts[0] || "";
+      if (parts.length > 1) resume.phone = parts[1] || "";
+      if (parts.length > 2) resume.location = parts[2] || "";
+      if (parts.length > 3) resume.linkedin = parts[3] || "";
+      if (parts.length > 4) resume.website = parts[4] || "";
+    }
+
+    // Parse Sections via simple state check
+    let currentSection = "";
+    let currentExp: any = null;
+    let currentEdu: any = null;
+    let currentProj: any = null;
+
+    for (let i = 2; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line) continue;
+
+      const upper = line.toUpperCase();
+      if (upper === "PROFESSIONAL SUMMARY" || upper === "SUMMARY") {
+        currentSection = "summary";
+        resume.summary = "";
+        continue;
+      } else if (upper === "EXPERIENCE" || upper === "WORK EXPERIENCE") {
+        currentSection = "experience";
+        continue;
+      } else if (upper === "EDUCATION") {
+        currentSection = "education";
+        continue;
+      } else if (upper === "PROJECTS") {
+        currentSection = "projects";
+        continue;
+      } else if (upper === "SKILLS" || upper === "TECHNICAL SKILLS") {
+        currentSection = "skills";
+        continue;
+      }
+
+      if (currentSection === "summary") {
+        resume.summary = (resume.summary ? resume.summary + "\n" : "") + line;
+      } else if (currentSection === "experience") {
+        if (line.startsWith("•") || line.startsWith("-") || line.startsWith("*")) {
+          if (currentExp) {
+            const bullet = line.replace(/^[•\-*]\s*/, "");
+            currentExp.bullets.push(bullet);
+          }
+        } else {
+          const parts = line.split(/\s{3,}/);
+          const headerParts = (parts[0] || "").split(" - ");
+          currentExp = {
+            id: Math.random().toString(36).substr(2, 9),
+            company: headerParts[0] || "",
+            title: headerParts[1] || "",
+            date: parts[1] || "",
+            bullets: []
+          };
+          resume.experience.push(currentExp);
+        }
+      } else if (currentSection === "education") {
+        const parts = line.split(/\s{3,}/);
+        const headerParts = (parts[0] || "").split(" - ");
+        const fieldParts = (headerParts[1] || "").split(" in ");
+        currentEdu = {
+          id: Math.random().toString(36).substr(2, 9),
+          school: headerParts[0] || "",
+          degree: fieldParts[0] || "",
+          field: fieldParts[1] || "",
+          date: parts[1] || "",
+          description: ""
+        };
+        resume.education.push(currentEdu);
+      } else if (currentSection === "projects") {
+        const parts = line.split(/\s{3,}/);
+        const headerParts = (parts[0] || "").split(" - ");
+        currentProj = {
+          id: Math.random().toString(36).substr(2, 9),
+          name: headerParts[0] || "",
+          role: headerParts[1] || "",
+          date: parts[1] || "",
+          description: ""
+        };
+        resume.projects.push(currentProj);
+      } else if (currentSection === "skills") {
+        const skillsList = line.split(",").map(s => s.trim()).filter(Boolean);
+        resume.skills = [...resume.skills, ...skillsList];
+      }
+    }
+
+    // Prefill fallback values if sections are empty
+    if (resume.experience.length === 0) {
+      resume.experience = [{ id: "exp1", company: "Google", title: "Frontend Software Engineer", date: "2024 - Present", bullets: ["Built responsive SaaS pages and dashboards.", "Optimized client side bundle sizes by 30%."] }];
+    }
+    if (resume.education.length === 0) {
+      resume.education = [{ id: "edu1", school: "Stanford University", degree: "Bachelor of Science", field: "Computer Science", date: "2020 - 2024", description: "Graduated with honors." }];
+    }
+
+    return resume;
+  };
+
+  // Compile structured format back to flat text string
+  const compileStructuredResume = (data: StructuredResume): string => {
+    let text = `${data.name || "Jane Smith"}\n`;
+    const contactParts = [data.email, data.phone, data.location, data.linkedin, data.website].filter(Boolean);
+    text += `${contactParts.join(" | ")}\n\n`;
+    
+    if (data.summary) {
+      text += `PROFESSIONAL SUMMARY\n${data.summary}\n\n`;
+    }
+    
+    if (data.experience.length > 0) {
+      text += `EXPERIENCE\n`;
+      data.experience.forEach(exp => {
+        const leftPart = `${exp.company}${exp.title ? ' - ' + exp.title : ''}`;
+        text += `${leftPart}${"   "}${exp.date}\n`;
+        exp.bullets.forEach(bullet => {
+          if (bullet.trim()) {
+            text += `• ${bullet.trim()}\n`;
+          }
+        });
+      });
+      text += `\n`;
+    }
+    
+    if (data.education.length > 0) {
+      text += `EDUCATION\n`;
+      data.education.forEach(edu => {
+        const leftPart = `${edu.school}${edu.degree ? ' - ' + edu.degree : ''}${edu.field ? ' in ' + edu.field : ''}`;
+        text += `${leftPart}${"   "}${edu.date}\n`;
+        if (edu.description) {
+          text += `${edu.description}\n`;
+        }
+      });
+      text += `\n`;
+    }
+    
+    if (data.projects.length > 0) {
+      text += `PROJECTS\n`;
+      data.projects.forEach(proj => {
+        const leftPart = `${proj.name}${proj.role ? ' - ' + proj.role : ''}`;
+        text += `${leftPart}${"   "}${proj.date}\n`;
+        if (proj.description) {
+          text += `${proj.description}\n`;
+        }
+      });
+      text += `\n`;
+    }
+    
+    if (data.skills.length > 0) {
+      text += `SKILLS\n`;
+      text += `${data.skills.join(", ")}\n\n`;
+    }
+    
+    return text.trim();
+  };
+
+  // Open Resume Editor
+  const handleOpenEditor = (record: ResumeRecord) => {
+    setEditingResume(record);
+    setTempTitle(record.jobTitle || "Untitled Resume");
+    const parsed = parseResumeText(record.optimizedText || record.originalText);
+    setEditorData(parsed);
+  };
+
+  // Create New Resume Card Trigger
+  const handleCreateNewResume = async () => {
+    if (!userId) return;
+    setActionLoading("create");
+
+    const defaultText = `JANE SMITH\njane@example.com | +1 (555) 000-0000 | New York, NY | linkedin.com/in/jane | janesmith.dev\n\nPROFESSIONAL SUMMARY\nResults-driven professional with experience in building clean frontend software interfaces.\n\nEXPERIENCE\nAcme Software - Frontend Engineer   2024 - Present\n• Developed premium responsive dashboard widgets and screens.\n• Spearheaded code optimization resulting in 40% loading speedup.\n\nEDUCATION\nTech University - Bachelor of Science in Computer Science   2020 - 2024\nGraduated with Honors. GPA 3.9/4.0`;
+
+    try {
+      const { data, error } = await supabase
+        .from("Resume")
+        .insert({
+          userId: userId,
+          originalText: defaultText,
+          optimizedText: defaultText,
+          jobTitle: "Untitled Resume",
+          company: "General Application",
+          scoreBefore: 45,
+          scoreAfter: 45,
+          keywordsBefore: 0,
+          keywordsAfter: 0,
+          impactBefore: 0,
+          impactAfter: 0,
+          keywordsAdded: []
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const newRecord = data as ResumeRecord;
+        setResumes(prev => [newRecord, ...prev]);
+        handleOpenEditor(newRecord);
+        toast.success("New resume card created successfully!");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create new resume.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Delete Resume Card
+  const handleDeleteResume = async (e: React.MouseEvent, recordId: string) => {
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to permanently delete this resume card?")) {
+      return;
+    }
+
+    setActionLoading(`delete-${recordId}`);
+    try {
+      const { error } = await supabase.from("Resume").delete().eq("id", recordId);
+      if (error) throw error;
+      setResumes(prev => prev.filter(r => r.id !== recordId));
+      toast.success("Resume record deleted.");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete resume record.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Download PDF file
+  const handleDownloadPDF = async (record: ResumeRecord) => {
+    setActionLoading(`pdf-${record.id}`);
     try {
       const response = await fetch("/api/export/pdf", {
         method: "POST",
@@ -116,50 +408,247 @@ export default function ResumesPage() {
     }
   };
 
-  const handleDownloadDOCX = async (e: React.MouseEvent, record: ResumeRecord) => {
-    e.stopPropagation();
-    setActionLoading(`docx-${record.id}`);
+  // Sync state changes back to database
+  const saveEditorData = async (updatedData: StructuredResume, updateRecordFields: Partial<ResumeRecord> = {}) => {
+    if (!editingResume || !userId) return;
+    
+    const compiledText = compileStructuredResume(updatedData);
+    const updatedRecord: ResumeRecord = {
+      ...editingResume,
+      optimizedText: compiledText,
+      ...updateRecordFields
+    };
+
+    setEditingResume(updatedRecord);
+    setResumes(prev => prev.map(r => r.id === editingResume.id ? updatedRecord : r));
 
     try {
-      const response = await fetch("/api/export/docx", {
+      await supabase
+        .from("Resume")
+        .update({
+          optimizedText: compiledText,
+          ...updateRecordFields
+        })
+        .eq("id", editingResume.id);
+    } catch (err) {
+      console.error("Failed to sync resume updates with db:", err);
+    }
+  };
+
+  // Field change triggers
+  const handlePersonalInfoChange = (field: keyof StructuredResume, value: string) => {
+    if (!editorData) return;
+    const updated = { ...editorData, [field]: value };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  const handleSummaryChange = (value: string) => {
+    if (!editorData) return;
+    const updated = { ...editorData, summary: value };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  // Auto-Improve Professional Summary
+  const handleImproveSummary = async () => {
+    if (!editorData) return;
+    setActionLoading("improve-summary");
+
+    try {
+      const response = await fetch("/api/improve-bullet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeId: record.id })
+        body: JSON.stringify({ 
+          bullet: editorData.summary,
+          jobDescription: "General Professional Alignment" 
+        })
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to export DOCX.");
+      if (response.ok) {
+        const data = await response.json();
+        const updated = { ...editorData, summary: data.improvedBullet || editorData.summary };
+        setEditorData(updated);
+        saveEditorData(updated);
+        toast.success("Summary enhanced with AI optimization!");
+      } else {
+        throw new Error("AI engine failed.");
       }
-
-      const blob = await response.blob();
-      saveAs(blob, `${record.jobTitle?.replace(/\s+/g, "-") || "resume"}-optimized.docx`);
-      toast.success("DOCX exported successfully!");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to download DOCX.");
+    } catch (err) {
+      toast.error("Could not optimize summary at this time.");
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleDeleteResume = async (e: React.MouseEvent, recordId: string) => {
-    e.stopPropagation();
-    if (!confirm("Are you sure you want to permanently delete this optimized resume record?")) {
-      return;
-    }
+  // Experience changes handlers
+  const handleExpChange = (id: string, field: string, value: string) => {
+    if (!editorData) return;
+    const updatedExp = editorData.experience.map(exp => 
+      exp.id === id ? { ...exp, [field]: value } : exp
+    );
+    const updated = { ...editorData, experience: updatedExp };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
 
-    setActionLoading(`delete-${recordId}`);
-    try {
-      const { error } = await supabase.from("Resume").delete().eq("id", recordId);
-      if (error) {
-        throw error;
+  const handleExpBulletChange = (expId: string, idx: number, value: string) => {
+    if (!editorData) return;
+    const updatedExp = editorData.experience.map(exp => {
+      if (exp.id === expId) {
+        const newBullets = [...exp.bullets];
+        newBullets[idx] = value;
+        return { ...exp, bullets: newBullets };
       }
-      setResumes((prev) => prev.filter((r) => r.id !== recordId));
-      toast.success("Resume record deleted.");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete resume record.");
-    } finally {
-      setActionLoading(null);
+      return exp;
+    });
+    const updated = { ...editorData, experience: updatedExp };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  const addExpBullet = (expId: string) => {
+    if (!editorData) return;
+    const updatedExp = editorData.experience.map(exp => {
+      if (exp.id === expId) {
+        return { ...exp, bullets: [...exp.bullets, ""] };
+      }
+      return exp;
+    });
+    const updated = { ...editorData, experience: updatedExp };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  const removeExpBullet = (expId: string, idx: number) => {
+    if (!editorData) return;
+    const updatedExp = editorData.experience.map(exp => {
+      if (exp.id === expId) {
+        return { ...exp, bullets: exp.bullets.filter((_, i) => i !== idx) };
+      }
+      return exp;
+    });
+    const updated = { ...editorData, experience: updatedExp };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  const addExperienceItem = () => {
+    if (!editorData) return;
+    const newExp = {
+      id: Math.random().toString(36).substr(2, 9),
+      company: "New Company",
+      title: "Software Developer",
+      date: "Jan 2024 - Present",
+      bullets: ["Developed frontend UI components."]
+    };
+    const updated = { ...editorData, experience: [...editorData.experience, newExp] };
+    setEditorData(updated);
+    saveEditorData(updated);
+    toast.success("Experience section added!");
+  };
+
+  const removeExperienceItem = (id: string) => {
+    if (!editorData) return;
+    const updated = { ...editorData, experience: editorData.experience.filter(exp => exp.id !== id) };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  // Education changes handlers
+  const handleEduChange = (id: string, field: string, value: string) => {
+    if (!editorData) return;
+    const updatedEdu = editorData.education.map(edu => 
+      edu.id === id ? { ...edu, [field]: value } : edu
+    );
+    const updated = { ...editorData, education: updatedEdu };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  const addEducationItem = () => {
+    if (!editorData) return;
+    const newEdu = {
+      id: Math.random().toString(36).substr(2, 9),
+      school: "Tech Institute",
+      degree: "B.S.",
+      field: "Computer Engineering",
+      date: "2018 - 2022",
+      description: ""
+    };
+    const updated = { ...editorData, education: [...editorData.education, newEdu] };
+    setEditorData(updated);
+    saveEditorData(updated);
+    toast.success("Education section added!");
+  };
+
+  const removeEducationItem = (id: string) => {
+    if (!editorData) return;
+    const updated = { ...editorData, education: editorData.education.filter(edu => edu.id !== id) };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  // Projects change handlers
+  const handleProjChange = (id: string, field: string, value: string) => {
+    if (!editorData) return;
+    const updatedProj = editorData.projects.map(proj => 
+      proj.id === id ? { ...proj, [field]: value } : proj
+    );
+    const updated = { ...editorData, projects: updatedProj };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  const addProjectItem = () => {
+    if (!editorData) return;
+    const newProj = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: "FastHire AI Platform",
+      role: "Lead Creator",
+      date: "June 2026",
+      description: "AI-driven ATS optimization dashboard."
+    };
+    const updated = { ...editorData, projects: [...editorData.projects, newProj] };
+    setEditorData(updated);
+    saveEditorData(updated);
+    toast.success("Project section added!");
+  };
+
+  const removeProjectItem = (id: string) => {
+    if (!editorData) return;
+    const updated = { ...editorData, projects: editorData.projects.filter(proj => proj.id !== id) };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  // Skills change handler
+  const handleSkillsChange = (value: string) => {
+    if (!editorData) return;
+    const skillsList = value.split(",").map(s => s.trim());
+    const updated = { ...editorData, skills: skillsList };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  // Calculate circular progress indicator based on completed sections
+  const calculateCompleteness = (data: StructuredResume): number => {
+    let score = 0;
+    if (data.name) score += 15;
+    if (data.email && data.phone) score += 15;
+    if (data.summary) score += 20;
+    if (data.experience.length > 0 && data.experience[0].company) score += 25;
+    if (data.education.length > 0 && data.education[0].school) score += 15;
+    if (data.skills.length > 0 && data.skills[0]) score += 10;
+    return score;
+  };
+
+  // Save Title Changes
+  const handleSaveTitle = () => {
+    if (editingResume && tempTitle.trim()) {
+      saveEditorData(editorData!, { jobTitle: tempTitle.trim() });
     }
+    setIsTitleEditing(false);
   };
 
   if (authLoading) {
@@ -167,187 +656,761 @@ export default function ResumesPage() {
       <div className="flex min-h-screen items-center justify-center bg-[#060713]">
         <div className="text-center space-y-2">
           <Loader2 className="h-8 w-8 text-violet-600 animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-semibold">Verifying session...</p>
+          <p className="text-xs text-slate-500 font-semibold">Loading Resumes...</p>
         </div>
       </div>
     );
   }
 
+  // Max Quota limit calculation based on tier
+  const maxLimit = activePlan === "free" ? 2 : activePlan === "premium" ? 15 : activePlan === "team" ? 30 : 999;
+
   return (
-    <div className="flex flex-col min-h-screen bg-[#060713] text-slate-100 font-sans">
-      <Navbar />
-
-      <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8">
+    <div className="flex flex-col min-h-screen bg-[#060713] text-slate-100 font-sans select-text">
+      
+      {/* Dynamic View: LIST VIEW OR EDITOR VIEW */}
+      {!editingResume ? (
         
-        {/* Navigation header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link href="/dashboard">
-            <Button variant="outline" size="sm" className="border-white/5 text-slate-300 hover:bg-white/5 h-9 w-9 p-0 rounded-full bg-transparent">
-              <ArrowLeft className="h-4.5 w-4.5" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-              <FileText className="h-6 w-6 text-violet-500" />
-              My Saved Resumes
-            </h1>
-            <p className="text-xs text-slate-400">
-              Manage and download your optimized resume versions.
-            </p>
-          </div>
-        </div>
+        /* MY RESUMES LIST PAGE (Image 1) */
+        <>
+          <Navbar />
 
-        {/* Loading resumes list state */}
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="text-center space-y-2">
-              <Loader2 className="h-8 w-8 text-violet-600 animate-spin mx-auto" />
-              <p className="text-xs text-slate-500 font-semibold">Fetching resumes...</p>
+          <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-6">
+            
+            {/* Header Details */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 select-none">
+                  My Resumes
+                </h1>
+                <p className="text-xs text-slate-400 font-semibold">
+                  {resumes.length} / {maxLimit} resumes
+                </p>
+              </div>
+
+              <Button
+                onClick={handleCreateNewResume}
+                disabled={actionLoading === "create" || resumes.length >= maxLimit}
+                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-9 text-xs rounded-full px-5 flex items-center gap-1.5 shadow-lg shadow-violet-600/10"
+              >
+                {actionLoading === "create" ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                New Resume
+              </Button>
             </div>
-          </div>
-        ) : resumes.length === 0 ? (
-          // Empty State layout
-          <div className="flex flex-col items-center justify-center border border-dashed border-white/5 rounded-2xl p-12 text-center bg-[#0e0f21]/40 min-h-[380px]">
-            <AlertCircle className="h-10 w-10 text-violet-500 mb-4 animate-pulse" />
-            <h3 className="font-extrabold text-white text-lg">No saved resumes</h3>
-            <p className="text-xs text-slate-400 max-w-xs mt-1.5 leading-relaxed font-medium">
-              You haven&apos;t optimized and saved any resumes yet. Head over to the dashboard to build or optimize your first profile!
-            </p>
-            <div className="mt-6">
-              <Link href="/dashboard">
-                <Button className="bg-violet-600 hover:bg-violet-500 text-white font-semibold">
-                  Go to Dashboard
-                </Button>
-              </Link>
-            </div>
-          </div>
-        ) : (
-          /* Resumes grid layout */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {resumes.map((resume) => {
-              const delta = resume.scoreAfter - resume.scoreBefore;
-              const formattedDate = formatDate(resume.createdAt);
-              const isDeleting = actionLoading === `delete-${resume.id}`;
 
-              return (
-                <Card 
-                  key={resume.id}
-                  onClick={() => handleOpenWorkspace(resume)}
-                  className="group relative border-white/5 bg-[#0e0f21]/50 hover:bg-[#12132d]/40 hover:border-violet-500/40 cursor-pointer overflow-hidden transition-all duration-300 rounded-2xl shadow-xl flex flex-col justify-between"
-                >
-                  <CardContent className="p-5 flex flex-col justify-between h-full min-h-[180px] space-y-4">
-                    
-                    {/* Top Row details */}
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-start gap-4">
-                        <h3 className="font-bold text-base text-white truncate group-hover:text-violet-400 transition-colors">
-                          {resume.jobTitle || "Tailored Resume"}
-                        </h3>
-                        {delta > 0 && (
-                          <Badge className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 select-none font-bold shrink-0 text-[10px]">
-                            +{delta} pts
-                          </Badge>
-                        )}
-                      </div>
+            {/* Grid display options */}
+            {loading ? (
+              <div className="flex justify-center py-20">
+                <Loader2 className="h-8 w-8 text-violet-600 animate-spin" />
+              </div>
+            ) : resumes.length === 0 ? (
+              
+              /* Empty state listing card options */
+              <div className="flex flex-col items-center justify-center border border-dashed border-white/5 rounded-2xl p-12 text-center bg-[#0e0f21]/40 min-h-[380px]">
+                <FileText className="h-10 w-10 text-violet-500 mb-4 animate-pulse" />
+                <h3 className="font-extrabold text-white text-lg">No Resumes Found</h3>
+                <p className="text-xs text-slate-400 max-w-xs mt-1.5 leading-relaxed font-medium">
+                  Create your first resume structure to build customized applications.
+                </p>
+                <div className="mt-6">
+                  <Button 
+                    onClick={handleCreateNewResume}
+                    className="bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-full"
+                  >
+                    Get Started
+                  </Button>
+                </div>
+              </div>
 
-                      {/* Company description */}
-                      {resume.company && (
-                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                          <Building className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                          <span className="truncate">{resume.company}</span>
-                        </div>
-                      )}
+            ) : (
 
-                      {/* Date */}
-                      <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                        <Calendar className="h-3.5 w-3.5 shrink-0" />
-                        <span>{formattedDate}</span>
-                      </div>
-                    </div>
+              /* Cards listing dashboard grid (Image 1) */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+                
+                {resumes.map((resume) => {
+                  const parsedData = parseResumeText(resume.optimizedText || resume.originalText);
+                  const completionScore = calculateCompleteness(parsedData);
+                  const isDeleting = actionLoading === `delete-${resume.id}`;
 
-                    {/* Scores layout block */}
-                    <div className="flex justify-between items-center bg-[#070814]/60 p-2.5 rounded-lg border border-white/5 text-[11px] font-semibold">
-                      <div>
-                        <span className="text-slate-500">Before:</span>{" "}
-                        <span className="text-red-400 font-bold">{resume.scoreBefore}</span>
-                      </div>
-                      <span className="text-slate-600 font-black">→</span>
-                      <div>
-                        <span className="text-slate-500">After:</span>{" "}
-                        <span className="text-emerald-400 font-black">{resume.scoreAfter}</span>
-                      </div>
-                    </div>
-
-                    {/* Action button triggers bottom bar */}
-                    <div className="flex justify-between items-center border-t border-white/5 pt-3 mt-3">
-                      
-                      {/* PDF / Word downloads */}
-                      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          onClick={(e) => handleDownloadPDF(e, resume)}
-                          disabled={actionLoading !== null}
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 text-[10px] px-2 bg-slate-900 border border-white/5 text-slate-400 hover:text-white hover:bg-slate-800 gap-1"
-                        >
-                          {actionLoading === `pdf-${resume.id}` ? (
-                            <Loader2 className="h-3 w-3 animate-spin text-violet-400" />
-                          ) : (
-                            <Download className="h-3 w-3" />
-                          )}
-                          PDF
-                        </Button>
+                  return (
+                    <Card
+                      key={resume.id}
+                      className="group relative border-white/5 bg-[#0e0f21]/50 hover:bg-[#12132d]/40 hover:border-violet-500/40 cursor-pointer overflow-hidden transition-all duration-300 rounded-2xl shadow-xl flex flex-col justify-between"
+                    >
+                      <CardContent className="p-5 flex flex-col justify-between h-full min-h-[160px] space-y-4">
                         
-                        <Button
-                          onClick={(e) => handleDownloadDOCX(e, resume)}
-                          disabled={actionLoading !== null}
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 text-[10px] px-2 bg-slate-900 border border-white/5 text-slate-400 hover:text-white hover:bg-slate-800 gap-1"
-                        >
-                          {actionLoading === `docx-${resume.id}` ? (
-                            <Loader2 className="h-3 w-3 animate-spin text-violet-400" />
-                          ) : (
-                            <Download className="h-3 w-3" />
-                          )}
-                          Word
-                        </Button>
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="space-y-1">
+                            <h3 className="font-bold text-base text-white truncate max-w-[150px]">
+                              {resume.jobTitle || "Untitled Resume"}
+                            </h3>
+                            <p className="text-[10px] text-slate-500 font-semibold select-none">
+                              Edited {formatDate(resume.createdAt)}
+                            </p>
+                          </div>
+                          
+                          {/* Circular completeness badge */}
+                          <div className="relative h-9 w-9 rounded-full bg-slate-950 flex items-center justify-center border border-white/10 text-[9px] font-black text-violet-400 select-none">
+                            {completionScore}%
+                          </div>
+                        </div>
+
+                        {/* Card controls footer (Image 1) */}
+                        <div className="flex gap-2 items-center pt-2 border-t border-white/5">
+                          <Button
+                            onClick={() => handleOpenEditor(resume)}
+                            variant="ghost"
+                            className="flex-1 bg-[#161730]/40 border border-slate-700/50 hover:border-slate-500 hover:bg-slate-800 text-slate-300 hover:text-white rounded-full h-8 text-[11px] font-bold gap-1.5"
+                          >
+                            <Edit3 className="h-3.5 w-3.5" />
+                            Edit
+                          </Button>
+                          <Button
+                            onClick={(e) => handleDeleteResume(e, resume.id)}
+                            disabled={isDeleting}
+                            variant="ghost"
+                            className="h-8 w-8 p-0 rounded-full hover:bg-red-500/10 text-slate-500 hover:text-red-400 border border-white/5"
+                            title="Remove resume"
+                          >
+                            {isDeleting ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                        </div>
+
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+
+                {/* Dashed placeholder template card */}
+                {resumes.length < maxLimit && (
+                  <div
+                    onClick={handleCreateNewResume}
+                    className="border border-dashed border-white/10 bg-[#0e0f21]/20 hover:bg-[#12132d]/20 hover:border-violet-500/40 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 min-h-[160px] select-none"
+                  >
+                    <Plus className="h-7 w-7 text-slate-500 group-hover:text-white mb-2" />
+                    <span className="font-bold text-xs text-slate-400">New Resume</span>
+                  </div>
+                )}
+
+              </div>
+            )}
+
+          </main>
+        </>
+
+      ) : (
+
+        /* RESUME BUILDER SPLIT-SCREEN EDITOR PAGE (Image 2) */
+        <div className="flex flex-col h-screen overflow-hidden bg-[#060713]">
+          
+          {/* Header Row */}
+          <header className="border-b border-white/5 bg-[#060713]/80 backdrop-blur-md px-6 py-3 flex items-center justify-between z-10 shrink-0">
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={() => {
+                  setEditingResume(null);
+                  setEditorData(null);
+                }}
+                variant="ghost"
+                className="text-slate-400 hover:text-white flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-white/5 bg-transparent"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Resumes
+              </Button>
+
+              <div className="flex items-center gap-1.5 border-l border-white/10 pl-4">
+                {isTitleEditing ? (
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      value={tempTitle}
+                      onChange={(e) => setTempTitle(e.target.value)}
+                      onBlur={handleSaveTitle}
+                      onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
+                      autoFocus
+                      className="h-7 w-48 text-xs border-white/10 bg-[#070814] text-white rounded px-2"
+                    />
+                    <Button onClick={handleSaveTitle} size="sm" className="h-7 bg-violet-600 text-white text-[10px] rounded px-2.5">Save</Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 select-text">
+                    <span className="font-extrabold text-sm text-white">{editingResume.jobTitle || "Untitled Resume"}</span>
+                    <button 
+                      onClick={() => setIsTitleEditing(true)}
+                      className="text-slate-500 hover:text-slate-300"
+                    >
+                      <Edit3 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <Button
+              onClick={() => handleDownloadPDF(editingResume)}
+              disabled={actionLoading === `pdf-${editingResume.id}`}
+              className="bg-violet-600 hover:bg-violet-500 text-white font-bold h-8 text-[11px] rounded-full px-5 flex items-center gap-1.5 shadow-lg shadow-violet-600/10"
+            >
+              {actionLoading === `pdf-${editingResume.id}` ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )}
+              Download
+            </Button>
+          </header>
+
+          {/* Split Columns Layout */}
+          <div className="flex-1 flex overflow-hidden w-full items-stretch">
+            
+            {/* Left Column: Editor fields scrollable inputs */}
+            <div className="w-1/2 overflow-y-auto border-r border-white/5 px-6 py-6 space-y-4">
+              
+              {editorData && (
+                <>
+                  {/* Accordion 1: Personal info */}
+                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => toggleCollapsible("personal")}
+                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                    >
+                      <span className="flex items-center gap-2">
+                        <UserIcon className="h-4 w-4 text-violet-500" />
+                        Personal Info
+                      </span>
+                      {collapsibles.personal ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
+
+                    {collapsibles.personal && (
+                      <div className="p-4 grid grid-cols-2 gap-4 text-xs font-semibold select-none">
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 uppercase tracking-wide">Full Name</label>
+                          <Input
+                            placeholder="e.g. Alexis Carter"
+                            value={editorData.name}
+                            onChange={(e) => handlePersonalInfoChange("name", e.target.value)}
+                            className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 uppercase tracking-wide">Email</label>
+                          <Input
+                            placeholder="e.g. alexis@mail.com"
+                            value={editorData.email}
+                            onChange={(e) => handlePersonalInfoChange("email", e.target.value)}
+                            className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 uppercase tracking-wide">Phone Number</label>
+                          <Input
+                            placeholder="e.g. +1 (555) 000-0000"
+                            value={editorData.phone}
+                            onChange={(e) => handlePersonalInfoChange("phone", e.target.value)}
+                            className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 uppercase tracking-wide">Location</label>
+                          <Input
+                            placeholder="e.g. Seattle, WA"
+                            value={editorData.location}
+                            onChange={(e) => handlePersonalInfoChange("location", e.target.value)}
+                            className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 uppercase tracking-wide">LinkedIn Profile</label>
+                          <Input
+                            placeholder="e.g. linkedin.com/in/alexis"
+                            value={editorData.linkedin}
+                            onChange={(e) => handlePersonalInfoChange("linkedin", e.target.value)}
+                            className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 uppercase tracking-wide">Portfolio / Website</label>
+                          <Input
+                            placeholder="e.g. alexisdev.io"
+                            value={editorData.website}
+                            onChange={(e) => handlePersonalInfoChange("website", e.target.value)}
+                            className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500"
+                          />
+                        </div>
                       </div>
-
-                      {/* Delete item */}
-                      <Button
-                        onClick={(e) => handleDeleteResume(e, resume.id)}
-                        disabled={isDeleting || actionLoading !== null}
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-full"
-                        title="Delete Record"
-                      >
-                        {isDeleting ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-3.5 w-3.5" />
-                        )}
-                      </Button>
-
-                    </div>
-
-                  </CardContent>
-
-                  {/* Open details overlay */}
-                  <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                    <div className="flex items-center gap-1.5 bg-violet-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                      <span>Open in Editor</span>
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </div>
+                    )}
                   </div>
 
-                </Card>
-              );
-            })}
+                  {/* Accordion 2: Professional Summary */}
+                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => toggleCollapsible("summary")}
+                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                    >
+                      <span className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-violet-500" />
+                        Professional Summary
+                      </span>
+                      {collapsibles.summary ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
+
+                    {collapsibles.summary && (
+                      <div className="p-4 space-y-3 select-none">
+                        <div className="flex justify-between items-center">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wide">Summary Text</label>
+                          <Button
+                            type="button"
+                            onClick={handleImproveSummary}
+                            disabled={actionLoading === "improve-summary"}
+                            className="bg-violet-950/40 border border-violet-500/20 text-violet-400 hover:text-white hover:bg-violet-900 h-7 text-[10px] font-bold px-3 gap-1 rounded-full"
+                          >
+                            {actionLoading === "improve-summary" ? (
+                              <Loader2 className="h-3 w-3 animate-spin text-violet-400" />
+                            ) : (
+                              <Sparkles className="h-3 w-3" />
+                            )}
+                            Improve
+                          </Button>
+                        </div>
+                        <textarea
+                          placeholder="Write a concise overview of your skills and career targets..."
+                          value={editorData.summary}
+                          onChange={(e) => handleSummaryChange(e.target.value)}
+                          rows={4}
+                          className="w-full p-2.5 border border-white/5 bg-[#070814] text-white rounded-lg focus:border-violet-500 outline-none focus:ring-1 focus:ring-violet-500 font-sans text-xs resize-none"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Accordion 3: Experience Cards */}
+                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => toggleCollapsible("experience")}
+                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Briefcase className="h-4 w-4 text-violet-500" />
+                        Experience
+                      </span>
+                      {collapsibles.experience ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
+
+                    {collapsibles.experience && (
+                      <div className="p-4 space-y-4 select-none">
+                        {editorData.experience.map((exp) => (
+                          <div key={exp.id} className="border border-white/5 bg-[#070814]/30 rounded-lg p-3 space-y-3 relative">
+                            <button
+                              onClick={() => removeExperienceItem(exp.id)}
+                              className="absolute top-2 right-2 text-slate-500 hover:text-red-400"
+                              title="Delete Item"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div className="space-y-1">
+                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Company</label>
+                                <Input
+                                  value={exp.company}
+                                  onChange={(e) => handleExpChange(exp.id, "company", e.target.value)}
+                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Title</label>
+                                <Input
+                                  value={exp.title}
+                                  onChange={(e) => handleExpChange(exp.id, "title", e.target.value)}
+                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-1 text-xs">
+                              <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Dates Active</label>
+                              <Input
+                                value={exp.date}
+                                onChange={(e) => handleExpChange(exp.id, "date", e.target.value)}
+                                className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                              />
+                            </div>
+
+                            {/* Bullet points mapping */}
+                            <div className="space-y-2">
+                              <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Description Bullets</label>
+                              {exp.bullets.map((bullet, idx) => (
+                                <div key={idx} className="flex gap-2 items-center">
+                                  <span className="text-slate-500 text-xs select-none">•</span>
+                                  <Input
+                                    value={bullet}
+                                    onChange={(e) => handleExpBulletChange(exp.id, idx, e.target.value)}
+                                    className="h-8 flex-1 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                    placeholder="Add detail bullet..."
+                                  />
+                                  <button
+                                    onClick={() => removeExpBullet(exp.id, idx)}
+                                    className="text-slate-600 hover:text-red-400 p-1"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              ))}
+                              <Button
+                                type="button"
+                                onClick={() => addExpBullet(exp.id)}
+                                className="bg-transparent border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3"
+                              >
+                                + Add Bullet
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+
+                        <Button
+                          onClick={addExperienceItem}
+                          className="w-full bg-[#12132d]/40 border border-white/5 text-slate-300 hover:text-white h-8 text-[11px] font-bold rounded-lg"
+                        >
+                          + Add Experience
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Accordion 4: Education Details */}
+                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => toggleCollapsible("education")}
+                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                    >
+                      <span className="flex items-center gap-2">
+                        <BookOpen className="h-4 w-4 text-violet-500" />
+                        Education
+                      </span>
+                      {collapsibles.education ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
+
+                    {collapsibles.education && (
+                      <div className="p-4 space-y-4 select-none">
+                        {editorData.education.map((edu) => (
+                          <div key={edu.id} className="border border-white/5 bg-[#070814]/30 rounded-lg p-3 space-y-3 relative">
+                            <button
+                              onClick={() => removeEducationItem(edu.id)}
+                              className="absolute top-2 right-2 text-slate-500 hover:text-red-400"
+                              title="Delete Item"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div className="space-y-1">
+                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Institution</label>
+                                <Input
+                                  value={edu.school}
+                                  onChange={(e) => handleEduChange(edu.id, "school", e.target.value)}
+                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Degree</label>
+                                <Input
+                                  value={edu.degree}
+                                  onChange={(e) => handleEduChange(edu.id, "degree", e.target.value)}
+                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div className="space-y-1">
+                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Field of Study</label>
+                                <Input
+                                  value={edu.field}
+                                  onChange={(e) => handleEduChange(edu.id, "field", e.target.value)}
+                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Dates/Years</label>
+                                <Input
+                                  value={edu.date}
+                                  onChange={(e) => handleEduChange(edu.id, "date", e.target.value)}
+                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+
+                        <Button
+                          onClick={addEducationItem}
+                          className="w-full bg-[#12132d]/40 border border-white/5 text-slate-300 hover:text-white h-8 text-[11px] font-bold rounded-lg"
+                        >
+                          + Add Education
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Accordion 5: Projects Info */}
+                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => toggleCollapsible("projects")}
+                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                    >
+                      <span className="flex items-center gap-2">
+                        <FolderGit className="h-4 w-4 text-violet-500" />
+                        Projects
+                      </span>
+                      {collapsibles.projects ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
+
+                    {collapsibles.projects && (
+                      <div className="p-4 space-y-4 select-none">
+                        {editorData.projects.map((proj) => (
+                          <div key={proj.id} className="border border-white/5 bg-[#070814]/30 rounded-lg p-3 space-y-3 relative">
+                            <button
+                              onClick={() => removeProjectItem(proj.id)}
+                              className="absolute top-2 right-2 text-slate-500 hover:text-red-400"
+                              title="Delete Item"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div className="space-y-1">
+                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Project Name</label>
+                                <Input
+                                  value={proj.name}
+                                  onChange={(e) => handleProjChange(proj.id, "name", e.target.value)}
+                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Role / Scope</label>
+                                <Input
+                                  value={proj.role}
+                                  onChange={(e) => handleProjChange(proj.id, "role", e.target.value)}
+                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-1 text-xs">
+                              <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Date/Duration</label>
+                              <Input
+                                value={proj.date}
+                                onChange={(e) => handleProjChange(proj.id, "date", e.target.value)}
+                                className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                              />
+                            </div>
+
+                            <div className="space-y-1 text-xs">
+                              <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Description</label>
+                              <Input
+                                value={proj.description}
+                                onChange={(e) => handleProjChange(proj.id, "description", e.target.value)}
+                                className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                placeholder="Describe project outcomes..."
+                              />
+                            </div>
+                          </div>
+                        ))}
+
+                        <Button
+                          onClick={addProjectItem}
+                          className="w-full bg-[#12132d]/40 border border-white/5 text-slate-300 hover:text-white h-8 text-[11px] font-bold rounded-lg"
+                        >
+                          + Add Project
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Accordion 6: Skills Details */}
+                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => toggleCollapsible("skills")}
+                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Wrench className="h-4 w-4 text-violet-500" />
+                        Skills
+                      </span>
+                      {collapsibles.skills ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
+
+                    {collapsibles.skills && (
+                      <div className="p-4 space-y-1.5 select-none">
+                        <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Skills tags (Comma-separated)</label>
+                        <Input
+                          placeholder="e.g. React, TypeScript, Node.js, Next.js, Python"
+                          value={editorData.skills.join(", ")}
+                          onChange={(e) => handleSkillsChange(e.target.value)}
+                          className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Bottom promo promotion banner (Image 2) */}
+              {activePlan !== "team" && (
+                <div className="p-4 border border-white/5 bg-[#0c0d1b] rounded-xl flex items-center justify-center gap-2 text-center text-slate-400 font-bold text-[10px] tracking-wide select-none">
+                  <Sparkles className="h-4.5 w-4.5 text-violet-500 animate-pulse" />
+                  <span>Upgrade to Premium to unlock AI enhancements and bulk export templates.</span>
+                </div>
+              )}
+
+            </div>
+
+            {/* Right Column: Live Professional Preview sheet matching HTML design (Image 2) */}
+            <div className="w-1/2 bg-[#0a0b16] overflow-y-auto px-10 py-10 flex justify-center">
+              
+              {editorData && (
+                <div 
+                  className="w-full max-w-[800px] min-h-[1056px] bg-white text-black p-[25mm] shadow-2xl flex flex-col font-serif select-text border border-slate-300"
+                  style={{ fontFamily: "'Times New Roman', Times, serif" }}
+                >
+                  
+                  {/* Name center header */}
+                  <h1 className="text-2xl font-bold uppercase text-center tracking-wide leading-tight">
+                    {editorData.name || "Jane Smith"}
+                  </h1>
+
+                  {/* Contact parts centered */}
+                  <div className="text-[10px] text-slate-700 text-center mt-1 mb-4 font-normal flex flex-wrap justify-center gap-1.5 leading-normal">
+                    {[editorData.email, editorData.phone, editorData.location, editorData.linkedin, editorData.website]
+                      .filter(Boolean)
+                      .map((val, idx, arr) => (
+                        <React.Fragment key={idx}>
+                          <span>{val}</span>
+                          {idx < arr.length - 1 && <span className="text-slate-400 select-none">|</span>}
+                        </React.Fragment>
+                      ))
+                    }
+                  </div>
+
+                  {/* Sections list mapping */}
+                  <div className="space-y-4 text-xs font-normal">
+                    
+                    {/* Summary Section */}
+                    {editorData.summary && (
+                      <div className="space-y-1.5">
+                        <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5">
+                          Professional Summary
+                        </h2>
+                        <p className="text-justify leading-relaxed">
+                          {editorData.summary}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Experience Section */}
+                    {editorData.experience.length > 0 && (
+                      <div className="space-y-3">
+                        <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5">
+                          Experience
+                        </h2>
+                        <div className="space-y-2.5">
+                          {editorData.experience.map(exp => (
+                            <div key={exp.id} className="space-y-1">
+                              <div className="flex justify-between items-baseline font-bold">
+                                <span>{exp.company} {exp.title ? `— ${exp.title}` : ""}</span>
+                                <span className="font-normal italic text-[10px]">{exp.date}</span>
+                              </div>
+                              {exp.bullets.length > 0 && (
+                                <ul className="list-disc pl-4 space-y-0.5">
+                                  {exp.bullets.filter(Boolean).map((bullet, idx) => (
+                                    <li key={idx} className="text-justify leading-relaxed">
+                                      {bullet}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Education Section */}
+                    {editorData.education.length > 0 && (
+                      <div className="space-y-2">
+                        <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5">
+                          Education
+                        </h2>
+                        <div className="space-y-1.5">
+                          {editorData.education.map(edu => (
+                            <div key={edu.id} className="flex justify-between items-baseline">
+                              <div>
+                                <span className="font-bold">{edu.school}</span>
+                                {edu.degree && <span className="italic"> — {edu.degree}</span>}
+                                {edu.field && <span> in {edu.field}</span>}
+                              </div>
+                              <span className="font-normal italic text-[10px]">{edu.date}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Projects Section */}
+                    {editorData.projects.length > 0 && (
+                      <div className="space-y-3">
+                        <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5">
+                          Projects
+                        </h2>
+                        <div className="space-y-2">
+                          {editorData.projects.map(proj => (
+                            <div key={proj.id} className="space-y-0.5">
+                              <div className="flex justify-between items-baseline font-bold">
+                                <span>{proj.name} {proj.role ? `— ${proj.role}` : ""}</span>
+                                <span className="font-normal italic text-[10px]">{proj.date}</span>
+                              </div>
+                              {proj.description && (
+                                <p className="text-justify leading-relaxed pl-1 text-[11px] text-slate-700">
+                                  {proj.description}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Skills Section */}
+                    {editorData.skills.length > 0 && editorData.skills[0] && (
+                      <div className="space-y-1">
+                        <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5">
+                          Skills
+                        </h2>
+                        <p className="leading-relaxed">
+                          {editorData.skills.join(", ")}
+                        </p>
+                      </div>
+                    )}
+
+                  </div>
+
+                </div>
+              )}
+
+            </div>
+
           </div>
-        )}
-      </main>
+
+        </div>
+      )}
+
     </div>
   );
 }

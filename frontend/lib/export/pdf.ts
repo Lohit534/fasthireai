@@ -47,7 +47,18 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
         continue;
       }
 
-      // 3. Detect Bullet points: lines starting with •, -, * or standard Unicode bullet characters
+      // 3. Detect column alignment lines with 3 or more spaces
+      const columns = line.split(/\s{3,}/);
+      if (columns.length > 1) {
+        if (inList) {
+          htmlBody += "</ul>\n";
+          inList = false;
+        }
+        htmlBody += `<div class="line-row"><span class="left">${escapeHtml(columns[0])}</span><span class="right">${escapeHtml(columns[1])}</span></div>\n`;
+        continue;
+      }
+
+      // 4. Detect Bullet points: lines starting with •, -, * or standard Unicode bullet characters
       if (/^[•\-*\u2022]/.test(line)) {
         if (!inList) {
           htmlBody += "<ul>\n";
@@ -64,13 +75,13 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
         }
       }
 
-      // 4. Detect Section headers: ALL CAPS lines (length > 3) or lines ending with ":"
+      // 5. Detect Section headers: ALL CAPS lines (length > 3) or lines ending with ":"
       const isHeader = (line.toUpperCase() === line && line.length > 3) || line.endsWith(":");
       if (isHeader) {
         const cleanHeader = line.endsWith(":") ? line.slice(0, -1) : line;
         htmlBody += `<h2>${escapeHtml(cleanHeader)}</h2>\n`;
       } else {
-        // 5. Normal line (regular text paragraph)
+        // 6. Normal line (regular text paragraph)
         htmlBody += `<p>${escapeHtml(line)}</p>\n`;
       }
     }
@@ -87,47 +98,67 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
           <meta charset="utf-8" />
           <style>
             body {
-              font-family: Arial, sans-serif;
+              font-family: 'Times New Roman', Times, serif;
               font-size: 11pt;
-              line-height: 1.4;
+              line-height: 1.35;
               color: #000000;
               margin: 0;
               padding: 0;
             }
             h1 {
+              font-family: 'Times New Roman', Times, serif;
               font-size: 18pt;
               margin: 0 0 4px 0;
               text-align: center;
               font-weight: bold;
+              text-transform: uppercase;
             }
             .contact {
+              font-family: 'Times New Roman', Times, serif;
               font-size: 10pt;
-              color: #333333;
+              color: #222222;
               text-align: center;
               margin-bottom: 12px;
             }
             h2 {
-              font-size: 12pt;
+              font-family: 'Times New Roman', Times, serif;
+              font-size: 11pt;
               text-transform: uppercase;
-              letter-spacing: 1px;
+              letter-spacing: 0.5px;
               border-bottom: 1px solid #000000;
               margin: 12px 0 6px 0;
-              padding-bottom: 3px;
+              padding-bottom: 2px;
               font-weight: bold;
             }
             p {
-              margin: 0 0 6px 0;
+              font-family: 'Times New Roman', Times, serif;
+              margin: 0 0 4px 0;
               font-size: 11pt;
               text-align: justify;
             }
             ul {
               margin: 0 0 6px 0;
-              padding-left: 20px;
+              padding-left: 18px;
             }
             li {
-              margin-bottom: 3px;
+              font-family: 'Times New Roman', Times, serif;
+              margin-bottom: 2px;
               font-size: 11pt;
               text-align: justify;
+            }
+            .line-row {
+              display: flex;
+              justify-content: space-between;
+              font-family: 'Times New Roman', Times, serif;
+              font-size: 11pt;
+              margin-bottom: 3px;
+            }
+            .line-row .left {
+              font-weight: bold;
+            }
+            .line-row .right {
+              font-weight: bold;
+              text-align: right;
             }
           </style>
         </head>

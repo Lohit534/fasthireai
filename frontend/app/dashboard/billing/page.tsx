@@ -120,13 +120,13 @@ export default function BillingPage() {
 
         // 4. Invoices creation
         const invoiceHistory: Invoice[] = [
-          { id: "inv_1", date: "2026-06-15", description: "FastHire Premium Monthly Subscription", amount: "$15.00", status: "paid" },
-          { id: "inv_2", date: "2026-05-15", description: "FastHire Premium Monthly Subscription", amount: "$15.00", status: "paid" }
+          { id: "inv_1", date: "2026-06-15", description: "FastHire Premium Monthly Subscription", amount: "₹99.00", status: "paid" },
+          { id: "inv_2", date: "2026-05-15", description: "FastHire Premium Monthly Subscription", amount: "₹99.00", status: "paid" }
         ];
 
         if (plan === "team") {
           invoiceHistory.unshift({
-            id: "inv_3", date: "2026-06-20", description: "FastHire Team Plan Setup Package", amount: "$49.00", status: "paid"
+            id: "inv_3", date: "2026-06-20", description: "FastHire Team Plan Setup Package", amount: "₹199.00", status: "paid"
           });
         }
 
@@ -197,7 +197,7 @@ export default function BillingPage() {
   }
 
   // Quota computations
-  const totalLimit = activePlan === "free" ? 2 : activePlan === "premium" ? 30 : 9999;
+  const totalLimit = activePlan === "free" ? 2 : activePlan === "premium" ? 15 : activePlan === "team" ? 30 : 9999;
   const used = credits?.freeUsed ?? 0;
   const remaining = credits?.freeRemaining ?? totalLimit;
   const percentUsed = Math.min(100, Math.round((used / totalLimit) * 100));
@@ -277,7 +277,7 @@ export default function BillingPage() {
                 <div className="border-t border-white/5 pt-4 flex items-center justify-between gap-4">
                   <div className="text-[11px] text-slate-400">
                     {activePlan !== "free" ? (
-                      <span>Renews automatically for <strong className="text-white">{activePlan === "premium" ? "$15.00" : "$49.00"}</strong></span>
+                      <span>Renews automatically for <strong className="text-white">{activePlan === "premium" ? "₹99" : "₹199"}</strong></span>
                     ) : (
                       <span>Need more resumes to apply? Upgrade to a premium tier.</span>
                     )}

@@ -51,11 +51,11 @@ const PLANS: Plan[] = [
   {
     id: "premium",
     name: "Premium Pro",
-    price: "$15",
+    price: "₹99",
     period: "monthly",
     description: "For active job hunters targeting multiple roles.",
     features: [
-      "30 Resume optimizations per month",
+      "15 Resume optimizations per month",
       "Deep AI Bullet rewrite with custom prompt settings",
       "Instant PDF & Microsoft Word exports",
       "Save unlimited optimized resume versions",
@@ -67,11 +67,11 @@ const PLANS: Plan[] = [
   {
     id: "team",
     name: "Team & Bootcamps",
-    price: "$49",
+    price: "₹199",
     period: "monthly",
     description: "For groups, universities, and collaborative workspaces.",
     features: [
-      "Unlimited resume optimizations",
+      "30 Resume optimizations per month",
       "Shared candidates workspace and history logs",
       "Centralized billing and roles controls",
       "FastHire Optimization API integrations",
@@ -200,8 +200,8 @@ export default function PricingPage() {
           // Boost available credits
           const creditsObject = {
             freeUsed: 0,
-            paidCredits: selectedPlan.id === "premium" ? 30 : 999,
-            freeRemaining: selectedPlan.id === "premium" ? 30 : 999,
+            paidCredits: selectedPlan.id === "premium" ? 15 : selectedPlan.id === "team" ? 30 : 999,
+            freeRemaining: selectedPlan.id === "premium" ? 15 : selectedPlan.id === "team" ? 30 : 999,
             resetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
           };
           localStorage.setItem(`fastHire_mockCredits_${userId}`, JSON.stringify(creditsObject));
