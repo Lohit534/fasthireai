@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PDFParse } from "pdf-parse";
 import mammoth from "mammoth";
 import { countWords } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
+    const pdf = require("pdf-parse");
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
 
@@ -43,8 +43,7 @@ export async function POST(request: NextRequest) {
     logger.info(`Parsing uploaded file: ${file.name} (${fileType}, ${file.size} bytes)`);
 
     if (fileType === "pdf") {
-      const parser = new PDFParse({ data: new Uint8Array(buffer) });
-      const data = await parser.getText();
+      const data = await pdf(buffer);
       extractedText = data.text;
     } else {
       const data = await mammoth.extractRawText({ buffer });
