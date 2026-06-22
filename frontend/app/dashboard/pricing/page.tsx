@@ -190,7 +190,7 @@ export default function PricingPage() {
     checkUser();
   }, [router]);
 
-  const handlePlanAction = (plan: Plan) => {
+  const handlePlanAction = async (plan: Plan) => {
     if (plan.id === currentPlan) {
       toast.success(`You are already subscribed to the ${plan.name}.`);
       return;
@@ -198,10 +198,24 @@ export default function PricingPage() {
 
     if (plan.id === "free") {
       if (confirm("Are you sure you want to downgrade to the Free Plan? Monthly limits will be applied.")) {
-        if (userId) {
-          localStorage.setItem(`fastHire_plan_${userId}`, "free");
-          setCurrentPlan("free");
-          toast.success("Downgraded to Free plan.");
+        try {
+          if (userId) {
+            const res = await fetch("/api/credits", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ planId: "free" })
+            });
+
+            if (!res.ok) {
+              throw new Error("API request failed");
+            }
+
+            localStorage.setItem(`fastHire_plan_${userId}`, "free");
+            setCurrentPlan("free");
+            toast.success("Downgraded to Free plan.");
+          }
+        } catch (err) {
+          toast.error("Failed to downgrade plan. Please try again.");
         }
       }
       return;
@@ -247,7 +261,7 @@ export default function PricingPage() {
   };
 
   // Checkout submission handler
-  const handleCheckoutSubmit = (e: React.FormEvent) => {
+  const handleCheckoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPlan) return;
 
@@ -258,33 +272,43 @@ export default function PricingPage() {
 
     setCheckoutLoading(true);
 
-    setTimeout(async () => {
-      try {
-        if (userId) {
-          localStorage.setItem(`fastHire_plan_${userId}`, selectedPlan.id);
-          localStorage.setItem(`fastHire_billingCycle_${userId}`, billingCycle);
-          localStorage.setItem(`fastHire_planDate_${userId}`, new Date().toISOString());
-          setCurrentPlan(selectedPlan.id);
-          
-          // Boost available credits based on new limits
-          const limitValue = selectedPlan.id === "premium" ? 15 : selectedPlan.id === "team" ? 30 : 999;
-          const creditsObject = {
-            freeUsed: 0,
-            paidCredits: limitValue,
-            freeRemaining: limitValue,
-            resetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-          };
-          localStorage.setItem(`fastHire_mockCredits_${userId}`, JSON.stringify(creditsObject));
+    try {
+      if (userId) {
+        // Real API request to save plan upgrade in database
+        const res = await fetch("/api/credits", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ planId: selectedPlan.id })
+        });
 
-          toast.success(`Success! Welcome to FastHire ${selectedPlan.name}.`);
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || "Failed to update credits");
         }
-      } catch (err) {
-        toast.error("Processing payment failed. Please try again.");
-      } finally {
-        setCheckoutLoading(false);
-        setIsCheckoutOpen(false);
+
+        localStorage.setItem(`fastHire_plan_${userId}`, selectedPlan.id);
+        localStorage.setItem(`fastHire_billingCycle_${userId}`, billingCycle);
+        localStorage.setItem(`fastHire_planDate_${userId}`, new Date().toISOString());
+        setCurrentPlan(selectedPlan.id);
+        
+        // Boost available credits based on new limits
+        const limitValue = selectedPlan.id === "premium" ? 15 : selectedPlan.id === "team" ? 30 : 999;
+        const creditsObject = {
+          freeUsed: 0,
+          paidCredits: limitValue,
+          freeRemaining: limitValue,
+          resetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        };
+        localStorage.setItem(`fastHire_mockCredits_${userId}`, JSON.stringify(creditsObject));
+
+        toast.success(`Success! Welcome to FastHire ${selectedPlan.name}.`);
       }
-    }, 2000);
+    } catch (err: any) {
+      toast.error(err.message || "Processing payment failed. Please try again.");
+    } finally {
+      setCheckoutLoading(false);
+      setIsCheckoutOpen(false);
+    }
   };
 
   const toggleFAQ = (idx: number) => {

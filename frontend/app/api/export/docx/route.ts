@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { generateDOCX } from "@/lib/export/docx";
 import { logger } from "@/lib/logger";
 
@@ -23,9 +23,17 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Fetch Resume and Verify Ownership
-    const resume = await prisma.resume.findUnique({
-      where: { id: resumeId }
-    });
+    const admin = getAdminClient() as any;
+    const { data: resume, error: fetchErr } = await admin
+      .from("Resume")
+      .select("id, userId, optimizedText")
+      .eq("id", resumeId)
+      .maybeSingle();
+
+    if (fetchErr) {
+      logger.error("Resume fetch error:", fetchErr.message);
+      return NextResponse.json({ error: "Database error fetching resume." }, { status: 500 });
+    }
 
     if (!resume) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });

@@ -1,6 +1,13 @@
+/**
+ * POST /api/optimize
+ *
+ * Core resume optimization pipeline.
+ * Uses Supabase JS client (HTTPS/REST) for all DB operations — NO direct Postgres.
+ * Works on Vercel without any Supabase IPv4 add-on.
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { scoreResume } from "@/lib/ats/scorer";
 import { buildOptimizationPrompt } from "@/lib/ai/prompts";
 import { callAI } from "@/lib/ai/router";
@@ -9,20 +16,19 @@ import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Verify Authentication
+    // 1. Verify auth session
     const supabase = createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      logger.warn("Unauthorized attempt to access /api/optimize");
+      logger.warn("[optimize] Unauthorized request");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 2. Parse Request Body
+    // 2. Parse and validate body
     const body = await request.json();
     const { resumeText, jobDescription, instructions, lengthOption, jobTitle, company } = body;
 
-    // 3. Input Validation
     if (!resumeText || typeof resumeText !== "string" || resumeText.trim().length < MIN_RESUME_CHARS) {
       return NextResponse.json(
         { error: `Resume text must be at least ${MIN_RESUME_CHARS} characters.` },
@@ -37,85 +43,82 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Ensure DB User and Credits exist
-    let userRecord = await prisma.user.findUnique({
-      where: { email: user.email! },
-      include: { credit: true }
-    });
+    const isOwner = user.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+    const admin = getAdminClient() as any;
+    const now = new Date();
 
-    if (!userRecord) {
-      userRecord = await prisma.user.create({
-        data: {
+    // 3. Upsert User row
+    await admin
+      .from("User")
+      .upsert(
+        {
           id: user.id,
           email: user.email!,
           name: user.user_metadata?.full_name || null,
-          credit: {
-            create: {
-              freeUsed: 0,
-              paidCredits: 0,
-              resetAt: new Date()
-            }
-          }
+          createdAt: now.toISOString(),
         },
-        include: { credit: true }
-      });
-    } else if (!userRecord.credit) {
-      await prisma.credit.create({
-        data: {
-          userId: userRecord.id,
-          freeUsed: 0,
-          paidCredits: 0,
-          resetAt: new Date()
-        }
-      });
-      userRecord = await prisma.user.findUnique({
-        where: { id: userRecord.id },
-        include: { credit: true }
-      }) as any;
-    }
+        { onConflict: "id", ignoreDuplicates: true }
+      );
 
-    // 5. Check Monthly Credit Reset
-    const now = new Date();
-    const credit = userRecord!.credit!;
-    const resetAt = new Date(credit.resetAt);
-    
-    let freeUsed = credit.freeUsed;
-    let paidCredits = credit.paidCredits;
+    let freeUsed = 0;
+    let paidCredits = 0;
+    let creditId: string | null = null;
 
-    const isNewMonth = 
-      now.getMonth() !== resetAt.getMonth() || 
-      now.getFullYear() !== resetAt.getFullYear();
-
-    if (isNewMonth) {
-      freeUsed = 0;
-      await prisma.credit.update({
-        where: { userId: userRecord!.id },
-        data: {
-          freeUsed: 0,
-          resetAt: now
-        }
-      });
-    }
-
-    // 6. Enforce Credit Limits — skipped for owner who gets unlimited access
-    const isOwner = user.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
     if (!isOwner) {
-      const freeRemaining = Math.max(0, FREE_CREDITS_PER_MONTH - freeUsed);
-      if (freeRemaining <= 0 && paidCredits <= 0) {
-        return NextResponse.json(
-          { error: "Free limit reached. Upgrade to continue." },
-          { status: 403 }
-        );
+      // 4. Fetch or create Credit row
+      let { data: creditRow } = await admin
+        .from("Credit")
+        .select("*")
+        .eq("userId", user.id)
+        .maybeSingle();
+
+      if (!creditRow) {
+        const { data: newCredit } = await admin
+          .from("Credit")
+          .insert({
+            userId: user.id,
+            freeUsed: 0,
+            paidCredits: 0,
+            resetAt: now.toISOString(),
+          })
+          .select()
+          .single();
+        creditRow = newCredit;
+      }
+
+      if (creditRow) {
+        creditId = creditRow.id;
+        const resetAt = new Date(creditRow.resetAt);
+        const isNewMonth =
+          now.getMonth() !== resetAt.getMonth() ||
+          now.getFullYear() !== resetAt.getFullYear();
+
+        freeUsed = isNewMonth ? 0 : creditRow.freeUsed;
+        paidCredits = creditRow.paidCredits;
+
+        if (isNewMonth) {
+          await admin
+            .from("Credit")
+            .update({ freeUsed: 0, resetAt: now.toISOString() })
+            .eq("userId", user.id);
+        }
+
+        // 5. Enforce credit limits (non-owner only)
+        const freeRemaining = Math.max(0, FREE_CREDITS_PER_MONTH - freeUsed);
+        if (freeRemaining <= 0 && paidCredits <= 0) {
+          return NextResponse.json(
+            { error: "Free limit reached. Upgrade to continue." },
+            { status: 403 }
+          );
+        }
       }
     }
 
-    logger.info(`Deducting credits for user: ${user.email} (Free used: ${freeUsed}, Paid: ${paidCredits}, Owner: ${isOwner})`);
+    logger.info(`[optimize] User: ${user.email} | freeUsed=${freeUsed} | paid=${paidCredits} | owner=${isOwner}`);
 
-    // 7. Core Optimization Flow
-    // Phase A: Pre-score
+    // 6. Core AI optimization pipeline
     const scoreBefore = await scoreResume(resumeText, jobDescription);
 
-    // Phase B: AI Rewrite
     const prompt = buildOptimizationPrompt(
       resumeText,
       jobDescription,
@@ -126,29 +129,29 @@ export async function POST(request: NextRequest) {
     );
     const aiResult = await callAI(prompt, resumeText);
 
-    // Phase C: Post-score
     const scoreAfter = await scoreResume(aiResult.resume, jobDescription);
 
-    // 8. Deduct Credit (owner gets unlimited — no deduction)
+    // 7. Deduct credit (non-owner only)
     if (!isOwner) {
       const freeRemaining = Math.max(0, FREE_CREDITS_PER_MONTH - freeUsed);
       if (freeRemaining > 0) {
-        await prisma.credit.update({
-          where: { userId: userRecord!.id },
-          data: { freeUsed: { increment: 1 } }
-        });
+        await admin
+          .from("Credit")
+          .update({ freeUsed: freeUsed + 1 })
+          .eq("userId", user.id);
       } else {
-        await prisma.credit.update({
-          where: { userId: userRecord!.id },
-          data: { paidCredits: { decrement: 1 } }
-        });
+        await admin
+          .from("Credit")
+          .update({ paidCredits: paidCredits - 1 })
+          .eq("userId", user.id);
       }
     }
 
-    // 9. Save Optimization Log to Prisma DB
-    const resumeRecord = await prisma.resume.create({
-      data: {
-        userId: userRecord!.id,
+    // 8. Save resume record to Supabase
+    const { data: resumeRecord, error: resumeInsertErr } = await admin
+      .from("Resume")
+      .insert({
+        userId: user.id,
         originalText: resumeText,
         jobDescription: jobDescription,
         jobTitle: jobTitle || null,
@@ -161,12 +164,20 @@ export async function POST(request: NextRequest) {
         impactAfter: scoreAfter.impactBullets,
         optimizedText: aiResult.resume,
         keywordsAdded: aiResult.keywordsAdded,
-      }
-    });
+        createdAt: now.toISOString(),
+      })
+      .select()
+      .single();
 
-    // 10. Return OptimizeResult
+    if (resumeInsertErr) {
+      logger.error("[optimize] Resume insert failed:", resumeInsertErr.message);
+      // Still return success — the user got their optimization even if logging failed
+    } else {
+      logger.info(`[optimize] Resume saved: id=${resumeRecord?.id}`);
+    }
+
     return NextResponse.json({
-      resumeId: resumeRecord.id,
+      resumeId: resumeRecord?.id ?? "offline-" + Date.now(),
       scoreBefore: scoreBefore.overall,
       scoreAfter: scoreAfter.overall,
       optimizedText: aiResult.resume,
@@ -175,7 +186,7 @@ export async function POST(request: NextRequest) {
       summary: aiResult.summary,
     });
   } catch (error: any) {
-    logger.error("Failed to execute resume optimization API flow:", error);
+    logger.error("[optimize] Unhandled error:", error?.message, "\nStack:", error?.stack?.split("\n").slice(0, 4).join("\n"));
     return NextResponse.json(
       { error: "Internal server error during resume optimization." },
       { status: 500 }
