@@ -43,6 +43,7 @@ export default function BillingPage() {
   
   // States
   const [activePlan, setActivePlan] = useState("free");
+  const [billingCycle, setBillingCycle] = useState("monthly");
   const [credits, setCredits] = useState<CreditInfo | null>(null);
   const [cardDetails, setCardDetails] = useState<{ brand: string; last4: string; exp: string; name: string } | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -73,6 +74,8 @@ export default function BillingPage() {
         // 1. Plan Tier Loading
         const plan = localStorage.getItem(`fastHire_plan_${user.id}`) || "free";
         setActivePlan(plan);
+        const cycle = localStorage.getItem(`fastHire_billingCycle_${user.id}`) || "monthly";
+        setBillingCycle(cycle);
 
         // 2. Credits setup
         const creditsData = localStorage.getItem(`fastHire_mockCredits_${user.id}`);
@@ -277,7 +280,7 @@ export default function BillingPage() {
                 <div className="border-t border-white/5 pt-4 flex items-center justify-between gap-4">
                   <div className="text-[11px] text-slate-400">
                     {activePlan !== "free" ? (
-                      <span>Renews automatically for <strong className="text-white">{activePlan === "premium" ? "₹99" : "₹199"}</strong></span>
+                      <span>Renews automatically for <strong className="text-white">{activePlan === "premium" ? (billingCycle === "yearly" ? "₹166" : "₹99") : (billingCycle === "yearly" ? "₹332" : "₹199")}</strong> / {billingCycle === "yearly" ? "year" : "month"}</span>
                     ) : (
                       <span>Need more resumes to apply? Upgrade to a premium tier.</span>
                     )}
