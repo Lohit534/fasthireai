@@ -852,7 +852,7 @@ export default function ResumesPage() {
                 {/* Dashed placeholder template card */}
                 {resumes.length < maxLimit && (
                   <div
-                    onClick={handleCreateNewResume}
+                    onClick={() => router.push("/dashboard/builder")}
                     className="border border-dashed border-white/10 bg-[#0e0f21]/20 hover:bg-[#12132d]/20 hover:border-violet-500/40 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 min-h-[160px] select-none"
                   >
                     <Plus className="h-7 w-7 text-slate-500 group-hover:text-white mb-2" />

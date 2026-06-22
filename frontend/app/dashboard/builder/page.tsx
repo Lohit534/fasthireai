@@ -238,7 +238,7 @@ export default function ResumeBuilderPage() {
   };
 
   // Markdown Generator & Sync
-  const handleSyncResume = () => {
+  const handleSyncResume = async () => {
     if (!contact.fullName.trim()) {
       toast.error("Candidate full name is required.");
       setCurrentStep(1);
@@ -328,10 +328,37 @@ export default function ResumeBuilderPage() {
     }
 
     const finalMarkdown = md.trim();
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { error } = await supabase
+          .from("Resume")
+          .insert({
+            userId: user.id,
+            originalText: finalMarkdown,
+            optimizedText: finalMarkdown,
+            jobDescription: "",
+            jobTitle: `${contact.fullName.trim()}'s Resume`,
+            company: "General Application",
+            scoreBefore: 45,
+            scoreAfter: 45,
+            keywordsBefore: 0,
+            keywordsAfter: 0,
+            impactBefore: 0,
+            impactAfter: 0,
+            keywordsAdded: []
+          });
+
+        if (error) throw error;
+      }
+    } catch (err: any) {
+      toast.error("Failed to save resume record: " + err.message);
+    }
     
     // Save to Zustand store
     setResumeText(finalMarkdown);
-    toast.success("Resume structure synchronized and ready for optimization!");
+    toast.success("Resume structure synchronized and saved!");
     router.push("/dashboard");
   };
 

@@ -22,7 +22,8 @@ import {
   Lock,
   ExternalLink,
   ChevronRight,
-  TrendingUp
+  TrendingUp,
+  Sparkles
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
@@ -243,20 +244,30 @@ export default function BillingPage() {
                   <div className="space-y-1">
                     <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Active Package Tier</p>
                     <h3 className="text-lg font-extrabold text-white capitalize select-none">
-                      {activePlan === "free" ? "Free Career Tier" : activePlan === "premium" ? "Premium Pro" : "Team & Bootcamps"}
+                      {credits?.isOwner ? "Owner Account (Unlimited)" : (activePlan === "free" ? "Free Career Tier" : activePlan === "premium" ? "Premium Pro" : "Team & Bootcamps")}
                     </h3>
                   </div>
                   <Badge className={`text-[10px] font-bold border capitalize ${
-                    activePlan === "free" 
-                      ? "bg-slate-800/50 border-white/5 text-slate-400"
-                      : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                    credits?.isOwner 
+                      ? "bg-violet-500/10 border-violet-500/20 text-violet-400"
+                      : (activePlan === "free" 
+                          ? "bg-slate-800/50 border-white/5 text-slate-400"
+                          : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400")
                   }`}>
-                    {activePlan === "free" ? "Limited Access" : "Active & Paid"}
+                    {credits?.isOwner ? "Lifetime Bypassed" : (activePlan === "free" ? "Limited Access" : "Active & Paid")}
                   </Badge>
                 </div>
 
                 {/* Quota Progress */}
-                {activePlan !== "team" ? (
+                {credits?.isOwner ? (
+                  <div className="bg-violet-950/20 border border-violet-500/20 p-4 rounded-xl flex items-center justify-between">
+                    <div className="space-y-1">
+                      <span className="font-bold text-violet-400 text-xs">Developer Owner Account</span>
+                      <p className="text-[10px] text-slate-400 font-semibold">Your developer account has bypassed all billing limits and quotas.</p>
+                    </div>
+                    <Sparkles className="h-5 w-5 text-violet-400" />
+                  </div>
+                ) : activePlan !== "team" ? (
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs font-semibold">
                       <span className="text-slate-400">Monthly Usage Quota</span>

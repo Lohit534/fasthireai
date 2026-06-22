@@ -163,13 +163,19 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
               <>
                 {/* Credit usage pill widget */}
                 <div className="hidden sm:flex items-center gap-2.5 bg-[#15172b]/50 border border-white/5 px-3 py-1.5 rounded-full select-none text-[11px] font-semibold text-slate-400">
-                  <div className="h-2 w-14 bg-slate-800 rounded-full overflow-hidden border border-white/5">
-                    <div 
-                      className="h-full bg-gradient-to-r from-violet-500 to-indigo-500" 
-                      style={{ width: `${usedPercent}%` }}
-                    />
-                  </div>
-                  <span>{usedPercent}% used - resets 10d left</span>
+                  {credits?.isOwner ? (
+                    <span className="text-violet-400 font-extrabold uppercase tracking-wide">Owner Account &bull; Unlimited</span>
+                  ) : (
+                    <>
+                      <div className="h-2 w-14 bg-slate-800 rounded-full overflow-hidden border border-white/5">
+                        <div 
+                          className="h-full bg-gradient-to-r from-violet-500 to-indigo-500" 
+                          style={{ width: `${usedPercent}%` }}
+                        />
+                      </div>
+                      <span>{usedPercent}% used - resets 10d left</span>
+                    </>
+                  )}
                 </div>
 
                 {/* Upgrade Button */}
@@ -198,12 +204,12 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                     <div className="absolute right-0 mt-2.5 w-[240px] bg-[#0c0d1b] border border-white/10 rounded-2xl shadow-2xl p-2.5 space-y-1.5 select-none animate-in fade-in slide-in-from-top-1 duration-150">
                       
                       {/* User title/credits summary */}
-                      <div className="px-2.5 py-2 border-b border-white/5">
+                       <div className="px-2.5 py-2 border-b border-white/5">
                         <div className="text-xs font-bold text-white truncate max-w-full">
                           {user.email}
                         </div>
                         <div className="text-[10px] text-slate-500 font-semibold mt-0.5 uppercase tracking-wider">
-                          Free &bull; {freeRemaining} left
+                          {credits?.isOwner ? "Owner (Unlimited)" : `Free • ${freeRemaining} left`}
                         </div>
                       </div>
 

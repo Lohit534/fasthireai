@@ -11,7 +11,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { scoreResume } from "@/lib/ats/scorer";
 import { buildOptimizationPrompt } from "@/lib/ai/prompts";
 import { callAI } from "@/lib/ai/router";
-import { MIN_RESUME_CHARS, MIN_JD_CHARS, FREE_CREDITS_PER_MONTH, OWNER_EMAIL } from "@/types";
+import { MIN_RESUME_CHARS, MIN_JD_CHARS, FREE_CREDITS_PER_MONTH, isOwnerEmail } from "@/types";
 import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isOwner = user.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+    const isOwner = isOwnerEmail(user.email);
     const admin = getAdminClient() as any;
     const now = new Date();
 

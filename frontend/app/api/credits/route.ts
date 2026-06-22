@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { FREE_CREDITS_PER_MONTH, OWNER_EMAIL } from "@/types";
+import { FREE_CREDITS_PER_MONTH, isOwnerEmail } from "@/types";
 import { logger } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Owner always gets unlimited — no DB lookup needed
-    const isOwner = user.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+    const isOwner = isOwnerEmail(user.email);
     if (isOwner) {
       return NextResponse.json({
         freeUsed: 0,
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { planId } = await request.json();
-    const isOwner = user.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+    const isOwner = isOwnerEmail(user.email);
 
     // Owner is always unlimited - no credits update needed
     if (isOwner) {

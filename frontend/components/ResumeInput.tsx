@@ -108,14 +108,6 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
             {isDragActive ? "Drop the resume here..." : "Drag & drop your resume file"}
           </p>
           <p className="text-xs text-slate-400 mt-1">Supports PDF or DOCX (Max 5MB)</p>
-          
-          <div className="mt-4" onClick={(e) => e.stopPropagation()}>
-            <Link href="/dashboard/builder">
-              <Button size="sm" variant="outline" className="border-indigo-500/50 hover:bg-indigo-600 hover:text-white text-indigo-400 text-xs font-bold py-1.5 px-3 h-auto rounded-lg">
-                ⚡ Build Resume from Scratch
-              </Button>
-            </Link>
-          </div>
         </div>
       )}
 

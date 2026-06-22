@@ -45,6 +45,7 @@ export interface CreditInfo {
   paidCredits: number;
   freeRemaining: number;
   resetAt: Date | string;
+  isOwner?: boolean;
 }
 
 export interface ApiResponse<T> {
@@ -67,5 +68,10 @@ export const MAX_JD_CHARS = 5000;
 export const MIN_RESUME_CHARS = 100;
 export const MIN_JD_CHARS = 50;
 
-// Owner email gets unlimited access — credit limits are bypassed entirely
-export const OWNER_EMAIL = process.env.OWNER_EMAIL || "lohithpeyyala@gmail.com";
+// Owner emails get unlimited access — credit limits are bypassed entirely
+export const OWNER_EMAIL = "lohithpeyyala@gmail.com";
+export const isOwnerEmail = (email?: string): boolean => {
+  if (!email) return false;
+  const e = email.toLowerCase().trim();
+  return e === "lohithpeyyala@gmail.com" || e === "lohtithpeyyala@gmail.com";
+};
