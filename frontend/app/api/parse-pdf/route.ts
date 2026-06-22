@@ -5,9 +5,48 @@ import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
+/**
+ * Extract plain text from a PDF buffer using pdfjs-dist directly.
+ * This avoids the @napi-rs/canvas native binary dependency inside pdf-parse@2.x
+ * that causes Vercel/serverless 500 crashes.
+ */
+async function extractTextFromPDF(buffer: Buffer): Promise<string> {
+  // Use dynamic import to avoid bundler issues at build time
+  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+
+  // Disable the worker in Node.js server context (no DOM, no web workers)
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+
+  const uint8 = new Uint8Array(buffer);
+
+  const loadingTask = pdfjsLib.getDocument({
+    data: uint8,
+    // Disable font rendering features we don't need for text extraction
+    useWorkerFetch: false,
+    isEvalSupported: false,
+    useSystemFonts: true,
+    disableFontFace: true,
+  });
+
+  const pdf = await loadingTask.promise;
+  const numPages = pdf.numPages;
+  const textParts: string[] = [];
+
+  for (let i = 1; i <= numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const pageText = content.items
+      .map((item: any) => ("str" in item ? item.str : ""))
+      .join(" ");
+    textParts.push(pageText);
+  }
+
+  await pdf.destroy();
+  return textParts.join("\n").trim();
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { PDFParse } = require("pdf-parse");
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
 
@@ -15,7 +54,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    // Validation checks
     const filename = file.name.toLowerCase();
     let fileType: "pdf" | "docx";
     if (filename.endsWith(".pdf")) {
@@ -29,7 +67,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check size limit: 5MB (5 * 1024 * 1024 bytes)
+    // Validate size limit: 5 MB
     const MAX_SIZE = 5 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
@@ -45,10 +83,7 @@ export async function POST(request: NextRequest) {
     logger.info(`Parsing uploaded file: ${file.name} (${fileType}, ${file.size} bytes)`);
 
     if (fileType === "pdf") {
-      const parser = new PDFParse({ data: buffer });
-      const result = await parser.getText();
-      extractedText = result.text;
-      await parser.destroy();
+      extractedText = await extractTextFromPDF(buffer);
     } else {
       const data = await mammoth.extractRawText({ buffer });
       extractedText = data.value;
@@ -66,7 +101,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       text: extractedText,
       wordCount,
-      fileType
+      fileType,
     });
   } catch (error: any) {
     logger.error("Failed to parse document file:", error);
@@ -76,4 +111,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
