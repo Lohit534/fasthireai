@@ -66,3 +66,6 @@ export const MAX_RESUME_CHARS = 8000;
 export const MAX_JD_CHARS = 5000;
 export const MIN_RESUME_CHARS = 100;
 export const MIN_JD_CHARS = 50;
+
+// Owner email gets unlimited access — credit limits are bypassed entirely
+export const OWNER_EMAIL = process.env.OWNER_EMAIL || "22h41a0534lohit@gmail.com";

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { scoreResume } from "@/lib/ats/scorer";
 import { buildOptimizationPrompt } from "@/lib/ai/prompts";
 import { callAI } from "@/lib/ai/router";
-import { MIN_RESUME_CHARS, MIN_JD_CHARS, FREE_CREDITS_PER_MONTH } from "@/types";
+import { MIN_RESUME_CHARS, MIN_JD_CHARS, FREE_CREDITS_PER_MONTH, OWNER_EMAIL } from "@/types";
 import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
@@ -97,16 +97,19 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 6. Enforce Credit Limits
-    const freeRemaining = Math.max(0, FREE_CREDITS_PER_MONTH - freeUsed);
-    if (freeRemaining <= 0 && paidCredits <= 0) {
-      return NextResponse.json(
-        { error: "Free limit reached. Upgrade to continue." },
-        { status: 403 }
-      );
+    // 6. Enforce Credit Limits — skipped for owner who gets unlimited access
+    const isOwner = user.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+    if (!isOwner) {
+      const freeRemaining = Math.max(0, FREE_CREDITS_PER_MONTH - freeUsed);
+      if (freeRemaining <= 0 && paidCredits <= 0) {
+        return NextResponse.json(
+          { error: "Free limit reached. Upgrade to continue." },
+          { status: 403 }
+        );
+      }
     }
 
-    logger.info(`Deducting credits for user: ${user.email} (Free used: ${freeUsed}, Paid: ${paidCredits})`);
+    logger.info(`Deducting credits for user: ${user.email} (Free used: ${freeUsed}, Paid: ${paidCredits}, Owner: ${isOwner})`);
 
     // 7. Core Optimization Flow
     // Phase A: Pre-score
@@ -126,17 +129,20 @@ export async function POST(request: NextRequest) {
     // Phase C: Post-score
     const scoreAfter = await scoreResume(aiResult.resume, jobDescription);
 
-    // 8. Deduct Credit
-    if (freeRemaining > 0) {
-      await prisma.credit.update({
-        where: { userId: userRecord!.id },
-        data: { freeUsed: { increment: 1 } }
-      });
-    } else {
-      await prisma.credit.update({
-        where: { userId: userRecord!.id },
-        data: { paidCredits: { decrement: 1 } }
-      });
+    // 8. Deduct Credit (owner gets unlimited — no deduction)
+    if (!isOwner) {
+      const freeRemaining = Math.max(0, FREE_CREDITS_PER_MONTH - freeUsed);
+      if (freeRemaining > 0) {
+        await prisma.credit.update({
+          where: { userId: userRecord!.id },
+          data: { freeUsed: { increment: 1 } }
+        });
+      } else {
+        await prisma.credit.update({
+          where: { userId: userRecord!.id },
+          data: { paidCredits: { decrement: 1 } }
+        });
+      }
     }
 
     // 9. Save Optimization Log to Prisma DB

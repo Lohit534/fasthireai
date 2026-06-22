@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import { FREE_CREDITS_PER_MONTH } from "@/types";
+import { FREE_CREDITS_PER_MONTH, OWNER_EMAIL } from "@/types";
 import { logger } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
@@ -77,11 +77,24 @@ export async function GET(request: NextRequest) {
     }
 
     // 4. Return CreditInfo response
+    const isOwner = user.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+
+    if (isOwner) {
+      return NextResponse.json({
+        freeUsed: 0,
+        paidCredits: 999999,
+        freeRemaining: 999999,
+        resetAt: new Date().toISOString(),
+        isOwner: true,
+      });
+    }
+
     return NextResponse.json({
       freeUsed,
       paidCredits,
       freeRemaining: Math.max(0, FREE_CREDITS_PER_MONTH - freeUsed),
       resetAt: isNewMonth ? now.toISOString() : resetAt.toISOString(),
+      isOwner: false,
     });
   } catch (error: any) {
     logger.error("Failed to query user credits:", error);
