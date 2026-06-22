@@ -51,7 +51,23 @@ function createMockFallbackProxy(target: any, path: string[] = []): any {
           try {
             return await target[prop](...args);
           } catch (dbError: any) {
-            logger.warn(`Prisma DB connection issue detected at ${nextPath.join(".")}. Using in-memory fallback.`, dbError.message);
+            const dbMsg = dbError?.message || "unknown";
+            const isIPv6 = dbMsg.includes("P1001") || dbMsg.includes("ETIMEDOUT") || dbMsg.includes("ECONNREFUSED") || dbMsg.includes("connect");
+            
+            if (isIPv6) {
+              logger.error(
+                `[Prisma] DB connection FAILED at ${nextPath.join(".")}.\n` +
+                `Error: ${dbMsg}\n` +
+                `ROOT CAUSE: Your DATABASE_URL in Vercel env vars is using a direct/IPv6 address.\n` +
+                `FIX: In Vercel Dashboard → Settings → Environment Variables, set:\n` +
+                `  DATABASE_URL = postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true\n` +
+                `  DIRECT_URL  = postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres?sslmode=require\n` +
+                `Get these from: Supabase Dashboard → Settings → Database → Connection String → Transaction Mode`
+              );
+            } else {
+              logger.warn(`[Prisma] DB error at ${nextPath.join(".")}: ${dbMsg}`);
+            }
+
             
             const model = nextPath[0].toLowerCase(); // "user", "resume", "credit"
             const operation = prop;

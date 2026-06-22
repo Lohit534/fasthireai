@@ -4,46 +4,7 @@ import { countWords } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
-
-/**
- * Extract plain text from a PDF buffer using pdfjs-dist directly.
- * This avoids the @napi-rs/canvas native binary dependency inside pdf-parse@2.x
- * that causes Vercel/serverless 500 crashes.
- */
-async function extractTextFromPDF(buffer: Buffer): Promise<string> {
-  // Use dynamic import to avoid bundler issues at build time
-  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-
-  // Disable the worker in Node.js server context (no DOM, no web workers)
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "";
-
-  const uint8 = new Uint8Array(buffer);
-
-  const loadingTask = pdfjsLib.getDocument({
-    data: uint8,
-    // Disable font rendering features we don't need for text extraction
-    useWorkerFetch: false,
-    isEvalSupported: false,
-    useSystemFonts: true,
-    disableFontFace: true,
-  });
-
-  const pdf = await loadingTask.promise;
-  const numPages = pdf.numPages;
-  const textParts: string[] = [];
-
-  for (let i = 1; i <= numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const pageText = content.items
-      .map((item: any) => ("str" in item ? item.str : ""))
-      .join(" ");
-    textParts.push(pageText);
-  }
-
-  await pdf.destroy();
-  return textParts.join("\n").trim();
-}
+export const maxDuration = 30; // 30s timeout for large PDFs
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,6 +17,7 @@ export async function POST(request: NextRequest) {
 
     const filename = file.name.toLowerCase();
     let fileType: "pdf" | "docx";
+
     if (filename.endsWith(".pdf")) {
       fileType = "pdf";
     } else if (filename.endsWith(".docx")) {
@@ -67,8 +29,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate size limit: 5 MB
-    const MAX_SIZE = 5 * 1024 * 1024;
+    const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
         { error: "File exceeds maximum size limit of 5MB." },
@@ -80,18 +41,65 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
     let extractedText = "";
 
-    logger.info(`Parsing uploaded file: ${file.name} (${fileType}, ${file.size} bytes)`);
+    logger.info(
+      `[parse-pdf] Parsing: ${file.name} | type=${fileType} | size=${file.size} bytes`
+    );
 
     if (fileType === "pdf") {
-      extractedText = await extractTextFromPDF(buffer);
+      // pdf-parse@1.1.1 — pure JavaScript, no native binaries, works on Vercel
+      // We require() lazily so the module is not evaluated at build time
+      let pdfParse: (buf: Buffer, options?: any) => Promise<{ text: string; numpages: number }>;
+      try {
+        pdfParse = require("pdf-parse");
+      } catch (requireErr: any) {
+        logger.error("[parse-pdf] Failed to require pdf-parse:", requireErr.message);
+        return NextResponse.json(
+          { error: "PDF parser module failed to load. Please try a DOCX file." },
+          { status: 500 }
+        );
+      }
+
+      try {
+        const result = await pdfParse(buffer, {
+          // Only extract text — skip canvas/image rendering entirely
+          version: "v1.10.100",
+        });
+        extractedText = result.text;
+        logger.info(
+          `[parse-pdf] PDF parsed OK — pages=${result.numpages}, chars=${extractedText.length}`
+        );
+      } catch (pdfErr: any) {
+        logger.error("[parse-pdf] pdf-parse threw:", pdfErr.message, pdfErr.stack?.split("\n")[1]);
+        return NextResponse.json(
+          {
+            error:
+              "Could not read your PDF. The file may be scanned/image-only or password-protected. Please try a text-based PDF or convert to DOCX.",
+          },
+          { status: 422 }
+        );
+      }
     } else {
-      const data = await mammoth.extractRawText({ buffer });
-      extractedText = data.value;
+      try {
+        const data = await mammoth.extractRawText({ buffer });
+        extractedText = data.value;
+        logger.info(
+          `[parse-pdf] DOCX parsed OK — chars=${extractedText.length}`
+        );
+      } catch (docxErr: any) {
+        logger.error("[parse-pdf] mammoth threw:", docxErr.message);
+        return NextResponse.json(
+          { error: "Failed to read DOCX file. Please ensure it is a valid Word document." },
+          { status: 422 }
+        );
+      }
     }
 
     if (!extractedText || !extractedText.trim()) {
       return NextResponse.json(
-        { error: "Could not extract any readable text from the file." },
+        {
+          error:
+            "No readable text found. Your file may be image-only or empty. Try a different PDF or use a DOCX.",
+        },
         { status: 422 }
       );
     }
@@ -104,9 +112,13 @@ export async function POST(request: NextRequest) {
       fileType,
     });
   } catch (error: any) {
-    logger.error("Failed to parse document file:", error);
+    // Log full stack so Vercel logs show the real cause
+    logger.error("[parse-pdf] Unhandled error:", error?.message, "\nStack:", error?.stack);
     return NextResponse.json(
-      { error: "Internal server error during document parsing." },
+      {
+        error:
+          "Internal server error during document parsing. Check Vercel function logs for details.",
+      },
       { status: 500 }
     );
   }
