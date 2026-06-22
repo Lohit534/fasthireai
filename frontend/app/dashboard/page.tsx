@@ -311,30 +311,7 @@ export default function DashboardPage() {
           /* RESULTS WORKSPACE ROW */
           <div className="space-y-6">
             
-            {/* Top Row: score comparisons and downloads */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-              <div className="lg:col-span-8">
-                <ScoreCard before={beforeScore} after={afterScore} loading={optimizing} />
-              </div>
-              <div className="lg:col-span-4 flex flex-col justify-between gap-4">
-                {optimizeResult?.resumeId && (
-                  <div className="flex flex-col justify-center items-center h-full bg-slate-950/40 border border-white/5 rounded-2xl p-6 shadow-sm">
-                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">Export Tailored Document</span>
-                    <DownloadButtons resumeId={optimizeResult.resumeId} />
-                  </div>
-                )}
-                {afterScore && (
-                  <div className="flex-1 bg-slate-950/40 border border-white/5 rounded-2xl p-4">
-                    <KeywordBadges
-                      added={optimizeResult?.keywordsAdded || []}
-                      missing={afterScore.missingKeywords}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Bottom Row: Edit & review workspace split */}
+            {/* Top Row: Edit & review workspace split */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
               {/* Left Pane: Current raw editor */}
@@ -390,6 +367,29 @@ export default function DashboardPage() {
                 </Tabs>
               </div>
 
+            </div>
+
+            {/* Bottom Row: score comparisons and downloads */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch pt-4 border-t border-white/5">
+              <div className="lg:col-span-8">
+                <ScoreCard before={beforeScore} after={afterScore} loading={optimizing} />
+              </div>
+              <div className="lg:col-span-4 flex flex-col justify-between gap-4">
+                {optimizeResult?.resumeId && (
+                  <div className="flex flex-col justify-center items-center h-full bg-slate-950/40 border border-white/5 rounded-2xl p-6 shadow-sm">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">Export Tailored Document</span>
+                    <DownloadButtons resumeId={optimizeResult.resumeId} />
+                  </div>
+                )}
+                {afterScore && (
+                  <div className="flex-1 bg-slate-950/40 border border-white/5 rounded-2xl p-4">
+                    <KeywordBadges
+                      added={optimizeResult?.keywordsAdded || []}
+                      missing={afterScore.missingKeywords}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
           </div>

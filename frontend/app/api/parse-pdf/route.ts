@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
-    const pdf = require("pdf-parse");
+    const { PDFParse } = require("pdf-parse");
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
 
@@ -45,8 +45,10 @@ export async function POST(request: NextRequest) {
     logger.info(`Parsing uploaded file: ${file.name} (${fileType}, ${file.size} bytes)`);
 
     if (fileType === "pdf") {
-      const data = await pdf(buffer);
-      extractedText = data.text;
+      const parser = new PDFParse({ data: buffer });
+      const result = await parser.getText();
+      extractedText = result.text;
+      await parser.destroy();
     } else {
       const data = await mammoth.extractRawText({ buffer });
       extractedText = data.value;

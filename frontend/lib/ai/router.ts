@@ -1,4 +1,4 @@
-import { callClaude } from "./claude";
+import { callGroq } from "./groq";
 import { callGemini } from "./gemini";
 import { logger } from "../logger";
 
@@ -17,19 +17,19 @@ export async function callAI(prompt: string, rawText = ""): Promise<AIResult> {
     summary: "Optimized."
   };
 
-  const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
+  const hasGroq = !!process.env.GROQ_API_KEY;
 
-  if (hasAnthropic) {
+  if (hasGroq) {
     try {
-      logger.info("AI Router: Routing optimization request to Claude...");
-      const result = await callClaude(prompt, rawText);
-      logger.info("AI Router: Successfully optimized using Claude.");
+      logger.info("AI Router: Routing optimization request to Groq...");
+      const result = await callGroq(prompt, rawText);
+      logger.info("AI Router: Successfully optimized using Groq.");
       return {
         ...defaultFallback,
         ...result
       };
     } catch (error) {
-      logger.warn("AI Router: Claude call failed, falling back to Gemini.", error);
+      logger.warn("AI Router: Groq call failed, falling back to Gemini.", error);
     }
   }
 
@@ -42,7 +42,7 @@ export async function callAI(prompt: string, rawText = ""): Promise<AIResult> {
       ...result
     };
   } catch (error) {
-    logger.error("AI Router: Critical failure. Both Claude and Gemini calls failed.", error);
+    logger.error("AI Router: Critical failure. Both Groq and Gemini calls failed.", error);
     return defaultFallback;
   }
 }
