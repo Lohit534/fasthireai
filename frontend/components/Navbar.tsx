@@ -104,11 +104,11 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
   // Nav links definitions
   const links = [
     { label: "Optimize", href: "/dashboard" },
-    { label: "Resumes", href: "/dashboard" },
-    { label: "Job Tracker", href: "/dashboard" },
+    { label: "Resumes", href: "/dashboard/resumes" },
+    { label: "Job Tracker", href: "/dashboard/job-tracker" },
     { label: "History", href: "/dashboard/history" },
-    { label: "Pricing", href: "/dashboard" },
-    { label: "Billing", href: "/dashboard" },
+    { label: "Pricing", href: "/dashboard/pricing" },
+    { label: "Billing", href: "/dashboard/billing" },
   ];
 
   // Calculations for credit percentage
@@ -218,7 +218,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                           Optimize Resume
                         </Link>
                         <Link 
-                          href="/dashboard" 
+                          href="/dashboard/resumes" 
                           onClick={() => setIsDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
                         >
@@ -226,7 +226,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                           My Resumes
                         </Link>
                         <Link 
-                          href="/dashboard" 
+                          href="/dashboard/job-tracker" 
                           onClick={() => setIsDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
                         >
@@ -234,7 +234,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                           Job Tracker
                         </Link>
                         <Link 
-                          href="/dashboard" 
+                          href="/dashboard/pricing" 
                           onClick={() => setIsDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
                         >
@@ -242,7 +242,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                           Team Plan
                         </Link>
                         <Link 
-                          href="/dashboard" 
+                          href="/dashboard/pricing" 
                           onClick={() => setIsDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
                         >
@@ -250,7 +250,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                           Pricing
                         </Link>
                         <Link 
-                          href="/dashboard" 
+                          href="/dashboard/billing" 
                           onClick={() => setIsDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
                         >

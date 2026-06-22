@@ -83,33 +83,33 @@ export default function HistoryPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-[#060713]">
         <div className="text-center space-y-2">
-          <Loader2 className="h-8 w-8 text-indigo-600 animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-medium">Verifying session...</p>
+          <Loader2 className="h-8 w-8 text-violet-600 animate-spin mx-auto" />
+          <p className="text-xs text-slate-500 font-semibold">Verifying session...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 text-slate-900">
+    <div className="flex flex-col min-h-screen bg-[#060713] text-slate-100">
       <Navbar />
 
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Navigation Toolbar */}
         <div className="flex items-center gap-4 mb-8">
           <Link href="/dashboard">
-            <Button variant="outline" size="sm" className="border-slate-300 text-slate-700 hover:bg-slate-100 h-9 w-9 p-0 rounded-full">
+            <Button variant="outline" size="sm" className="border-white/5 text-slate-300 hover:bg-white/5 h-9 w-9 p-0 rounded-full bg-transparent">
               <ArrowLeft className="h-4.5 w-4.5" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <History className="h-6 w-6 text-indigo-500" />
+            <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
+              <History className="h-6 w-6 text-violet-500" />
               Optimization History
             </h1>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-400">
               Click any card to restore the files into the workspace editor.
             </p>
           </div>
@@ -119,21 +119,21 @@ export default function HistoryPage() {
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="text-center space-y-2">
-              <Loader2 className="h-8 w-8 text-indigo-600 animate-spin mx-auto" />
+              <Loader2 className="h-8 w-8 text-violet-600 animate-spin mx-auto" />
               <p className="text-xs text-slate-500 font-medium">Fetching history records...</p>
             </div>
           </div>
         ) : resumes.length === 0 ? (
           // Empty State
-          <div className="flex flex-col items-center justify-center border border-dashed border-gray-300 rounded-2xl p-12 text-center bg-gray-50 min-h-[380px]">
-            <AlertCircle className="h-10 w-10 text-indigo-400 mb-4 animate-pulse" />
-            <h3 className="font-extrabold text-slate-800 text-lg">No optimizations yet</h3>
-            <p className="text-xs text-slate-500 max-w-xs mt-1.5 leading-relaxed font-medium">
+          <div className="flex flex-col items-center justify-center border border-dashed border-white/5 rounded-2xl p-12 text-center bg-[#0e0f21]/40 min-h-[380px]">
+            <AlertCircle className="h-10 w-10 text-violet-500 mb-4 animate-pulse" />
+            <h3 className="font-extrabold text-white text-lg">No optimizations yet</h3>
+            <p className="text-xs text-slate-400 max-w-xs mt-1.5 leading-relaxed font-medium">
               You haven&apos;t run any resume optimizations yet. Head back to the dashboard to scan your first document!
             </p>
             <div className="mt-6">
               <Link href="/dashboard">
-                <Button className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">
+                <Button className="bg-violet-600 hover:bg-violet-500 text-white font-semibold">
                   Go to Dashboard
                 </Button>
               </Link>
