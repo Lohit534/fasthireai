@@ -163,14 +163,6 @@ export default function SupportChatbot() {
     const isPremium = activePlan.includes("Premium Pro");
     const isProMax = activePlan.includes("Pro Max") || activePlan.toLowerCase().includes("owner");
 
-    if (isFree) {
-      toast.error("Support Chatbot is a premium benefit. Redirecting to upgrades page...");
-      setTimeout(() => {
-        window.location.href = "/dashboard/pricing";
-      }, 1500);
-      return;
-    }
-
     if (mode === "admin" && !isProMax) {
       toast.error("Direct messaging to the Admin is a Pro Max exclusive benefit. Redirecting to upgrades...");
       setTimeout(() => {
@@ -307,13 +299,6 @@ export default function SupportChatbot() {
           <div className="px-4 py-2 border-b border-white/5 bg-[#0e0f21]/20 flex gap-2">
             <button
               onClick={() => {
-                if (activePlan.includes("Free Tier")) {
-                  toast.error("AI Support Assistant is a premium benefit. Redirecting to upgrades...");
-                  setTimeout(() => {
-                    window.location.href = "/dashboard/pricing";
-                  }, 1500);
-                  return;
-                }
                 setMode("ai");
                 loadUserData(); // Auto refresh only for AI Assistant!
               }}
@@ -328,13 +313,6 @@ export default function SupportChatbot() {
             </button>
             <button
               onClick={() => {
-                if (activePlan.includes("Free Tier")) {
-                  toast.error("Support Chatbot is a premium benefit. Redirecting to upgrades...");
-                  setTimeout(() => {
-                    window.location.href = "/dashboard/pricing";
-                  }, 1500);
-                  return;
-                }
                 if (!activePlan.includes("Pro Max") && !activePlan.toLowerCase().includes("owner")) {
                   toast.error("Direct Admin Messaging is a Pro Max exclusive benefit. Redirecting to upgrades...");
                   setTimeout(() => {

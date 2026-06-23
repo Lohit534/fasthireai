@@ -29,6 +29,7 @@ import {
 import { CreditInfo } from "@/types";
 import { toast } from "react-hot-toast";
 import SupportChatbot from "@/components/SupportChatbot";
+import FeedbackModal from "@/components/FeedbackModal";
 
 interface NavbarProps {
   refreshKey?: number;
@@ -40,6 +41,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
   const [user, setUser] = useState<User | null>(null);
   const [credits, setCredits] = useState<CreditInfo | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Sync auth state
@@ -299,14 +301,16 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                           <HelpCircle className="h-4 w-4 text-slate-400" />
                           Help &amp; Support
                         </button>
-                        <a
-                          href="mailto:lohithpeyyala@gmail.com?subject=FastHire-AI%20Feedback"
-                          onClick={() => setIsDropdownOpen(false)}
+                        <button
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            setIsFeedbackOpen(true);
+                          }}
                           className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left cursor-pointer"
                         >
                           <MessageSquare className="h-4 w-4 text-slate-400" />
                           Feedback
-                        </a>
+                        </button>
                         <Link
                           href="/privacy"
                           onClick={() => setIsDropdownOpen(false)}
@@ -351,6 +355,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
       </div>
       </nav>
       {user && <SupportChatbot />}
+      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} userEmail={user?.email} />
     </>
   );
 }
