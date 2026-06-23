@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { CreditInfo } from "@/types";
 import { toast } from "react-hot-toast";
+import SupportChatbot from "@/components/SupportChatbot";
 
 interface NavbarProps {
   refreshKey?: number;
@@ -244,8 +245,8 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                           onClick={() => setIsDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
                         >
-                          <Users className="h-4 w-4 text-slate-400" />
-                          Team Plan
+                          <Sparkles className="h-4 w-4 text-slate-400" />
+                          Pro Max Plan
                         </Link>
                         <Link 
                           href="/dashboard/pricing" 
@@ -334,6 +335,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
 
         </div>
       </div>
+      {user && <SupportChatbot />}
     </nav>
   );
 }

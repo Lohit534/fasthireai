@@ -741,8 +741,8 @@ export default function HistoryPage() {
             setUserPlan("owner");
           } else if (creditsData.paidCredits === 15) {
             setUserPlan("premium");
-          } else if (creditsData.paidCredits === 30) {
-            setUserPlan("team");
+          } else if (creditsData.paidCredits > 100) {
+            setUserPlan("promax");
           } else {
             setUserPlan("free");
           }

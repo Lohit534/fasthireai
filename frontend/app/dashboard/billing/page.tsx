@@ -108,9 +108,9 @@ export default function BillingPage() {
           { id: "inv_2", date: "2026-05-15", description: "FastHire Premium Monthly Subscription", amount: "₹99.00", status: "paid" }
         ];
 
-        if (plan === "team") {
+        if (plan === "team" || plan === "promax") {
           invoiceHistory.unshift({
-            id: "inv_3", date: "2026-06-20", description: "FastHire Team Plan Setup Package", amount: "₹199.00", status: "paid"
+            id: "inv_3", date: "2026-06-20", description: "FastHire Pro Max Setup Package", amount: "₹199.00", status: "paid"
           });
         }
 
@@ -146,7 +146,7 @@ export default function BillingPage() {
   }
 
   // Quota computations
-  const totalLimit = activePlan === "free" ? 2 : activePlan === "premium" ? 15 : activePlan === "team" ? 999999 : 999999;
+  const totalLimit = activePlan === "free" ? 2 : activePlan === "premium" ? 15 : (activePlan === "team" || activePlan === "promax") ? 999999 : 999999;
   const used = credits?.freeUsed ?? 0;
   const remaining = credits?.freeRemaining ?? totalLimit;
   const percentUsed = Math.min(100, Math.round((used / totalLimit) * 100));
@@ -190,8 +190,8 @@ export default function BillingPage() {
                     <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Active Package Tier</p>
                     <h3 className="text-lg font-extrabold text-white capitalize select-none">
                       {credits?.isOwner 
-                        ? `Owner Account - Unlimited ${activePlan === "free" ? "Free" : activePlan === "premium" ? "Pro" : "Team"}` 
-                        : (activePlan === "free" ? "Free Career Tier" : activePlan === "premium" ? "Premium Pro" : "Team & Bootcamps")}
+                        ? `Owner Account - Unlimited ${activePlan === "free" ? "Free" : activePlan === "premium" ? "Pro" : "Pro Max"}` 
+                        : (activePlan === "free" ? "Free Career Tier" : activePlan === "premium" ? "Premium Pro" : "Pro Max (Unlimited)")}
                     </h3>
                   </div>
                   <Badge className={`text-[10px] font-bold border capitalize ${
@@ -223,7 +223,7 @@ export default function BillingPage() {
                       <Progress value={0} className="h-1.5 bg-slate-900 [&>div]:bg-violet-500 rounded-full border border-white/5" />
                     </div>
                   </div>
-                ) : activePlan !== "team" ? (
+                ) : (activePlan !== "team" && activePlan !== "promax") ? (
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs font-semibold">
                       <span className="text-slate-400">Monthly Usage Quota</span>
@@ -238,7 +238,7 @@ export default function BillingPage() {
                   <div className="bg-[#0c0d1b] border border-white/5 p-4 rounded-xl flex items-center justify-between">
                     <div className="space-y-1">
                       <span className="font-bold text-white text-xs">Unlimited Pipeline Access</span>
-                      <p className="text-[10px] text-slate-500">Your bootcamp package includes unlimited optimizations.</p>
+                      <p className="text-[10px] text-slate-500">Your Pro Max package includes unlimited optimizations.</p>
                     </div>
                     <TrendingUp className="h-5 w-5 text-emerald-400" />
                   </div>

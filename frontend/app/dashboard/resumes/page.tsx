@@ -733,7 +733,7 @@ export default function ResumesPage() {
   }
 
   // Max Quota limit calculation based on tier
-  const maxLimit = activePlan === "free" ? 2 : activePlan === "premium" ? 15 : activePlan === "team" ? 30 : 999;
+  const maxLimit = activePlan === "free" ? 2 : activePlan === "premium" ? 15 : (activePlan === "team" || activePlan === "promax") ? 999999 : 999999;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#060713] text-slate-100 font-sans select-text">
@@ -1348,7 +1348,7 @@ export default function ResumesPage() {
               )}
 
               {/* Bottom promo promotion banner (Image 2) */}
-              {activePlan !== "team" && (
+              {activePlan !== "team" && activePlan !== "promax" && (
                 <div className="p-4 border border-white/5 bg-[#0c0d1b] rounded-xl flex items-center justify-center gap-2 text-center text-slate-400 font-bold text-[10px] tracking-wide select-none">
                   <Sparkles className="h-4.5 w-4.5 text-violet-500 animate-pulse" />
                   <span>Upgrade to Premium to unlock AI enhancements and bulk export templates.</span>

@@ -22,7 +22,7 @@ import {
 import { toast } from "react-hot-toast";
 
 interface Plan {
-  id: "free" | "premium" | "team";
+  id: "free" | "premium" | "promax";
   name: string;
   priceMonthly: string;
   priceYearly: string;
@@ -75,23 +75,23 @@ const PLANS: Plan[] = [
     popular: true
   },
   {
-    id: "team",
-    name: "Team & Bootcamps",
+    id: "promax",
+    name: "Pro Max (Individual Unlimited)",
     priceMonthly: "₹199",
     priceYearly: "₹332",
     periodMonthly: "month",
     periodYearly: "year",
-    description: "For groups, universities, and collaborative workspaces (HireRaft.link benefits).",
+    description: "For hardcore job seekers needing absolute limit bypass and priority features.",
     features: [
       "Unlimited AI resume optimizations",
+      "Unlimited PDF + DOCX downloads",
       "Unlimited cover letters / month",
       "Unlimited skills learning roadmaps",
-      "Shared candidates workspace and history logs",
-      "Centralized team billing & role controls",
-      "FastHire Optimization API integrations",
-      "Dedicated account manager support"
+      "Priority AI optimization queues",
+      "1-on-1 Help & Support chatbot",
+      "Direct messaging to FastHire-AI Admin"
     ],
-    cta: "Get Started Team"
+    cta: "Upgrade to Pro Max"
   }
 ];
 
@@ -133,14 +133,6 @@ const FAQ_ITEMS: FAQItem[] = [
     question: "Is Razorpay secure?",
     answer: "Yes. Razorpay is PCI-DSS compliant. We never store your card details."
   },
-  {
-    question: "What is the Team plan?",
-    answer: "The Team plan is designed for teams, bootcamps, and universities to collaborate, share candidates workspaces, and manage pooled resume optimizations."
-  },
-  {
-    question: "Can I have a Team plan and a Pro/Power subscription at the same time?",
-    answer: "No, subscriptions are per-account. If you are part of a Team workspace, your account will inherit the Team plan benefits automatically."
-  }
 ];
 
 export default function PricingPage() {
@@ -236,7 +228,7 @@ export default function PricingPage() {
           localStorage.setItem(`fastHire_plan_${userId}`, plan.id);
           setCurrentPlan(plan.id);
 
-          const limitValue = plan.id === "premium" ? 15 : plan.id === "team" ? 999999 : 999999;
+          const limitValue = plan.id === "premium" ? 15 : plan.id === "promax" ? 999999 : 999999;
           const creditsObject = {
             freeUsed: 0,
             paidCredits: limitValue,
@@ -332,7 +324,7 @@ export default function PricingPage() {
             localStorage.setItem(`fastHire_planDate_${userId}`, new Date().toISOString());
             setCurrentPlan(selectedPlan.id);
 
-            const limitValue = selectedPlan.id === "premium" ? 15 : selectedPlan.id === "team" ? 999999 : 999999;
+            const limitValue = selectedPlan.id === "premium" ? 15 : selectedPlan.id === "promax" ? 999999 : 999999;
             const creditsObject = {
               freeUsed: 0,
               paidCredits: limitValue,
@@ -384,7 +376,7 @@ export default function PricingPage() {
           localStorage.setItem(`fastHire_planDate_${userId}`, new Date().toISOString());
           setCurrentPlan(selectedPlan.id);
 
-          const limitValue = selectedPlan.id === "premium" ? 15 : selectedPlan.id === "team" ? 999999 : 999999;
+          const limitValue = selectedPlan.id === "premium" ? 15 : selectedPlan.id === "promax" ? 999999 : 999999;
           const creditsObject = {
             freeUsed: 0,
             paidCredits: limitValue,
