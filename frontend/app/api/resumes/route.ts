@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/logger";
+import { generateUUID } from "@/lib/utils";
 
-// Helper to resolve active user record ID in public.User by authenticated email
+// Helper to resolve active user record ID in public.User by authenticated email, creating it if missing
 async function getActiveUserId(user: any): Promise<string> {
   let activeUserId = user.id;
   if (user.email) {
@@ -18,9 +19,22 @@ async function getActiveUserId(user: any): Promise<string> {
       if (existingUser) {
         activeUserId = existingUser.id;
         logger.info(`[api/resumes] Resolved user email ${user.email} to DB ID ${activeUserId}`);
+      } else {
+        logger.info(`[api/resumes] User record missing for ${user.email}. Creating it now with ID ${user.id}`);
+        const { error: insertUserErr } = await admin
+          .from("User")
+          .insert({
+            id: user.id,
+            email: user.email.toLowerCase().trim(),
+            name: user.user_metadata?.full_name || null,
+            createdAt: new Date().toISOString(),
+          });
+        if (insertUserErr) {
+          logger.error("[api/resumes] Failed to insert missing User record:", insertUserErr.message);
+        }
       }
     } catch (e: any) {
-      logger.error(`[api/resumes] User resolution query crashed: ${e.message}`);
+      logger.error(`[api/resumes] User resolution/creation query crashed: ${e.message}`);
     }
   }
   return activeUserId;
@@ -42,7 +56,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await admin
       .from("Resume")
       .insert({
-        id: body.id || undefined,
+        id: body.id || generateUUID(),
         userId: activeUserId,
         originalText: body.originalText || "",
         optimizedText: body.optimizedText || "",
