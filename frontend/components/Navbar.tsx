@@ -23,7 +23,8 @@ import {
   DollarSign,
   TrendingUp,
   Settings,
-  Users
+  Users,
+  ShieldCheck
 } from "lucide-react";
 import { CreditInfo } from "@/types";
 import { toast } from "react-hot-toast";
@@ -108,6 +109,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
     { label: "Resumes", href: "/dashboard/resumes" },
     { label: "Job Tracker", href: "/dashboard/job-tracker" },
     { label: "History", href: "/dashboard/history" },
+    ...(credits?.isOwner ? [{ label: "Admin Messages", href: "/dashboard/admin/messages" }] : []),
     { label: "Pricing", href: "/dashboard/pricing" },
     { label: "Billing", href: "/dashboard/billing" },
   ];
@@ -218,6 +220,16 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
 
                       {/* Main links list */}
                       <div className="space-y-0.5">
+                        {credits?.isOwner && (
+                          <Link 
+                            href="/dashboard/admin/messages" 
+                            onClick={() => setIsDropdownOpen(false)}
+                            className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 transition-colors"
+                          >
+                            <ShieldCheck className="h-4 w-4 text-violet-400" />
+                            Admin Messages
+                          </Link>
+                        )}
                         <Link 
                           href="/dashboard" 
                           onClick={() => setIsDropdownOpen(false)}

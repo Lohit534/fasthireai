@@ -137,7 +137,9 @@ export default function SupportChatbot() {
       const res = await fetch("/api/support/messages");
       if (res.ok) {
         const data = await res.json();
-        setAdminTickets(data.reverse()); // Show newest at the bottom
+        // Only show tickets belonging to the current user in the chatbot drawer
+        const userTickets = data.filter((t: any) => t.userId === userId);
+        setAdminTickets(userTickets.reverse()); // Show newest at the bottom
       }
     } catch (err) {
       console.error("Error loading support tickets:", err);
