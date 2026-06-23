@@ -45,13 +45,13 @@ export async function callGroq(prompt: string, rawText = ""): Promise<any> {
     }
 
     return JSON.parse(cleanedText);
-  } catch (error) {
+  } catch (error: any) {
     logger.error("Groq optimization API call or JSON parsing failed:", error);
     return {
       resume: rawText,
       keywordsAdded: [],
       changesCount: 0,
-      summary: "Optimized."
+      summary: `Optimized (Groq API error: ${error?.message || "unknown"}).`
     };
   }
 }

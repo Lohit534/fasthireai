@@ -41,8 +41,11 @@ export async function callAI(prompt: string, rawText = ""): Promise<AIResult> {
       ...defaultFallback,
       ...result
     };
-  } catch (error) {
+  } catch (error: any) {
     logger.error("AI Router: Critical failure. Both Groq and Gemini calls failed.", error);
-    return defaultFallback;
+    return {
+      ...defaultFallback,
+      summary: `Optimized (AI Critical Failure: ${error?.message || "unknown"}).`
+    };
   }
 }

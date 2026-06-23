@@ -1,6 +1,6 @@
 const isProd = process.env.NODE_ENV === "production";
 
-function sanitize(val: any, seen = new WeakSet()): any {
+function sanitize(val: any, seen: any = new WeakSet()): any {
   if (typeof val === "string") {
     if (val.includes("@") || val.length > 100) {
       return "[FILTERED_PII_OR_LONG_TEXT]";
@@ -15,6 +15,9 @@ function sanitize(val: any, seen = new WeakSet()): any {
     };
   }
   if (val && typeof val === "object") {
+    if (!(seen instanceof WeakSet)) {
+      seen = new WeakSet();
+    }
     if (seen.has(val)) {
       return "[CIRCULAR]";
     }
@@ -39,22 +42,22 @@ function getTimestamp(): string {
 export const logger = {
   info: (...args: any[]) => {
     if (isProd) return;
-    const sanitizedArgs = args.map(sanitize);
+    const sanitizedArgs = args.map(arg => sanitize(arg));
     console.log(getTimestamp(), "[INFO]", ...sanitizedArgs);
   },
   warn: (...args: any[]) => {
     if (isProd) return;
-    const sanitizedArgs = args.map(sanitize);
+    const sanitizedArgs = args.map(arg => sanitize(arg));
     console.warn(getTimestamp(), "[WARN]", ...sanitizedArgs);
   },
   error: (...args: any[]) => {
     if (isProd) return;
-    const sanitizedArgs = args.map(sanitize);
+    const sanitizedArgs = args.map(arg => sanitize(arg));
     console.error(getTimestamp(), "[ERROR]", ...sanitizedArgs);
   },
   debug: (...args: any[]) => {
     if (isProd) return;
-    const sanitizedArgs = args.map(sanitize);
+    const sanitizedArgs = args.map(arg => sanitize(arg));
     console.debug(getTimestamp(), "[DEBUG]", ...sanitizedArgs);
   },
 };

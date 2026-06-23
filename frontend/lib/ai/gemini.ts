@@ -40,13 +40,13 @@ export async function callGemini(prompt: string, rawText = ""): Promise<object> 
     }
 
     return JSON.parse(cleanedText);
-  } catch (error) {
+  } catch (error: any) {
     logger.error("Gemini optimization API call or JSON parsing failed:", error);
     return {
       resume: rawText,
       keywordsAdded: [],
       changesCount: 0,
-      summary: "Optimized."
+      summary: `Optimized (Gemini API error: ${error?.message || "unknown"}).`
     };
   }
 }
