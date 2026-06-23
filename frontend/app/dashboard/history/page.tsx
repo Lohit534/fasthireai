@@ -718,12 +718,20 @@ export default function HistoryPage() {
 
         if (active) setAuthLoading(false);
 
-        // Fetch history
-        const { data: dbData, error: dbError } = await supabase
-          .from("Resume")
-          .select("*")
-          .eq("userId", user.id)
-          .order("createdAt", { ascending: false });
+        // Fetch history via API endpoint to bypass client RLS issues
+        let dbData: any[] = [];
+        let dbError: any = null;
+        try {
+          const historyRes = await fetch("/api/history");
+          if (historyRes.ok) {
+            dbData = await historyRes.json();
+          } else {
+            const errBody = await historyRes.json().catch(() => ({}));
+            dbError = new Error(errBody.error || "Failed to fetch history from API");
+          }
+        } catch (fetchErr: any) {
+          dbError = fetchErr;
+        }
 
         // Fetch plan/credits details
         const creditsRes = await fetch("/api/credits");

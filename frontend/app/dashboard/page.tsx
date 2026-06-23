@@ -9,13 +9,11 @@ import ResumeInput from "@/components/ResumeInput";
 import JobDescriptionInput from "@/components/JobDescriptionInput";
 import ScoreCard from "@/components/ScoreCard";
 import OptimizedResume from "@/components/OptimizedResume";
-import BulletImprover from "@/components/BulletImprover";
 import KeywordBadges from "@/components/KeywordBadges";
 import DownloadButtons from "@/components/DownloadButtons";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ATSScore } from "@/types";
@@ -241,16 +239,57 @@ export default function DashboardPage() {
         
         {/* Loading Progress overlays */}
         {optimizing && (
-          <div className="fixed inset-0 bg-[#060713]/80 backdrop-blur-md z-50 flex items-center justify-center p-6">
-            <div className="max-w-md w-full bg-slate-950 border border-white/10 p-6 rounded-2xl space-y-4 shadow-2xl text-center">
-              <Loader2 className="h-10 w-10 text-violet-500 animate-spin mx-auto" />
-              <div className="space-y-1">
-                <h3 className="font-bold text-white text-base">Improving Your Resume</h3>
-                <p className="text-xs text-slate-400 font-medium">{loadingMessage}</p>
+          <div className="fixed inset-0 bg-[#060713]/90 backdrop-blur-md z-50 flex items-center justify-center p-6">
+            <div className="max-w-md w-full bg-[#0d0e1f] border border-white/10 p-8 rounded-2xl space-y-6 shadow-2xl relative overflow-hidden">
+              <div className="absolute -top-24 -left-24 w-48 h-48 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+              
+              <div className="text-center space-y-2">
+                <Loader2 className="h-10 w-10 text-violet-500 animate-spin mx-auto" />
+                <h3 className="font-black text-white text-lg tracking-tight">Improving Your Resume</h3>
+                <p className="text-[11px] text-slate-400">Our AI pipeline is tailoring your resume for the target role...</p>
               </div>
-              <div className="space-y-2">
-                <Progress value={progress} className="h-1.5 bg-slate-900 [&>div]:bg-violet-600 rounded-full" />
-                <span className="text-[10px] font-bold text-violet-400">{progress}% completed</span>
+
+              <div className="space-y-1.5">
+                <Progress value={progress} className="h-1.5 bg-slate-950 [&>div]:bg-gradient-to-r [&>div]:from-violet-500 [&>div]:to-indigo-500 rounded-full border border-white/5" />
+                <div className="flex justify-between text-[10px] font-bold text-violet-400">
+                  <span>{loadingMessage}</span>
+                  <span>{progress}%</span>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-4 border-t border-white/5 text-left">
+                {[
+                  { label: "Analyze keywords & semantic patterns", minPrg: 10 },
+                  { label: "Run AI rewrite engine to upgrade weak bullets", minPrg: 35 },
+                  { label: "Inject missing job description keywords naturally", minPrg: 70 },
+                  { label: "Compute and verify before/after ATS scores", minPrg: 90 },
+                ].map((step, idx) => {
+                  const isDone = progress > step.minPrg;
+                  const isActive = progress >= step.minPrg && progress < (idx === 3 ? 101 : [35, 70, 90, 101][idx]);
+                  return (
+                    <div key={idx} className="flex items-center gap-3 transition-opacity duration-300">
+                      <div className={`h-5 w-5 rounded-full flex items-center justify-center border text-[10px] font-bold shrink-0 ${
+                        isDone 
+                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+                          : isActive 
+                          ? "bg-violet-500/10 border-violet-500/35 text-violet-400 animate-pulse" 
+                          : "bg-slate-900 border-white/5 text-slate-600"
+                      }`}>
+                        {isDone ? "✓" : idx + 1}
+                      </div>
+                      <span className={`text-[11px] font-semibold ${
+                        isDone 
+                          ? "text-slate-300 line-through decoration-slate-600" 
+                          : isActive 
+                          ? "text-white font-extrabold" 
+                          : "text-slate-500"
+                      }`}>
+                        {step.label}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -320,51 +359,32 @@ export default function DashboardPage() {
                 <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
               </div>
 
-              {/* Right Pane: Optimization tabs (Full text vs bullets review) */}
-              <div className="lg:col-span-6">
-                <Tabs defaultValue="optimized-text" className="w-full space-y-4">
-                  <TabsList className="w-full flex border-b border-white/5 bg-[#0f1022] p-1 rounded-xl">
-                    <TabsTrigger value="optimized-text" className="flex-1 py-2 font-bold text-xs">
-                      📝 Full Optimized Text
-                    </TabsTrigger>
-                    <TabsTrigger value="bullet-improver" className="flex-1 py-2 font-bold text-xs">
-                      ⚡ Bullet-by-Bullet Reviewer
-                    </TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="optimized-text" className="outline-none">
-                    {optimizeResult?.optimizedText ? (
-                      <OptimizedResume
-                        text={optimizeResult.optimizedText}
-                        resumeId={optimizeResult.resumeId}
-                        onChange={(newText) => {
-                          setOptimizeResult((prev: any) => ({ ...prev, optimizedText: newText }));
-                          handleReScoreAfter(newText);
-                        }}
-                      />
-                    ) : (
-                      <div className="text-center p-8 bg-slate-950/20 border border-white/5 rounded-2xl text-slate-500 text-xs italic">
-                        No optimized text available. Please optimize your resume first.
-                      </div>
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="bullet-improver" className="outline-none">
-                    <BulletImprover
-                      resumeText={optimizeResult?.optimizedText || resumeText}
-                      jobDescription={jobDescription}
-                      onChange={(newText) => {
-                        if (optimizeResult?.optimizedText) {
-                          setOptimizeResult((prev: any) => ({ ...prev, optimizedText: newText }));
-                          handleReScoreAfter(newText);
-                        } else {
-                          setResumeText(newText);
-                          handleReScoreBefore(newText);
-                        }
-                      }}
-                    />
-                  </TabsContent>
-                </Tabs>
+              {/* Right Pane: AI Optimized Text directly */}
+              <div className="lg:col-span-6 space-y-4">
+                <div className="bg-[#0f1022] border border-white/5 p-3.5 rounded-xl flex items-center justify-between">
+                  <span className="font-extrabold text-white text-xs flex items-center gap-1.5 select-none">
+                    <Sparkles className="h-4 w-4 text-violet-400" />
+                    AI Optimized Resume Text
+                  </span>
+                  <Badge className="bg-violet-500/10 border-violet-500/20 text-violet-400 text-[10px] font-bold select-none px-2 py-0.5">
+                    Automatically Tailored
+                  </Badge>
+                </div>
+                
+                {optimizeResult?.optimizedText ? (
+                  <OptimizedResume
+                    text={optimizeResult.optimizedText}
+                    resumeId={optimizeResult.resumeId}
+                    onChange={(newText) => {
+                      setOptimizeResult((prev: any) => ({ ...prev, optimizedText: newText }));
+                      handleReScoreAfter(newText);
+                    }}
+                  />
+                ) : (
+                  <div className="text-center p-8 bg-slate-950/20 border border-white/5 rounded-2xl text-slate-500 text-xs italic">
+                    No optimized text available. Please optimize your resume first.
+                  </div>
+                )}
               </div>
 
             </div>
@@ -391,6 +411,33 @@ export default function DashboardPage() {
                 )}
               </div>
             </div>
+
+            {/* Summary of Changes Done */}
+            {optimizeResult?.summary && (
+              <Card className="border-white/5 bg-[#0e0f21]/40 shadow-xl rounded-2xl overflow-hidden mt-6">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-violet-400" />
+                    <h3 className="text-sm font-extrabold text-white">Summary of AI Optimizations Done</h3>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                    {optimizeResult.summary}
+                  </p>
+                  {optimizeResult.keywordsAdded && optimizeResult.keywordsAdded.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Keywords Integrated Successfully</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {optimizeResult.keywordsAdded.map((kw: string) => (
+                          <Badge key={kw} className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-semibold px-2 py-0.5 rounded-md">
+                            + {kw}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
           </div>
 

@@ -101,11 +101,20 @@ export default function ResumesPage() {
           setActivePlan(plan);
         }
 
-        const { data: dbData, error: dbError } = await supabase
-          .from("Resume")
-          .select("*")
-          .eq("userId", user.id)
-          .order("createdAt", { ascending: false });
+        // Fetch resumes via API endpoint to bypass client RLS issues
+        let dbData: any[] = [];
+        let dbError: any = null;
+        try {
+          const historyRes = await fetch("/api/history");
+          if (historyRes.ok) {
+            dbData = await historyRes.json();
+          } else {
+            const errBody = await historyRes.json().catch(() => ({}));
+            dbError = new Error(errBody.error || "Failed to fetch resumes from API");
+          }
+        } catch (fetchErr: any) {
+          dbError = fetchErr;
+        }
 
         if (!active) return;
 
