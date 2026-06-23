@@ -47,18 +47,41 @@ export async function POST(request: NextRequest) {
     const admin = getAdminClient() as any;
     const now = new Date();
 
+    // Prevent duplicate email unique constraint violations if ID has changed
+    try {
+      if (user.email) {
+        const { data: existingUser } = await admin
+          .from("User")
+          .select("id")
+          .eq("email", user.email.toLowerCase().trim())
+          .maybeSingle();
+
+        if (existingUser && existingUser.id !== user.id) {
+          logger.info(`[optimize] Deleting stale user row for email ${user.email} with old ID ${existingUser.id}`);
+          await admin.from("User").delete().eq("id", existingUser.id);
+        }
+      }
+    } catch (e: any) {
+      logger.warn("[optimize] Failed checking for stale email user:", e.message);
+    }
+
     // 3. Upsert User row
-    await admin
-      .from("User")
-      .upsert(
-        {
-          id: user.id,
-          email: user.email!,
-          name: user.user_metadata?.full_name || null,
-          createdAt: now.toISOString(),
-        },
-        { onConflict: "id", ignoreDuplicates: true }
-      );
+    try {
+      const { error: upsertErr } = await admin
+        .from("User")
+        .upsert(
+          {
+            id: user.id,
+            email: user.email!,
+            name: user.user_metadata?.full_name || null,
+            createdAt: now.toISOString(),
+          },
+          { onConflict: "id", ignoreDuplicates: true }
+        );
+      if (upsertErr) throw upsertErr;
+    } catch (e: any) {
+      logger.error("[optimize] User upsert error:", e.message);
+    }
 
     let freeUsed = 0;
     let paidCredits = 0;

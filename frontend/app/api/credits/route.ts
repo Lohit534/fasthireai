@@ -37,6 +37,24 @@ export async function GET(request: NextRequest) {
     const admin = getAdminClient() as any;
     const now = new Date();
 
+    // Prevent duplicate email unique constraint violations if ID has changed
+    try {
+      if (user.email) {
+        const { data: existingUser } = await admin
+          .from("User")
+          .select("id")
+          .eq("email", user.email.toLowerCase().trim())
+          .maybeSingle();
+
+        if (existingUser && existingUser.id !== user.id) {
+          logger.info(`[credits] Deleting stale user row for email ${user.email} with old ID ${existingUser.id}`);
+          await admin.from("User").delete().eq("id", existingUser.id);
+        }
+      }
+    } catch (e: any) {
+      logger.warn("[credits] Failed checking for stale email user:", e.message);
+    }
+
     // 2. Upsert User row (Credit table is separate)
     const { error: upsertUserErr } = await admin
       .from("User")
