@@ -372,11 +372,11 @@ export default function ResumesPage() {
     const defaultText = `JANE SMITH\njane@example.com | +1 (555) 000-0000 | New York, NY | linkedin.com/in/jane | janesmith.dev\n\nPROFESSIONAL SUMMARY\nResults-driven professional with experience in building clean frontend software interfaces.\n\nEXPERIENCE\nAcme Software - Frontend Engineer   2024 - Present\n• Developed premium responsive dashboard widgets and screens.\n• Spearheaded code optimization resulting in 40% loading speedup.\n\nEDUCATION\nTech University - Bachelor of Science in Computer Science   2020 - 2024\nGraduated with Honors. GPA 3.9/4.0`;
 
     try {
-      const { data, error } = await supabase
-        .from("Resume")
-        .insert({
+      const res = await fetch("/api/resumes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           id: generateUUID(),
-          userId: userId,
           originalText: defaultText,
           optimizedText: defaultText,
           jobDescription: "",
@@ -390,11 +390,14 @@ export default function ResumesPage() {
           impactAfter: 0,
           keywordsAdded: []
         })
-        .select()
-        .single();
+      });
 
-      if (error) throw error;
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error || "Failed to create resume on the server.");
+      }
 
+      const data = await res.json();
       if (data) {
         const newRecord = data as ResumeRecord;
         setResumes(prev => [newRecord, ...prev]);
@@ -417,8 +420,13 @@ export default function ResumesPage() {
 
     setActionLoading(`delete-${recordId}`);
     try {
-      const { error } = await supabase.from("Resume").delete().eq("id", recordId);
-      if (error) throw error;
+      const res = await fetch(`/api/resumes?id=${recordId}`, {
+        method: "DELETE"
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error || "Failed to delete resume card on the server.");
+      }
       setResumes(prev => prev.filter(r => r.id !== recordId));
       toast.success("Resume record deleted.");
     } catch (err: any) {
@@ -493,13 +501,15 @@ export default function ResumesPage() {
     setResumes(prev => prev.map(r => r.id === editingResume.id ? updatedRecord : r));
 
     try {
-      await supabase
-        .from("Resume")
-        .update({
+      await fetch("/api/resumes", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingResume.id,
           optimizedText: compiledText,
           ...updateRecordFields
         })
-        .eq("id", editingResume.id);
+      });
     } catch (err) {
       console.error("Failed to sync resume updates with db:", err);
     }

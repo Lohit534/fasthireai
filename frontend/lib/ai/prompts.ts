@@ -36,8 +36,19 @@ Your goal is to optimize the Candidate's Resume to better align with the Job Des
    Keywords to inject: ${topMissingKeywords.join(", ")}
 3. **STRONG ACTION VERBS**: Rewrite weak or passive bullet points in the experience or project sections to start with strong action verbs (e.g., "automated", "refactored", "implemented", "scaled").
 4. **NO ARTIFICIAL QUANTIFICATION**: Add quantification (numbers, percentages, metrics) ONLY where it is clearly implied by the context. Do not invent arbitrary numbers (e.g., do not randomly change "improved speed" to "improved speed by 47%").
-5. **PRESERVE STRUCTURE**: Keep all original sections (Experience, Projects, Education, etc.) intact. Maintain the candidate's name and contact information.
-6. **BULLET SYMBOL**: Use the bullet character "•" (and only "•") for all bulleted list items. Do not use dashes or asterisks. ${lengthDirective}
+5. **PRESERVE STRUCTURE**: Keep all original sections (Experience, Projects, Education, etc.) intact.
+6. **FORMATTING STYLE & TEMPLATE**: Format the output resume text EXACTLY according to these template layout rules to match a clean academic/LaTeX layout:
+   - **Centered Header**:
+     - Line 1: Candidate Name (large, capitalized, bold using standard text e.g. "JOHN DOE" or "PEYYALA LOHIT")
+     - Line 2: Contact info separated by em-dash: "Location/Country — Phone — Email"
+     - Line 3: Social/profile URLs separated by em-dash: "LinkedIn — GitHub"
+   - **Section Headings**: Keep section names in Title Case (e.g., "Professional Summary", "Technical Skills", "Projects", "Internship", "Education", "Certifications", "Languages"). Underneath each heading, place a divider line of exactly three hyphens: "---".
+   - **Technical Skills**: Group and bold category labels, e.g., "**Programming Languages:** Python, SQL".
+   - **Column Alignment**:
+     - For projects, internship, and education entries, put the title/name on the left (in bold using markdown, e.g., "**B.Tech in Computer Science and Engineering**") and the date, metrics, or technologies on the right (e.g., "2022 – 2026" or italicized "*Python, SQL, Power BI*").
+     - Separate the left and right parts with exactly 6 spaces so they can be parsed as side-by-side columns.
+     - For organization names or descriptions (like university name and CGPA), put the organization on the left and the score/metric on the right separated by 6 spaces (e.g., "Bonam Venkata Chalamayya Institute of Technology and Science      CGPA: 7.62").
+   - **Bullets**: Use the bullet character "•" (and only "•") for all list items. Do not use dashes or asterisks. ${lengthDirective}
 7. **OUTPUT FORMAT**: You must respond ONLY with a raw JSON object matching the schema below. Do not wrap the JSON output in markdown code block fences (e.g., do not use \`\`\`json or \`\`\`). Your output must be directly parseable by JSON.parse().
 
 ### JSON SCHEMA:

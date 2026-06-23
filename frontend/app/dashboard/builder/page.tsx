@@ -336,11 +336,11 @@ export default function ResumeBuilderPage() {
         // Ensure user row is upserted in the database via the credits endpoint
         await fetch("/api/credits").catch(() => {});
 
-        const { error } = await supabase
-          .from("Resume")
-          .insert({
+        const res = await fetch("/api/resumes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
             id: generateUUID(),
-            userId: user.id,
             originalText: finalMarkdown,
             optimizedText: finalMarkdown,
             jobDescription: "",
@@ -353,9 +353,13 @@ export default function ResumeBuilderPage() {
             impactBefore: 0,
             impactAfter: 0,
             keywordsAdded: []
-          });
+          })
+        });
 
-        if (error) throw error;
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || "Failed to create resume on the server.");
+        }
       }
     } catch (err: any) {
       toast.error("Failed to save resume record: " + err.message);

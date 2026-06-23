@@ -99,12 +99,19 @@ export default function JobTrackerPage() {
         setUserId(user.id);
         setAuthLoading(false);
 
-        // Fetch user's saved resumes
-        const { data: dbData, error: dbError } = await supabase
-          .from("Resume")
-          .select("id, jobTitle, company, createdAt")
-          .eq("userId", user.id)
-          .order("createdAt", { ascending: false });
+        // Fetch user's saved resumes via history API to ensure correct activeUserId resolution
+        let dbData: any[] = [];
+        let dbError: any = null;
+        try {
+          const historyRes = await fetch("/api/history");
+          if (historyRes.ok) {
+            dbData = await historyRes.json();
+          } else {
+            dbError = new Error("Failed to load resumes");
+          }
+        } catch (e) {
+          dbError = e;
+        }
 
         if (!dbError && dbData) {
           setResumes(dbData as MiniResume[]);

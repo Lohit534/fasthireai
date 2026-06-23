@@ -1,6 +1,36 @@
 import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle } from "docx";
 import { logger } from "../logger";
 
+// Parses text with **bold** and *italic* markdown tags into separate TextRun elements
+function parseTextRuns(text: string, baseOptions: any = {}): TextRun[] {
+  const runs: TextRun[] = [];
+  const boldTokens = text.split(/\*\*/);
+  for (let i = 0; i < boldTokens.length; i++) {
+    const isBold = i % 2 === 1;
+    const boldText = boldTokens[i];
+    if (!boldText) continue;
+
+    const italicTokens = boldText.split(/\*/);
+    for (let j = 0; j < italicTokens.length; j++) {
+      const isItalic = j % 2 === 1;
+      const finalRawText = italicTokens[j];
+      if (!finalRawText) continue;
+
+      runs.push(
+        new TextRun({
+          font: "Times New Roman",
+          size: 22, // 11pt default
+          ...baseOptions,
+          text: finalRawText,
+          bold: isBold || baseOptions.bold,
+          italic: isItalic || baseOptions.italic,
+        })
+      );
+    }
+  }
+  return runs;
+}
+
 export async function generateDOCX(resumeText: string): Promise<Buffer> {
   try {
     logger.info("Initializing DOCX generation with custom parsing...");
@@ -8,7 +38,7 @@ export async function generateDOCX(resumeText: string): Promise<Buffer> {
     const children: Paragraph[] = [];
     
     let name = "";
-    let contact = "";
+    let headerEnded = false;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -23,41 +53,82 @@ export async function generateDOCX(resumeText: string): Promise<Buffer> {
         continue;
       }
 
-      // 2. First non-empty line: Name
-      if (!name) {
-        name = line;
-        children.push(
-          new Paragraph({
-            alignment: AlignmentType.CENTER,
-            children: [
-              new TextRun({
-                text: line,
-                font: "Calibri",
-                size: 36, // 18pt in half-points
-                bold: true
-              })
-            ],
-            spacing: { after: 60 }
-          })
-        );
+      // Check if this line or next line indicates a header section
+      const isDivider = /^[=\-\*_]{3,}$/.test(line);
+      const nextLine = (i + 1 < lines.length) ? lines[i + 1].trim() : "";
+      const isSetextHeader = nextLine && /^[=\-\*_]{3,}$/.test(nextLine);
+      const isMarkdownHeader = line.startsWith("## ");
+      const isAllCapsHeader = line.toUpperCase() === line && line.length > 3 && !/^[•\-*\u2022]/.test(line) && !/^\d+\.?$/.test(line);
+      const isHeader = isMarkdownHeader || isAllCapsHeader || isSetextHeader;
+
+      if (isHeader || isDivider) {
+        headerEnded = true;
+      }
+
+      if (isDivider) {
+        // Skip Setext divider line
         continue;
       }
 
-      // 3. Contact info: lines with @ or phone pattern
-      if (!contact && (line.includes("@") || /\b\d{10}\b|\+\d{2}/.test(line))) {
-        contact = line;
+      // 2. Centered header lines (Name & contact info)
+      if (!headerEnded) {
+        if (!name) {
+          name = line.replace(/^[#\s\-\*\_]+|[\#\s\-\*\_]+$/g, "").trim();
+          children.push(
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [
+                new TextRun({
+                  text: name,
+                  font: "Times New Roman",
+                  size: 36, // 18pt
+                  bold: true
+                })
+              ],
+              spacing: { after: 60 }
+            })
+          );
+        } else {
+          // Replace pipe symbols with em-dashes
+          let contactLine = line.replace(/ \| /g, " — ");
+          children.push(
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [
+                new TextRun({
+                  text: contactLine,
+                  font: "Times New Roman",
+                  size: 20, // 10pt
+                  color: "222222"
+                })
+              ],
+              spacing: { after: 40 }
+            })
+          );
+        }
+        continue;
+      }
+
+      // 3. Detect column alignment lines with 3 or more spaces
+      const columns = line.split(/\s{3,}/);
+      if (columns.length > 1) {
+        const leftText = columns[0];
+        const rightText = columns[1];
+        
         children.push(
           new Paragraph({
-            alignment: AlignmentType.CENTER,
-            children: [
-              new TextRun({
-                text: line,
-                font: "Calibri",
-                size: 20, // 10pt in half-points
-                color: "666666"
-              })
+            tabStops: [
+              {
+                type: "right", // Right tab-stop type
+                position: 9360, // Align at right margin (6.5 inches printable width * 1440 dxa/inch)
+              },
             ],
-            spacing: { after: 60 }
+            children: [
+              ...parseTextRuns(leftText),
+              new TextRun({ text: "\t" }), // Tab key advances tab-stop
+              ...parseTextRuns(rightText),
+            ],
+            spacing: { after: 60 },
           })
         );
         continue;
@@ -71,32 +142,29 @@ export async function generateDOCX(resumeText: string): Promise<Buffer> {
             bullet: {
               level: 0
             },
-            children: [
-              new TextRun({
-                text: cleanBulletText,
-                font: "Calibri",
-                size: 22 // 11pt in half-points
-              })
-            ],
+            children: parseTextRuns(cleanBulletText),
             spacing: { after: 40 }
           })
         );
         continue;
       }
 
-      // 5. ALL CAPS header (length > 3) or ending with ":"
-      const isHeader = (line.toUpperCase() === line && line.length > 3) || line.endsWith(":");
+      // 5. Section headers
       if (isHeader) {
-        const cleanHeader = line.endsWith(":") ? line.slice(0, -1) : line;
+        let cleanHeader = line;
+        if (isMarkdownHeader) {
+          cleanHeader = line.substring(3).trim();
+        } else if (line.endsWith(":")) {
+          cleanHeader = line.slice(0, -1);
+        }
         children.push(
           new Paragraph({
             children: [
               new TextRun({
                 text: cleanHeader,
-                font: "Calibri",
-                size: 24, // 12pt in half-points
-                bold: true,
-                allCaps: true
+                font: "Times New Roman",
+                size: 22, // 11pt
+                bold: true
               })
             ],
             border: {
@@ -104,37 +172,34 @@ export async function generateDOCX(resumeText: string): Promise<Buffer> {
                 color: "000000",
                 space: 4,
                 style: BorderStyle.SINGLE,
-                size: 6 // 6 eighths of a pt = 0.75pt border
+                size: 6 // 0.75pt border
               }
             },
             spacing: { before: 200, after: 60 }
           })
         );
+        if (isSetextHeader) {
+          i++; // Skip the underline divider line
+        }
         continue;
       }
 
       // 6. Normal paragraph
       children.push(
         new Paragraph({
-          children: [
-            new TextRun({
-              text: line,
-              font: "Calibri",
-              size: 22 // 11pt in half-points
-            })
-          ],
+          children: parseTextRuns(line),
           spacing: { after: 100 }
         })
       );
     }
 
-    // Set default styles for Calibri 11pt, matching request
+    // Set default styles for Times New Roman 11pt
     const doc = new Document({
       styles: {
         default: {
           document: {
             run: {
-              font: "Calibri",
+              font: "Times New Roman",
               size: 22
             }
           }

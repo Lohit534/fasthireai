@@ -42,8 +42,20 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Resume not found" }, { status: 404 });
       }
 
-      if (resume.userId !== user.id) {
-        logger.warn(`User ${user.email} attempted to export unauthorized resume ${resumeId}`);
+      let activeUserId = user.id;
+      if (user.email) {
+        const { data: existingUser } = await admin
+          .from("User")
+          .select("id")
+          .eq("email", user.email.toLowerCase().trim())
+          .maybeSingle();
+        if (existingUser) {
+          activeUserId = existingUser.id;
+        }
+      }
+
+      if (resume.userId !== activeUserId) {
+        logger.warn(`User ${user.email} (activeUserId: ${activeUserId}) attempted to export unauthorized resume ${resumeId} owned by ${resume.userId}`);
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
 

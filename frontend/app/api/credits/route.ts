@@ -193,6 +193,39 @@ export async function POST(request: NextRequest) {
     const admin = getAdminClient() as any;
     const now = new Date();
 
+    // Resolve user record ID in public.User to prevent email unique constraint violations or foreign key errors
+    let activeUserId = user.id;
+    try {
+      if (user.email) {
+        const { data: existingUser } = await admin
+          .from("User")
+          .select("id")
+          .eq("email", user.email.toLowerCase().trim())
+          .maybeSingle();
+
+        if (existingUser) {
+          activeUserId = existingUser.id;
+          logger.info(`[credits POST] Found existing User record for email ${user.email} with ID ${existingUser.id}. Reusing this ID.`);
+        } else {
+          // If the user doesn't exist, we insert a new record
+          logger.info(`[credits POST] Creating new User record for email ${user.email} with ID ${user.id}`);
+          const { error: insertUserErr } = await admin
+            .from("User")
+            .insert({
+              id: user.id,
+              email: user.email.toLowerCase().trim(),
+              name: user.user_metadata?.full_name || null,
+              createdAt: now.toISOString(),
+            });
+          if (insertUserErr) {
+            logger.error("[credits POST] Failed to insert new User record:", insertUserErr.message);
+          }
+        }
+      }
+    } catch (e: any) {
+      logger.error("[credits POST] Error during User resolution/insertion:", e.message);
+    }
+
     // Map planId to paidCredits
     let paidCredits = 0;
     if (planId === "premium") {
@@ -206,7 +239,7 @@ export async function POST(request: NextRequest) {
       .from("Credit")
       .upsert(
         {
-          userId: user.id,
+          userId: activeUserId,
           freeUsed: 0,
           paidCredits: paidCredits,
           resetAt: now.toISOString(),

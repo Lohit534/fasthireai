@@ -11,6 +11,15 @@ function escapeHtml(text: string): string {
     .replace(/'/g, "&#039;");
 }
 
+function formatInline(text: string): string {
+  let escaped = escapeHtml(text);
+  // Replace **bold**
+  escaped = escaped.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+  // Replace *italic*
+  escaped = escaped.replace(/\*(.*?)\*/g, "<em>$1</em>");
+  return escaped;
+}
+
 export async function generatePDF(resumeText: string): Promise<Buffer> {
   let browser = null;
   try {
@@ -21,7 +30,7 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
     let htmlBody = "";
     let inList = false;
     let name = "";
-    let contact = "";
+    let headerEnded = false;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -33,17 +42,32 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
         continue;
       }
 
-      // 1. Detect Name: first non-empty line
-      if (!name) {
-        name = line;
-        htmlBody += `<h1>${escapeHtml(line)}</h1>\n`;
+      // Check if this line or next line indicates a header section
+      const isDivider = /^[=\-\*_]{3,}$/.test(line);
+      const nextLine = (i + 1 < lines.length) ? lines[i + 1].trim() : "";
+      const isSetextHeader = nextLine && /^[=\-\*_]{3,}$/.test(nextLine);
+      const isMarkdownHeader = line.startsWith("## ");
+      const isAllCapsHeader = line.toUpperCase() === line && line.length > 3 && !/^[•\-*\u2022]/.test(line) && !/^\d+\.?$/.test(line);
+      const isHeader = isMarkdownHeader || isAllCapsHeader || isSetextHeader;
+
+      if (isHeader || isDivider) {
+        headerEnded = true;
+      }
+
+      if (isDivider) {
+        // Skip Setext divider line
         continue;
       }
 
-      // 2. Detect Contact Info: lines containing @ or matching a simple phone pattern
-      if (!contact && (line.includes("@") || /\b\d{10}\b|\+\d{2}/.test(line))) {
-        contact = line;
-        htmlBody += `<div class="contact">${escapeHtml(line)}</div>\n`;
+      if (!headerEnded) {
+        if (!name) {
+          name = line.replace(/^[#\s\-\*\_]+|[\#\s\-\*\_]+$/g, "").trim();
+          htmlBody += `<h1>${escapeHtml(name)}</h1>\n`;
+        } else {
+          // Replace pipe symbols with em-dashes
+          let contactLine = line.replace(/ \| /g, " — ");
+          htmlBody += `<div class="contact">${escapeHtml(contactLine)}</div>\n`;
+        }
         continue;
       }
 
@@ -54,7 +78,7 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
           htmlBody += "</ul>\n";
           inList = false;
         }
-        htmlBody += `<div class="line-row"><span class="left">${escapeHtml(columns[0])}</span><span class="right">${escapeHtml(columns[1])}</span></div>\n`;
+        htmlBody += `<div class="line-row"><span class="left">${formatInline(columns[0])}</span><span class="right">${formatInline(columns[1])}</span></div>\n`;
         continue;
       }
 
@@ -66,7 +90,7 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
         }
         // Strip the bullet symbol from the text
         const cleanBulletText = line.replace(/^[•\-*\u2022]\s*/, "");
-        htmlBody += `<li>${escapeHtml(cleanBulletText)}</li>\n`;
+        htmlBody += `<li>${formatInline(cleanBulletText)}</li>\n`;
         continue;
       } else {
         if (inList) {
@@ -75,14 +99,21 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
         }
       }
 
-      // 5. Detect Section headers: ALL CAPS lines (length > 3) or lines ending with ":"
-      const isHeader = (line.toUpperCase() === line && line.length > 3) || line.endsWith(":");
+      // 5. Detect Section headers
       if (isHeader) {
-        const cleanHeader = line.endsWith(":") ? line.slice(0, -1) : line;
+        let cleanHeader = line;
+        if (isMarkdownHeader) {
+          cleanHeader = line.substring(3).trim();
+        } else if (line.endsWith(":")) {
+          cleanHeader = line.slice(0, -1);
+        }
         htmlBody += `<h2>${escapeHtml(cleanHeader)}</h2>\n`;
+        if (isSetextHeader) {
+          i++; // Skip the next underline divider line
+        }
       } else {
         // 6. Normal line (regular text paragraph)
-        htmlBody += `<p>${escapeHtml(line)}</p>\n`;
+        htmlBody += `<p>${formatInline(line)}</p>\n`;
       }
     }
 
@@ -111,19 +142,18 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
               margin: 0 0 4px 0;
               text-align: center;
               font-weight: bold;
-              text-transform: uppercase;
             }
             .contact {
               font-family: 'Times New Roman', Times, serif;
               font-size: 10pt;
               color: #222222;
               text-align: center;
-              margin-bottom: 12px;
+              margin-bottom: 4px;
             }
             h2 {
               font-family: 'Times New Roman', Times, serif;
               font-size: 11pt;
-              text-transform: uppercase;
+              text-transform: none;
               letter-spacing: 0.5px;
               border-bottom: 1px solid #000000;
               margin: 12px 0 6px 0;
@@ -154,11 +184,11 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
               margin-bottom: 3px;
             }
             .line-row .left {
-              font-weight: bold;
+              /* bold is decided by markdown formatting */
             }
             .line-row .right {
-              font-weight: bold;
               text-align: right;
+              /* italicized or bold is decided by markdown formatting */
             }
           </style>
         </head>
