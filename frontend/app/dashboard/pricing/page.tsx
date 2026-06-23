@@ -149,6 +149,7 @@ export default function PricingPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const [currentPlan, setCurrentPlan] = useState<string>("free");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const [isOwner, setIsOwner] = useState(false);
   
   // Checkout Modal State
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
@@ -182,11 +183,26 @@ export default function PricingPage() {
           return;
         }
         setUserId(data.user.id);
-        setAuthLoading(false);
 
-        // Load active plan
-        const plan = localStorage.getItem(`fastHire_plan_${data.user.id}`) || "free";
-        setCurrentPlan(plan);
+        try {
+          const res = await fetch("/api/credits");
+          if (res.ok) {
+            const apiCredits = await res.json();
+            if (apiCredits.isOwner) {
+              setIsOwner(true);
+            }
+            const plan = localStorage.getItem(`fastHire_plan_${data.user.id}`) || "free";
+            setCurrentPlan(plan);
+          } else {
+            const plan = localStorage.getItem(`fastHire_plan_${data.user.id}`) || "free";
+            setCurrentPlan(plan);
+          }
+        } catch (e) {
+          const plan = localStorage.getItem(`fastHire_plan_${data.user.id}`) || "free";
+          setCurrentPlan(plan);
+        }
+
+        setAuthLoading(false);
 
         // Load billing cycle
         const cycle = localStorage.getItem(`fastHire_billingCycle_${data.user.id}`) as "monthly" | "yearly" || "monthly";
@@ -200,6 +216,43 @@ export default function PricingPage() {
   }, [router]);
 
   const handlePlanAction = async (plan: Plan) => {
+    if (isOwner) {
+      if (plan.id === currentPlan) {
+        toast.success(`You are already simulated on the ${plan.name}.`);
+        return;
+      }
+      try {
+        if (userId) {
+          const res = await fetch("/api/credits", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ planId: plan.id })
+          });
+
+          if (!res.ok) {
+            throw new Error("Failed to sync plan state on backend");
+          }
+
+          localStorage.setItem(`fastHire_plan_${userId}`, plan.id);
+          setCurrentPlan(plan.id);
+
+          const limitValue = plan.id === "premium" ? 15 : plan.id === "team" ? 999999 : 999999;
+          const creditsObject = {
+            freeUsed: 0,
+            paidCredits: limitValue,
+            freeRemaining: limitValue,
+            resetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+          };
+          localStorage.setItem(`fastHire_mockCredits_${userId}`, JSON.stringify(creditsObject));
+
+          toast.success(`Switched simulated plan to ${plan.name} (Owner Account Bypass).`);
+        }
+      } catch (err: any) {
+        toast.error("Failed to switch plan: " + err.message);
+      }
+      return;
+    }
+
     if (plan.id === currentPlan) {
       toast.success(`You are already subscribed to the ${plan.name}.`);
       return;
@@ -279,7 +332,7 @@ export default function PricingPage() {
             localStorage.setItem(`fastHire_planDate_${userId}`, new Date().toISOString());
             setCurrentPlan(selectedPlan.id);
 
-            const limitValue = selectedPlan.id === "premium" ? 15 : selectedPlan.id === "team" ? 30 : 999;
+            const limitValue = selectedPlan.id === "premium" ? 15 : selectedPlan.id === "team" ? 999999 : 999999;
             const creditsObject = {
               freeUsed: 0,
               paidCredits: limitValue,
@@ -331,7 +384,7 @@ export default function PricingPage() {
           localStorage.setItem(`fastHire_planDate_${userId}`, new Date().toISOString());
           setCurrentPlan(selectedPlan.id);
 
-          const limitValue = selectedPlan.id === "premium" ? 15 : selectedPlan.id === "team" ? 30 : 999;
+          const limitValue = selectedPlan.id === "premium" ? 15 : selectedPlan.id === "team" ? 999999 : 999999;
           const creditsObject = {
             freeUsed: 0,
             paidCredits: limitValue,
@@ -483,7 +536,9 @@ export default function PricingPage() {
                         : "bg-white text-slate-950 hover:bg-slate-200"
                     }`}
                   >
-                    {isActive ? "Current Active Plan" : plan.cta}
+                    {isActive 
+                      ? (isOwner ? "Current Plan (Owner Unlimited)" : "Current Active Plan")
+                      : (isOwner ? `Simulate ${plan.name}` : plan.cta)}
                   </Button>
 
                 </CardContent>

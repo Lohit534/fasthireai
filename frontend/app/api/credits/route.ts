@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
     if (planId === "premium") {
       paidCredits = 15;
     } else if (planId === "team") {
-      paidCredits = 30;
+      paidCredits = 999999;
     }
 
     // Upsert or update the credit row

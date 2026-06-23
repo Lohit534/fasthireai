@@ -46,16 +46,7 @@ export default function BillingPage() {
   const [activePlan, setActivePlan] = useState("free");
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [credits, setCredits] = useState<CreditInfo | null>(null);
-  const [cardDetails, setCardDetails] = useState<{ brand: string; last4: string; exp: string; name: string } | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  
-  // Card Edit Modal
-  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
-  const [cardModalLoading, setCardModalLoading] = useState(false);
-  const [newCardName, setNewCardName] = useState("");
-  const [newCardNumber, setNewCardNumber] = useState("");
-  const [newCardExpiry, setNewCardExpiry] = useState("");
-  const [newCardCvc, setNewCardCvc] = useState("");
 
   // Initialize page variables
   useEffect(() => {
@@ -109,18 +100,7 @@ export default function BillingPage() {
           }
         }
 
-        // 3. Card details loading
-        const savedCard = localStorage.getItem(`fastHire_card_${user.id}`);
-        if (savedCard) {
-          try {
-            setCardDetails(JSON.parse(savedCard));
-          } catch (e) {}
-        } else if (plan !== "free") {
-          // Prefill card for premium mock subscriptions
-          const mockCard = { brand: "Visa", last4: "4242", exp: "12/28", name: "Candidate user" };
-          setCardDetails(mockCard);
-          localStorage.setItem(`fastHire_card_${user.id}`, JSON.stringify(mockCard));
-        }
+
 
         // 4. Invoices creation
         const invoiceHistory: Invoice[] = [
@@ -148,42 +128,7 @@ export default function BillingPage() {
     loadBillingInfo();
   }, [router]);
 
-  const handleUpdateCard = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userId) return;
 
-    if (!newCardName.trim() || newCardNumber.length < 19 || newCardExpiry.length < 5 || newCardCvc.length < 3) {
-      toast.error("Please fill in correct payment details.");
-      return;
-    }
-
-    setCardModalLoading(true);
-
-    setTimeout(() => {
-      const cardType = newCardNumber.startsWith("5") ? "Mastercard" : newCardNumber.startsWith("3") ? "Amex" : "Visa";
-      const info = {
-        brand: cardType,
-        last4: newCardNumber.slice(-4),
-        exp: newCardExpiry,
-        name: newCardName.trim()
-      };
-
-      localStorage.setItem(`fastHire_card_${userId}`, JSON.stringify(info));
-      setCardDetails(info);
-      setCardModalLoading(false);
-      setIsCardModalOpen(false);
-      toast.success("Payment card info updated successfully!");
-    }, 1500);
-  };
-
-  const handleRemoveCard = () => {
-    if (!userId) return;
-    if (confirm("Are you sure you want to remove your credit card? If you have an active subscription, it will not renew.")) {
-      localStorage.removeItem(`fastHire_card_${userId}`);
-      setCardDetails(null);
-      toast.success("Card removed successfully.");
-    }
-  };
 
   const handlePrintReceipt = (invoice: Invoice) => {
     toast.success(`Downloading PDF Invoice for ${invoice.id}...`);
@@ -201,7 +146,7 @@ export default function BillingPage() {
   }
 
   // Quota computations
-  const totalLimit = activePlan === "free" ? 2 : activePlan === "premium" ? 15 : activePlan === "team" ? 30 : 9999;
+  const totalLimit = activePlan === "free" ? 2 : activePlan === "premium" ? 15 : activePlan === "team" ? 999999 : 999999;
   const used = credits?.freeUsed ?? 0;
   const remaining = credits?.freeRemaining ?? totalLimit;
   const percentUsed = Math.min(100, Math.round((used / totalLimit) * 100));
@@ -224,16 +169,16 @@ export default function BillingPage() {
               Billing &amp; Subscription Usage
             </h1>
             <p className="text-xs text-slate-400">
-              Check your active plan quotas, update credit card settings, and view invoice histories.
+              Check your active plan quotas and view invoice histories.
             </p>
           </div>
         </div>
 
         {/* Dashboard Split Widgets */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
           
-          {/* Left Column: Sub details and payment methods */}
-          <div className="lg:col-span-7 flex flex-col gap-6">
+          {/* Left Column: Sub details */}
+          <div className="flex flex-col gap-6">
             
             {/* Card 1: Subscription Quota overview */}
             <Card className="border-white/5 bg-[#0e0f21]/40 shadow-xl flex-1 flex flex-col justify-between">
@@ -244,7 +189,9 @@ export default function BillingPage() {
                   <div className="space-y-1">
                     <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Active Package Tier</p>
                     <h3 className="text-lg font-extrabold text-white capitalize select-none">
-                      {credits?.isOwner ? "Owner Account (Unlimited)" : (activePlan === "free" ? "Free Career Tier" : activePlan === "premium" ? "Premium Pro" : "Team & Bootcamps")}
+                      {credits?.isOwner 
+                        ? `Owner Account - Unlimited ${activePlan === "free" ? "Free" : activePlan === "premium" ? "Pro" : "Team"}` 
+                        : (activePlan === "free" ? "Free Career Tier" : activePlan === "premium" ? "Premium Pro" : "Team & Bootcamps")}
                     </h3>
                   </div>
                   <Badge className={`text-[10px] font-bold border capitalize ${
@@ -254,18 +201,27 @@ export default function BillingPage() {
                           ? "bg-slate-800/50 border-white/5 text-slate-400"
                           : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400")
                   }`}>
-                    {credits?.isOwner ? "Lifetime Bypassed" : (activePlan === "free" ? "Limited Access" : "Active & Paid")}
+                    {credits?.isOwner ? "Developer Bypass" : (activePlan === "free" ? "Limited Access" : "Active & Paid")}
                   </Badge>
                 </div>
 
                 {/* Quota Progress */}
                 {credits?.isOwner ? (
-                  <div className="bg-violet-950/20 border border-violet-500/20 p-4 rounded-xl flex items-center justify-between">
-                    <div className="space-y-1">
-                      <span className="font-bold text-violet-400 text-xs">Developer Owner Account</span>
-                      <p className="text-[10px] text-slate-400 font-semibold">Your developer account has bypassed all billing limits and quotas.</p>
+                  <div className="space-y-4">
+                    <div className="bg-violet-950/20 border border-violet-500/20 p-4 rounded-xl flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="font-bold text-violet-400 text-xs">Developer Owner Account</span>
+                        <p className="text-[10px] text-slate-400 font-semibold">Your developer account has bypassed all billing limits and quotas.</p>
+                      </div>
+                      <Sparkles className="h-5 w-5 text-violet-400" />
                     </div>
-                    <Sparkles className="h-5 w-5 text-violet-400" />
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-slate-400">Simulated Plan Quota ({activePlan === "free" ? "Free Tier" : activePlan === "premium" ? "Premium Pro" : "Team Plan"})</span>
+                        <span className="text-white">Unlimited / {totalLimit} (Owner Bypassed)</span>
+                      </div>
+                      <Progress value={0} className="h-1.5 bg-slate-900 [&>div]:bg-violet-500 rounded-full border border-white/5" />
+                    </div>
                   </div>
                 ) : activePlan !== "team" ? (
                   <div className="space-y-2">
@@ -306,81 +262,10 @@ export default function BillingPage() {
               </CardContent>
             </Card>
 
-            {/* Card 2: Payment details */}
-            <Card className="border-white/5 bg-[#0e0f21]/40 shadow-xl">
-              <CardContent className="p-6 space-y-4">
-                <div className="space-y-1">
-                  <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Payment Method Settings</p>
-                </div>
-
-                {cardDetails ? (
-                  <div className="flex items-center justify-between p-3.5 bg-[#0c0d1b] border border-white/5 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-14 bg-slate-900 border border-white/10 rounded-lg flex items-center justify-center text-[10px] font-black text-slate-300 select-none uppercase">
-                        {cardDetails.brand}
-                      </div>
-                      <div className="space-y-0.5">
-                        <span className="font-bold text-white text-xs truncate block">
-                          •••• •••• •••• {cardDetails.last4}
-                        </span>
-                        <p className="text-[9px] text-slate-500 font-semibold uppercase">
-                          Exp: {cardDetails.exp} &bull; {cardDetails.name}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setNewCardName(cardDetails.name);
-                          setNewCardNumber("");
-                          setNewCardExpiry(cardDetails.exp);
-                          setNewCardCvc("");
-                          setIsCardModalOpen(true);
-                        }}
-                        className="h-7 px-3 rounded-full hover:bg-white/5 border border-white/5 text-[10px] text-slate-300 font-bold transition-colors"
-                      >
-                        Update
-                      </button>
-                      <button
-                        onClick={handleRemoveCard}
-                        className="h-7 w-7 rounded-full hover:bg-red-500/10 text-slate-500 hover:text-red-400 flex items-center justify-center transition-colors"
-                        title="Remove Card"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-6 border border-dashed border-white/5 rounded-xl text-center gap-3">
-                    <AlertCircle className="h-6 w-6 text-slate-500" />
-                    <div className="space-y-0.5">
-                      <span className="font-bold text-white text-[11px]">No active payment card</span>
-                      <p className="text-[9px] text-slate-500">Add a credit card to proceed to subscription checkouts.</p>
-                    </div>
-                    <Button 
-                      size="sm"
-                      onClick={() => {
-                        setNewCardName("");
-                        setNewCardNumber("");
-                        setNewCardExpiry("");
-                        setNewCardCvc("");
-                        setIsCardModalOpen(true);
-                      }}
-                      className="bg-transparent border border-white/10 hover:bg-white/5 text-slate-200 h-8 text-[10px] rounded-full px-4"
-                    >
-                      <Plus className="h-3.5 w-3.5 mr-1" /> Add Payment Method
-                    </Button>
-                  </div>
-                )}
-
-              </CardContent>
-            </Card>
-
           </div>
 
           {/* Right Column: Invoices list */}
-          <div className="lg:col-span-5 flex flex-col">
+          <div className="flex flex-col">
             <Card className="border-white/5 bg-[#0e0f21]/40 shadow-xl flex-1 flex flex-col justify-between overflow-hidden">
               <div className="p-6 pb-2">
                 <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Invoice &amp; Transaction History</p>
@@ -426,120 +311,8 @@ export default function BillingPage() {
               </div>
             </Card>
           </div>
-
         </div>
-
       </main>
-
-      {/* UPDATE/ADD CARD MODAL WINDOW */}
-      {isCardModalOpen && (
-        <div className="fixed inset-0 bg-[#060713]/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-[#0d0e1f] border border-white/10 p-6 rounded-2xl space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            
-            <div className="flex items-center justify-between pb-3 border-b border-white/5">
-              <h3 className="font-extrabold text-white text-sm">
-                Configure Billing Method
-              </h3>
-              <button 
-                onClick={() => setIsCardModalOpen(false)}
-                disabled={cardModalLoading}
-                className="text-slate-400 hover:text-white font-bold text-xs"
-              >
-                Close
-              </button>
-            </div>
-
-            <form onSubmit={handleUpdateCard} className="space-y-4 text-xs select-none">
-              
-              {/* Cardholder name */}
-              <div className="space-y-1">
-                <label className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Cardholder Name</label>
-                <Input
-                  required
-                  placeholder="e.g. Alexis Carter"
-                  value={newCardName}
-                  onChange={(e) => setNewCardName(e.target.value)}
-                  className="h-9 border-white/5 bg-[#070814] text-white rounded-lg focus:border-violet-500"
-                />
-              </div>
-
-              {/* Credit card number */}
-              <div className="space-y-1">
-                <label className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Credit Card Number</label>
-                <div className="relative">
-                  <Input
-                    required
-                    placeholder="0000 0000 0000 0000"
-                    value={newCardNumber}
-                    onChange={(e) => {
-                      let val = e.target.value.replace(/\D/g, "");
-                      if (val.length > 16) val = val.substring(0, 16);
-                      const matches = val.match(/\d{4,16}/g);
-                      const match = (matches && matches[0]) || "";
-                      const parts = [];
-                      for (let i = 0; i < match.length; i += 4) {
-                        parts.push(match.substring(i, i + 4));
-                      }
-                      setNewCardNumber(parts.length > 0 ? parts.join(" ") : val);
-                    }}
-                    className="h-9 pl-9 border-white/5 bg-[#070814] text-white rounded-lg focus:border-violet-500"
-                  />
-                  <CreditCard className="absolute left-3 top-2.5 h-4.5 w-4.5 text-slate-500" />
-                </div>
-              </div>
-
-              {/* Expiry & CVV */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Expiration Date</label>
-                  <Input
-                    required
-                    placeholder="MM/YY"
-                    value={newCardExpiry}
-                    onChange={(e) => {
-                      let val = e.target.value.replace(/\D/g, "");
-                      if (val.length > 4) val = val.substring(0, 4);
-                      setNewCardExpiry(val.length >= 2 ? val.substring(0, 2) + "/" + val.substring(2) : val);
-                    }}
-                    className="h-9 border-white/5 bg-[#070814] text-white rounded-lg focus:border-violet-500"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Security Code (CVV)</label>
-                  <Input
-                    required
-                    maxLength={4}
-                    placeholder="123"
-                    value={newCardCvc}
-                    onChange={(e) => setNewCardCvc(e.target.value.replace(/\D/g, ""))}
-                    className="h-9 border-white/5 bg-[#070814] text-white rounded-lg focus:border-violet-500"
-                  />
-                </div>
-              </div>
-
-              {/* Submit triggers */}
-              <Button
-                type="submit"
-                disabled={cardModalLoading}
-                className="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold h-10 rounded-lg flex items-center justify-center gap-1.5"
-              >
-                {cardModalLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Validating card...
-                  </>
-                ) : (
-                  <>
-                    Save Configuration Details
-                  </>
-                )}
-              </Button>
-
-            </form>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

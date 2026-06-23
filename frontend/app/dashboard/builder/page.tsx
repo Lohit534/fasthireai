@@ -332,6 +332,9 @@ export default function ResumeBuilderPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // Ensure user row is upserted in the database via the credits endpoint
+        await fetch("/api/credits").catch(() => {});
+
         const { error } = await supabase
           .from("Resume")
           .insert({

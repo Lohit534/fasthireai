@@ -324,6 +324,15 @@ def call_gemini(prompt: str, raw_text: str) -> Dict[str, Any]:
 
 # ----------------- REST API Route Handlers -----------------
 
+@app.get("/")
+def read_root():
+    """Root endpoint returning status and welcome message"""
+    return {
+        "message": "FastHire-AI Python AI Microservice is running successfully.",
+        "status": "healthy",
+        "docs": "/docs"
+    }
+
 @app.get("/health")
 def healthcheck():
     """Health check endpoint checking SBERT state"""
