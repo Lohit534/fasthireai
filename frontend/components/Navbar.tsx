@@ -119,8 +119,9 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
   const usedPercent = Math.min(100, Math.max(0, Math.round((freeUsed / totalFree) * 100)));
 
   return (
-    <nav className="border-b border-white/5 bg-[#060713]/80 text-slate-100 sticky top-0 z-50 backdrop-blur-md bg-opacity-80">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <>
+      <nav className="border-b border-white/5 bg-[#060713]/80 text-slate-100 sticky top-0 z-50 backdrop-blur-md bg-opacity-80">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-14 items-center justify-between">
           
           {/* Left: Brand logo */}
@@ -180,13 +181,14 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                 </div>
 
                 {/* Upgrade Button */}
-                <Button 
-                  size="sm" 
-                  onClick={() => toast.success("Pricing details matching in dashboard.")}
-                  className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-8 text-[11px] rounded-full px-4 shadow-lg shadow-violet-600/10"
-                >
-                  Upgrade
-                </Button>
+                <Link href="/dashboard/pricing">
+                  <Button 
+                    size="sm" 
+                    className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-8 text-[11px] rounded-full px-4 shadow-lg shadow-violet-600/10"
+                  >
+                    Upgrade
+                  </Button>
+                </Link>
 
                 {/* Profile circular avatar dropdown container */}
                 <div className="relative" ref={dropdownRef}>
@@ -335,7 +337,8 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
 
         </div>
       </div>
+      </nav>
       {user && <SupportChatbot />}
-    </nav>
+    </>
   );
 }

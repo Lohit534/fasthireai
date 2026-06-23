@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { 
-  Check, 
-  Sparkles, 
-  Loader2, 
-  CreditCard, 
-  Lock, 
+import {
+  Check,
+  Sparkles,
+  Loader2,
+  CreditCard,
+  Lock,
   ShieldCheck,
   ChevronDown,
   ChevronUp,
@@ -67,7 +67,7 @@ const PLANS: Plan[] = [
       "Build up to 20 resumes from scratch",
       "AI resume builder (improve bullets, write summary)",
       "Import resume via AI",
-      "Optimization history logs",
+      "Optimization history logs(2 months retension)",
       "Job application tracker",
       "Priority support"
     ],
@@ -85,11 +85,14 @@ const PLANS: Plan[] = [
     features: [
       "Unlimited AI resume optimizations",
       "Unlimited PDF + DOCX downloads",
-      "Unlimited cover letters / month",
-      "Unlimited skills learning roadmaps",
-      "Priority AI optimization queues",
-      "1-on-1 Help & Support chatbot",
-      "Direct messaging to FastHire-AI Admin"
+      "15 cover letters / month",
+      "Skills learning roadmap (30/month)",
+      "Build up to 40 resumes from scratch",
+      "AI resume builder (improve bullets, write summary)",
+      "Import resume via AI",
+      "Optimization history logs(4 months retension)",
+      "Job application tracker",
+      "Priority support"
     ],
     cta: "Upgrade to Pro Max"
   }
@@ -142,12 +145,12 @@ export default function PricingPage() {
   const [currentPlan, setCurrentPlan] = useState<string>("free");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [isOwner, setIsOwner] = useState(false);
-  
+
   // Checkout Modal State
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-  
+
   // FAQ open/close index state
   const [openFAQIndex, setOpenFAQIndex] = useState<number | null>(null);
 
@@ -160,7 +163,7 @@ export default function PricingPage() {
     return () => {
       try {
         document.body.removeChild(script);
-      } catch (e) {}
+      } catch (e) { }
     };
   }, []);
 
@@ -287,15 +290,15 @@ export default function PricingPage() {
 
     setCheckoutLoading(true);
 
-    const priceNum = billingCycle === "monthly" 
-      ? (selectedPlan.id === "premium" ? 99 : 199) 
+    const priceNum = billingCycle === "monthly"
+      ? (selectedPlan.id === "premium" ? 99 : 199)
       : (selectedPlan.id === "premium" ? 99 * 10 : 199 * 10); // 2 months discount
 
     let userEmail = "";
     try {
       const { data } = await supabase.auth.getUser();
       userEmail = data?.user?.email || "";
-    } catch (err) {}
+    } catch (err) { }
 
     // Check if Razorpay script is loaded in window
     if (typeof (window as any).Razorpay !== "undefined") {
@@ -348,7 +351,7 @@ export default function PricingPage() {
           color: "#7c3aed"
         },
         modal: {
-          ondismiss: function() {
+          ondismiss: function () {
             setCheckoutLoading(false);
           }
         }
@@ -423,7 +426,7 @@ export default function PricingPage() {
       <Navbar />
 
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-10">
-        
+
         {/* Title details */}
         <div className="text-center space-y-4">
           <h1 className="text-3xl md:text-4.5xl font-black text-white tracking-tight leading-none">
@@ -437,21 +440,19 @@ export default function PricingPage() {
           <div className="flex justify-center items-center gap-3 pt-2 select-none">
             <button
               onClick={() => handleBillingCycleChange("monthly")}
-              className={`text-xs font-bold px-3.5 py-1.5 rounded-full transition-all ${
-                billingCycle === "monthly"
-                  ? "bg-[#161730] text-white border border-violet-500/30"
-                  : "text-slate-400 hover:text-white"
-              }`}
+              className={`text-xs font-bold px-3.5 py-1.5 rounded-full transition-all ${billingCycle === "monthly"
+                ? "bg-[#161730] text-white border border-violet-500/30"
+                : "text-slate-400 hover:text-white"
+                }`}
             >
               Bill Monthly
             </button>
             <button
               onClick={() => handleBillingCycleChange("yearly")}
-              className={`text-xs font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 transition-all ${
-                billingCycle === "yearly"
-                  ? "bg-[#161730] text-white border border-violet-500/30"
-                  : "text-slate-400 hover:text-white"
-              }`}
+              className={`text-xs font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 transition-all ${billingCycle === "yearly"
+                ? "bg-[#161730] text-white border border-violet-500/30"
+                : "text-slate-400 hover:text-white"
+                }`}
             >
               Bill Yearly
               <Badge className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[9px] font-bold px-1.5 py-0.5 rounded-md">
@@ -467,15 +468,14 @@ export default function PricingPage() {
             const isActive = currentPlan === plan.id;
             const price = billingCycle === "monthly" ? plan.priceMonthly : plan.priceYearly;
             const period = billingCycle === "monthly" ? plan.periodMonthly : plan.periodYearly;
-            
+
             return (
-              <Card 
+              <Card
                 key={plan.id}
-                className={`relative border-white/5 bg-[#0e0f21]/40 flex flex-col justify-between overflow-hidden rounded-2xl shadow-xl transition-all duration-300 ${
-                  plan.popular 
-                    ? "border-violet-500/40 ring-1 ring-violet-500/30 scale-105 shadow-violet-950/20" 
-                    : "hover:border-white/10"
-                }`}
+                className={`relative border-white/5 bg-[#0e0f21]/40 flex flex-col justify-between overflow-hidden rounded-2xl shadow-xl transition-all duration-300 ${plan.popular
+                  ? "border-violet-500/40 ring-1 ring-violet-500/30 scale-105 shadow-violet-950/20"
+                  : "hover:border-white/10"
+                  }`}
               >
                 {/* Popular Banner */}
                 {plan.popular && (
@@ -487,7 +487,7 @@ export default function PricingPage() {
                 )}
 
                 <CardContent className="p-6 flex-1 flex flex-col justify-between space-y-6">
-                  
+
                   {/* Tier details */}
                   <div className="space-y-4">
                     <div className="space-y-1">
@@ -520,15 +520,14 @@ export default function PricingPage() {
                   {/* Actions CTA Trigger */}
                   <Button
                     onClick={() => handlePlanAction(plan)}
-                    className={`w-full font-bold text-xs h-10 rounded-full transition-all ${
-                      isActive
-                        ? "bg-slate-900 border border-white/10 text-slate-400 hover:text-white"
-                        : plan.popular
+                    className={`w-full font-bold text-xs h-10 rounded-full transition-all ${isActive
+                      ? "bg-slate-900 border border-white/10 text-slate-400 hover:text-white"
+                      : plan.popular
                         ? "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-600/20"
                         : "bg-white text-slate-950 hover:bg-slate-200"
-                    }`}
+                      }`}
                   >
-                    {isActive 
+                    {isActive
                       ? (isOwner ? "Current Plan (Owner Unlimited)" : "Current Active Plan")
                       : (isOwner ? `Simulate ${plan.name}` : plan.cta)}
                   </Button>
@@ -564,7 +563,7 @@ export default function PricingPage() {
             {FAQ_ITEMS.map((faq, idx) => {
               const isOpen = openFAQIndex === idx;
               return (
-                <div 
+                <div
                   key={idx}
                   className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden transition-all duration-300"
                 >
@@ -597,7 +596,7 @@ export default function PricingPage() {
       {isCheckoutOpen && selectedPlan && (
         <div className="fixed inset-0 bg-[#060713]/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-[#0d0e1f] border border-white/10 p-6 rounded-2xl space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            
+
             {/* Header info */}
             <div className="flex items-center justify-between pb-3 border-b border-white/5">
               <div className="flex items-center gap-2">
@@ -606,7 +605,7 @@ export default function PricingPage() {
                   Razorpay Secure Checkout
                 </h3>
               </div>
-              <button 
+              <button
                 onClick={() => setIsCheckoutOpen(false)}
                 disabled={checkoutLoading}
                 className="text-slate-400 hover:text-white font-bold text-xs"
@@ -616,7 +615,7 @@ export default function PricingPage() {
             </div>
 
             <form onSubmit={handleCheckoutSubmit} className="space-y-4 text-xs select-none">
-              
+
               {/* Plan Selected Summary */}
               <div className="bg-[#070814] p-4 rounded-xl border border-white/5 flex justify-between items-center">
                 <div>

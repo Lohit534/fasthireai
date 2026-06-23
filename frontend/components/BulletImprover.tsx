@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { extractActionVerbs } from "@/lib/ats/keywords";
@@ -72,6 +73,32 @@ export default function BulletImprover({ resumeText, jobDescription, onChange }:
 
   // 3. Request auto-improvement from Gemini
   const handleAutoImprove = async (bulletIdx: number, rawLine: string) => {
+    // Check if free user is attempting to use the Pro feature
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const credRes = await fetch("/api/credits");
+        let isFree = true;
+        if (credRes.ok) {
+          const creds = await credRes.json();
+          const storedPlan = localStorage.getItem(`fastHire_plan_${user.id}`) || "free";
+          if (creds.isOwner || storedPlan === "premium" || storedPlan === "promax" || creds.paidCredits > 0) {
+            isFree = false;
+          }
+        }
+        
+        if (isFree) {
+          toast.error("Auto-Improve is a Premium Pro/Pro Max feature. Redirecting to upgrades...");
+          setTimeout(() => {
+            window.location.href = "/dashboard/pricing";
+          }, 1500);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed checking user plan:", e);
+    }
+
     const { cleanText } = checkBullet(rawLine);
     
     setLoadingMap((prev) => ({ ...prev, [bulletIdx]: true }));

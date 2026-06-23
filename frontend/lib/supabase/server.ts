@@ -7,7 +7,13 @@ export function createClient(useServiceRole = false) {
     ? process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder-service-key"
     : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
 
-  if (supabaseUrl.includes("placeholder-project")) {
+  if (
+    supabaseUrl.includes("placeholder-project") || 
+    !supabaseKey || 
+    supabaseKey === "placeholder-anon-key" || 
+    supabaseKey === "placeholder-service-key" || 
+    supabaseKey.trim() === ""
+  ) {
     const mockUser = {
       id: "demo-user-id",
       email: "demo@fasthire.ai",

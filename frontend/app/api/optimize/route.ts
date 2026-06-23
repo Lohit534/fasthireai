@@ -8,6 +8,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
+import fs from "fs";
+import path from "path";
 import { scoreResume } from "@/lib/ats/scorer";
 import { buildOptimizationPrompt } from "@/lib/ai/prompts";
 import { callAI } from "@/lib/ai/router";
@@ -171,15 +173,57 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 8. Save resume record to Supabase
-    const { data: resumeRecord, error: resumeInsertErr } = await admin
-      .from("Resume")
-      .insert({
-        id: generateUUID(),
+    // 8. Save resume record to Supabase with fallback to local JSON file
+    const generatedId = generateUUID();
+    let resumeRecord: any = null;
+
+    try {
+      const { data, error: resumeInsertErr } = await admin
+        .from("Resume")
+        .insert({
+          id: generatedId,
+          userId: user.id,
+          originalText: resumeText,
+          jobDescription: jobDescription,
+          jobTitle: jobTitle || null,
+          company: company || null,
+          scoreBefore: scoreBefore.overall,
+          scoreAfter: scoreAfter.overall,
+          keywordsBefore: scoreBefore.foundKeywords.length,
+          keywordsAfter: scoreAfter.foundKeywords.length,
+          impactBefore: scoreBefore.impactBullets,
+          impactAfter: scoreAfter.impactBullets,
+          optimizedText: aiResult.resume,
+          keywordsAdded: aiResult.keywordsAdded,
+          createdAt: now.toISOString(),
+        })
+        .select()
+        .single();
+
+      if (resumeInsertErr) {
+        logger.error("[optimize] Resume insert failed:", resumeInsertErr.message);
+      } else {
+        resumeRecord = data;
+        logger.info(`[optimize] Resume saved: id=${resumeRecord?.id}`);
+      }
+    } catch (dbErr: any) {
+      logger.warn("[optimize] DB insert crashed, utilizing offline fallback:", dbErr.message);
+    }
+
+    // Write to local JSON file as backup/fallback
+    try {
+      const DATA_DIR = path.join(process.cwd(), "data");
+      const FILE_PATH = path.join(DATA_DIR, "resumes.json");
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+      const localResumes = fs.existsSync(FILE_PATH) ? JSON.parse(fs.readFileSync(FILE_PATH, "utf8") || "[]") : [];
+      const newRecord = {
+        id: resumeRecord?.id || generatedId,
         userId: user.id,
         originalText: resumeText,
         jobDescription: jobDescription,
-        jobTitle: jobTitle || null,
+        jobTitle: jobTitle || `${jobTitle || "Resume Optimization"}`,
         company: company || null,
         scoreBefore: scoreBefore.overall,
         scoreAfter: scoreAfter.overall,
@@ -190,15 +234,14 @@ export async function POST(request: NextRequest) {
         optimizedText: aiResult.resume,
         keywordsAdded: aiResult.keywordsAdded,
         createdAt: now.toISOString(),
-      })
-      .select()
-      .single();
-
-    if (resumeInsertErr) {
-      logger.error("[optimize] Resume insert failed:", resumeInsertErr.message);
-      // Still return success — the user got their optimization even if logging failed
-    } else {
-      logger.info(`[optimize] Resume saved: id=${resumeRecord?.id}`);
+      };
+      localResumes.unshift(newRecord);
+      fs.writeFileSync(FILE_PATH, JSON.stringify(localResumes, null, 2), "utf8");
+      if (!resumeRecord) {
+        resumeRecord = newRecord;
+      }
+    } catch (e: any) {
+      logger.warn("[optimize] Failed to write local resumes JSON backup:", e.message);
     }
 
     return NextResponse.json({

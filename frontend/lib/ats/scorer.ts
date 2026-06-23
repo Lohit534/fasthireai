@@ -27,7 +27,7 @@ async function callPythonScorer(resumeText: string, jobDescription: string): Pro
       job_description: jobDescription
     },
     {
-      timeout: 15000,
+      timeout: 3000,
       headers: {
         "Content-Type": "application/json"
       }

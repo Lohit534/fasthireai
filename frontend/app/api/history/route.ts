@@ -9,6 +9,12 @@ import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/logger";
 
+import fs from "fs";
+import path from "path";
+
+const DATA_DIR = path.join(process.cwd(), "data");
+const FILE_PATH = path.join(DATA_DIR, "resumes.json");
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = createClient();
@@ -18,19 +24,48 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const admin = getAdminClient() as any;
-    const { data, error } = await admin
-      .from("Resume")
-      .select("*")
-      .eq("userId", user.id)
-      .order("createdAt", { ascending: false });
-
-    if (error) {
-      logger.error("[history] Database select failed:", error.message);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    // 1. Fetch from database with fallback
+    let dbData: any[] = [];
+    try {
+      const admin = getAdminClient() as any;
+      const { data, error } = await admin
+        .from("Resume")
+        .select("*")
+        .eq("userId", user.id)
+        .order("createdAt", { ascending: false });
+      if (!error && data) {
+        dbData = data;
+      } else if (error) {
+        logger.warn("[history] DB fetch returned error:", error.message);
+      }
+    } catch (dbErr: any) {
+      logger.warn("[history] DB fetch crashed, using fallbacks:", dbErr.message);
     }
 
-    return NextResponse.json(data || []);
+    // 2. Fetch from local JSON file
+    let localData: any[] = [];
+    try {
+      if (fs.existsSync(FILE_PATH)) {
+        const fileContent = fs.readFileSync(FILE_PATH, "utf8");
+        const allResumes = JSON.parse(fileContent || "[]");
+        localData = allResumes.filter((r: any) => r.userId === user.id);
+      }
+    } catch (jsonErr: any) {
+      logger.warn("[history] Local JSON read failed:", jsonErr.message);
+    }
+
+    // 3. Merge and deduplicate by id
+    const combined = [...dbData];
+    for (const r of localData) {
+      if (!combined.some((dbR) => dbR.id === r.id)) {
+        combined.push(r);
+      }
+    }
+
+    // Sort by createdAt descending
+    combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return NextResponse.json(combined);
   } catch (error: any) {
     logger.error("[history] GET Unhandled error:", error?.message);
     return NextResponse.json(

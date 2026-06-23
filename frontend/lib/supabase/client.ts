@@ -4,7 +4,12 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
 
 export const createClient = () => {
-  if (supabaseUrl.includes("placeholder-project")) {
+  if (
+    supabaseUrl.includes("placeholder-project") || 
+    !supabaseAnonKey || 
+    supabaseAnonKey === "placeholder-anon-key" || 
+    supabaseAnonKey.trim() === ""
+  ) {
     const mockUser = {
       id: "demo-user-id",
       email: "demo@fasthire.ai",

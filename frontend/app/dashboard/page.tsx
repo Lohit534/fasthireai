@@ -11,6 +11,7 @@ import ScoreCard from "@/components/ScoreCard";
 import OptimizedResume from "@/components/OptimizedResume";
 import KeywordBadges from "@/components/KeywordBadges";
 import DownloadButtons from "@/components/DownloadButtons";
+import BulletImprover from "@/components/BulletImprover";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
@@ -411,6 +412,34 @@ export default function DashboardPage() {
                 )}
               </div>
             </div>
+
+            {/* Interactive Bullet Point Reviewer / Improver */}
+            <Card className="border-white/5 bg-[#0e0f21]/40 shadow-xl rounded-2xl overflow-hidden mt-6">
+              <CardContent className="p-6 space-y-4 text-slate-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-violet-400" />
+                    <h3 className="text-sm font-extrabold text-white">Interactive Bullet Point Improver</h3>
+                  </div>
+                  <Badge className="bg-violet-500/10 border-violet-500/20 text-violet-400 text-[10px] font-bold select-none px-2 py-0.5">
+                    Pro Feature
+                  </Badge>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed font-semibold">
+                  Scan and optimize individual bullet points on your original resume text. We identify missing action verbs and metrics.
+                </p>
+                <div className="bg-[#070814]/40 border border-white/5 p-4 rounded-xl">
+                  <BulletImprover
+                    resumeText={resumeText}
+                    jobDescription={jobDescription}
+                    onChange={(newText) => {
+                      setResumeText(newText);
+                      handleReScoreBefore(newText);
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Summary of Changes Done */}
             {optimizeResult?.summary && (
