@@ -19,6 +19,7 @@ export function getAdminClient() {
 
   if (!serviceKey || serviceKey === "placeholder-service-key" || serviceKey.trim() === "" || url.includes("placeholder-project")) {
     const chain: any = {
+      from: () => chain,
       select: () => chain,
       insert: () => chain,
       upsert: () => chain,
@@ -26,6 +27,7 @@ export function getAdminClient() {
       delete: () => chain,
       eq: () => chain,
       order: () => chain,
+      limit: () => chain,
       maybeSingle: async () => ({ data: null, error: null }),
       single: async () => ({ data: null, error: null }),
       then: (resolve: any) => resolve({ data: [], error: null }),
