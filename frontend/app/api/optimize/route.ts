@@ -50,7 +50,8 @@ export async function POST(request: NextRequest) {
     const admin = getAdminClient() as any;
     const now = new Date();
 
-    // Prevent duplicate email unique constraint violations if ID has changed
+    // Resolve user record ID in public.User to prevent email unique constraint violations or foreign key errors
+    let activeUserId = user.id;
     try {
       if (user.email) {
         const { data: existingUser } = await admin
@@ -59,31 +60,27 @@ export async function POST(request: NextRequest) {
           .eq("email", user.email.toLowerCase().trim())
           .maybeSingle();
 
-        if (existingUser && existingUser.id !== user.id) {
-          logger.info(`[optimize] Deleting stale user row for email ${user.email} with old ID ${existingUser.id}`);
-          await admin.from("User").delete().eq("id", existingUser.id);
+        if (existingUser) {
+          activeUserId = existingUser.id;
+          logger.info(`[optimize] Found existing User record for email ${user.email} with ID ${existingUser.id}. Reusing this ID.`);
+        } else {
+          // If the user doesn't exist, we insert a new record
+          logger.info(`[optimize] Creating new User record for email ${user.email} with ID ${user.id}`);
+          const { error: insertUserErr } = await admin
+            .from("User")
+            .insert({
+              id: user.id,
+              email: user.email.toLowerCase().trim(),
+              name: user.user_metadata?.full_name || null,
+              createdAt: now.toISOString(),
+            });
+          if (insertUserErr) {
+            logger.error("[optimize] Failed to insert new User record:", insertUserErr.message);
+          }
         }
       }
     } catch (e: any) {
-      logger.warn("[optimize] Failed checking for stale email user:", e.message);
-    }
-
-    // 3. Upsert User row
-    try {
-      const { error: upsertErr } = await admin
-        .from("User")
-        .upsert(
-          {
-            id: user.id,
-            email: user.email!,
-            name: user.user_metadata?.full_name || null,
-            createdAt: now.toISOString(),
-          },
-          { onConflict: "id", ignoreDuplicates: true }
-        );
-      if (upsertErr) throw upsertErr;
-    } catch (e: any) {
-      logger.error("[optimize] User upsert error:", e.message);
+      logger.error("[optimize] Error during User resolution/insertion:", e.message);
     }
 
     let freeUsed = 0;
@@ -95,14 +92,14 @@ export async function POST(request: NextRequest) {
       let { data: creditRow } = await admin
         .from("Credit")
         .select("*")
-        .eq("userId", user.id)
+        .eq("userId", activeUserId)
         .maybeSingle();
 
       if (!creditRow) {
         const { data: newCredit } = await admin
           .from("Credit")
           .insert({
-            userId: user.id,
+            userId: activeUserId,
             freeUsed: 0,
             paidCredits: 0,
             resetAt: now.toISOString(),
@@ -126,7 +123,7 @@ export async function POST(request: NextRequest) {
           await admin
             .from("Credit")
             .update({ freeUsed: 0, resetAt: now.toISOString() })
-            .eq("userId", user.id);
+            .eq("userId", activeUserId);
         }
 
         // 5. Enforce credit limits (non-owner only)
@@ -140,7 +137,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    logger.info(`[optimize] User: ${user.email} | freeUsed=${freeUsed} | paid=${paidCredits} | owner=${isOwner}`);
+    logger.info(`[optimize] User: ${user.email} | activeUserId=${activeUserId} | freeUsed=${freeUsed} | paid=${paidCredits} | owner=${isOwner}`);
 
     // 6. Core AI optimization pipeline
     const scoreBefore = await scoreResume(resumeText, jobDescription);
@@ -164,12 +161,12 @@ export async function POST(request: NextRequest) {
         await admin
           .from("Credit")
           .update({ freeUsed: freeUsed + 1 })
-          .eq("userId", user.id);
+          .eq("userId", activeUserId);
       } else {
         await admin
           .from("Credit")
           .update({ paidCredits: paidCredits - 1 })
-          .eq("userId", user.id);
+          .eq("userId", activeUserId);
       }
     }
 
@@ -182,7 +179,7 @@ export async function POST(request: NextRequest) {
         .from("Resume")
         .insert({
           id: generatedId,
-          userId: user.id,
+          userId: activeUserId,
           originalText: resumeText,
           jobDescription: jobDescription,
           jobTitle: jobTitle || null,
@@ -220,7 +217,7 @@ export async function POST(request: NextRequest) {
       const localResumes = fs.existsSync(FILE_PATH) ? JSON.parse(fs.readFileSync(FILE_PATH, "utf8") || "[]") : [];
       const newRecord = {
         id: resumeRecord?.id || generatedId,
-        userId: user.id,
+        userId: activeUserId,
         originalText: resumeText,
         jobDescription: jobDescription,
         jobTitle: jobTitle || `${jobTitle || "Resume Optimization"}`,

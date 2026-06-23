@@ -24,6 +24,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Resolve user record ID in public.User to prevent email unique ID mismatch
+    let activeUserId = user.id;
+    try {
+      if (user.email) {
+        const admin = getAdminClient() as any;
+        const { data: existingUser } = await admin
+          .from("User")
+          .select("id")
+          .eq("email", user.email.toLowerCase().trim())
+          .maybeSingle();
+
+        if (existingUser) {
+          activeUserId = existingUser.id;
+          logger.info(`[history] Found existing User record for email ${user.email} with ID ${existingUser.id}. Reusing this ID.`);
+        }
+      }
+    } catch (e: any) {
+      logger.warn("[history] Failed to resolve user ID by email:", e.message);
+    }
+
     // 1. Fetch from database with fallback
     let dbData: any[] = [];
     try {
@@ -31,7 +51,7 @@ export async function GET(request: NextRequest) {
       const { data, error } = await admin
         .from("Resume")
         .select("*")
-        .eq("userId", user.id)
+        .eq("userId", activeUserId)
         .order("createdAt", { ascending: false });
       if (!error && data) {
         dbData = data;
@@ -48,7 +68,7 @@ export async function GET(request: NextRequest) {
       if (fs.existsSync(FILE_PATH)) {
         const fileContent = fs.readFileSync(FILE_PATH, "utf8");
         const allResumes = JSON.parse(fileContent || "[]");
-        localData = allResumes.filter((r: any) => r.userId === user.id);
+        localData = allResumes.filter((r: any) => r.userId === activeUserId || r.userId === user.id);
       }
     } catch (jsonErr: any) {
       logger.warn("[history] Local JSON read failed:", jsonErr.message);

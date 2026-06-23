@@ -37,7 +37,8 @@ export async function GET(request: NextRequest) {
     const admin = getAdminClient() as any;
     const now = new Date();
 
-    // Prevent duplicate email unique constraint violations if ID has changed
+    // Resolve user record ID in public.User to prevent email unique constraint violations or foreign key errors
+    let activeUserId = user.id;
     try {
       if (user.email) {
         const { data: existingUser } = await admin
@@ -46,37 +47,34 @@ export async function GET(request: NextRequest) {
           .eq("email", user.email.toLowerCase().trim())
           .maybeSingle();
 
-        if (existingUser && existingUser.id !== user.id) {
-          logger.info(`[credits] Deleting stale user row for email ${user.email} with old ID ${existingUser.id}`);
-          await admin.from("User").delete().eq("id", existingUser.id);
+        if (existingUser) {
+          activeUserId = existingUser.id;
+          logger.info(`[credits] Found existing User record for email ${user.email} with ID ${existingUser.id}. Reusing this ID.`);
+        } else {
+          // If the user doesn't exist, we insert a new record
+          logger.info(`[credits] Creating new User record for email ${user.email} with ID ${user.id}`);
+          const { error: insertUserErr } = await admin
+            .from("User")
+            .insert({
+              id: user.id,
+              email: user.email.toLowerCase().trim(),
+              name: user.user_metadata?.full_name || null,
+              createdAt: now.toISOString(),
+            });
+          if (insertUserErr) {
+            logger.error("[credits] Failed to insert new User record:", insertUserErr.message);
+          }
         }
       }
     } catch (e: any) {
-      logger.warn("[credits] Failed checking for stale email user:", e.message);
-    }
-
-    // 2. Upsert User row (Credit table is separate)
-    const { error: upsertUserErr } = await admin
-      .from("User")
-      .upsert(
-        {
-          id: user.id,
-          email: user.email!,
-          name: user.user_metadata?.full_name || null,
-          createdAt: now.toISOString(),
-        },
-        { onConflict: "id", ignoreDuplicates: true }
-      );
-
-    if (upsertUserErr) {
-      logger.warn("[credits] User upsert warning:", upsertUserErr.message);
+      logger.error("[credits] Error during User resolution/insertion:", e.message);
     }
 
     // 3. Fetch or create Credit row
     let { data: creditRow, error: creditFetchErr } = await admin
       .from("Credit")
       .select("*")
-      .eq("userId", user.id)
+      .eq("userId", activeUserId)
       .maybeSingle();
 
     if (creditFetchErr) {
@@ -88,7 +86,7 @@ export async function GET(request: NextRequest) {
       const { data: newCredit, error: createErr } = await admin
         .from("Credit")
         .insert({
-          userId: user.id,
+          userId: activeUserId,
           freeUsed: 0,
           paidCredits: 0,
           resetAt: now.toISOString(),
@@ -124,7 +122,7 @@ export async function GET(request: NextRequest) {
       await admin
         .from("Credit")
         .update({ freeUsed: 0, resetAt: now.toISOString() })
-        .eq("userId", user.id);
+        .eq("userId", activeUserId);
     }
 
     return NextResponse.json({
