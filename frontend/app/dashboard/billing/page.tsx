@@ -82,6 +82,10 @@ export default function BillingPage() {
             if (res.ok) {
               const apiCredits = await res.json();
               setCredits(apiCredits);
+              if (apiCredits.isFirst50) {
+                localStorage.setItem(`fastHire_plan_${user.id}`, "premium");
+                setActivePlan("premium");
+              }
             } else {
               setCredits({
                 freeUsed: 0,

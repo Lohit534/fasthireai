@@ -70,6 +70,19 @@ export async function GET(request: NextRequest) {
       logger.error("[credits] Error during User resolution/insertion:", e.message);
     }
 
+    // Determine if user is in the first 50 users (sorted by createdAt)
+    let isFirst50 = false;
+    try {
+      const { data: first50Users } = await admin
+        .from("User")
+        .select("id")
+        .order("createdAt", { ascending: true })
+        .limit(50);
+      isFirst50 = first50Users?.some((u: any) => u.id === activeUserId) || false;
+    } catch (e: any) {
+      logger.warn("[credits] Failed checking first 50 users list:", e.message);
+    }
+
     // 3. Fetch or create Credit row
     let { data: creditRow, error: creditFetchErr } = await admin
       .from("Credit")
@@ -88,7 +101,7 @@ export async function GET(request: NextRequest) {
         .insert({
           userId: activeUserId,
           freeUsed: 0,
-          paidCredits: 0,
+          paidCredits: isFirst50 ? 15 : 0,
           resetAt: now.toISOString(),
         })
         .select()
@@ -103,15 +116,27 @@ export async function GET(request: NextRequest) {
           freeRemaining: FREE_CREDITS_PER_MONTH,
           resetAt: now.toISOString(),
           isOwner: false,
+          isFirst50: false,
         });
       }
       creditRow = newCredit;
+    } else if (isFirst50 && creditRow.paidCredits < 15) {
+      // Auto-upgrade free tier credits to Premium plan credits for first 50 users
+      const { data: updatedCredit } = await admin
+        .from("Credit")
+        .update({ paidCredits: 15 })
+        .eq("userId", activeUserId)
+        .select()
+        .single();
+      if (updatedCredit) {
+        creditRow = updatedCredit;
+      }
     }
 
     // 4. Monthly reset check
     const resetAt = new Date(creditRow.resetAt);
     let freeUsed = creditRow.freeUsed;
-    const paidCredits = creditRow.paidCredits;
+    let paidCredits = creditRow.paidCredits;
 
     const isNewMonth =
       now.getMonth() !== resetAt.getMonth() ||
@@ -119,18 +144,24 @@ export async function GET(request: NextRequest) {
 
     if (isNewMonth) {
       freeUsed = 0;
+      paidCredits = isFirst50 ? 15 : creditRow.paidCredits;
       await admin
         .from("Credit")
-        .update({ freeUsed: 0, resetAt: now.toISOString() })
+        .update({ 
+          freeUsed: 0, 
+          paidCredits: paidCredits, 
+          resetAt: now.toISOString() 
+        })
         .eq("userId", activeUserId);
     }
 
     return NextResponse.json({
       freeUsed,
       paidCredits,
-      freeRemaining: Math.max(0, FREE_CREDITS_PER_MONTH - freeUsed),
+      freeRemaining: Math.max(0, (isFirst50 ? 15 : FREE_CREDITS_PER_MONTH) - freeUsed),
       resetAt: isNewMonth ? now.toISOString() : creditRow.resetAt,
       isOwner: false,
+      isFirst50: isFirst50,
     });
   } catch (error: any) {
     logger.error("[credits] GET Unhandled error:", error?.message);

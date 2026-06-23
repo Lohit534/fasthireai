@@ -68,12 +68,16 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
   // Fetch credits
   useEffect(() => {
     if (!user) return;
+    const userId = user.id;
     async function fetchCredits() {
       try {
         const res = await fetch("/api/credits");
         if (res.ok) {
           const data = await res.json();
           setCredits(data);
+          if (data.isFirst50 && userId) {
+            localStorage.setItem(`fastHire_plan_${userId}`, "premium");
+          }
         }
       } catch (err) {
         // Silently catch
@@ -295,16 +299,14 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                           <HelpCircle className="h-4 w-4 text-slate-400" />
                           Help &amp; Support
                         </button>
-                        <button
-                          onClick={() => {
-                            setIsDropdownOpen(false);
-                            window.dispatchEvent(new CustomEvent("open-support-chatbot", { detail: { mode: "admin" } }));
-                          }}
+                        <a
+                          href="mailto:lohithpeyyala@gmail.com?subject=FastHire-AI%20Feedback"
+                          onClick={() => setIsDropdownOpen(false)}
                           className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left cursor-pointer"
                         >
                           <MessageSquare className="h-4 w-4 text-slate-400" />
                           Feedback
-                        </button>
+                        </a>
                         <Link
                           href="/privacy"
                           onClick={() => setIsDropdownOpen(false)}

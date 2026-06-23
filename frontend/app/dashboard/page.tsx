@@ -469,27 +469,6 @@ export default function DashboardPage() {
               </Card>
             )}
 
-            {/* Feedback Email Card */}
-            <Card className="border-white/5 bg-[#0e0f21]/40 shadow-xl rounded-2xl overflow-hidden mt-6">
-              <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="space-y-1.5 text-left flex-1">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-violet-400" />
-                    <h3 className="text-sm font-extrabold text-white">Help Us Improve FastHire-AI</h3>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed font-semibold">
-                    Have feedback or questions? Send an email directly to our owner at <span className="text-violet-400 font-bold">lohithpeyyala@gmail.com</span>. We'd love to hear your thoughts!
-                  </p>
-                </div>
-                <a
-                  href="mailto:lohithpeyyala@gmail.com?subject=FastHire-AI%20Feedback%20%26%20Support"
-                  className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-10 px-6 rounded-xl shadow-lg shadow-violet-600/10 transition-all flex items-center justify-center text-xs shrink-0 select-none cursor-pointer"
-                >
-                  Send Email Feedback
-                </a>
-              </CardContent>
-            </Card>
-
           </div>
 
         ) : (
@@ -593,27 +572,6 @@ export default function DashboardPage() {
                 )}
               </Button>
             </div>
-
-            {/* Feedback Email Card */}
-            <Card className="border-white/5 bg-[#0b0c1a]/60 shadow-xl rounded-2xl overflow-hidden mt-6">
-              <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="space-y-1.5 text-left flex-1">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-violet-400" />
-                    <h3 className="text-sm font-extrabold text-white">Help Us Improve FastHire-AI</h3>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed font-semibold">
-                    Have feedback or questions? Send an email directly to our owner at <span className="text-violet-400 font-bold">lohithpeyyala@gmail.com</span>. We'd love to hear your thoughts!
-                  </p>
-                </div>
-                <a
-                  href="mailto:lohithpeyyala@gmail.com?subject=FastHire-AI%20Feedback%20%26%20Support"
-                  className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-10 px-6 rounded-xl shadow-lg shadow-violet-600/10 transition-all flex items-center justify-center text-xs shrink-0 select-none cursor-pointer"
-                >
-                  Send Email Feedback
-                </a>
-              </CardContent>
-            </Card>
 
             {/* Dashboard Footer Feature badges */}
             <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 pt-6 text-[10px] text-slate-500 font-bold uppercase tracking-wider select-none">

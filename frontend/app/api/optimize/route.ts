@@ -95,18 +95,42 @@ export async function POST(request: NextRequest) {
         .eq("userId", activeUserId)
         .maybeSingle();
 
+      // Check if user is in the first 50 users (sorted by createdAt)
+      let isFirst50 = false;
+      try {
+        const { data: first50Users } = await admin
+          .from("User")
+          .select("id")
+          .order("createdAt", { ascending: true })
+          .limit(50);
+        isFirst50 = first50Users?.some((u: any) => u.id === activeUserId) || false;
+      } catch (e: any) {
+        logger.warn("[optimize] Failed checking first 50 users list:", e.message);
+      }
+
       if (!creditRow) {
         const { data: newCredit } = await admin
           .from("Credit")
           .insert({
             userId: activeUserId,
             freeUsed: 0,
-            paidCredits: 0,
+            paidCredits: isFirst50 ? 15 : 0,
             resetAt: now.toISOString(),
           })
           .select()
           .single();
         creditRow = newCredit;
+      } else if (isFirst50 && creditRow.paidCredits < 15) {
+        // Auto-upgrade free tier credits to Premium plan credits for first 50 users
+        const { data: updatedCredit } = await admin
+          .from("Credit")
+          .update({ paidCredits: 15 })
+          .eq("userId", activeUserId)
+          .select()
+          .single();
+        if (updatedCredit) {
+          creditRow = updatedCredit;
+        }
       }
 
       if (creditRow) {
@@ -117,17 +141,21 @@ export async function POST(request: NextRequest) {
           now.getFullYear() !== resetAt.getFullYear();
 
         freeUsed = isNewMonth ? 0 : creditRow.freeUsed;
-        paidCredits = creditRow.paidCredits;
+        paidCredits = isNewMonth ? (isFirst50 ? 15 : creditRow.paidCredits) : creditRow.paidCredits;
 
         if (isNewMonth) {
           await admin
             .from("Credit")
-            .update({ freeUsed: 0, resetAt: now.toISOString() })
+            .update({ 
+              freeUsed: 0, 
+              paidCredits: paidCredits, 
+              resetAt: now.toISOString() 
+            })
             .eq("userId", activeUserId);
         }
 
         // 5. Enforce credit limits (non-owner only)
-        const freeRemaining = Math.max(0, FREE_CREDITS_PER_MONTH - freeUsed);
+        const freeRemaining = Math.max(0, (isFirst50 ? 15 : FREE_CREDITS_PER_MONTH) - freeUsed);
         if (freeRemaining <= 0 && paidCredits <= 0) {
           return NextResponse.json(
             { error: "Free limit reached. Upgrade to continue." },
