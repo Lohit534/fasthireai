@@ -13,6 +13,7 @@ import { buildOptimizationPrompt } from "@/lib/ai/prompts";
 import { callAI } from "@/lib/ai/router";
 import { MIN_RESUME_CHARS, MIN_JD_CHARS, FREE_CREDITS_PER_MONTH, isOwnerEmail } from "@/types";
 import { logger } from "@/lib/logger";
+import { generateUUID } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -174,6 +175,7 @@ export async function POST(request: NextRequest) {
     const { data: resumeRecord, error: resumeInsertErr } = await admin
       .from("Resume")
       .insert({
+        id: generateUUID(),
         userId: user.id,
         originalText: resumeText,
         jobDescription: jobDescription,

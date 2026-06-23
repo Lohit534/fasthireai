@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useResumeStore } from "@/store/useResumeStore";
+import { generateUUID } from "@/lib/utils";
 import { supabase } from "@/lib/supabase/client";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -338,6 +339,7 @@ export default function ResumeBuilderPage() {
         const { error } = await supabase
           .from("Resume")
           .insert({
+            id: generateUUID(),
             userId: user.id,
             originalText: finalMarkdown,
             optimizedText: finalMarkdown,

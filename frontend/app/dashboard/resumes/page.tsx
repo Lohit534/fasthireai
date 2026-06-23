@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ResumeRecord } from "@/types";
 import { logger } from "@/lib/logger";
-import { formatDate } from "@/lib/utils";
+import { formatDate, generateUUID } from "@/lib/utils";
 import { 
   Loader2, 
   ArrowLeft, 
@@ -375,6 +375,7 @@ export default function ResumesPage() {
       const { data, error } = await supabase
         .from("Resume")
         .insert({
+          id: generateUUID(),
           userId: userId,
           originalText: defaultText,
           optimizedText: defaultText,
