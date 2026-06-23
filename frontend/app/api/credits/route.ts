@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
     let paidCredits = 0;
     if (planId === "premium") {
       paidCredits = 15;
-    } else if (planId === "team") {
+    } else if (planId === "team" || planId === "promax") {
       paidCredits = 999999;
     }
 

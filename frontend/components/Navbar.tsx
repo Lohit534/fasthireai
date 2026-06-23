@@ -276,9 +276,9 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                         <button
                           onClick={() => {
                             setIsDropdownOpen(false);
-                            toast.success("Help and support overlay loaded.");
+                            window.dispatchEvent(new CustomEvent("open-support-chatbot", { detail: { mode: "ai" } }));
                           }}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left"
+                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left cursor-pointer"
                         >
                           <HelpCircle className="h-4 w-4 text-slate-400" />
                           Help &amp; Support
@@ -286,23 +286,21 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                         <button
                           onClick={() => {
                             setIsDropdownOpen(false);
-                            toast.success("Feedback submitted!");
+                            window.dispatchEvent(new CustomEvent("open-support-chatbot", { detail: { mode: "admin" } }));
                           }}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left"
+                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left cursor-pointer"
                         >
                           <MessageSquare className="h-4 w-4 text-slate-400" />
                           Feedback
                         </button>
-                        <button
-                          onClick={() => {
-                            setIsDropdownOpen(false);
-                            toast.success("Data preferences loaded.");
-                          }}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left"
+                        <Link
+                          href="/privacy"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
                         >
                           <Lock className="h-4 w-4 text-slate-400" />
                           Data Preferences
-                        </button>
+                        </Link>
                       </div>
 
                       {/* Divider */}

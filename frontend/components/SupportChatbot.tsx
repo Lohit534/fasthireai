@@ -70,48 +70,64 @@ export default function SupportChatbot() {
   }, [aiHistory, adminTickets, isOpen, mode]);
 
   // Load User Authentication & Plan details
-  useEffect(() => {
-    async function loadUserData() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          setUserId(user.id);
-          setUserEmail(user.email ?? null);
-          
-          // Fetch backend credits
-          const credRes = await fetch("/api/credits");
-          if (credRes.ok) {
-            const creds: UserCreditsInfo = await credRes.json();
-            setRawCredits(creds);
+  const loadUserData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+        setUserEmail(user.email ?? null);
+        
+        // Fetch backend credits
+        const credRes = await fetch("/api/credits");
+        if (credRes.ok) {
+          const creds: UserCreditsInfo = await credRes.json();
+          setRawCredits(creds);
 
-            // Fetch stored plan ID
-            const planId = localStorage.getItem(`fastHire_plan_${user.id}`) || "free";
-            
-            // Map plan name and credits
-            if (creds.isOwner) {
-              setActivePlan(`Owner (${planId === "promax" ? "Pro Max" : planId === "premium" ? "Premium Pro" : "Free"})`);
-              setRemainingCredits("Unlimited");
-            } else if (planId === "promax" || creds.paidCredits >= 99999) {
-              setActivePlan("Pro Max");
-              setRemainingCredits("Unlimited");
-            } else if (planId === "premium") {
-              setActivePlan("Premium Pro");
-              setRemainingCredits(`${creds.paidCredits} Credits`);
-            } else {
-              setActivePlan("Free Tier");
-              setRemainingCredits(`${creds.freeRemaining} Credits`);
-            }
+          // Fetch stored plan ID
+          const planId = localStorage.getItem(`fastHire_plan_${user.id}`) || "free";
+          
+          // Map plan name and credits
+          if (creds.isOwner) {
+            setActivePlan(`Owner (${planId === "promax" ? "Pro Max" : planId === "premium" ? "Premium Pro" : "Free"})`);
+            setRemainingCredits("Unlimited");
+          } else if (planId === "promax" || creds.paidCredits >= 99999) {
+            setActivePlan("Pro Max");
+            setRemainingCredits("Unlimited");
+          } else if (planId === "premium") {
+            setActivePlan("Premium Pro");
+            setRemainingCredits(`${creds.paidCredits} Credits`);
+          } else {
+            setActivePlan("Free Tier");
+            setRemainingCredits(`${creds.freeRemaining} Credits`);
           }
         }
-      } catch (err) {
-        console.error("Failed to load user credentials for support bot:", err);
       }
+    } catch (err) {
+      console.error("Failed to load user credentials for support bot:", err);
     }
+  };
 
+  useEffect(() => {
     if (isOpen) {
       loadUserData();
     }
   }, [isOpen]);
+
+  // Custom Event Listener to trigger support chatbot externally (e.g. from Navbar profile links)
+  useEffect(() => {
+    const handleOpenChat = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const targetMode = customEvent.detail?.mode || "ai";
+      setIsOpen(true);
+      setMode(targetMode);
+      loadUserData();
+    };
+
+    window.addEventListener("open-support-chatbot", handleOpenChat as any);
+    return () => {
+      window.removeEventListener("open-support-chatbot", handleOpenChat as any);
+    };
+  }, []);
 
   // Load human admin support tickets
   const loadAdminTickets = async () => {
@@ -121,7 +137,6 @@ export default function SupportChatbot() {
       const res = await fetch("/api/support/messages");
       if (res.ok) {
         const data = await res.json();
-        // Sort tickets by oldest/newest appropriately
         setAdminTickets(data.reverse()); // Show newest at the bottom
       }
     } catch (err) {
@@ -141,6 +156,27 @@ export default function SupportChatbot() {
     e.preventDefault();
     if (!inputText.trim()) return;
 
+    // Check plan constraints before sending
+    const isFree = activePlan.includes("Free Tier");
+    const isPremium = activePlan.includes("Premium Pro");
+    const isProMax = activePlan.includes("Pro Max") || activePlan.toLowerCase().includes("owner");
+
+    if (isFree) {
+      toast.error("Support Chatbot is a premium benefit. Redirecting to upgrades page...");
+      setTimeout(() => {
+        window.location.href = "/dashboard/pricing";
+      }, 1500);
+      return;
+    }
+
+    if (mode === "admin" && !isProMax) {
+      toast.error("Direct messaging to the Admin is a Pro Max exclusive benefit. Redirecting to upgrades...");
+      setTimeout(() => {
+        window.location.href = "/dashboard/pricing";
+      }, 1500);
+      return;
+    }
+
     const userMsg = inputText.trim();
     setInputText("");
 
@@ -159,6 +195,7 @@ export default function SupportChatbot() {
         if (res.ok) {
           const data = await res.json();
           setAiHistory(prev => [...prev, { sender: "ai", text: data.answer, timestamp: new Date() }]);
+          loadUserData(); // Auto refresh plan / credits
         } else {
           setAiHistory(prev => [...prev, { 
             sender: "ai", 
@@ -191,7 +228,6 @@ export default function SupportChatbot() {
 
         if (res.ok) {
           toast.success("Message logged for the FastHire-AI Admin.");
-          // Reload tickets
           await loadAdminTickets();
         } else {
           toast.error("Failed to send support ticket.");
@@ -268,8 +304,18 @@ export default function SupportChatbot() {
           {/* Mode Switch Toggle Selector */}
           <div className="px-4 py-2 border-b border-white/5 bg-[#0e0f21]/20 flex gap-2">
             <button
-              onClick={() => setMode("ai")}
-              className={`flex-1 py-1 px-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 border ${
+              onClick={() => {
+                if (activePlan.includes("Free Tier")) {
+                  toast.error("AI Support Assistant is a premium benefit. Redirecting to upgrades...");
+                  setTimeout(() => {
+                    window.location.href = "/dashboard/pricing";
+                  }, 1500);
+                  return;
+                }
+                setMode("ai");
+                loadUserData(); // Auto refresh only for AI Assistant!
+              }}
+              className={`flex-1 py-1 px-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 border cursor-pointer ${
                 mode === "ai"
                   ? "bg-violet-600/10 border-violet-500/25 text-violet-400 font-bold"
                   : "bg-transparent border-transparent text-slate-400 hover:text-slate-200"
@@ -279,8 +325,24 @@ export default function SupportChatbot() {
               AI Assistant
             </button>
             <button
-              onClick={() => setMode("admin")}
-              className={`flex-1 py-1 px-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 border ${
+              onClick={() => {
+                if (activePlan.includes("Free Tier")) {
+                  toast.error("Support Chatbot is a premium benefit. Redirecting to upgrades...");
+                  setTimeout(() => {
+                    window.location.href = "/dashboard/pricing";
+                  }, 1500);
+                  return;
+                }
+                if (!activePlan.includes("Pro Max") && !activePlan.toLowerCase().includes("owner")) {
+                  toast.error("Direct Admin Messaging is a Pro Max exclusive benefit. Redirecting to upgrades...");
+                  setTimeout(() => {
+                    window.location.href = "/dashboard/pricing";
+                  }, 1500);
+                  return;
+                }
+                setMode("admin");
+              }}
+              className={`flex-1 py-1 px-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 border cursor-pointer ${
                 mode === "admin"
                   ? "bg-violet-600/10 border-violet-500/25 text-violet-400 font-bold"
                   : "bg-transparent border-transparent text-slate-400 hover:text-slate-200"
