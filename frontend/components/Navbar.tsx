@@ -135,7 +135,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
           {/* Left: Brand logo */}
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2 group select-none">
-              <Briefcase className="h-5 w-5 text-violet-500 group-hover:text-violet-400 transition-colors" />
+              <img src="/logo.png" alt="FastHire Logo" className="h-5 w-5 rounded-full object-cover group-hover:scale-105 transition-transform" />
               <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
                 FastHire
               </span>

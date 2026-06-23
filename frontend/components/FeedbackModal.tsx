@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Sparkles, Lightbulb, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,62 +16,24 @@ type FeedbackType = "bug" | "feature" | "improvement" | "general";
 export default function FeedbackModal({ isOpen, onClose, userEmail }: FeedbackModalProps) {
   const [selectedType, setSelectedType] = useState<FeedbackType>("general");
   const [feedbackText, setFeedbackText] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    if (userEmail) {
+      setName(userEmail.split("@")[0]);
+      setEmail(userEmail);
+    }
+  }, [userEmail]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!feedbackText.trim()) return;
-
-    const typeLabels = {
-      bug: "Bug / Problem 🐛",
-      feature: "Feature Request ✨",
-      improvement: "Improvement 💡",
-      general: "General Feedback 💬",
-    };
-
-    const subject = encodeURIComponent(`FastHire-AI Feedback - ${typeLabels[selectedType]}`);
-    const body = encodeURIComponent(
-      `Feedback Type: ${typeLabels[selectedType]}\n` +
-      `User Email: ${userEmail || "Anonymous/Not logged in"}\n\n` +
-      `Message:\n${feedbackText.trim()}\n\n` +
-      `Sent from FastHire-AI Dashboard`
-    );
-
-    // Open native email client
-    window.location.href = `mailto:lohithpeyyala@gmail.com?subject=${subject}&body=${body}`;
-    
-    // Reset and close
-    setFeedbackText("");
-    onClose();
+  const typeLabels = {
+    bug: "Bug / Problem 🐛",
+    feature: "Feature Request ✨",
+    improvement: "Improvement 💡",
+    general: "General Feedback 💬",
   };
-
-  const types = [
-    {
-      id: "bug" as FeedbackType,
-      title: "Bug / Problem",
-      desc: "A specific bug or something broken",
-      icon: <span className="text-xl">🐛</span>,
-    },
-    {
-      id: "feature" as FeedbackType,
-      title: "Feature request",
-      desc: "Something new you wish existed",
-      icon: <Sparkles className="h-5 w-5 text-amber-400" />,
-    },
-    {
-      id: "improvement" as FeedbackType,
-      title: "Improvement",
-      desc: "Something that works but could be better",
-      icon: <Lightbulb className="h-5 w-5 text-yellow-400" />,
-    },
-    {
-      id: "general" as FeedbackType,
-      title: "General",
-      desc: "Anything else on your mind",
-      icon: <MessageSquare className="h-5 w-5 text-blue-400" />,
-    },
-  ];
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -85,18 +47,92 @@ export default function FeedbackModal({ isOpen, onClose, userEmail }: FeedbackMo
           </div>
           <button
             onClick={onClose}
+            type="button"
             className="h-8 w-8 rounded-full border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition-colors focus:outline-none"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form 
+          action="https://formsubmit.co/lohithpeyyala@gmail.com" 
+          method="POST" 
+          target="_blank"
+          onSubmit={() => {
+            // Close modal immediately and clear text
+            setTimeout(() => {
+              setFeedbackText("");
+              onClose();
+            }, 200);
+          }}
+          className="p-6 space-y-6"
+        >
+          {/* FormSubmit Configuration Fields */}
+          <input type="hidden" name="_subject" value={`FastHire-AI Feedback - ${typeLabels[selectedType]}`} />
+          <input type="hidden" name="_captcha" value="false" />
+          <input type="hidden" name="Feedback Type" value={typeLabels[selectedType]} />
+          {typeof window !== "undefined" && (
+            <input type="hidden" name="_next" value={window.location.origin + "/dashboard"} />
+          )}
+
+          {/* User Details Grid */}
+          <div className="grid grid-cols-2 gap-3.5">
+            <div className="space-y-1.5 text-left">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Your Name</label>
+              <input
+                type="text"
+                name="name"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Alex"
+                className="w-full h-10 bg-[#070814] border border-white/5 text-white text-xs focus:border-violet-500 focus:ring-violet-500 rounded-xl px-3 focus:outline-none"
+              />
+            </div>
+            <div className="space-y-1.5 text-left">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Your Email</label>
+              <input
+                type="email"
+                name="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="e.g. alex@example.com"
+                className="w-full h-10 bg-[#070814] border border-white/5 text-white text-xs focus:border-violet-500 focus:ring-violet-500 rounded-xl px-3 focus:outline-none"
+              />
+            </div>
+          </div>
+
           {/* Categories Grid */}
           <div className="space-y-3">
             <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">What kind of feedback?</h3>
             <div className="grid grid-cols-2 gap-3.5">
-              {types.map((t) => {
+              {[
+                {
+                  id: "bug" as FeedbackType,
+                  title: "Bug / Problem",
+                  desc: "A specific bug or something broken",
+                  icon: <span className="text-xl">🐛</span>,
+                },
+                {
+                  id: "feature" as FeedbackType,
+                  title: "Feature request",
+                  desc: "Something new you wish existed",
+                  icon: <Sparkles className="h-5 w-5 text-amber-400" />,
+                },
+                {
+                  id: "improvement" as FeedbackType,
+                  title: "Improvement",
+                  desc: "Something that works but could be better",
+                  icon: <Lightbulb className="h-5 w-5 text-yellow-400" />,
+                },
+                {
+                  id: "general" as FeedbackType,
+                  title: "General",
+                  desc: "Anything else on your mind",
+                  icon: <MessageSquare className="h-5 w-5 text-blue-400" />,
+                },
+              ].map((t) => {
                 const isSelected = selectedType === t.id;
                 return (
                   <button
@@ -126,6 +162,7 @@ export default function FeedbackModal({ isOpen, onClose, userEmail }: FeedbackMo
           <div className="space-y-2">
             <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tell us more</h3>
             <Textarea
+              name="message"
               placeholder="Found a bug? Want a new feature? Something could be better? Tell us — we read every message."
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
@@ -148,7 +185,7 @@ export default function FeedbackModal({ isOpen, onClose, userEmail }: FeedbackMo
               </Button>
               <Button
                 type="submit"
-                disabled={!feedbackText.trim()}
+                disabled={!feedbackText.trim() || !name.trim() || !email.trim()}
                 className="h-10 px-8 rounded-full bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold shadow-lg shadow-violet-600/10"
               >
                 Send feedback
