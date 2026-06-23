@@ -133,6 +133,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    if (!creditRow) {
+      return NextResponse.json({
+        freeUsed: 0,
+        paidCredits: 0,
+        freeRemaining: FREE_CREDITS_PER_MONTH,
+        resetAt: now.toISOString(),
+        isOwner: false,
+        isFirst50: false,
+      });
+    }
+
     // 4. Monthly reset check
     const resetAt = new Date(creditRow.resetAt);
     let freeUsed = creditRow.freeUsed;
