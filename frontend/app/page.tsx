@@ -202,38 +202,34 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center max-w-3xl mx-auto">
-            {/* Before */}
-            <div className="border border-red-500/15 bg-[#1a0707]/40 rounded-2xl p-6 text-center space-y-4">
-              <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-red-400 border border-red-500/20 bg-red-500/10 px-3 py-1 rounded-full">
-                Unoptimized Resume
-              </span>
-              <div className="flex items-center justify-center h-28 w-28 rounded-full border-4 border-red-500/20 bg-red-500/5 mx-auto">
+          {/* Side-by-side circles */}
+          <div className="flex flex-row items-center justify-center gap-8 md:gap-16">
+            {/* Before circle */}
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex items-center justify-center h-32 w-32 rounded-full border-4 border-red-500/30 bg-red-500/8 shadow-lg shadow-red-500/10">
                 <span className="text-5xl font-black text-red-500">34</span>
               </div>
-              <p className="text-xs text-slate-500 font-medium">Action verbs weak · 14 keywords missing · Low ATS pass rate</p>
+              <p className="text-xs text-slate-500 font-semibold text-center">Before · 14 keywords missing</p>
             </div>
 
-            {/* Arrow */}
-            <div className="hidden md:flex flex-col items-center gap-2">
-              <div className="h-px w-full bg-gradient-to-r from-red-500/20 via-cyan-500/40 to-emerald-500/20" />
-              <span className="text-xs font-black text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 rounded-full">⚡ AI Optimizes</span>
-              <div className="h-px w-full bg-gradient-to-r from-red-500/20 via-cyan-500/40 to-emerald-500/20" />
+            {/* Connector arrow */}
+            <div className="flex flex-col items-center gap-2 shrink-0">
+              <div className="h-px w-12 md:w-20 bg-gradient-to-r from-red-500/30 to-cyan-500/30" />
+              <span className="text-[9px] font-black text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1 rounded-full whitespace-nowrap">⚡ AI</span>
+              <div className="h-px w-12 md:w-20 bg-gradient-to-r from-cyan-500/30 to-emerald-500/30" />
             </div>
 
-            {/* After */}
-            <div className="border border-emerald-500/15 bg-[#071a0e]/40 rounded-2xl p-6 text-center space-y-4">
-              <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-emerald-400 border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 rounded-full">
-                FastHire Optimized
-              </span>
-              <div className="flex items-center justify-center h-28 w-28 rounded-full border-4 border-emerald-500/20 bg-emerald-500/5 mx-auto">
+            {/* After circle */}
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex items-center justify-center h-32 w-32 rounded-full border-4 border-emerald-500/30 bg-emerald-500/8 shadow-lg shadow-emerald-500/10">
                 <span className="text-5xl font-black text-emerald-400">91</span>
               </div>
-              <p className="text-xs text-slate-500 font-medium">Strong keyword alignment · Impact metrics added · ATS-ready ✓</p>
+              <p className="text-xs text-slate-500 font-semibold text-center">After · ATS-ready ✓</p>
             </div>
           </div>
         </div>
       </section>
+
 
       {/* ── HOW IT WORKS ────────────────────────────────────────── */}
       <section className="py-20 border-b border-white/5">
@@ -344,21 +340,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      {/* ── FOOTER ──────────────────────────────────────────────── */}
-      <footer className="bg-[#040d1a] border-t border-white/5 py-8">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-600">
-          <div className="flex items-center gap-2 font-bold text-slate-500">
-            <Zap className="h-3.5 w-3.5 text-cyan-500" />
-            FastHire AI © 2026. All rights reserved.
-          </div>
-          <div className="flex gap-5 font-semibold text-slate-500">
-            <Link href="/privacy" className="hover:text-cyan-400 transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-cyan-400 transition-colors">Terms of Service</Link>
-            <Link href="/auth/login" className="hover:text-cyan-400 transition-colors">Sign In</Link>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
