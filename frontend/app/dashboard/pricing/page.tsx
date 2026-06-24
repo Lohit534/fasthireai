@@ -145,6 +145,7 @@ export default function PricingPage() {
   const [currentPlan, setCurrentPlan] = useState<string>("free");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [isOwner, setIsOwner] = useState(false);
+  const [isFirst50, setIsFirst50] = useState(false);
 
   // Checkout Modal State
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
@@ -183,9 +184,9 @@ export default function PricingPage() {
           const res = await fetch("/api/credits");
           if (res.ok) {
             const apiCredits = await res.json();
-            if (apiCredits.isOwner) {
-              setIsOwner(true);
-            }
+            if (apiCredits.isOwner) setIsOwner(true);
+            // Detect first-50 users: paidCredits >= 365 (1 year grant)
+            if (apiCredits.paidCredits >= 365 || apiCredits.isFirst50) setIsFirst50(true);
             const plan = localStorage.getItem(`fastHire_plan_${data.user.id}`) || "free";
             setCurrentPlan(plan);
           } else {
@@ -472,17 +473,36 @@ export default function PricingPage() {
             return (
               <Card
                 key={plan.id}
-                className={`relative border-white/5 bg-[#0e0f21]/40 flex flex-col justify-between overflow-hidden rounded-2xl shadow-xl transition-all duration-300 ${plan.popular
-                  ? "border-violet-500/40 ring-1 ring-violet-500/30 scale-105 shadow-violet-950/20"
-                  : "hover:border-white/10"
-                  }`}
+                className={`relative border-white/5 bg-[#0e0f21]/40 flex flex-col justify-between overflow-hidden rounded-2xl shadow-xl transition-all duration-300 ${
+                  isActive
+                    ? "border-cyan-500/40 ring-1 ring-cyan-500/20 shadow-cyan-950/10"
+                    : plan.popular
+                    ? "border-violet-500/40 ring-1 ring-violet-500/30 scale-105 shadow-violet-950/20"
+                    : "hover:border-white/10"
+                }`}
               >
+                {/* Active Plan Badge */}
+                {isActive && (
+                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-500/0 via-cyan-400 to-cyan-500/0" />
+                )}
+
                 {/* Popular Banner */}
-                {plan.popular && (
+                {plan.popular && !isActive && (
                   <div className="absolute top-0 right-0">
                     <Badge className="bg-violet-600 border border-violet-500 text-white rounded-bl-xl rounded-tr-none px-3 py-1 font-bold text-[9px] uppercase tracking-wider select-none">
                       Best Choice
                     </Badge>
+                  </div>
+                )}
+
+                {/* First 50 Users Banner (only on Premium card) */}
+                {plan.id === "premium" && isFirst50 && (
+                  <div className="mx-4 mt-4 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2">
+                    <span className="text-base">🎁</span>
+                    <div>
+                      <p className="text-[10px] font-extrabold text-emerald-400">First 50 Users — 1 Year Free!</p>
+                      <p className="text-[9px] text-emerald-600 font-medium">You have 365 Premium credits. Enjoy!</p>
+                    </div>
                   </div>
                 )}
 
@@ -518,19 +538,28 @@ export default function PricingPage() {
                   </div>
 
                   {/* Actions CTA Trigger */}
-                  <Button
-                    onClick={() => handlePlanAction(plan)}
-                    className={`w-full font-bold text-xs h-10 rounded-full transition-all ${isActive
-                      ? "bg-slate-900 border border-white/10 text-slate-400 hover:text-white"
-                      : plan.popular
-                        ? "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-600/20"
-                        : "bg-white text-slate-950 hover:bg-slate-200"
+                  <div className="space-y-2">
+                    {isActive && (
+                      <div className="flex items-center justify-center gap-1.5 py-1.5 text-[10px] font-bold text-cyan-400">
+                        <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                        Currently Active Plan
+                      </div>
+                    )}
+                    <Button
+                      onClick={() => handlePlanAction(plan)}
+                      className={`w-full font-bold text-xs h-10 rounded-full transition-all ${
+                        isActive
+                          ? "bg-slate-900 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/5"
+                          : plan.popular
+                          ? "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-600/20"
+                          : "bg-white text-slate-950 hover:bg-slate-200"
                       }`}
-                  >
-                    {isActive
-                      ? (isOwner ? "Current Plan (Owner Unlimited)" : "Current Active Plan")
-                      : (isOwner ? `Simulate ${plan.name}` : plan.cta)}
-                  </Button>
+                    >
+                      {isActive
+                        ? (isOwner ? "✓ Active (Owner Unlimited)" : "✓ Your Current Plan")
+                        : (isOwner ? `Simulate ${plan.name}` : plan.cta)}
+                    </Button>
+                  </div>
 
                 </CardContent>
               </Card>

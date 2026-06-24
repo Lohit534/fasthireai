@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getScoreColor, getScoreLabel } from "@/lib/utils";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, AlertCircle } from "lucide-react";
 
 interface ScoreCardProps {
   before: ATSScore | null;
@@ -98,32 +98,37 @@ export default function ScoreCard({ before, after, loading = false }: ScoreCardP
         </span>
 
         {/* Sub-score Progress Rows */}
-        <div className="w-full space-y-4 mt-6">
-          {/* Keyword Progress Bar */}
+        <div className="w-full space-y-3 mt-6">
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
               <span className="text-slate-400 font-medium">Keyword Match</span>
               <span className="text-slate-200 font-bold">{scoreData.keywordMatch}%</span>
             </div>
-            <Progress value={scoreData.keywordMatch} className="h-1.5 bg-slate-900 [&>div]:bg-indigo-500" />
+            <Progress value={scoreData.keywordMatch} className="h-1.5 bg-slate-900 [&>div]:bg-cyan-500" />
           </div>
 
-          {/* Impact Progress Bar */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-400 font-medium">Semantic Match</span>
+              <span className="text-slate-200 font-bold">{scoreData.semanticMatch}%</span>
+            </div>
+            <Progress value={scoreData.semanticMatch} className="h-1.5 bg-slate-900 [&>div]:bg-indigo-500" />
+          </div>
+
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
               <span className="text-slate-400 font-medium">Impact Bullets</span>
               <span className="text-slate-200 font-bold">{scoreData.impactBullets}%</span>
             </div>
-            <Progress value={scoreData.impactBullets} className="h-1.5 bg-slate-900 [&>div]:bg-indigo-500" />
+            <Progress value={scoreData.impactBullets} className="h-1.5 bg-slate-900 [&>div]:bg-violet-500" />
           </div>
 
-          {/* Formatting Progress Bar */}
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
               <span className="text-slate-400 font-medium">ATS Formatting</span>
               <span className="text-slate-200 font-bold">{scoreData.formatting}%</span>
             </div>
-            <Progress value={scoreData.formatting} className="h-1.5 bg-slate-900 [&>div]:bg-indigo-500" />
+            <Progress value={scoreData.formatting} className="h-1.5 bg-slate-900 [&>div]:bg-blue-500" />
           </div>
         </div>
       </div>
@@ -159,6 +164,34 @@ export default function ScoreCard({ before, after, loading = false }: ScoreCardP
             </div>
           )}
         </div>
+        {/* Missing Keywords Panel */}
+        {before.missingKeywords && before.missingKeywords.length > 0 && (
+          <div className="mt-6 pt-5 border-t border-white/5">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
+              <h4 className="text-xs font-bold text-white">Missing Keywords from Your Resume</h4>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                {before.missingKeywords.length} gaps
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-500 mb-3">These keywords appear in the job description but were not found in your resume. Add them to boost your ATS score.</p>
+            <div className="flex flex-wrap gap-1.5">
+              {before.missingKeywords.slice(0, 20).map((kw) => (
+                <span
+                  key={kw}
+                  className="inline-flex items-center px-2.5 py-1 rounded-md bg-amber-500/8 border border-amber-500/20 text-amber-300 text-[10px] font-semibold"
+                >
+                  ✗ {kw}
+                </span>
+              ))}
+              {before.missingKeywords.length > 20 && (
+                <span className="text-[10px] text-slate-500 font-medium self-center">
+                  +{before.missingKeywords.length - 20} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

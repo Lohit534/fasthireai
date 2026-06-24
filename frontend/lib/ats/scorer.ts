@@ -55,24 +55,26 @@ async function callPythonScorer(resumeText: string, jobDescription: string): Pro
 export function localScore(resumeText: string, jobDescription: string): ATSScore {
   logger.info("Executing local ATS fallback scorer...");
 
-  // 1. Keyword Overlap
+  const resumeLower = resumeText.toLowerCase();
+  const jdLower = jobDescription.toLowerCase();
+
+  // 1. Keyword Overlap — with partial phrase matching
   const resumeKeywords = extractKeywords(resumeText);
   const jdKeywords = extractKeywords(jobDescription);
-  
+
   const foundKeywords: string[] = [];
   const missingKeywords: string[] = [];
 
   if (jdKeywords.size > 0) {
     for (const kw of jdKeywords) {
-      // Perform case-insensitive search in resume keywords
-      let matched = false;
-      for (const rkw of resumeKeywords) {
-        if (rkw.toLowerCase() === kw.toLowerCase()) {
-          matched = true;
-          break;
-        }
-      }
-      if (matched) {
+      const kwLower = kw.toLowerCase();
+      // Exact match OR partial phrase match in raw resume text
+      const exactMatch = [...resumeKeywords].some(r => r.toLowerCase() === kwLower);
+      const phraseMatch = resumeLower.includes(kwLower);
+      // Also try root-word match (e.g. "analysis" matches "analytics", "analysed")
+      const rootMatch = resumeLower.includes(kwLower.slice(0, Math.max(5, kwLower.length - 2)));
+
+      if (exactMatch || phraseMatch || rootMatch) {
         foundKeywords.push(kw);
       } else {
         missingKeywords.push(kw);
@@ -80,73 +82,85 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
     }
   }
 
-  const keywordMatch = jdKeywords.size > 0 
-    ? Math.round((foundKeywords.length / jdKeywords.size) * 100)
+  const rawKeywordMatch = jdKeywords.size > 0
+    ? (foundKeywords.length / jdKeywords.size) * 100
     : 100;
 
-  // 2. Semantic Match Fallback (approximate as keyword match * 0.9)
-  const semanticMatch = Math.round(keywordMatch * 0.9);
+  // Boost if high overlap — real ATS systems give credit for contextual use
+  const keywordMatch = Math.min(100, Math.round(rawKeywordMatch * 1.12));
 
-  // 3. Impact Bullets
-  // Identify lines that look like bullet points: start with standard markers or indentation
+  // 2. Semantic Match — weighted blend of keyword overlap + tech-term coverage
+  const resumeTechTerms = extractTechTerms(resumeText);
+  const jdTechTerms = extractTechTerms(jobDescription);
+  const techOverlap = jdTechTerms.length > 0
+    ? jdTechTerms.filter(t => resumeLower.includes(t.toLowerCase())).length / jdTechTerms.length
+    : 1;
+
+  const semanticMatch = Math.min(100, Math.round(
+    (keywordMatch * 0.65) + (techOverlap * 100 * 0.35)
+  ));
+
+  // 3. Impact Bullets — score each bullet for action verbs + metrics
   const lines = resumeText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  const bulletLines = lines.filter(line => 
-    /^[•\-*\u2022]/.test(line) || line.length > 20 && line.length < 200
+  const bulletLines = lines.filter(line =>
+    /^[•\-*\u2022▸►→]/.test(line) || (line.length > 25 && line.length < 250)
   );
 
-  let impactBullets = 0;
+  let impactBullets = 40; // Baseline for resumes with no clear bullets
   if (bulletLines.length > 0) {
-    let scoringSum = 0;
+    let scoreSum = 0;
     for (const bullet of bulletLines) {
       const verbs = extractActionVerbs(bullet);
       const hasVerb = verbs.length > 0;
-      // Look for numbers, percentages, or metrics indicators
-      const hasQuantifier = /\b\d+%?\b|\b(million|thousand|lakh|crore|k|m)\b/i.test(bullet);
-      
-      let bulletScore = 0;
-      if (hasVerb) bulletScore += 50;
-      if (hasQuantifier) bulletScore += 50;
-      scoringSum += bulletScore;
+      const hasQuantifier = /\b\d[\d,]*\s*(%|k|m|x|lakh|crore|million|thousand|percent|hrs?|days?|weeks?|months?|years?|users?|customers?|clients?)\b/i.test(bullet);
+      const hasDollar = /\$[\d,]+|\b(?:revenue|profit|sales|cost|budget|saving)\b/i.test(bullet);
+      const isLong = bullet.length > 60; // More detail = better bullet
+
+      let bScore = 20; // baseline per bullet
+      if (hasVerb) bScore += 35;
+      if (hasQuantifier) bScore += 30;
+      if (hasDollar) bScore += 10;
+      if (isLong) bScore += 5;
+      scoreSum += Math.min(100, bScore);
     }
-    impactBullets = Math.round(scoringSum / bulletLines.length);
-  } else {
-    // If no bullets identified, default baseline score
-    impactBullets = 30;
+    impactBullets = Math.min(100, Math.round(scoreSum / bulletLines.length));
   }
 
-  // 4. Formatting
-  let formatting = 0;
-  const lowerResume = resumeText.toLowerCase();
+  // 4. Formatting — richer section detection + structure signals
+  let formatting = 10; // baseline for any text at all
 
-  // Check section headers
-  if (/\b(experience|work history|employment)\b/i.test(lowerResume)) formatting += 20;
-  if (/\b(education|academic|college|university)\b/i.test(lowerResume)) formatting += 20;
-  if (/\b(skills|technologies|expertise)\b/i.test(lowerResume)) formatting += 20;
+  const sectionChecks: [RegExp, number][] = [
+    [/\b(experience|work history|employment|career|positions? held)\b/i, 18],
+    [/\b(education|academic|college|university|degree|bachelor|master|phd)\b/i, 18],
+    [/\b(skills|technical skills|technologies|tools|expertise|proficient)\b/i, 18],
+    [/\b(projects?|portfolio|work samples?)\b/i, 10],
+    [/\b(summary|profile|objective|about me)\b/i, 10],
+    [/\b(certifications?|licenses?|courses?|training)\b/i, 8],
+    [/@[a-z0-9]/i, 9],                      // email
+    [/\b\d{10}\b|\+\d{1,3}[\s\-]?\d/i, 9], // phone
+  ];
 
-  // Check contact details
-  if (lowerResume.includes("@")) formatting += 20; // Email indicator
-  if (/\b\d{10}\b|\+\d{2}/.test(lowerResume)) formatting += 20; // Phone number indicator
-
-  // Ensure formatting score is bound at 100
+  for (const [pattern, pts] of sectionChecks) {
+    if (pattern.test(resumeText)) formatting += pts;
+  }
   formatting = Math.min(100, formatting);
 
-  // Calculate Overall Weighted Score
-  // Weights: Semantic 35%, Keyword 25%, Impact 25%, Formatting 15%
-  const overall = Math.round(
-    (semanticMatch * 0.35) +
-    (keywordMatch * 0.25) +
-    (impactBullets * 0.25) +
-    (formatting * 0.15)
+  // 5. Overall — rebalanced weights (Semantic 40%, Keyword 30%, Impact 20%, Formatting 10%)
+  const overall = Math.min(
+    99, // cap at 99 — perfect score only for truly excellent resumes
+    Math.round(
+      (semanticMatch * 0.40) +
+      (keywordMatch  * 0.30) +
+      (impactBullets * 0.20) +
+      (formatting    * 0.10)
+    )
   );
 
-  // Extract skills and job titles
   const extractedSkills = extractTechTerms(resumeText);
   const extractedTitles: string[] = [];
   for (const title of COMMON_TITLES) {
     const regex = new RegExp(`\\b${title}\\b`, "i");
-    if (regex.test(resumeText)) {
-      extractedTitles.push(title);
-    }
+    if (regex.test(resumeText)) extractedTitles.push(title);
   }
 
   return {
@@ -158,7 +172,7 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
     extractedSkills,
     extractedTitles,
     missingKeywords,
-    foundKeywords
+    foundKeywords,
   };
 }
 

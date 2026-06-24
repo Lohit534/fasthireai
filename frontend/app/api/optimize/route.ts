@@ -114,17 +114,18 @@ export async function POST(request: NextRequest) {
           .insert({
             userId: activeUserId,
             freeUsed: 0,
-            paidCredits: isFirst50 ? 15 : 0,
+            // First 50 users get 365 credits = 1 full year of Premium Pro for free
+            paidCredits: isFirst50 ? 365 : 0,
             resetAt: now.toISOString(),
           })
           .select()
           .single();
         creditRow = newCredit;
-      } else if (isFirst50 && creditRow.paidCredits < 15) {
-        // Auto-upgrade free tier credits to Premium plan credits for first 50 users
+      } else if (isFirst50 && creditRow.paidCredits < 365) {
+        // Auto-upgrade first 50 users to full year of Premium Pro (365 credits)
         const { data: updatedCredit } = await admin
           .from("Credit")
-          .update({ paidCredits: 15 })
+          .update({ paidCredits: 365 })
           .eq("userId", activeUserId)
           .select()
           .single();
@@ -141,7 +142,8 @@ export async function POST(request: NextRequest) {
           now.getFullYear() !== resetAt.getFullYear();
 
         freeUsed = isNewMonth ? 0 : creditRow.freeUsed;
-        paidCredits = isNewMonth ? (isFirst50 ? 15 : creditRow.paidCredits) : creditRow.paidCredits;
+        // First 50 users: restore 365 credits on new month if they dropped below
+        paidCredits = isNewMonth ? (isFirst50 ? 365 : creditRow.paidCredits) : creditRow.paidCredits;
 
         if (isNewMonth) {
           await admin
