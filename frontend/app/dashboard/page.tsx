@@ -18,63 +18,58 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ATSScore } from "@/types";
-import { 
-  Sparkles, 
-  Loader2, 
-  RefreshCw, 
-  BarChart, 
-  History, 
-  ArrowLeft, 
-  Check, 
+import {
+  Sparkles,
+  Loader2,
+  RefreshCw,
+  History,
+  ArrowLeft,
+  Zap,
+  Target,
+  FileText,
   ChevronRight,
+  Shield,
   TrendingUp,
-  Settings,
-  Cpu,
-  BookOpen,
-  MessageSquare
+  Download,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
 
 export default function DashboardPage() {
   const router = useRouter();
-  
-  // Zustand State Store
+
   const {
     resumeText,
     jobDescription,
     setResumeText,
     setJobDescription,
-    reset: resetStore
+    reset: resetStore,
   } = useResumeStore();
 
   const [authLoading, setAuthLoading] = useState(true);
   const [optimizing, setOptimizing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("");
-  
+
   const [beforeScore, setBeforeScore] = useState<ATSScore | null>(null);
   const [afterScore, setAfterScore] = useState<ATSScore | null>(null);
   const [optimizeResult, setOptimizeResult] = useState<any>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Core visual fields from Image 3
   const [instructions, setInstructions] = useState("");
   const [lengthOption, setLengthOption] = useState("Auto-detect");
 
-  // 1. Auth Guard Client Verification
   useEffect(() => {
     async function checkAuth() {
       try {
         const { data, error } = await supabase.auth.getUser();
         if (error || !data?.user) {
-          toast.error("Please sign in to access the dashboard.");
+          toast.error("Please sign in to continue.");
           router.push("/auth/login");
         } else {
           setAuthLoading(false);
         }
-      } catch (err) {
-        toast.error("Authentication check failed.");
+      } catch {
         router.push("/auth/login");
       }
     }
@@ -82,12 +77,12 @@ export default function DashboardPage() {
   }, [router]);
 
   const handleOptimize = async () => {
-    if (!resumeText || !resumeText.trim()) {
-      toast.error("Please upload or paste your current resume first.");
+    if (!resumeText?.trim()) {
+      toast.error("Add your resume first.");
       return;
     }
-    if (!jobDescription || !jobDescription.trim()) {
-      toast.error("Please paste the job description to optimize against.");
+    if (!jobDescription?.trim()) {
+      toast.error("Paste the job description to match against.");
       return;
     }
 
@@ -96,84 +91,49 @@ export default function DashboardPage() {
     setAfterScore(null);
     setOptimizeResult(null);
     setProgress(10);
-    setLoadingMessage("Analyzing keywords...");
+    setLoadingMessage("Scanning keywords & semantic patterns...");
 
     try {
-      // Step-by-step progress timeline simulation
-      const t1 = setTimeout(() => {
-        setProgress(35);
-        setLoadingMessage("Running AI rewrite engine (rewriting weak bullets)...");
-      }, 2000);
+      const t1 = setTimeout(() => { setProgress(35); setLoadingMessage("AI rewriting weak bullet points..."); }, 2000);
+      const t2 = setTimeout(() => { setProgress(70); setLoadingMessage("Injecting missing keywords naturally..."); }, 5000);
+      const t3 = setTimeout(() => { setProgress(90); setLoadingMessage("Computing ATS score improvements..."); }, 7500);
 
-      const t2 = setTimeout(() => {
-        setProgress(70);
-        setLoadingMessage("Integrating keywords naturally...");
-      }, 5000);
-
-      const t3 = setTimeout(() => {
-        setProgress(90);
-        setLoadingMessage("Computing final ATS score weights...");
-      }, 7500);
-
-      // Perform POST call passing instructions & length option
       const response = await fetch("/api/optimize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          resumeText, 
-          jobDescription,
-          instructions,
-          lengthOption
-        })
+        body: JSON.stringify({ resumeText, jobDescription, instructions, lengthOption }),
       });
 
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        if (response.status === 403) {
-          throw new Error("Free limit reached. Upgrade to continue.");
-        }
-        throw new Error(errorData.error || "Optimization handler failed.");
+        if (response.status === 403) throw new Error("Free limit reached. Upgrade to continue.");
+        throw new Error(errorData.error || "Optimization failed.");
       }
 
       setProgress(95);
-      setLoadingMessage("Mapping scoring reports...");
-      
+      setLoadingMessage("Finalizing your results...");
+
       const data = await response.json();
       setOptimizeResult(data);
 
-      // Trigger detailed score calculations for before/after states
-      const beforeScoreRes = await fetch("/api/score", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText, jobDescription }),
-      });
-      const beforeScoreData = beforeScoreRes.ok ? await beforeScoreRes.json() : null;
+      const [beforeRes, afterRes] = await Promise.all([
+        fetch("/api/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeText, jobDescription }) }),
+        fetch("/api/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeText: data.optimizedText, jobDescription }) }),
+      ]);
 
-      const afterScoreRes = await fetch("/api/score", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText: data.optimizedText, jobDescription }),
-      });
-      const afterScoreData = afterScoreRes.ok ? await afterScoreRes.json() : null;
+      if (beforeRes.ok) setBeforeScore(await beforeRes.json());
+      if (afterRes.ok) setAfterScore(await afterRes.json());
 
-      setBeforeScore(beforeScoreData);
-      setAfterScore(afterScoreData);
-      
       setProgress(100);
-      setRefreshKey(prev => prev + 1); // Trigger credits reload
-      toast.success("Resume optimized successfully!");
+      setRefreshKey((p) => p + 1);
+      toast.success("Resume optimized! 🎯");
     } catch (err: any) {
-      toast.error(err.message || "Resume optimization failed.");
+      toast.error(err.message || "Something went wrong.");
       setOptimizeResult(null);
     } finally {
-      setTimeout(() => {
-        setOptimizing(false);
-        setProgress(0);
-      }, 500);
+      setTimeout(() => { setOptimizing(false); setProgress(0); }, 500);
     }
   };
 
@@ -184,195 +144,213 @@ export default function DashboardPage() {
     setBeforeScore(null);
     setAfterScore(null);
     setOptimizeResult(null);
-    toast.success("Workspace reset.");
+    toast.success("Workspace cleared.");
   };
 
   const handleReScoreBefore = async (newText: string) => {
     try {
-      const res = await fetch("/api/score", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText: newText, jobDescription }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setBeforeScore(data);
-      }
-    } catch (err) {
-      console.error("Failed to re-score before resume:", err);
-    }
+      const res = await fetch("/api/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeText: newText, jobDescription }) });
+      if (res.ok) setBeforeScore(await res.json());
+    } catch {}
   };
 
   const handleReScoreAfter = async (newText: string) => {
     try {
-      const res = await fetch("/api/score", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText: newText, jobDescription }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAfterScore(data);
-      }
-    } catch (err) {
-      console.error("Failed to re-score after resume:", err);
-    }
+      const res = await fetch("/api/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeText: newText, jobDescription }) });
+      if (res.ok) setAfterScore(await res.json());
+    } catch {}
   };
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#060713]">
-        <div className="text-center space-y-2">
-          <Loader2 className="h-8 w-8 text-violet-600 animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-semibold">Verifying user credentials...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#040d1a]">
+        <div className="text-center space-y-3">
+          <div className="relative mx-auto h-12 w-12">
+            <div className="absolute inset-0 rounded-full border-2 border-cyan-500/20" />
+            <div className="absolute inset-0 rounded-full border-t-2 border-cyan-400 animate-spin" />
+            <Zap className="absolute inset-0 m-auto h-5 w-5 text-cyan-400" />
+          </div>
+          <p className="text-xs text-slate-500 font-semibold tracking-wide">Authenticating...</p>
         </div>
       </div>
     );
   }
 
-  // Check if we show the Results Workspace view
   const hasResults = !optimizing && (optimizeResult || beforeScore);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#060713] text-slate-100 font-sans select-text">
+    <div className="flex flex-col min-h-screen bg-[#040d1a] text-slate-100 font-sans">
+      {/* Ambient background glows */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[400px] bg-cyan-500/4 rounded-full blur-[120px]" />
+        <div className="absolute top-1/3 right-0 w-[400px] h-[400px] bg-blue-600/4 rounded-full blur-[100px]" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[300px] bg-indigo-600/3 rounded-full blur-[100px]" />
+      </div>
+
       <Navbar refreshKey={refreshKey} />
 
-      <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* Loading Progress overlays */}
+      <main className="relative flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8">
+
+        {/* ── LOADING OVERLAY ─────────────────────────────────────── */}
         {optimizing && (
-          <div className="fixed inset-0 bg-[#060713]/90 backdrop-blur-md z-50 flex items-center justify-center p-6">
-            <div className="max-w-md w-full bg-[#0d0e1f] border border-white/10 p-8 rounded-2xl space-y-6 shadow-2xl relative overflow-hidden">
-              <div className="absolute -top-24 -left-24 w-48 h-48 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
-              
-              <div className="text-center space-y-2">
-                <Loader2 className="h-10 w-10 text-violet-500 animate-spin mx-auto" />
-                <h3 className="font-black text-white text-lg tracking-tight">Improving Your Resume</h3>
-                <p className="text-[11px] text-slate-400">Our AI pipeline is tailoring your resume for the target role...</p>
-              </div>
-
-              <div className="space-y-1.5">
-                <Progress value={progress} className="h-1.5 bg-slate-950 [&>div]:bg-gradient-to-r [&>div]:from-violet-500 [&>div]:to-indigo-500 rounded-full border border-white/5" />
-                <div className="flex justify-between text-[10px] font-bold text-violet-400">
-                  <span>{loadingMessage}</span>
-                  <span>{progress}%</span>
-                </div>
-              </div>
-
-              <div className="space-y-3 pt-4 border-t border-white/5 text-left">
-                {[
-                  { label: "Analyze keywords & semantic patterns", minPrg: 10 },
-                  { label: "Run AI rewrite engine to upgrade weak bullets", minPrg: 35 },
-                  { label: "Inject missing job description keywords naturally", minPrg: 70 },
-                  { label: "Compute and verify before/after ATS scores", minPrg: 90 },
-                ].map((step, idx) => {
-                  const isDone = progress > step.minPrg;
-                  const isActive = progress >= step.minPrg && progress < (idx === 3 ? 101 : [35, 70, 90, 101][idx]);
-                  return (
-                    <div key={idx} className="flex items-center gap-3 transition-opacity duration-300">
-                      <div className={`h-5 w-5 rounded-full flex items-center justify-center border text-[10px] font-bold shrink-0 ${
-                        isDone 
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
-                          : isActive 
-                          ? "bg-violet-500/10 border-violet-500/35 text-violet-400 animate-pulse" 
-                          : "bg-slate-900 border-white/5 text-slate-600"
-                      }`}>
-                        {isDone ? "✓" : idx + 1}
-                      </div>
-                      <span className={`text-[11px] font-semibold ${
-                        isDone 
-                          ? "text-slate-300 line-through decoration-slate-600" 
-                          : isActive 
-                          ? "text-white font-extrabold" 
-                          : "text-slate-500"
-                      }`}>
-                        {step.label}
-                      </span>
+          <div className="fixed inset-0 bg-[#040d1a]/95 backdrop-blur-lg z-50 flex items-center justify-center p-6">
+            <div className="max-w-[420px] w-full relative">
+              {/* Glow behind card */}
+              <div className="absolute -inset-8 bg-cyan-500/5 rounded-full blur-3xl" />
+              <div className="relative bg-[#071525] border border-cyan-500/15 p-8 rounded-2xl shadow-2xl space-y-6">
+                {/* Icon */}
+                <div className="flex flex-col items-center gap-3">
+                  <div className="relative h-14 w-14">
+                    <div className="absolute inset-0 rounded-full bg-cyan-500/10 border border-cyan-500/20 animate-pulse" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Zap className="h-6 w-6 text-cyan-400" />
                     </div>
-                  );
-                })}
+                  </div>
+                  <div className="text-center">
+                    <h3 className="font-black text-white text-base tracking-tight">Beating the ATS</h3>
+                    <p className="text-[11px] text-slate-400 mt-1">Tailoring your resume for the target role...</p>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="space-y-2">
+                  <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-700"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] font-bold">
+                    <span className="text-cyan-400">{loadingMessage}</span>
+                    <span className="text-slate-500">{progress}%</span>
+                  </div>
+                </div>
+
+                {/* Steps */}
+                <div className="space-y-2.5 border-t border-white/5 pt-4">
+                  {[
+                    { label: "Keyword & semantic pattern analysis", thresh: 10 },
+                    { label: "AI rewrites weak bullets with impact verbs", thresh: 35 },
+                    { label: "Natural keyword injection into your resume", thresh: 70 },
+                    { label: "Before & after ATS score computation", thresh: 90 },
+                  ].map((step, idx) => {
+                    const done = progress > step.thresh;
+                    const active = progress >= step.thresh && !done;
+                    return (
+                      <div key={idx} className="flex items-center gap-3">
+                        <div className={`h-4 w-4 rounded-full border flex items-center justify-center text-[9px] font-black shrink-0 transition-all ${
+                          done ? "bg-cyan-500/15 border-cyan-500/40 text-cyan-400"
+                          : active ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-400 animate-pulse"
+                          : "bg-slate-900 border-white/5 text-slate-600"
+                        }`}>
+                          {done ? "✓" : idx + 1}
+                        </div>
+                        <span className={`text-[11px] font-semibold transition-all ${
+                          done ? "text-slate-500 line-through decoration-slate-700"
+                          : active ? "text-white"
+                          : "text-slate-600"
+                        }`}>
+                          {step.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Dynamic header routing toggle */}
+        {/* ── RESULTS HEADER ──────────────────────────────────────── */}
         {hasResults ? (
           <div className="mb-6 flex justify-between items-center">
             <button
-              onClick={() => {
-                setOptimizeResult(null);
-                setBeforeScore(null);
-                setAfterScore(null);
-              }}
-              className="flex items-center text-xs font-bold text-slate-400 hover:text-violet-400 transition-colors"
+              onClick={() => { setOptimizeResult(null); setBeforeScore(null); setAfterScore(null); }}
+              className="flex items-center text-xs font-bold text-slate-400 hover:text-cyan-400 transition-colors"
             >
               <ArrowLeft className="h-4 w-4 mr-1.5" />
               Back to Editor
             </button>
             <div className="flex gap-2">
               <Link href="/dashboard/history">
-                <Button size="sm" variant="outline" className="border-white/5 text-slate-300 hover:bg-white/5 text-xs font-bold h-8 rounded-full">
+                <Button size="sm" variant="outline" className="border-white/8 text-slate-300 hover:bg-white/5 hover:border-cyan-500/30 text-xs font-bold h-8 rounded-full px-4">
                   <History className="h-3.5 w-3.5 mr-1.5" />
-                  View History
+                  History
                 </Button>
               </Link>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleReset}
-                className="border-white/5 text-slate-300 hover:bg-white/5 text-xs font-bold h-8 rounded-full"
-              >
+              <Button size="sm" variant="outline" onClick={handleReset} className="border-white/8 text-slate-300 hover:bg-white/5 hover:border-cyan-500/30 text-xs font-bold h-8 rounded-full px-4">
                 <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
                 Reset
               </Button>
             </div>
           </div>
         ) : (
-          /* Header Title Block (Image 3) */
-          <div className="text-center space-y-3 mb-10">
-            <h1 className="text-3xl md:text-4.5xl font-black text-white tracking-tight leading-none">
-              Improve Your Resume <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-indigo-400 bg-clip-text text-transparent">for Any Job</span>
+          /* ── HERO HEADER ────────────────────────────────────────── */
+          <div className="text-center space-y-4 mb-10">
+            {/* Status pill */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/8 border border-cyan-500/20 text-cyan-400 text-[10px] font-bold uppercase tracking-widest">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              AI-Powered · 2 Free Optimizations / Month
+            </div>
+
+            <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-none">
+              Beat the ATS.{" "}
+              <span className="relative">
+                <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                  Land the Interview.
+                </span>
+                <span className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-cyan-500/0 via-cyan-500/50 to-cyan-500/0" />
+              </span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto font-medium leading-relaxed">
-              Paste your resume and the job you want. We improve it to match — automatically. Get 2 free resumes per month.
+
+            <p className="text-sm text-slate-400 max-w-lg mx-auto font-medium leading-relaxed">
+              Paste your resume + job description. Our AI rewrites, scores, and tailors it
+              to pass ATS filters — in under 30 seconds.
             </p>
-            <div>
-              <Badge className="bg-[#00e699]/5 border border-[#00e699]/20 text-[#00e699] hover:bg-[#00e699]/5 px-3 py-1 text-[10px] rounded-full font-bold select-none">
-                +1 extra resume for each referral
-              </Badge>
+
+            {/* Feature pills */}
+            <div className="flex flex-wrap justify-center gap-2 pt-1">
+              {[
+                { icon: Target, text: "ATS Keyword Matching" },
+                { icon: Zap, text: "Smart Bullet Rewrites" },
+                { icon: TrendingUp, text: "Before / After Scoring" },
+                { icon: Download, text: "PDF & DOCX Export" },
+              ].map(({ icon: Icon, text }) => (
+                <span key={text} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/60 border border-white/5 text-[10px] text-slate-400 font-semibold">
+                  <Icon className="h-3 w-3 text-cyan-500" />
+                  {text}
+                </span>
+              ))}
             </div>
           </div>
         )}
 
-        {/* WORKSPACE CONTENT SECTION */}
+        {/* ── RESULTS WORKSPACE ───────────────────────────────────── */}
         {hasResults ? (
-          
-          /* RESULTS WORKSPACE ROW */
           <div className="space-y-6">
-            
-            {/* Top Row: Edit & review workspace split */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              
-              {/* Left Pane: Current raw editor */}
-              <div className="lg:col-span-6 space-y-4">
-                <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">Candidate Current Text</h4>
+
+            {/* Side-by-side editor */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Original */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-slate-500" />
+                  <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest">Original Resume</span>
+                </div>
                 <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
               </div>
 
-              {/* Right Pane: AI Optimized Text directly */}
-              <div className="lg:col-span-6 space-y-4">
-                <div className="bg-[#0f1022] border border-white/5 p-3.5 rounded-xl flex items-center justify-between">
-                  <span className="font-extrabold text-white text-xs flex items-center gap-1.5 select-none">
-                    <Sparkles className="h-4 w-4 text-violet-400" />
-                    AI Optimized Resume Text
+              {/* Optimized */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                    <span className="text-[10px] font-bold uppercase text-cyan-500 tracking-widest">AI-Optimized Resume</span>
+                  </div>
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                    ATS-Tailored ✓
                   </span>
-                  <Badge className="bg-violet-500/10 border-violet-500/20 text-violet-400 text-[10px] font-bold select-none px-2 py-0.5">
-                    Automatically Tailored
-                  </Badge>
                 </div>
-                
                 {optimizeResult?.optimizedText ? (
                   <OptimizedResume
                     text={optimizeResult.optimizedText}
@@ -383,203 +361,202 @@ export default function DashboardPage() {
                     }}
                   />
                 ) : (
-                  <div className="text-center p-8 bg-slate-950/20 border border-white/5 rounded-2xl text-slate-500 text-xs italic">
-                    No optimized text available. Please optimize your resume first.
+                  <div className="text-center p-8 bg-slate-900/30 border border-white/5 rounded-2xl text-slate-600 text-xs italic">
+                    No optimized output yet.
                   </div>
                 )}
               </div>
-
             </div>
 
-            {/* Bottom Row: score comparisons and downloads */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch pt-4 border-t border-white/5">
+            {/* Score + Download + Keywords */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 border-t border-white/5 pt-6">
               <div className="lg:col-span-8">
                 <ScoreCard before={beforeScore} after={afterScore} loading={optimizing} />
               </div>
-              <div className="lg:col-span-4 flex flex-col justify-between gap-4">
+              <div className="lg:col-span-4 flex flex-col gap-4">
                 {optimizeResult?.resumeId && (
-                  <div className="flex flex-col justify-center items-center h-full bg-slate-950/40 border border-white/5 rounded-2xl p-6 shadow-sm">
-                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">Export Tailored Document</span>
+                  <div className="flex flex-col items-center justify-center bg-[#071525]/80 border border-cyan-500/10 rounded-2xl p-5">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-3">Export Document</span>
                     <DownloadButtons resumeId={optimizeResult.resumeId} text={optimizeResult.optimizedText} />
                   </div>
                 )}
                 {afterScore && (
-                  <div className="flex-1 bg-slate-950/40 border border-white/5 rounded-2xl p-4">
-                    <KeywordBadges
-                      added={optimizeResult?.keywordsAdded || []}
-                      missing={afterScore.missingKeywords}
-                    />
+                  <div className="flex-1 bg-[#071525]/60 border border-white/5 rounded-2xl p-4">
+                    <KeywordBadges added={optimizeResult?.keywordsAdded || []} missing={afterScore.missingKeywords} />
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Interactive Bullet Point Reviewer / Improver */}
-            <Card className="border-white/5 bg-[#0e0f21]/40 shadow-xl rounded-2xl overflow-hidden mt-6">
-              <CardContent className="p-6 space-y-4 text-slate-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-violet-400" />
-                    <h3 className="text-sm font-extrabold text-white">Interactive Bullet Point Improver</h3>
+            {/* Bullet Improver */}
+            <div className="bg-[#071525]/60 border border-white/5 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-lg bg-cyan-500/10 border border-cyan-500/15 flex items-center justify-center">
+                    <Sparkles className="h-4 w-4 text-cyan-400" />
                   </div>
-                  <Badge className="bg-violet-500/10 border-violet-500/20 text-violet-400 text-[10px] font-bold select-none px-2 py-0.5">
-                    Pro Feature
-                  </Badge>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-white">Bullet Point Enhancer</h3>
+                    <p className="text-[10px] text-slate-500 font-medium">Rewrite weak bullets with metrics & action verbs</p>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed font-semibold">
-                  Scan and optimize individual bullet points on your original resume text. We identify missing action verbs and metrics.
-                </p>
-                <div className="bg-[#070814]/40 border border-white/5 p-4 rounded-xl">
-                  <BulletImprover
-                    resumeText={resumeText}
-                    jobDescription={jobDescription}
-                    onChange={(newText) => {
-                      setResumeText(newText);
-                      handleReScoreBefore(newText);
-                    }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+                <span className="text-[9px] font-bold px-2 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">Live Editor</span>
+              </div>
+              <div className="bg-[#040d1a]/60 border border-white/5 p-4 rounded-xl">
+                <BulletImprover
+                  resumeText={resumeText}
+                  jobDescription={jobDescription}
+                  onChange={(newText) => { setResumeText(newText); handleReScoreBefore(newText); }}
+                />
+              </div>
+            </div>
 
-            {/* Summary of Changes Done */}
+            {/* AI Summary */}
             {optimizeResult?.summary && (
-              <Card className="border-white/5 bg-[#0e0f21]/40 shadow-xl rounded-2xl overflow-hidden mt-6">
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-violet-400" />
-                    <h3 className="text-sm font-extrabold text-white">Summary of AI Optimizations Done</h3>
+              <div className="bg-[#071525]/60 border border-white/5 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-lg bg-indigo-500/10 border border-indigo-500/15 flex items-center justify-center">
+                    <FileText className="h-4 w-4 text-indigo-400" />
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                    {optimizeResult.summary}
-                  </p>
-                  {optimizeResult.keywordsAdded && optimizeResult.keywordsAdded.length > 0 && (
-                    <div className="space-y-2">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Keywords Integrated Successfully</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {optimizeResult.keywordsAdded.map((kw: string) => (
-                          <Badge key={kw} className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-semibold px-2 py-0.5 rounded-md">
-                            + {kw}
-                          </Badge>
-                        ))}
-                      </div>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-white">What Changed</h3>
+                    <p className="text-[10px] text-slate-500 font-medium">AI summary of every optimization made</p>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">{optimizeResult.summary}</p>
+                {optimizeResult.keywordsAdded?.length > 0 && (
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Keywords Added</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {optimizeResult.keywordsAdded.map((kw: string) => (
+                        <span key={kw} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-semibold">
+                          + {kw}
+                        </span>
+                      ))}
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </div>
+                )}
+              </div>
             )}
 
           </div>
 
         ) : (
 
-          /* INPUTS EDITOR WORKSPACE (Image 3) */
-          <div className="space-y-6 max-w-5xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-              
-              {/* Left Column: Your Resume Block */}
-              <div className="flex flex-col bg-[#0b0c1a]/60 border border-white/5 rounded-2xl p-6 space-y-4">
-                <div className="space-y-0.5">
-                  <h3 className="font-extrabold text-white text-sm">Your Resume</h3>
-                  <p className="text-[11px] text-slate-500 font-semibold">Paste text or upload a PDF</p>
+          /* ── INPUT WORKSPACE ──────────────────────────────────── */
+          <div className="space-y-5 max-w-5xl mx-auto">
+
+            {/* Split-panel: Resume | Job Description */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+              {/* Resume Panel */}
+              <div className="group flex flex-col bg-[#071525]/70 border border-white/6 hover:border-cyan-500/20 rounded-2xl p-5 space-y-4 transition-colors duration-300">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-lg bg-slate-800 border border-white/5 flex items-center justify-center">
+                      <FileText className="h-4 w-4 text-cyan-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-white text-sm">Your Resume</h3>
+                      <p className="text-[10px] text-slate-500 font-medium">Paste text or upload PDF</p>
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-bold text-slate-600 border border-white/5 px-2 py-0.5 rounded-full">Step 1</span>
                 </div>
-                <div className="flex-1 flex flex-col justify-between space-y-4">
-                  <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
-                </div>
+                <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
               </div>
 
-              {/* Right Column: Job Description Block */}
-              <div className="flex flex-col bg-[#0b0c1a]/60 border border-white/5 rounded-2xl p-6 space-y-4">
-                <div className="space-y-0.5">
-                  <h3 className="font-extrabold text-white text-sm">Job Description</h3>
-                  <p className="text-[11px] text-slate-500 font-semibold">Paste or fetch from a URL</p>
+              {/* Job Description Panel */}
+              <div className="group flex flex-col bg-[#071525]/70 border border-white/6 hover:border-cyan-500/20 rounded-2xl p-5 space-y-4 transition-colors duration-300">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-lg bg-slate-800 border border-white/5 flex items-center justify-center">
+                      <Target className="h-4 w-4 text-cyan-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-white text-sm">Target Job Description</h3>
+                      <p className="text-[10px] text-slate-500 font-medium">The role you're applying for</p>
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-bold text-slate-600 border border-white/5 px-2 py-0.5 rounded-full">Step 2</span>
                 </div>
-                <div className="flex-1 flex flex-col justify-between space-y-4">
-                  <JobDescriptionInput value={jobDescription} onChange={setJobDescription} disabled={optimizing} />
-                </div>
+                <JobDescriptionInput value={jobDescription} onChange={setJobDescription} disabled={optimizing} />
               </div>
 
             </div>
 
-            {/* Custom Instructions */}
-            <div className="bg-[#0b0c1a]/60 border border-white/5 rounded-2xl p-6 space-y-3">
-              <div className="space-y-0.5">
-                <h3 className="font-extrabold text-white text-xs">Anything specific to add or change? <span className="text-slate-500 font-semibold">(optional)</span></h3>
+            {/* Instructions Row */}
+            <div className="bg-[#071525]/70 border border-white/6 rounded-2xl p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
+                <h3 className="text-xs font-extrabold text-white">Custom Instructions <span className="text-slate-500 font-semibold">(optional)</span></h3>
               </div>
               <Input
-                placeholder="e.g. 'I led a team of 8 but forgot to add it' - 'Focus on Python and ML' - 'Switching from finance to tech' - 'Remove the 2022 gap'"
+                placeholder="e.g. 'I led a team of 8 engineers' · 'Focus on Python & ML' · 'Switching from finance to tech' · 'Remove the 2021 employment gap'"
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
                 disabled={optimizing}
-                className="h-11 border-white/5 bg-[#070814] text-white focus:border-violet-500 focus:ring-violet-500 rounded-xl text-xs"
+                className="h-10 border-white/5 bg-[#040d1a] text-white placeholder:text-slate-600 focus:border-cyan-500/50 focus:ring-cyan-500/20 rounded-xl text-xs"
               />
             </div>
 
-            {/* Bottom Form Settings Row */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#0b0c1a]/60 border border-white/5 rounded-2xl p-6">
-              
-              {/* Length options */}
+            {/* Length + Reset Row */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#071525]/70 border border-white/6 rounded-2xl p-5">
               <div className="space-y-2">
-                <h4 className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Resume Length</h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {["Auto-detect", "1 Page", "2 Pages", "Academic CV"].map((option) => {
-                    const isActive = lengthOption === option;
-                    return (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => setLengthOption(option)}
-                        className={`text-[10px] font-bold py-1.5 px-3 rounded-full border transition-all ${
-                          isActive
-                            ? "bg-violet-950/40 border-violet-500 text-violet-400"
-                            : "bg-transparent border-white/5 text-slate-400 hover:border-slate-700 hover:text-white"
-                        }`}
-                      >
-                        {option === "Auto-detect" ? "Auto-detect (Let AI decide)" : option}
-                      </button>
-                    );
-                  })}
+                <h4 className="text-[10px] font-bold uppercase text-slate-500 tracking-widest">Resume Length</h4>
+                <div className="flex flex-wrap gap-2">
+                  {["Auto-detect", "1 Page", "2 Pages", "Academic CV"].map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => setLengthOption(opt)}
+                      className={`text-[10px] font-bold py-1.5 px-3.5 rounded-full border transition-all duration-200 ${
+                        lengthOption === opt
+                          ? "bg-cyan-500/10 border-cyan-500/40 text-cyan-400"
+                          : "bg-transparent border-white/8 text-slate-500 hover:border-slate-600 hover:text-slate-300"
+                      }`}
+                    >
+                      {opt === "Auto-detect" ? "⚡ Auto (Recommended)" : opt}
+                    </button>
+                  ))}
                 </div>
               </div>
-
-              {/* Reset inputs button */}
               <Button
                 variant="outline"
                 onClick={handleReset}
                 disabled={optimizing}
-                className="border-white/5 text-slate-400 hover:bg-white/5 hover:text-white text-xs font-bold rounded-full px-5 self-end md:self-auto h-8"
+                className="border-white/8 text-slate-500 hover:bg-white/5 hover:text-white text-xs font-bold rounded-full px-5 h-8 self-end sm:self-auto shrink-0"
               >
-                Reset inputs
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                Clear All
               </Button>
             </div>
 
-            {/* Main Submit Optimization Trigger */}
-            <div className="pt-4 flex justify-center">
-              <Button
+            {/* CTA Button */}
+            <div className="flex justify-center pt-2">
+              <button
                 onClick={handleOptimize}
                 disabled={optimizing}
-                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-12 px-12 rounded-full shadow-lg shadow-violet-600/25 transition-all w-full sm:w-auto text-sm"
+                className="group relative overflow-hidden bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-sm h-13 px-14 rounded-full shadow-lg shadow-cyan-500/20 transition-all duration-300 hover:shadow-cyan-500/35 hover:scale-[1.02] disabled:opacity-60 disabled:scale-100 disabled:cursor-not-allowed"
+                style={{ height: "52px", paddingLeft: "3.5rem", paddingRight: "3.5rem" }}
               >
-                {optimizing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Improving Resume...
-                  </>
-                ) : (
-                  <>
-                    Improve My Resume →
-                  </>
-                )}
-              </Button>
+                {/* Shimmer */}
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700 skew-x-12" />
+                <span className="relative flex items-center gap-2">
+                  {optimizing ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Optimizing Resume...</>
+                  ) : (
+                    <><Zap className="h-4 w-4" /> Optimize My Resume <ChevronRight className="h-4 w-4" /></>
+                  )}
+                </span>
+              </button>
             </div>
 
-            {/* Dashboard Footer Feature badges */}
-            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 pt-6 text-[10px] text-slate-500 font-bold uppercase tracking-wider select-none">
-              <span className="flex items-center gap-1.5">🔍 ATS Keyword Analysis</span>
-              <span className="flex items-center gap-1.5">✍️ Smart Bullet Rewrites</span>
-              <span className="flex items-center gap-1.5">📄 Smart Page Length</span>
-              <span className="flex items-center gap-1.5">📊 Before/After Scoring</span>
-              <span className="flex items-center gap-1.5">⏱️ ~20 Second Results</span>
+            {/* Trust badges */}
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 pt-2 text-[10px] text-slate-600 font-semibold">
+              <span className="flex items-center gap-1.5"><Shield className="h-3 w-3 text-slate-700" /> No data sold</span>
+              <span className="flex items-center gap-1.5"><Zap className="h-3 w-3 text-slate-700" /> ~20s results</span>
+              <span className="flex items-center gap-1.5"><Target className="h-3 w-3 text-slate-700" /> ATS-Tested</span>
+              <span className="flex items-center gap-1.5"><TrendingUp className="h-3 w-3 text-slate-700" /> Score improvement guaranteed</span>
             </div>
 
           </div>

@@ -19,12 +19,60 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Check password against HaveIBeenPwned using k-anonymity (password never sent — only first 5 chars of SHA-1 hash)
+  const checkLeakedPassword = async (pwd: string): Promise<boolean> => {
+    try {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(pwd);
+      const hashBuffer = await crypto.subtle.digest("SHA-1", data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+      const prefix = hashHex.slice(0, 5);
+      const suffix = hashHex.slice(5);
+
+      const res = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`, {
+        headers: { "Add-Padding": "true" },
+      });
+      if (!res.ok) return false; // If HIBP is down, don't block signup
+
+      const text = await res.text();
+      const lines = text.split("\n");
+      for (const line of lines) {
+        const [hashSuffix, count] = line.split(":");
+        if (hashSuffix.trim().toUpperCase() === suffix && parseInt(count, 10) > 0) {
+          return true; // Password found in breach database
+        }
+      }
+      return false;
+    } catch {
+      return false; // Network error — fail open (don't block signup)
+    }
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Basic password length check
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
     setLoading(true);
 
     try {
+      // Check if password has been leaked in known data breaches
+      const isLeaked = await checkLeakedPassword(password);
+      if (isLeaked) {
+        setError(
+          "This password has appeared in a known data breach. Please choose a stronger, unique password."
+        );
+        toast.error("Password found in breach database. Please choose a different one.");
+        setLoading(false);
+        return;
+      }
+
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -279,7 +327,7 @@ export default function SignupPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Password (Min. 6 chars)</label>
+                  <label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Password (Min. 8 chars)</label>
                   <div className="relative">
                     <KeyRound className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
                     <Input
