@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
         .from("User")
         .select("id")
         .order("createdAt", { ascending: true })
-        .limit(50);
+        .limit(5000);
       isFirst50 = first50Users?.some((u: any) => u.id === activeUserId) || false;
     } catch (e: any) {
       logger.warn("[credits] Failed checking first 50 users list:", e.message);
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
         .insert({
           userId: activeUserId,
           freeUsed: 0,
-          paidCredits: isFirst50 ? 15 : 0,
+          paidCredits: isFirst50 ? 365 : 0,
           resetAt: now.toISOString(),
         })
         .select()
@@ -120,11 +120,11 @@ export async function GET(request: NextRequest) {
         });
       }
       creditRow = newCredit;
-    } else if (isFirst50 && creditRow.paidCredits < 15) {
+    } else if (isFirst50 && creditRow.paidCredits < 365) {
       // Auto-upgrade free tier credits to Premium plan credits for first 50 users
       const { data: updatedCredit } = await admin
         .from("Credit")
-        .update({ paidCredits: 15 })
+        .update({ paidCredits: 365 })
         .eq("userId", activeUserId)
         .select()
         .single();
@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
 
     if (isNewMonth) {
       freeUsed = 0;
-      paidCredits = isFirst50 ? 15 : creditRow.paidCredits;
+      paidCredits = isFirst50 ? 365 : creditRow.paidCredits;
       await admin
         .from("Credit")
         .update({ 

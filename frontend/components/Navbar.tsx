@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useResumeStore } from "@/store/useResumeStore";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -103,6 +104,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    useResumeStore.getState().reset();
     setIsDropdownOpen(false);
     toast.success("Signed out successfully.");
     router.push("/");
