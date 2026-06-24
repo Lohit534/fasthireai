@@ -7,19 +7,18 @@ import { useResumeStore } from "@/store/useResumeStore";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { 
-  FileText, 
-  ArrowRight, 
-  Upload, 
-  Terminal, 
-  CheckCircle2, 
-  Shield, 
-  Cpu, 
-  Sparkles,
+import {
+  FileText,
+  ArrowRight,
+  Upload,
   Zap,
   TrendingUp,
-  AlertCircle
+  Download,
+  Target,
+  Shield,
+  CheckCircle2,
+  ChevronRight,
+  Sparkles,
 } from "lucide-react";
 
 const SAMPLE_RESUME = `# Alex Rivera
@@ -64,95 +63,125 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#060713] text-slate-100 antialiased font-sans">
+    <div className="flex flex-col min-h-screen bg-[#040d1a] text-slate-100 antialiased font-sans">
+      {/* Ambient background glows */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        <div className="absolute top-0 right-1/4 w-[700px] h-[500px] bg-cyan-500/4 rounded-full blur-[140px]" />
+        <div className="absolute top-1/2 left-0 w-[500px] h-[500px] bg-blue-600/4 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-indigo-600/3 rounded-full blur-[100px]" />
+      </div>
+
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden pt-16 pb-20 md:pt-24 md:pb-28 border-b border-white/5 bg-[#060713]">
-        {/* Glowing backdrop spotlights */}
-        <div className="absolute top-1/4 right-[10%] h-[350px] w-[350px] rounded-full bg-violet-600/10 blur-[120px] -z-10" />
-        <div className="absolute bottom-1/4 left-[15%] h-[350px] w-[350px] rounded-full bg-indigo-600/10 blur-[120px] -z-10" />
-
+      {/* ── HERO SECTION ─────────────────────────────────────────── */}
+      <section className="relative pt-20 pb-24 md:pt-28 md:pb-32 border-b border-white/5">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            
-            {/* Left: Text copy and CTAs */}
-            <div className="lg:col-span-7 space-y-6 text-left">
-              <Badge className="bg-violet-950/40 border border-violet-800/30 text-violet-300 hover:bg-violet-950/40 px-3 py-1 text-xs rounded-full inline-flex items-center gap-1.5 select-none font-semibold">
-                <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-ping" />
-                2 Free Resumes - No Credit Card
-              </Badge>
-              
-              <h1 className="text-4xl sm:text-5xl md:text-6.5xl font-black tracking-tight leading-[1.05] max-w-2xl text-white">
-                Your resume deserves a <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-indigo-400 bg-clip-text text-transparent">fighting chance.</span>
-              </h1>
-              
-              <p className="text-sm sm:text-base text-slate-400 max-w-xl leading-relaxed font-medium">
-                The **AI resume builder** that checks your ATS score and rewrites your resume with exact keyword matching — in under 30 seconds. Free for all job seekers.
-              </p>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
 
-              <div className="flex flex-wrap gap-4 pt-2">
-                <Link href="/dashboard">
-                  <Button size="lg" className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-600/20 font-bold px-8 h-12 rounded-full">
-                    Improve My Resume
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  onClick={handleTrySample}
-                  className="border-white/10 text-slate-300 hover:bg-white/5 font-bold px-8 h-12 rounded-full bg-transparent"
-                >
-                  Try with Sample Resume →
-                </Button>
+            {/* Left: Copy + CTAs */}
+            <div className="lg:col-span-6 space-y-7 text-left">
+              {/* Status pill */}
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/8 border border-cyan-500/20 text-cyan-400 text-[10px] font-bold uppercase tracking-widest">
+                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                2 Free Optimizations — No Credit Card
               </div>
 
-              {/* Badges footer */}
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-4 text-xs text-slate-500 font-semibold select-none">
-                <span className="flex items-center gap-1.5">🛡️ No data sold</span>
-                <span className="flex items-center gap-1.5">⏱️ ~20s results</span>
-                <span className="flex items-center gap-1.5">✨ Free to start</span>
+              <h1 className="text-4xl sm:text-5xl md:text-[3.6rem] font-black tracking-tight leading-[1.05] text-white">
+                Stop Getting{" "}
+                <span className="relative inline-block">
+                  <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                    Rejected.
+                  </span>
+                </span>
+                <br />
+                Start Getting{" "}
+                <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                  Interviews.
+                </span>
+              </h1>
+
+              <p className="text-base text-slate-400 max-w-lg leading-relaxed font-medium">
+                Paste your resume + job description. Our AI rewrites, keyword-matches, and ATS-scores your resume in under 30 seconds — completely free to start.
+              </p>
+
+              {/* Feature chips */}
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { icon: Target, text: "ATS Keyword Match" },
+                  { icon: Zap, text: "AI Bullet Rewrites" },
+                  { icon: TrendingUp, text: "Score Tracking" },
+                  { icon: Download, text: "PDF & DOCX Export" },
+                ].map(({ icon: Icon, text }) => (
+                  <span key={text} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/60 border border-white/5 text-[11px] text-slate-400 font-semibold">
+                    <Icon className="h-3 w-3 text-cyan-500" />
+                    {text}
+                  </span>
+                ))}
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-wrap gap-3 pt-2">
+                <Link href="/auth/signup">
+                  <button className="group relative overflow-hidden bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-sm h-12 px-8 rounded-full shadow-lg shadow-cyan-500/25 transition-all duration-300 hover:shadow-cyan-500/40 hover:scale-[1.02]">
+                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700 skew-x-12" />
+                    <span className="relative flex items-center gap-2">
+                      Get Started Free
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
+                  </button>
+                </Link>
+                <button
+                  onClick={handleTrySample}
+                  className="h-12 px-8 rounded-full border border-white/10 text-slate-300 hover:bg-white/5 hover:border-cyan-500/30 font-bold text-sm transition-all duration-200"
+                >
+                  Try Sample Resume →
+                </button>
+              </div>
+
+              {/* Trust row */}
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-600 font-semibold">
+                <span className="flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-slate-700" /> No data sold, ever</span>
+                <span className="flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-slate-700" /> Results in ~20 seconds</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-slate-700" /> Free to start</span>
               </div>
             </div>
 
-            {/* Right: Floating Glassmorphic Score Cards */}
-            <div className="lg:col-span-5 relative flex justify-center lg:justify-end">
-              <div className="relative w-full max-w-[400px] h-[360px]">
-                
-                {/* Scorecard Before (Red Dial) */}
-                <div className="absolute top-4 left-0 w-[240px] border border-white/5 bg-[#0e0f21]/70 backdrop-blur-xl p-5 rounded-2xl shadow-2xl shadow-black/40 rotate-[-4deg] animate-pulse">
+            {/* Right: Score cards mockup */}
+            <div className="lg:col-span-6 relative flex justify-center lg:justify-end">
+              <div className="relative w-full max-w-[420px] h-[360px]">
+
+                {/* BEFORE card */}
+                <div className="absolute top-4 left-0 w-[240px] bg-[#071525]/90 border border-white/8 backdrop-blur-xl p-5 rounded-2xl shadow-2xl rotate-[-3deg]">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Before</span>
-                    <Badge variant="outline" className="border-red-500/20 bg-red-500/10 text-red-400 text-[10px] font-bold py-0.5 px-2 rounded-md">
-                      34%
-                    </Badge>
+                    <span className="text-[11px] font-black text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full">34%</span>
                   </div>
-                  {/* Skeletons */}
                   <div className="space-y-2">
-                    <div className="h-2 w-3/4 bg-slate-800 rounded-full" />
-                    <div className="h-2 w-full bg-slate-800 rounded-full" />
-                    <div className="h-2 w-5/6 bg-slate-800 rounded-full" />
+                    <div className="h-1.5 w-3/4 bg-slate-800 rounded-full" />
+                    <div className="h-1.5 w-full bg-slate-800 rounded-full" />
+                    <div className="h-1.5 w-5/6 bg-slate-800 rounded-full" />
+                    <div className="h-1.5 w-2/3 bg-slate-800 rounded-full" />
                   </div>
+                  <div className="mt-4 text-[10px] text-red-400/80 font-semibold">✗ Missing 14 keywords</div>
                 </div>
 
-                {/* Scorecard After (Green Dial) */}
-                <div className="absolute bottom-4 right-0 w-[260px] border border-white/10 bg-[#12132b]/80 backdrop-blur-xl p-6 rounded-2xl shadow-2xl shadow-violet-600/5 rotate-[2deg]">
-                  <div className="absolute -top-3 -right-3 bg-emerald-500 text-white font-black text-[10px] px-2.5 py-1 rounded-full border border-emerald-400 select-none shadow-lg shadow-emerald-500/10">
-                    +57 pts
+                {/* AFTER card */}
+                <div className="absolute bottom-4 right-0 w-[260px] bg-[#071a14]/90 border border-cyan-500/15 backdrop-blur-xl p-6 rounded-2xl shadow-2xl rotate-[2deg]">
+                  <div className="absolute -top-3 -right-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-black text-[10px] px-2.5 py-1 rounded-full shadow-lg shadow-cyan-500/20">
+                    +57 pts ↑
                   </div>
                   <div className="flex justify-between items-center mb-5">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">After Optimization</span>
-                    <Badge variant="outline" className="border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold py-0.5 px-2 rounded-md">
-                      91%
-                    </Badge>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">After AI Optimization</span>
+                    <span className="text-[11px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">91%</span>
                   </div>
-                  {/* Skeletons */}
                   <div className="space-y-2.5">
-                    <div className="h-2 w-5/6 bg-slate-700/80 rounded-full" />
-                    <div className="h-2 w-full bg-slate-700/80 rounded-full" />
-                    <div className="h-2 w-4/5 bg-slate-700/80 rounded-full" />
+                    {[100, 85, 92, 78].map((w, i) => (
+                      <div key={i} className="h-1.5 rounded-full overflow-hidden bg-slate-800">
+                        <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-400 rounded-full" style={{ width: `${w}%` }} />
+                      </div>
+                    ))}
                   </div>
+                  <div className="mt-4 text-[10px] text-emerald-400 font-semibold">✓ All keywords integrated</div>
                 </div>
 
               </div>
@@ -162,112 +191,171 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Before vs After Detailed Metrics Showroom */}
-      <section className="py-20 border-b border-white/5 bg-[#080917]">
+      {/* ── SCORE LIFT SECTION ──────────────────────────────────── */}
+      <section className="py-20 border-b border-white/5 bg-[#040d1a]">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center space-y-3">
-            <h2 className="text-3xl font-black text-white tracking-tight">Real-Time Scoring Lift</h2>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-500">Real Results</span>
+            <h2 className="text-3xl font-black text-white tracking-tight">Watch Your ATS Score Climb</h2>
             <p className="text-slate-400 text-sm max-w-md mx-auto font-medium">
-              Watch your resume score lift as we automatically address gaps.
+              Every optimization is scored before and after so you can see exactly how much better your resume performs.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center max-w-4xl mx-auto">
-            {/* Before Box */}
-            <Card className="border-white/5 bg-[#0e0f21]/50 shadow-lg p-6 text-center space-y-4">
-              <Badge variant="outline" className="border-red-500/20 bg-red-500/15 text-red-400 font-bold text-[10px] uppercase rounded-md tracking-wider">
-                Initial Resume
-              </Badge>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center max-w-3xl mx-auto">
+            {/* Before */}
+            <div className="border border-red-500/15 bg-[#1a0707]/40 rounded-2xl p-6 text-center space-y-4">
+              <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-red-400 border border-red-500/20 bg-red-500/10 px-3 py-1 rounded-full">
+                Unoptimized Resume
+              </span>
               <div className="flex items-center justify-center h-28 w-28 rounded-full border-4 border-red-500/20 bg-red-500/5 mx-auto">
-                <span className="text-4.5xl font-black text-red-500">34</span>
+                <span className="text-5xl font-black text-red-500">34</span>
               </div>
-              <h4 className="font-extrabold text-white text-sm">Action verbs and metrics missing</h4>
-            </Card>
+              <p className="text-xs text-slate-500 font-medium">Action verbs weak · 14 keywords missing · Low ATS pass rate</p>
+            </div>
 
-            {/* After Box */}
-            <Card className="border-white/10 bg-[#12132d]/60 shadow-xl p-6 text-center space-y-4 relative">
-              <Badge variant="outline" className="border-emerald-500/20 bg-emerald-500/15 text-emerald-400 font-bold text-[10px] uppercase rounded-md tracking-wider">
+            {/* Arrow */}
+            <div className="hidden md:flex flex-col items-center gap-2">
+              <div className="h-px w-full bg-gradient-to-r from-red-500/20 via-cyan-500/40 to-emerald-500/20" />
+              <span className="text-xs font-black text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 rounded-full">⚡ AI Optimizes</span>
+              <div className="h-px w-full bg-gradient-to-r from-red-500/20 via-cyan-500/40 to-emerald-500/20" />
+            </div>
+
+            {/* After */}
+            <div className="border border-emerald-500/15 bg-[#071a0e]/40 rounded-2xl p-6 text-center space-y-4">
+              <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-emerald-400 border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 rounded-full">
                 FastHire Optimized
-              </Badge>
+              </span>
               <div className="flex items-center justify-center h-28 w-28 rounded-full border-4 border-emerald-500/20 bg-emerald-500/5 mx-auto">
-                <span className="text-4.5xl font-black text-emerald-400">91</span>
+                <span className="text-5xl font-black text-emerald-400">91</span>
               </div>
-              <h4 className="font-extrabold text-white text-sm">Strong keyword alignment & verified verbs</h4>
-            </Card>
+              <p className="text-xs text-slate-500 font-medium">Strong keyword alignment · Impact metrics added · ATS-ready ✓</p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* How it Works Section */}
-      <section className="py-20 bg-[#060713]">
+      {/* ── HOW IT WORKS ────────────────────────────────────────── */}
+      <section className="py-20 border-b border-white/5">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center space-y-3">
-            <h2 className="text-3xl font-black text-white tracking-tight">How It Works</h2>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-500">Simple 3-Step Process</span>
+            <h2 className="text-3xl font-black text-white tracking-tight">How FastHire Works</h2>
             <p className="text-slate-400 text-sm max-w-md mx-auto font-medium">
-              Transform your resume to beat applicant tracking systems in three simple steps.
+              From upload to ATS-ready resume in under 30 seconds. No fluff, no gimmicks.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center space-y-4 p-5 rounded-2xl border border-white/5 bg-[#0e0f21]/40">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-950/50 border border-violet-800/30 text-violet-400 mx-auto">
-                <Upload className="h-6 w-6" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                step: "01",
+                icon: Upload,
+                title: "Paste Your Resume",
+                desc: "Upload a PDF/DOCX or paste your resume text. Our parser handles all formats cleanly.",
+                color: "cyan",
+              },
+              {
+                step: "02",
+                icon: Target,
+                title: "Add the Job Description",
+                desc: "Paste the job posting URL or text. Our AI maps every keyword gap instantly.",
+                color: "blue",
+              },
+              {
+                step: "03",
+                icon: Zap,
+                title: "Get Your Optimized Resume",
+                desc: "AI rewrites weak bullets, injects missing keywords, and scores your improvement.",
+                color: "indigo",
+              },
+            ].map(({ step, icon: Icon, title, desc, color }) => (
+              <div key={step} className={`relative p-6 rounded-2xl bg-[#071525]/60 border border-white/6 hover:border-${color}-500/20 transition-colors duration-300 space-y-4`}>
+                <div className="flex items-center justify-between">
+                  <div className={`h-10 w-10 rounded-xl bg-${color}-500/10 border border-${color}-500/20 flex items-center justify-center`}>
+                    <Icon className={`h-5 w-5 text-${color}-400`} />
+                  </div>
+                  <span className="text-[10px] font-black text-slate-700 tracking-widest">{step}</span>
+                </div>
+                <h3 className="font-extrabold text-white text-sm">{title}</h3>
+                <p className="text-xs text-slate-500 leading-relaxed font-medium">{desc}</p>
               </div>
-              <h3 className="font-bold text-base text-white">1. Upload Resume</h3>
-              <p className="text-xs text-slate-400 leading-relaxed font-medium">
-                Upload your PDF/DOCX or build a new one using our multi-step interactive resume wizard.
-              </p>
-            </div>
-
-            <div className="text-center space-y-4 p-5 rounded-2xl border border-white/5 bg-[#0e0f21]/40">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-950/50 border border-violet-800/30 text-violet-400 mx-auto">
-                <FileText className="h-6 w-6" />
-              </div>
-              <h3 className="font-bold text-base text-white">2. Target Job Description</h3>
-              <p className="text-xs text-slate-400 leading-relaxed font-medium">
-                Paste your target job description. Our engine will map semantic similarity gaps.
-              </p>
-            </div>
-
-            <div className="text-center space-y-4 p-5 rounded-2xl border border-white/5 bg-[#0e0f21]/40">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-950/50 border border-emerald-800/30 text-emerald-400 mx-auto">
-                <Zap className="h-6 w-6" />
-              </div>
-              <h3 className="font-bold text-base text-white">3. Apply Bullet Rewrites</h3>
-              <p className="text-xs text-slate-400 leading-relaxed font-medium">
-                Accept keyword-injected bullets and download your ATS-compliant resume instantly.
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Block */}
-      <section className="bg-[#080917] text-white py-16 text-center border-t border-white/5">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-6">
-          <h2 className="text-3xl font-black tracking-tight">Ready to Land More Interviews?</h2>
+      {/* ── WHY FASTHIRE ─────────────────────────────────────────── */}
+      <section className="py-20 border-b border-white/5 bg-[#040d1a]">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="text-center space-y-3">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-500">Why FastHire</span>
+            <h2 className="text-3xl font-black text-white tracking-tight">Built for Job Hunters, Not HR Departments</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              { icon: Target, title: "ATS-First Design", desc: "Every rewrite targets the exact keywords recruiters' ATS systems filter for." },
+              { icon: Zap, title: "30-Second Results", desc: "No waiting. No wizard. Just paste and get a better resume immediately." },
+              { icon: Shield, title: "100% Private", desc: "Your resume data is never sold, shared, or used to train third-party models." },
+              { icon: Download, title: "PDF & DOCX Ready", desc: "Export clean, recruiter-ready documents in one click." },
+            ].map(({ icon: Icon, title, desc }) => (
+              <div key={title} className="p-5 rounded-2xl bg-[#071525]/60 border border-white/6 space-y-3">
+                <div className="h-9 w-9 rounded-lg bg-cyan-500/10 border border-cyan-500/15 flex items-center justify-center">
+                  <Icon className="h-4 w-4 text-cyan-400" />
+                </div>
+                <h3 className="font-extrabold text-white text-sm">{title}</h3>
+                <p className="text-[11px] text-slate-500 leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA BLOCK ────────────────────────────────────────────── */}
+      <section className="py-20 text-center">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/8 border border-cyan-500/20 text-cyan-400 text-[10px] font-bold uppercase tracking-widest mb-2">
+            <Sparkles className="h-3 w-3" />
+            Free Forever Tier
+          </div>
+          <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+            Ready to Land More{" "}
+            <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Interviews?</span>
+          </h2>
           <p className="text-slate-400 text-sm max-w-md mx-auto font-medium">
-            Get 2 free resume optimizations each month. No credit card required. Cancel anytime.
+            2 free resume optimizations every month. No credit card. No setup. Just results.
           </p>
-          <div className="pt-2">
-            <Link href="/dashboard">
-              <Button size="lg" className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold px-8 h-12 rounded-full shadow-lg shadow-violet-600/20">
-                Start Free Now
-              </Button>
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
+            <Link href="/auth/signup">
+              <button className="group relative overflow-hidden bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-sm h-12 px-10 rounded-full shadow-lg shadow-cyan-500/25 transition-all duration-300 hover:shadow-cyan-500/40 hover:scale-[1.02]">
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700 skew-x-12" />
+                <span className="relative flex items-center gap-2">
+                  Start For Free
+                  <ChevronRight className="h-4 w-4" />
+                </span>
+              </button>
             </Link>
+            <button
+              onClick={handleTrySample}
+              className="h-12 px-8 rounded-full border border-white/10 text-slate-300 hover:bg-white/5 font-bold text-sm transition-all"
+            >
+              See a Demo →
+            </button>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-[#060713] border-t border-white/5 py-8 text-center text-xs text-slate-500 mt-auto font-semibold">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            FastHire &copy; 2026. All rights reserved.
+      {/* ── FOOTER ──────────────────────────────────────────────── */}
+      <footer className="bg-[#040d1a] border-t border-white/5 py-8">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-600">
+          <div className="flex items-center gap-2 font-bold text-slate-500">
+            <Zap className="h-3.5 w-3.5 text-cyan-500" />
+            FastHire AI © 2026. All rights reserved.
           </div>
-          <div className="flex gap-4 font-semibold text-slate-400">
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+          <div className="flex gap-5 font-semibold text-slate-500">
+            <Link href="/privacy" className="hover:text-cyan-400 transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-cyan-400 transition-colors">Terms of Service</Link>
+            <Link href="/auth/login" className="hover:text-cyan-400 transition-colors">Sign In</Link>
           </div>
         </div>
       </footer>
