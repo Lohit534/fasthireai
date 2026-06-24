@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
         .from("User")
         .select("id")
         .order("createdAt", { ascending: true })
-        .limit(5000);
+        .limit(50);
       isFirst50 = first50Users?.some((u: any) => u.id === activeUserId) || false;
     } catch (e: any) {
       logger.warn("[credits] Failed checking first 50 users list:", e.message);
