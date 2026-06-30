@@ -57,8 +57,6 @@ export default function LandingPage() {
   const { setResumeText, setJobDescription } = useResumeStore();
 
   const handleTrySample = () => {
-    setResumeText(SAMPLE_RESUME);
-    setJobDescription(SAMPLE_JD);
     router.push("/dashboard");
   };
 

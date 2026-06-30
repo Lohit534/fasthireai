@@ -267,17 +267,14 @@ export default function ResumeBuilderPage() {
     if (activeExp.length > 0) {
       md += `## Professional Experience\n\n`;
       activeExp.forEach((exp) => {
-        md += `**${exp.company.trim() || "Company Name"}** | ${exp.title.trim() || "Job Title"}\n`;
-        const meta = [exp.location.trim(), exp.dates.trim()].filter(Boolean).join(", ");
-        if (meta) {
-          md += `*${meta}*\n`;
-        }
+        md += `**${exp.title.trim() || "Job Title"}**   ${exp.dates.trim()}\n`;
+        md += `${exp.company.trim() || "Company Name"}${exp.location.trim() ? `, ${exp.location.trim()}` : ""}\n`;
         if (exp.bullets.trim()) {
           const lines = exp.bullets.split("\n").filter(l => l.trim());
           lines.forEach((line) => {
             let clean = line.trim();
             if (clean.startsWith("-") || clean.startsWith("*")) {
-              clean = clean.substring(1).trim();
+               clean = clean.substring(1).trim();
             }
             md += `- ${clean}\n`;
           });
@@ -291,11 +288,9 @@ export default function ResumeBuilderPage() {
     if (activeEdu.length > 0) {
       md += `## Education\n\n`;
       activeEdu.forEach((edu) => {
-        md += `**${edu.school.trim() || "University"}** | ${edu.degree.trim() || "Degree"}${edu.fieldOfStudy.trim() ? ` in ${edu.fieldOfStudy.trim()}` : ""}\n`;
-        if (edu.dates.trim()) {
-          md += `*${edu.dates.trim()}*\n`;
-        }
-        md += `\n`;
+        const degreeText = `${edu.degree.trim() || "Degree"}${edu.fieldOfStudy.trim() ? ` in ${edu.fieldOfStudy.trim()}` : ""}`;
+        md += `**${degreeText}**   ${edu.dates.trim()}\n`;
+        md += `${edu.school.trim() || "University"}\n\n`;
       });
     }
 
