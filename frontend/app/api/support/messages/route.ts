@@ -15,6 +15,7 @@ import { logger } from "@/lib/logger";
 import { generateUUID } from "@/lib/utils";
 import fs from "fs";
 import path from "path";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const FILE_PATH = path.join(DATA_DIR, "support_messages.json");
