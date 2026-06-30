@@ -162,9 +162,10 @@ export default function SupportChatbot() {
     const isFree = activePlan.includes("Free Tier");
     const isPremium = activePlan.includes("Premium Pro");
     const isProMax = activePlan.includes("Pro Max") || activePlan.toLowerCase().includes("owner");
+    const canContactAdmin = isProMax || isPremium;
 
-    if (mode === "admin" && !isProMax) {
-      toast.error("Direct messaging to the Admin is a Pro Max exclusive benefit. Redirecting to upgrades...");
+    if (mode === "admin" && !canContactAdmin) {
+      toast.error("Direct messaging to the Admin is a Premium/Pro Max exclusive benefit. Redirecting to upgrades...");
       setTimeout(() => {
         window.location.href = "/dashboard/pricing";
       }, 1500);
@@ -313,8 +314,9 @@ export default function SupportChatbot() {
             </button>
             <button
               onClick={() => {
-                if (!activePlan.includes("Pro Max") && !activePlan.toLowerCase().includes("owner")) {
-                  toast.error("Direct Admin Messaging is a Pro Max exclusive benefit. Redirecting to upgrades...");
+                const canContact = activePlan.includes("Pro Max") || activePlan.includes("Premium Pro") || activePlan.toLowerCase().includes("owner");
+                if (!canContact) {
+                  toast.error("Direct Admin Messaging is a Premium/Pro Max exclusive benefit. Redirecting to upgrades...");
                   setTimeout(() => {
                     window.location.href = "/dashboard/pricing";
                   }, 1500);
