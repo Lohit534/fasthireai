@@ -114,7 +114,9 @@ function drawRichText(
     
     if (part.startsWith("**") && part.endsWith("**")) {
       isBold = true;
-      textChunk = part.slice(2, -2);
+      textChunk = part.slice(2, -2).replace(/\*/g, ""); // Strip any internal asterisks
+    } else {
+      textChunk = textChunk.replace(/\*/g, ""); // Strip any stray asterisks
     }
     
     const font = isBold ? "F2" : "F1";
@@ -277,6 +279,7 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
           ensureSpace(sz * 1.5);
           text(line.text, ML, y, sz, false, true);
           y -= sz * 1.6;
+          y -= 12; // Added gap after contact info block
           break;
         }
 
@@ -287,7 +290,7 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
           text(line.text, ML, y, sz, true, false);
           y -= sz * 1.3;
           rule(y + 2);
-          y -= 5;
+          y -= 10; // Increased gap after section header
           break;
         }
 
@@ -414,21 +417,21 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
       append("\nendstream\nendobj\n");
     }
 
-    // Font 1 (Helvetica regular)
+    // Font 1 (Times-Roman regular)
     const font1Id = 3 + N * 2;
     offsets[font1Id] = byteOffset;
     append(
       `${font1Id} 0 obj\n` +
-      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica\n" +
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman\n" +
       "   /Encoding /WinAnsiEncoding >>\nendobj\n"
     );
 
-    // Font 2 (Helvetica bold)
+    // Font 2 (Times-Bold)
     const font2Id = 4 + N * 2;
     offsets[font2Id] = byteOffset;
     append(
       `${font2Id} 0 obj\n` +
-      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold\n" +
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Times-Bold\n" +
       "   /Encoding /WinAnsiEncoding >>\nendobj\n"
     );
 
