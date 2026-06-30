@@ -49,13 +49,24 @@ interface StructuredResume {
   website: string;
   summary: string;
   experience: { id: string; company: string; title: string; date: string; bullets: string[] }[];
-  education: { id: string; school: string; degree: string; field: string; date: string; description: string }[];
+  education: { id: string; school: string; degree: string; field: string; date: string; gpa: string; description: string }[];
   projects: { id: string; name: string; techStack: string; link: string; date: string; bullets: string[] }[];
   skills: { id: string; category: string; list: string[] }[];
   certifications: string[];
   languages: string[];
   achievements: string[];
 }
+
+const renderRichText = (text: string) => {
+  if (!text) return "";
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, idx) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={idx} className="font-bold">{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+};
 
 export default function ResumesPage() {
   const router = useRouter();
@@ -275,6 +286,10 @@ export default function ResumesPage() {
       } else if (currentSection === "education") {
         if ((line.startsWith("*") && line.endsWith("*") || line.startsWith("_") && line.endsWith("_")) && currentEdu) {
           currentEdu.date = line.replace(/^[\*\_]+|[\*\_]+$/g, "").trim();
+        } else if (line.toLowerCase().startsWith("cgpa:") || line.toLowerCase().startsWith("gpa:")) {
+          if (currentEdu) {
+            currentEdu.gpa = line.replace(/^(cgpa|gpa):\s*/i, "").trim();
+          }
         } else {
           const parts = line.split(/\s{3,}| \| /);
           const headerParts = (parts[0] || "").replace(/^\*\*|\*\*$/g, "").split(" - ");
@@ -286,6 +301,7 @@ export default function ResumesPage() {
             degree: (fieldParts[0] || "").replace(/^\*\*|\*\*$/g, "").trim(),
             field: (fieldParts[1] || "").replace(/^\*\*|\*\*$/g, "").trim(),
             date: (parts[2] || "").replace(/^[\*\_]+|[\*\_]+$/g, "").trim(),
+            gpa: "",
             description: ""
           };
           resume.education.push(currentEdu);
@@ -399,6 +415,9 @@ export default function ResumesPage() {
       data.education.forEach(edu => {
         const leftPart = `${edu.school}${edu.degree ? ' - ' + edu.degree : ''}${edu.field ? ' in ' + edu.field : ''}`;
         text += `${leftPart}${"   "}${edu.date}\n`;
+        if (edu.gpa) {
+          text += `CGPA: ${edu.gpa}\n`;
+        }
         if (edu.description) {
           text += `${edu.description}\n`;
         }
@@ -777,6 +796,7 @@ export default function ResumesPage() {
       degree: "B.S.",
       field: "Computer Engineering",
       date: "2018 - 2022",
+      gpa: "",
       description: ""
     };
     const updated = { ...editorData, education: [...editorData.education, newEdu] };
@@ -1407,17 +1427,23 @@ export default function ResumesPage() {
                             <div className="space-y-2">
                               <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Description Bullets</label>
                               {exp.bullets.map((bullet, idx) => (
-                                <div key={idx} className="flex gap-2 items-center">
-                                  <span className="text-slate-500 text-xs select-none">•</span>
-                                  <Input
+                                <div key={idx} className="flex gap-2 items-start">
+                                  <span className="text-slate-500 text-xs select-none mt-2">•</span>
+                                  <textarea
                                     value={bullet}
                                     onChange={(e) => handleExpBulletChange(exp.id, idx, e.target.value)}
-                                    className="h-8 flex-1 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                    className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs resize-none overflow-hidden"
                                     placeholder="Add detail bullet..."
+                                    rows={1}
+                                    onInput={(e) => {
+                                      const target = e.target as HTMLTextAreaElement;
+                                      target.style.height = "auto";
+                                      target.style.height = `${target.scrollHeight}px`;
+                                    }}
                                   />
                                   <button
                                     onClick={() => removeExpBullet(exp.id, idx)}
-                                    className="text-slate-600 hover:text-red-400 p-1"
+                                    className="text-slate-600 hover:text-red-400 p-1 mt-1"
                                   >
                                     <Trash2 className="h-3 w-3" />
                                   </button>
@@ -1506,6 +1532,18 @@ export default function ResumesPage() {
                                 />
                               </div>
                             </div>
+
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div className="space-y-1">
+                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">CGPA / GPA (Optional)</label>
+                                <Input
+                                  value={edu.gpa || ""}
+                                  onChange={(e) => handleEduChange(edu.id, "gpa", e.target.value)}
+                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  placeholder="e.g. 9.8/10 or 3.9/4.0"
+                                />
+                              </div>
+                            </div>
                           </div>
                         ))}
 
@@ -1589,17 +1627,23 @@ export default function ResumesPage() {
                             <div className="space-y-2">
                               <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Description Bullets</label>
                               {proj.bullets.map((bullet, idx) => (
-                                <div key={idx} className="flex gap-2 items-center">
-                                  <span className="text-slate-500 text-xs select-none">•</span>
-                                  <Input
+                                <div key={idx} className="flex gap-2 items-start">
+                                  <span className="text-slate-500 text-xs select-none mt-2">•</span>
+                                  <textarea
                                     value={bullet}
                                     onChange={(e) => handleProjBulletChange(proj.id, idx, e.target.value)}
-                                    className="h-8 flex-1 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                    className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs resize-none overflow-hidden"
                                     placeholder="Add project bullet..."
+                                    rows={1}
+                                    onInput={(e) => {
+                                      const target = e.target as HTMLTextAreaElement;
+                                      target.style.height = "auto";
+                                      target.style.height = `${target.scrollHeight}px`;
+                                    }}
                                   />
                                   <button
                                     onClick={() => removeProjBullet(proj.id, idx)}
-                                    className="text-slate-600 hover:text-red-400 p-1"
+                                    className="text-slate-600 hover:text-red-400 p-1 mt-1"
                                   >
                                     <Trash2 className="h-3 w-3" />
                                   </button>
@@ -1701,17 +1745,23 @@ export default function ResumesPage() {
                       <div className="p-4 space-y-3 select-none">
                         <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Certifications Bullets</label>
                         {editorData.certifications.map((cert, idx) => (
-                          <div key={idx} className="flex gap-2 items-center">
-                            <span className="text-slate-500 text-xs select-none">•</span>
-                            <Input
+                          <div key={idx} className="flex gap-2 items-start">
+                            <span className="text-slate-500 text-xs select-none mt-2">•</span>
+                            <textarea
                               value={cert}
                               onChange={(e) => handleCertificationItemChange(idx, e.target.value)}
-                              className="h-8 flex-1 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                              className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs resize-none overflow-hidden"
                               placeholder="e.g. AWS Certified Solutions Architect"
+                              rows={1}
+                              onInput={(e) => {
+                                const target = e.target as HTMLTextAreaElement;
+                                target.style.height = "auto";
+                                target.style.height = `${target.scrollHeight}px`;
+                              }}
                             />
                             <button
                               onClick={() => removeCertificationItem(idx)}
-                              className="text-slate-600 hover:text-red-400 p-1"
+                              className="text-slate-600 hover:text-red-400 p-1 mt-1"
                             >
                               <Trash2 className="h-3 w-3" />
                             </button>
@@ -1745,17 +1795,23 @@ export default function ResumesPage() {
                       <div className="p-4 space-y-3 select-none">
                         <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Languages Bullets</label>
                         {editorData.languages.map((lang, idx) => (
-                          <div key={idx} className="flex gap-2 items-center">
-                            <span className="text-slate-500 text-xs select-none">•</span>
-                            <Input
+                          <div key={idx} className="flex gap-2 items-start">
+                            <span className="text-slate-500 text-xs select-none mt-2">•</span>
+                            <textarea
                               value={lang}
                               onChange={(e) => handleLanguageItemChange(idx, e.target.value)}
-                              className="h-8 flex-1 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                              className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs resize-none overflow-hidden"
                               placeholder="e.g. English"
+                              rows={1}
+                              onInput={(e) => {
+                                const target = e.target as HTMLTextAreaElement;
+                                target.style.height = "auto";
+                                target.style.height = `${target.scrollHeight}px`;
+                              }}
                             />
                             <button
                               onClick={() => removeLanguageItem(idx)}
-                              className="text-slate-600 hover:text-red-400 p-1"
+                              className="text-slate-600 hover:text-red-400 p-1 mt-1"
                             >
                               <Trash2 className="h-3 w-3" />
                             </button>
@@ -1789,17 +1845,23 @@ export default function ResumesPage() {
                       <div className="p-4 space-y-3 select-none">
                         <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Achievements Bullets</label>
                         {editorData.achievements.map((ach, idx) => (
-                          <div key={idx} className="flex gap-2 items-center">
-                            <span className="text-slate-500 text-xs select-none">•</span>
-                            <Input
+                          <div key={idx} className="flex gap-2 items-start">
+                            <span className="text-slate-500 text-xs select-none mt-2">•</span>
+                            <textarea
                               value={ach}
                               onChange={(e) => handleAchievementItemChange(idx, e.target.value)}
-                              className="h-8 flex-1 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                              className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs resize-none overflow-hidden"
                               placeholder="e.g. Won 1st place in Smart India Hackathon"
+                              rows={1}
+                              onInput={(e) => {
+                                const target = e.target as HTMLTextAreaElement;
+                                target.style.height = "auto";
+                                target.style.height = `${target.scrollHeight}px`;
+                              }}
                             />
                             <button
                               onClick={() => removeAchievementItem(idx)}
-                              className="text-slate-600 hover:text-red-400 p-1"
+                              className="text-slate-600 hover:text-red-400 p-1 mt-1"
                             >
                               <Trash2 className="h-3 w-3" />
                             </button>
@@ -1865,7 +1927,7 @@ export default function ResumesPage() {
                           Professional Summary
                         </h2>
                         <p className="text-justify leading-relaxed">
-                          {editorData.summary}
+                          {renderRichText(editorData.summary)}
                         </p>
                       </div>
                     )}
@@ -1880,14 +1942,14 @@ export default function ResumesPage() {
                           {editorData.experience.map(exp => (
                             <div key={exp.id} className="space-y-1">
                               <div className="flex justify-between items-baseline font-bold">
-                                <span>{exp.company} {exp.title ? `— ${exp.title}` : ""}</span>
+                                <span>{renderRichText(exp.company)} {exp.title ? `— ${exp.title}` : ""}</span>
                                 <span className="font-normal italic text-[10px]">{exp.date}</span>
                               </div>
                               {exp.bullets.length > 0 && (
                                 <ul className="list-disc pl-4 space-y-0.5">
                                   {exp.bullets.filter(Boolean).map((bullet, idx) => (
                                     <li key={idx} className="text-justify leading-relaxed">
-                                      {bullet}
+                                      {renderRichText(bullet)}
                                     </li>
                                   ))}
                                 </ul>
@@ -1906,13 +1968,20 @@ export default function ResumesPage() {
                         </h2>
                         <div className="space-y-1.5">
                           {editorData.education.map(edu => (
-                            <div key={edu.id} className="flex justify-between items-baseline">
-                              <div>
-                                <span className="font-bold">{edu.school}</span>
-                                {edu.degree && <span className="italic"> — {edu.degree}</span>}
-                                {edu.field && <span> in {edu.field}</span>}
+                            <div key={edu.id} className="space-y-0.5">
+                              <div className="flex justify-between items-baseline">
+                                <div>
+                                  <span className="font-bold">{edu.school}</span>
+                                  {edu.degree && <span className="italic"> — {edu.degree}</span>}
+                                  {edu.field && <span> in {edu.field}</span>}
+                                </div>
+                                <span className="font-normal italic text-[10px]">{edu.date}</span>
                               </div>
-                              <span className="font-normal italic text-[10px]">{edu.date}</span>
+                              {edu.gpa && (
+                                <div className="flex justify-end text-[10px] text-slate-700 italic font-bold">
+                                  <span>CGPA: {edu.gpa}</span>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -1941,7 +2010,7 @@ export default function ResumesPage() {
                                 <ul className="list-disc pl-4 space-y-0.5">
                                   {proj.bullets.filter(Boolean).map((bullet, idx) => (
                                     <li key={idx} className="text-justify leading-relaxed">
-                                      {bullet}
+                                      {renderRichText(bullet)}
                                     </li>
                                   ))}
                                 </ul>
@@ -1977,7 +2046,7 @@ export default function ResumesPage() {
                         <ul className="list-disc pl-4 space-y-0.5">
                           {editorData.certifications.filter(Boolean).map((cert, idx) => (
                             <li key={idx} className="leading-relaxed">
-                              {cert}
+                              {renderRichText(cert)}
                             </li>
                           ))}
                         </ul>
@@ -1993,7 +2062,7 @@ export default function ResumesPage() {
                         <ul className="list-disc pl-4 space-y-0.5">
                           {editorData.languages.filter(Boolean).map((lang, idx) => (
                             <li key={idx} className="leading-relaxed">
-                              {lang}
+                              {renderRichText(lang)}
                             </li>
                           ))}
                         </ul>
@@ -2009,7 +2078,7 @@ export default function ResumesPage() {
                         <ul className="list-disc pl-4 space-y-0.5">
                           {editorData.achievements.filter(Boolean).map((ach, idx) => (
                             <li key={idx} className="leading-relaxed">
-                              {ach}
+                              {renderRichText(ach)}
                             </li>
                           ))}
                         </ul>

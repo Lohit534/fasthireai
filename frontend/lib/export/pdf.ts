@@ -265,7 +265,7 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
       switch (line.type) {
 
         case "name": {
-          const sz = 20;
+          const sz = 22;
           ensureSpace(sz * 1.3);
           text(line.text, ML, y, sz, true, true);
           y -= sz * 1.4;
@@ -273,7 +273,7 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
         }
 
         case "contact": {
-          const sz = 9;
+          const sz = 10.5;
           ensureSpace(sz * 1.5);
           text(line.text, ML, y, sz, false, true);
           y -= sz * 1.6;
@@ -281,7 +281,7 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
         }
 
         case "section": {
-          const sz = 11;
+          const sz = 12.5;
           y -= 8; // extra space before section
           ensureSpace(sz * 1.5 + 6);
           text(line.text, ML, y, sz, true, false);
@@ -293,8 +293,17 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
 
         case "role":
         case "body": {
-          const sz = 10;
+          const sz = 11.5;
           const isRole = line.type === "role";
+          
+          if (line.text.startsWith("CGPA:") || line.text.startsWith("GPA:")) {
+            ensureSpace(sz * 1.4);
+            const textW = measureRichTextWidth(line.text, sz, false);
+            const rightX = W - MR - textW;
+            drawRichText(pagesCmds[curPage], rightX, y, sz, false, line.text);
+            y -= sz * 1.4;
+            break;
+          }
           
           // Split by 3 or more spaces to detect columns (e.g. title left, date right)
           const columns = line.text.split(/\s{3,}/);
@@ -327,7 +336,7 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
         }
 
         case "bullet": {
-          const sz = 10;
+          const sz = 11.5;
           const INDENT = ML + 14;
           const maxC = charsPerLine(sz, false) - 3; // adjust for indent
           const wrapped = wordWrap(line.text, maxC);
