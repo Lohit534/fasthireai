@@ -58,18 +58,15 @@ export async function GET(request: NextRequest) {
     }
 
     const isOwner = isOwnerEmail(user.email);
-    const admin = getAdminClient() as any;
+    const messages = readMessages();
 
-    let query = admin.from("Resume").select("*").eq("jobTitle", "SUPPORT_TICKET").order("createdAt", { ascending: false });
-    
+    let userMessages = messages;
     if (!isOwner) {
-      query = query.eq("userId", user.id);
+      userMessages = messages.filter(m => m.userId === user.id);
     }
 
-    const { data, error } = await query;
-    if (error) throw error;
-
-    const messages = (data || []).map((row: any) => {
+    // Map to the expected output format
+    const formattedMessages = userMessages.map((row: any) => {
       try {
         const meta = JSON.parse(row.jobDescription || "{}");
         return {
@@ -87,9 +84,12 @@ export async function GET(request: NextRequest) {
       } catch (e) {
         return null;
       }
-    }).filter(Boolean);
+    }).filter(Boolean) as any[];
 
-    return NextResponse.json(messages);
+    // Sort by createdAt descending
+    formattedMessages.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return NextResponse.json(formattedMessages);
   } catch (error: any) {
     logger.error("[messages-api] GET Unhandled error:", error?.message);
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const isOwner = isOwnerEmail(user.email);
-    const admin = getAdminClient() as any;
+    const messages = readMessages();
 
     if (body.action === "reply") {
       if (!isOwner) {
@@ -119,27 +119,24 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "messageId and replyText are required." }, { status: 400 });
       }
 
-      // Fetch existing
-      const { data: existing } = await admin.from("Resume").select("*").eq("id", messageId).single();
-      if (!existing) return NextResponse.json({ error: "Message not found." }, { status: 404 });
+      const existingIndex = messages.findIndex(m => m.id === messageId);
+      if (existingIndex === -1) {
+        return NextResponse.json({ error: "Message not found." }, { status: 404 });
+      }
 
+      const existing = messages[existingIndex];
       const meta = JSON.parse(existing.jobDescription || "{}");
       meta.status = "replied";
       meta.repliedAt = new Date().toISOString();
 
-      const { data, error } = await admin
-        .from("Resume")
-        .update({
-          optimizedText: replyText,
-          jobDescription: JSON.stringify(meta)
-        })
-        .eq("id", messageId)
-        .select()
-        .single();
-        
-      if (error) throw error;
-      
-      return NextResponse.json({ success: true, message: data });
+      messages[existingIndex] = {
+        ...existing,
+        optimizedText: replyText,
+        jobDescription: JSON.stringify(meta)
+      };
+
+      writeMessages(messages);
+      return NextResponse.json({ success: true, message: messages[existingIndex] });
     } else if (body.action === "delete") {
       if (!isOwner) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -150,8 +147,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "messageId is required." }, { status: 400 });
       }
 
-      const { error } = await admin.from("Resume").delete().eq("id", messageId);
-      if (error) throw error;
+      const updatedMessages = messages.filter(m => m.id !== messageId);
+      writeMessages(updatedMessages);
 
       return NextResponse.json({ success: true });
     } else {
@@ -169,6 +166,7 @@ export async function POST(request: NextRequest) {
       };
 
       const newTicket = {
+        id: generateUUID(),
         userId: user.id,
         jobTitle: "SUPPORT_TICKET",
         company: "FASTHIRE_SUPPORT",
@@ -185,15 +183,10 @@ export async function POST(request: NextRequest) {
         createdAt: new Date().toISOString()
       };
 
-      const { data, error } = await admin
-        .from("Resume")
-        .insert(newTicket)
-        .select()
-        .single();
-        
-      if (error) throw error;
+      messages.push(newTicket);
+      writeMessages(messages);
 
-      return NextResponse.json({ success: true, message: data });
+      return NextResponse.json({ success: true, message: newTicket });
     }
   } catch (error: any) {
     logger.error("[messages-api] POST Unhandled error:", error?.message);
