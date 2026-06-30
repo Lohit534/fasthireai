@@ -399,8 +399,12 @@ export default function ResumesPage() {
     if (data.experience.length > 0) {
       text += `EXPERIENCE\n`;
       data.experience.forEach(exp => {
-        const leftPart = `${exp.company}${exp.title ? ' - ' + exp.title : ''}`;
-        text += `${leftPart}${"   "}${exp.date}\n`;
+        if (exp.title) {
+          text += `**${exp.title}**   ${exp.date}\n`;
+          if (exp.company) text += `${exp.company}\n`;
+        } else {
+          text += `**${exp.company}**   ${exp.date}\n`;
+        }
         exp.bullets.forEach(bullet => {
           if (bullet.trim()) {
             text += `• ${bullet.trim()}\n`;
@@ -413,8 +417,18 @@ export default function ResumesPage() {
     if (data.education.length > 0) {
       text += `EDUCATION\n`;
       data.education.forEach(edu => {
-        const leftPart = `${edu.school}${edu.degree ? ' - ' + edu.degree : ''}${edu.field ? ' in ' + edu.field : ''}`;
-        text += `${leftPart}${"   "}${edu.date}\n`;
+        let title = "";
+        if (edu.degree || edu.field) {
+          title = `${edu.degree || ''}${edu.degree && edu.field ? ' in ' : ''}${edu.field || ''}`.trim();
+        }
+        
+        if (title) {
+          text += `**${title}**   ${edu.date}\n`;
+          if (edu.school) text += `${edu.school}\n`;
+        } else {
+          text += `**${edu.school}**   ${edu.date}\n`;
+        }
+        
         if (edu.gpa) {
           text += `CGPA: ${edu.gpa}\n`;
         }
@@ -511,7 +525,7 @@ export default function ResumesPage() {
     if (!userId) return;
     setActionLoading("create");
 
-    const defaultText = `JANE SMITH\njane@example.com | +1 (555) 000-0000 | New York, NY | linkedin.com/in/jane | janesmith.dev\n\nPROFESSIONAL SUMMARY\nResults-driven professional with experience in building clean frontend software interfaces.\n\nEXPERIENCE\nAcme Software - Frontend Engineer   2024 - Present\n• Developed premium responsive dashboard widgets and screens.\n• Spearheaded code optimization resulting in 40% loading speedup.\n\nEDUCATION\nTech University - Bachelor of Science in Computer Science   2020 - 2024\nGraduated with Honors. GPA 3.9/4.0`;
+    const defaultText = ``;
 
     try {
       const res = await fetch("/api/resumes", {
@@ -1157,7 +1171,7 @@ export default function ResumesPage() {
                 {/* Dashed placeholder template card */}
                 {resumes.length < maxLimit && (
                   <div
-                    onClick={() => router.push("/dashboard/builder")}
+                    onClick={handleCreateNewResume}
                     className="border border-dashed border-white/10 bg-[#0e0f21]/20 hover:bg-[#12132d]/20 hover:border-violet-500/40 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 min-h-[160px] select-none"
                   >
                     <Plus className="h-7 w-7 text-slate-500 group-hover:text-white mb-2" />

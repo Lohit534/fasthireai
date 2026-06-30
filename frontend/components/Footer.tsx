@@ -26,7 +26,7 @@ export default function Footer() {
             <ul className="space-y-2">
               {[
                 { label: "Optimize Resume", href: "/dashboard" },
-                { label: "Resume Builder", href: "/dashboard/builder" },
+                { label: "Resumes", href: "/dashboard/resumes" },
                 { label: "Job Tracker", href: "/dashboard/job-tracker" },
                 { label: "History", href: "/dashboard/history" },
               ].map((l) => (
