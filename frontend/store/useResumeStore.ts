@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { OptimizeResult, CreditInfo } from "../types";
 
 interface ResumeState {
@@ -23,12 +24,20 @@ const initialState = {
   credits: null,
 };
 
-export const useResumeStore = create<ResumeState>((set) => ({
-  ...initialState,
-  setResumeText: (text) => set({ resumeText: text }),
-  setJobDescription: (text) => set({ jobDescription: text }),
-  setOptimizing: (v) => set({ isOptimizing: v }),
-  setResult: (r) => set({ result: r }),
-  setCredits: (c) => set({ credits: c }),
-  reset: () => set(initialState),
-}));
+export const useResumeStore = create<ResumeState>()(
+  persist(
+    (set) => ({
+      ...initialState,
+      setResumeText: (text) => set({ resumeText: text }),
+      setJobDescription: (text) => set({ jobDescription: text }),
+      setOptimizing: (v) => set({ isOptimizing: v }),
+      setResult: (r) => set({ result: r }),
+      setCredits: (c) => set({ credits: c }),
+      reset: () => set(initialState),
+    }),
+    {
+      name: "fasthire-resume-storage",
+      partialize: (state) => ({ resumeText: state.resumeText, jobDescription: state.jobDescription }),
+    }
+  )
+);

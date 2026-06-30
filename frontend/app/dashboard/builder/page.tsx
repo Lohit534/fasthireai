@@ -61,49 +61,7 @@ const POPULAR_SKILLS = [
   "Machine Learning", "System Design", "Agile", "Project Management"
 ];
 
-const SAMPLE_DATA = {
-  contact: {
-    fullName: "Alex Rivera",
-    title: "Full Stack Engineer",
-    email: "alex.rivera@fasthire.ai",
-    phone: "(555) 019-2834",
-    linkedin: "linkedin.com/in/alex-rivera",
-    portfolio: "alexrivera.dev"
-  },
-  experience: [
-    {
-      company: "InnovateTech Solutions",
-      title: "Senior Software Engineer",
-      location: "San Francisco, CA",
-      dates: "2023 - Present",
-      bullets: "Led a team of 4 engineers to migrate legacy monolith architecture to microservices using Next.js and Go, reducing cloud costs by 32%.\nOptimized backend REST API responses, yielding a 40% reduction in page load latency for over 250k daily active users.\nIntegrated custom LLM prompt workflows to automate report generation, boosting department efficiency by 15%."
-    },
-    {
-      company: "CloudFlow Inc.",
-      title: "Software Engineer II",
-      location: "Seattle, WA",
-      dates: "2021 - 2023",
-      bullets: "Developed responsive interactive analytics dashboards utilizing React, TypeScript, and Tailwind CSS.\nBuilt and maintained secure CI/CD pipelines deploying containerized Docker applications on AWS ECS."
-    }
-  ],
-  education: [
-    {
-      school: "University of Washington",
-      degree: "Bachelor of Science",
-      fieldOfStudy: "Computer Science",
-      dates: "2017 - 2021"
-    }
-  ],
-  projects: [
-    {
-      name: "FastHire AI Resume Scoring Engine",
-      role: "Lead Creator",
-      techStack: "Next.js, Python, FastAPI, Gemini AI",
-      bullets: "Created a semantic ATS matching system using BERT embeddings that maps job description keywords directly to resume bullets.\nImplemented real-time visual metrics scoring with responsive UI component overlays."
-    }
-  ],
-  skills: ["React", "Next.js", "TypeScript", "Node.js", "Python", "SQL", "Docker", "AWS", "Git", "Agile"]
-};
+// Removed SAMPLE_DATA per user request so forms are empty
 
 export default function ResumeBuilderPage() {
   const router = useRouter();
@@ -155,15 +113,30 @@ export default function ResumeBuilderPage() {
     checkAuth();
   }, [router]);
 
-  // Load sample data helper
-  const handleLoadSample = () => {
-    setContact(SAMPLE_DATA.contact);
-    setExperience(SAMPLE_DATA.experience);
-    setEducation(SAMPLE_DATA.education);
-    setProjects(SAMPLE_DATA.projects);
-    setSkills(SAMPLE_DATA.skills);
-    toast.success("Loaded professional template data!");
-  };
+  // Load from LocalStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("resume_builder_draft");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.contact) setContact(parsed.contact);
+        if (parsed.experience) setExperience(parsed.experience);
+        if (parsed.education) setEducation(parsed.education);
+        if (parsed.projects) setProjects(parsed.projects);
+        if (parsed.skills) setSkills(parsed.skills);
+      }
+    } catch (e) {
+      console.error("Failed to parse saved draft");
+    }
+  }, []);
+
+  // Auto-save to LocalStorage on changes
+  useEffect(() => {
+    const draft = { contact, experience, education, projects, skills };
+    localStorage.setItem("resume_builder_draft", JSON.stringify(draft));
+  }, [contact, experience, education, projects, skills]);
+
+  // No default template loader
 
   // Experience Handlers
   const addExperience = () => {
@@ -391,20 +364,11 @@ export default function ResumeBuilderPage() {
 
       <main className="flex-1 mx-auto max-w-4xl w-full px-4 py-8">
         {/* Back Link */}
-        <div className="mb-6 flex justify-between items-center">
-          <Link href="/dashboard" className="flex items-center text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors">
+        <div className="mb-6">
+          <Link href="/dashboard" className="flex items-center text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors w-max">
             <ArrowLeft className="h-4 w-4 mr-1.5" />
             Back to Dashboard
           </Link>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleLoadSample}
-            className="border-indigo-200 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-50 font-bold"
-          >
-            <Sparkles className="h-3.5 w-3.5 mr-1.5 text-indigo-500" />
-            Load Sample Template
-          </Button>
         </div>
 
         {/* Header Title */}
