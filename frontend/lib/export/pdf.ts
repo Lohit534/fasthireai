@@ -159,6 +159,8 @@ function parseResume(raw: string): PdfLine[] {
     const isSetext = /^[=\-]{3,}$/.test(nextT);
     const isAllCaps = t === t.toUpperCase() && t.length > 3 && /[A-Z]/.test(t) && !/^[•\-*>]/.test(t) && !/^\d/.test(t);
 
+    const isContactLine = t.includes("@") || t.includes("—") || t.includes("|") || /\+?\d[\d\-\s\(\)]{8,}/.test(t) || t.toLowerCase().includes("linkedin") || t.toLowerCase().includes("github");
+
     // Name (first meaningful line or # H1)
     if (!nameSet && !headerDone) {
       if (isH1 || (!isH2 && !isAllCaps && !isSetext)) {
@@ -178,7 +180,7 @@ function parseResume(raw: string): PdfLine[] {
     }
 
     // Section header
-    if (isH2 || isAllCaps || isSetext) {
+    if ((isH2 || isAllCaps || isSetext) && !isContactLine) {
       headerDone = true;
       let label = stripMarkdown(t.replace(/^#+\s*/, "").replace(/:$/, ""));
       if (isSetext) i++; // skip underline
@@ -212,11 +214,24 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
 
     const lines = parseResume(resumeText);
 
-    // Stream commands accumulator
-    const cmds: string[] = [];
+    // Stream commands accumulator per page
+    const pagesCmds: string[][] = [[]];
+    let curPage = 0;
     let y = H - MT; // current Y position (PDF coords: 0 = bottom)
 
     const needsNewPage = (lineH: number) => y - lineH < MB;
+
+    const addPage = () => {
+      pagesCmds.push([]);
+      curPage++;
+      y = H - MT;
+    };
+
+    const ensureSpace = (lineH: number) => {
+      if (needsNewPage(lineH)) {
+        addPage();
+      }
+    };
 
     /** Draw a single text line */
     const text = (
@@ -233,15 +248,15 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
         // Approximate center using char width estimate
         const approxW = s.length * size * (bold ? CH_BOLD : CH_NORMAL);
         const cx = (W - approxW) / 2;
-        cmds.push(`BT /${font} ${size} Tf ${cx.toFixed(1)} ${yPos.toFixed(1)} Td (${safeS}) Tj ET`);
+        pagesCmds[curPage].push(`BT /${font} ${size} Tf ${cx.toFixed(1)} ${yPos.toFixed(1)} Td (${safeS}) Tj ET`);
       } else {
-        cmds.push(`BT /${font} ${size} Tf ${x.toFixed(1)} ${yPos.toFixed(1)} Td (${safeS}) Tj ET`);
+        pagesCmds[curPage].push(`BT /${font} ${size} Tf ${x.toFixed(1)} ${yPos.toFixed(1)} Td (${safeS}) Tj ET`);
       }
     };
 
     /** Full-width horizontal rule */
     const rule = (yPos: number, thickness = 0.6) => {
-      cmds.push(`${thickness} w ${ML} ${yPos.toFixed(1)} m ${W - MR} ${yPos.toFixed(1)} l S`);
+      pagesCmds[curPage].push(`${thickness} w ${ML} ${yPos.toFixed(1)} m ${W - MR} ${yPos.toFixed(1)} l S`);
     };
 
     // ── Render lines ─────────────────────────────────────────────────────────
@@ -251,7 +266,7 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
 
         case "name": {
           const sz = 20;
-          if (needsNewPage(sz * 1.3)) break;
+          ensureSpace(sz * 1.3);
           text(line.text, ML, y, sz, true, true);
           y -= sz * 1.4;
           break;
@@ -259,7 +274,7 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
 
         case "contact": {
           const sz = 9;
-          if (needsNewPage(sz * 1.5)) break;
+          ensureSpace(sz * 1.5);
           text(line.text, ML, y, sz, false, true);
           y -= sz * 1.6;
           break;
@@ -268,7 +283,7 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
         case "section": {
           const sz = 11;
           y -= 8; // extra space before section
-          if (needsNewPage(sz * 1.5 + 6)) break;
+          ensureSpace(sz * 1.5 + 6);
           text(line.text, ML, y, sz, true, false);
           y -= sz * 1.3;
           rule(y + 2);
@@ -287,24 +302,24 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
             const left = columns[0];
             const right = columns.slice(1).join("   ");
             
-            if (needsNewPage(sz * 1.4)) break;
+            ensureSpace(sz * 1.4);
             
             // Render left column starting at ML
-            drawRichText(cmds, ML, y, sz, isRole, left);
+            drawRichText(pagesCmds[curPage], ML, y, sz, isRole, left);
             
             // Render right column right-aligned (ends at W - MR)
             const rightW = measureRichTextWidth(right, sz, false);
             const rightX = W - MR - rightW;
             
-            drawRichText(cmds, rightX, y, sz, false, right);
+            drawRichText(pagesCmds[curPage], rightX, y, sz, false, right);
             y -= sz * 1.4;
           } else {
             // No column split, wrap and render
             const maxC = charsPerLine(sz, isRole);
             const wrapped = wordWrap(line.text, maxC);
             for (const w of wrapped) {
-              if (needsNewPage(sz * 1.4)) break;
-              drawRichText(cmds, ML, y, sz, isRole, w);
+              ensureSpace(sz * 1.4);
+              drawRichText(pagesCmds[curPage], ML, y, sz, isRole, w);
               y -= sz * 1.4;
             }
           }
@@ -317,13 +332,13 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
           const maxC = charsPerLine(sz, false) - 3; // adjust for indent
           const wrapped = wordWrap(line.text, maxC);
           for (let wi = 0; wi < wrapped.length; wi++) {
-            if (needsNewPage(sz * 1.35)) break;
+            ensureSpace(sz * 1.35);
             if (wi === 0) {
               // Bullet dot
-              cmds.push(`BT /F1 ${sz} Tf ${(ML + 4).toFixed(1)} ${y.toFixed(1)} Td (-) Tj ET`);
-              drawRichText(cmds, INDENT, y, sz, false, wrapped[wi]);
+              pagesCmds[curPage].push(`BT /F1 ${sz} Tf ${(ML + 4).toFixed(1)} ${y.toFixed(1)} Td (-) Tj ET`);
+              drawRichText(pagesCmds[curPage], INDENT, y, sz, false, wrapped[wi]);
             } else {
-              drawRichText(cmds, INDENT, y, sz, false, wrapped[wi]);
+              drawRichText(pagesCmds[curPage], INDENT, y, sz, false, wrapped[wi]);
             }
             y -= sz * 1.35;
           }
@@ -339,10 +354,7 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
 
     // ── Assemble PDF binary ───────────────────────────────────────────────────
 
-    const streamContent = cmds.join("\n");
-    const streamBuf     = Buffer.from(streamContent, "latin1");
-    const streamLen     = streamBuf.length;
-
+    const N = pagesCmds.length;
     const offsets: number[] = [];
     const parts: Buffer[]   = [];
     let byteOffset = 0;
@@ -358,49 +370,62 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
 
     // Obj 1 — Catalog
     offsets[1] = byteOffset;
-    append("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+    append(`1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`);
 
     // Obj 2 — Pages tree
+    const kidsStr = Array.from({ length: N }, (_, idx) => `${3 + idx * 2} 0 R`).join(" ");
     offsets[2] = byteOffset;
-    append("2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n");
+    append(`2 0 obj\n<< /Type /Pages /Kids [${kidsStr}] /Count ${N} >>\nendobj\n`);
 
-    // Obj 3 — Page (A4, both fonts referenced)
-    offsets[3] = byteOffset;
+    // Page objects and content streams
+    for (let i = 0; i < N; i++) {
+      const pageObjId = 3 + i * 2;
+      const contentObjId = 4 + i * 2;
+      
+      const pageStreamContent = pagesCmds[i].join("\n");
+      const pageStreamBuf     = Buffer.from(pageStreamContent, "latin1");
+      const pageStreamLen     = pageStreamBuf.length;
+
+      // Page object
+      offsets[pageObjId] = byteOffset;
+      append(
+        `${pageObjId} 0 obj\n` +
+        `<< /Type /Page /Parent 2 0 R\n` +
+        `   /MediaBox [0 0 ${W} ${H}]\n` +
+        `   /Contents ${contentObjId} 0 R\n` +
+        `   /Resources << /Font << /F1 ${3 + N * 2} 0 R /F2 ${4 + N * 2} 0 R >> >>\n` +
+        ">>\nendobj\n"
+      );
+
+      // Content stream object
+      offsets[contentObjId] = byteOffset;
+      append(`${contentObjId} 0 obj\n<< /Length ${pageStreamLen} >>\nstream\n`);
+      parts.push(pageStreamBuf);
+      byteOffset += pageStreamLen;
+      append("\nendstream\nendobj\n");
+    }
+
+    // Font 1 (Helvetica regular)
+    const font1Id = 3 + N * 2;
+    offsets[font1Id] = byteOffset;
     append(
-      `3 0 obj\n` +
-      `<< /Type /Page /Parent 2 0 R\n` +
-      `   /MediaBox [0 0 ${W} ${H}]\n` +
-      `   /Contents 4 0 R\n` +
-      `   /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >>\n` +
-      ">>\nendobj\n"
-    );
-
-    // Obj 4 — Content stream
-    offsets[4] = byteOffset;
-    append(`4 0 obj\n<< /Length ${streamLen} >>\nstream\n`);
-    parts.push(streamBuf);
-    byteOffset += streamLen;
-    append("\nendstream\nendobj\n");
-
-    // Obj 5 — Helvetica (regular body text)
-    offsets[5] = byteOffset;
-    append(
-      "5 0 obj\n" +
+      `${font1Id} 0 obj\n` +
       "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica\n" +
       "   /Encoding /WinAnsiEncoding >>\nendobj\n"
     );
 
-    // Obj 6 — Helvetica-Bold (section headers, name, role lines)
-    offsets[6] = byteOffset;
+    // Font 2 (Helvetica bold)
+    const font2Id = 4 + N * 2;
+    offsets[font2Id] = byteOffset;
     append(
-      "6 0 obj\n" +
+      `${font2Id} 0 obj\n` +
       "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold\n" +
       "   /Encoding /WinAnsiEncoding >>\nendobj\n"
     );
 
     // Cross-reference table
     const xrefAt = byteOffset;
-    const objCount = 7; // objects 0–6
+    const objCount = 5 + N * 2;
     append(`xref\n0 ${objCount}\n`);
     append("0000000000 65535 f \n");
     for (let i = 1; i < objCount; i++) {
@@ -414,7 +439,7 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
     );
 
     const pdf = Buffer.concat(parts);
-    logger.info(`LaTeX-style PDF generated: ${pdf.length} bytes, ${cmds.length} text ops, y=${y.toFixed(0)}`);
+    logger.info(`LaTeX-style PDF generated: ${pdf.length} bytes, ${N} pages, y=${y.toFixed(0)}`);
     return pdf;
 
   } catch (err: any) {

@@ -50,8 +50,8 @@ interface StructuredResume {
   summary: string;
   experience: { id: string; company: string; title: string; date: string; bullets: string[] }[];
   education: { id: string; school: string; degree: string; field: string; date: string; description: string }[];
-  projects: { id: string; name: string; role: string; date: string; description: string }[];
-  skills: string[];
+  projects: { id: string; name: string; techStack: string; link: string; date: string; bullets: string[] }[];
+  skills: { id: string; category: string; list: string[] }[];
   certifications: string[];
   languages: string[];
   achievements: string[];
@@ -294,27 +294,60 @@ export default function ResumesPage() {
         if (line.startsWith("•") || line.startsWith("-") || line.startsWith("*") && !line.endsWith("*")) {
           if (currentProj) {
             const bullet = line.replace(/^[•\-*\u2022\s]+/, "");
-            currentProj.description = (currentProj.description ? currentProj.description + "\n" : "") + `- ${bullet}`;
+            currentProj.bullets.push(bullet);
           }
-        } else if ((line.startsWith("*") && line.endsWith("*") || line.startsWith("_") && line.endsWith("_")) && currentProj) {
-          const meta = line.replace(/^[\*\_]+|[\*\_]+$/g, "").trim();
-          currentProj.description = (currentProj.description ? currentProj.description + "\n" : "") + meta;
         } else {
           const parts = line.split(/\s{3,}| \| /);
-          const headerParts = (parts[0] || "").replace(/^\*\*|\*\*$/g, "").split(" - ");
+          
+          // Project name and optionally tech stack/link
+          const namePart = (parts[0] || "").replace(/^\*\*|\*\*$/g, "").trim();
+          let name = namePart;
+          let link = "";
+          
+          // Try to extract link inside parentheses from project name or whole line
+          const linkMatch = line.match(/\((https?:\/\/[^\s\)]+|github\.com[^\s\)]+|www\.[^\s\)]+)\)/);
+          if (linkMatch) {
+            link = linkMatch[1];
+            name = name.replace(/\s*\(.*?\)/, "").trim();
+          }
+
+          let tech = "";
+          if (parts[1]) {
+            tech = parts[1].replace(/^[\*\_]+|[\*\_]+$/g, "").trim();
+            // clean up parenthesized link from tech stack if it leaked
+            tech = tech.replace(/\s*\(.*?\)/, "").trim();
+          }
+
           currentProj = {
             id: Math.random().toString(36).substr(2, 9),
-            name: (headerParts[0] || "").replace(/^\*\*|\*\*$/g, "").trim(),
-            role: (headerParts[1] || "").replace(/^\*\*|\*\*$/g, "").trim(),
-            date: (parts[1] || "").replace(/^[\*\_]+|[\*\_]+$/g, "").trim(),
-            description: ""
+            name,
+            techStack: tech,
+            link,
+            date: (parts[2] || "").replace(/^[\*\_]+|[\*\_]+$/g, "").trim(),
+            bullets: []
           };
           resume.projects.push(currentProj);
         }
       } else if (currentSection === "skills") {
-        const cleanSkillLine = line.replace(/^\*\*Technical Skills:\*\*\s*|^\*\*Skills:\*\*\s*/i, "").trim();
-        const skillsList = cleanSkillLine.split(",").map(s => s.trim()).filter(Boolean);
-        resume.skills = [...resume.skills, ...skillsList];
+        const colonIndex = line.indexOf(":");
+        if (colonIndex !== -1) {
+          const category = line.substring(0, colonIndex).replace(/^\*\*|\*\*$/g, "").trim();
+          const list = line.substring(colonIndex + 1).split(",").map(s => s.trim()).filter(Boolean);
+          resume.skills.push({
+            id: Math.random().toString(36).substr(2, 9),
+            category,
+            list
+          });
+        } else {
+          const list = line.split(",").map(s => s.trim()).filter(Boolean);
+          if (list.length > 0) {
+            resume.skills.push({
+              id: Math.random().toString(36).substr(2, 9),
+              category: "General",
+              list
+            });
+          }
+        }
       } else if (currentSection === "certifications") {
         const cleanLine = line.replace(/^[•\-*\u2022\s]+/, "").trim();
         if (cleanLine) {
@@ -376,18 +409,29 @@ export default function ResumesPage() {
     if (data.projects.length > 0) {
       text += `PROJECTS\n`;
       data.projects.forEach(proj => {
-        const leftPart = `${proj.name}${proj.role ? ' - ' + proj.role : ''}`;
-        text += `${leftPart}${"   "}${proj.date}\n`;
-        if (proj.description) {
-          text += `${proj.description}\n`;
+        let leftPart = `**${proj.name}**`;
+        if (proj.techStack) {
+          leftPart += ` | *${proj.techStack}*`;
         }
+        if (proj.link) {
+          leftPart += ` (${proj.link})`;
+        }
+        text += `${leftPart}\n`;
+        proj.bullets.forEach(bullet => {
+          if (bullet.trim()) {
+            text += `• ${bullet.trim()}\n`;
+          }
+        });
       });
       text += `\n`;
     }
     
     if (data.skills.length > 0) {
       text += `SKILLS\n`;
-      text += `${data.skills.join(", ")}\n\n`;
+      data.skills.forEach(group => {
+        text += `**${group.category}:** ${group.list.join(", ")}\n`;
+      });
+      text += `\n`;
     }
 
     if (data.certifications && data.certifications.length > 0) {
@@ -418,7 +462,28 @@ export default function ResumesPage() {
   const handleOpenEditor = (record: ResumeRecord) => {
     setEditingResume(record);
     setTempTitle(record.jobTitle || "Untitled Resume");
-    const parsed = parseResumeText(record.optimizedText || record.originalText);
+    
+    // Check if optimizedText is present and different from originalText (i.e. it is optimized/compiled)
+    const hasOptimized = record.optimizedText && record.optimizedText.trim() !== "" && record.optimizedText !== record.originalText;
+    
+    const parsed = hasOptimized 
+      ? parseResumeText(record.optimizedText!) 
+      : {
+          name: "",
+          email: "",
+          phone: "",
+          location: "",
+          linkedin: "",
+          website: "",
+          summary: "",
+          experience: [],
+          education: [],
+          projects: [],
+          skills: [],
+          certifications: [],
+          languages: [],
+          achievements: []
+        };
     setEditorData(parsed);
   };
 
@@ -743,9 +808,10 @@ export default function ResumesPage() {
     const newProj = {
       id: Math.random().toString(36).substr(2, 9),
       name: "FastHire AI Platform",
-      role: "Lead Creator",
+      techStack: "React, Node.js",
+      link: "github.com/username/project",
       date: "June 2026",
-      description: "AI-driven ATS optimization dashboard."
+      bullets: ["AI-driven ATS optimization dashboard."]
     };
     const updated = { ...editorData, projects: [...editorData.projects, newProj] };
     setEditorData(updated);
@@ -760,35 +826,152 @@ export default function ResumesPage() {
     saveEditorData(updated);
   };
 
-  // Skills change handler
-  const handleSkillsChange = (value: string) => {
+  const handleProjBulletChange = (projId: string, idx: number, value: string) => {
     if (!editorData) return;
-    const skillsList = value.split(",").map(s => s.trim());
-    const updated = { ...editorData, skills: skillsList };
+    const updatedProj = editorData.projects.map(proj => {
+      if (proj.id === projId) {
+        const newBullets = [...proj.bullets];
+        newBullets[idx] = value;
+        return { ...proj, bullets: newBullets };
+      }
+      return proj;
+    });
+    const updated = { ...editorData, projects: updatedProj };
     setEditorData(updated);
     saveEditorData(updated);
   };
 
-  const handleCertificationsChange = (value: string) => {
+  const addProjBullet = (projId: string) => {
     if (!editorData) return;
-    const certList = value.split(",").map(s => s.trim());
-    const updated = { ...editorData, certifications: certList };
+    const updatedProj = editorData.projects.map(proj => {
+      if (proj.id === projId) {
+        return { ...proj, bullets: [...proj.bullets, ""] };
+      }
+      return proj;
+    });
+    const updated = { ...editorData, projects: updatedProj };
     setEditorData(updated);
     saveEditorData(updated);
   };
 
-  const handleLanguagesChange = (value: string) => {
+  const removeProjBullet = (projId: string, idx: number) => {
     if (!editorData) return;
-    const langList = value.split(",").map(s => s.trim());
-    const updated = { ...editorData, languages: langList };
+    const updatedProj = editorData.projects.map(proj => {
+      if (proj.id === projId) {
+        return { ...proj, bullets: proj.bullets.filter((_, i) => i !== idx) };
+      }
+      return proj;
+    });
+    const updated = { ...editorData, projects: updatedProj };
     setEditorData(updated);
     saveEditorData(updated);
   };
 
-  const handleAchievementsChange = (value: string) => {
+  // Skills handlers
+  const handleSkillGroupChange = (id: string, field: string, value: string) => {
     if (!editorData) return;
-    const achList = value.split(",").map(s => s.trim());
-    const updated = { ...editorData, achievements: achList };
+    const updatedSkills = editorData.skills.map(group => {
+      if (group.id === id) {
+        if (field === "list") {
+          return { ...group, list: value.split(",").map(s => s.trim()) };
+        }
+        return { ...group, [field]: value };
+      }
+      return group;
+    });
+    const updated = { ...editorData, skills: updatedSkills };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  const addSkillGroup = () => {
+    if (!editorData) return;
+    const newGroup = {
+      id: Math.random().toString(36).substr(2, 9),
+      category: "Skill Group",
+      list: []
+    };
+    const updated = { ...editorData, skills: [...editorData.skills, newGroup] };
+    setEditorData(updated);
+    saveEditorData(updated);
+    toast.success("Skill group added!");
+  };
+
+  const removeSkillGroup = (id: string) => {
+    if (!editorData) return;
+    const updated = { ...editorData, skills: editorData.skills.filter(g => g.id !== id) };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  // Certifications
+  const handleCertificationItemChange = (idx: number, value: string) => {
+    if (!editorData) return;
+    const newList = [...editorData.certifications];
+    newList[idx] = value;
+    const updated = { ...editorData, certifications: newList };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  const addCertificationItem = () => {
+    if (!editorData) return;
+    const updated = { ...editorData, certifications: [...editorData.certifications, ""] };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  const removeCertificationItem = (idx: number) => {
+    if (!editorData) return;
+    const updated = { ...editorData, certifications: editorData.certifications.filter((_, i) => i !== idx) };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  // Languages
+  const handleLanguageItemChange = (idx: number, value: string) => {
+    if (!editorData) return;
+    const newList = [...editorData.languages];
+    newList[idx] = value;
+    const updated = { ...editorData, languages: newList };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  const addLanguageItem = () => {
+    if (!editorData) return;
+    const updated = { ...editorData, languages: [...editorData.languages, ""] };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  const removeLanguageItem = (idx: number) => {
+    if (!editorData) return;
+    const updated = { ...editorData, languages: editorData.languages.filter((_, i) => i !== idx) };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  // Achievements
+  const handleAchievementItemChange = (idx: number, value: string) => {
+    if (!editorData) return;
+    const newList = [...editorData.achievements];
+    newList[idx] = value;
+    const updated = { ...editorData, achievements: newList };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  const addAchievementItem = () => {
+    if (!editorData) return;
+    const updated = { ...editorData, achievements: [...editorData.achievements, ""] };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  const removeAchievementItem = (idx: number) => {
+    if (!editorData) return;
+    const updated = { ...editorData, achievements: editorData.achievements.filter((_, i) => i !== idx) };
     setEditorData(updated);
     saveEditorData(updated);
   };
@@ -1371,32 +1554,64 @@ export default function ResumesPage() {
                                 />
                               </div>
                               <div className="space-y-1">
-                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Role / Scope</label>
+                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Tech Stack</label>
                                 <Input
-                                  value={proj.role}
-                                  onChange={(e) => handleProjChange(proj.id, "role", e.target.value)}
+                                  value={proj.techStack}
+                                  onChange={(e) => handleProjChange(proj.id, "techStack", e.target.value)}
                                   className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  placeholder="e.g. React, Node.js, PostgreSQL"
                                 />
                               </div>
                             </div>
 
-                            <div className="space-y-1 text-xs">
-                              <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Date/Duration</label>
-                              <Input
-                                value={proj.date}
-                                onChange={(e) => handleProjChange(proj.id, "date", e.target.value)}
-                                className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
-                              />
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div className="space-y-1">
+                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Link (Optional)</label>
+                                <Input
+                                  value={proj.link}
+                                  onChange={(e) => handleProjChange(proj.id, "link", e.target.value)}
+                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  placeholder="e.g. github.com/username/project"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Date/Duration</label>
+                                <Input
+                                  value={proj.date}
+                                  onChange={(e) => handleProjChange(proj.id, "date", e.target.value)}
+                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  placeholder="e.g. Jan 2024"
+                                />
+                              </div>
                             </div>
 
-                            <div className="space-y-1 text-xs">
-                              <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Description</label>
-                              <Input
-                                value={proj.description}
-                                onChange={(e) => handleProjChange(proj.id, "description", e.target.value)}
-                                className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
-                                placeholder="Describe project outcomes..."
-                              />
+                            {/* Bullets mapping */}
+                            <div className="space-y-2">
+                              <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Description Bullets</label>
+                              {proj.bullets.map((bullet, idx) => (
+                                <div key={idx} className="flex gap-2 items-center">
+                                  <span className="text-slate-500 text-xs select-none">•</span>
+                                  <Input
+                                    value={bullet}
+                                    onChange={(e) => handleProjBulletChange(proj.id, idx, e.target.value)}
+                                    className="h-8 flex-1 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                    placeholder="Add project bullet..."
+                                  />
+                                  <button
+                                    onClick={() => removeProjBullet(proj.id, idx)}
+                                    className="text-slate-600 hover:text-red-400 p-1"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              ))}
+                              <Button
+                                type="button"
+                                onClick={() => addProjBullet(proj.id)}
+                                className="bg-[#12132d]/40 border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3"
+                              >
+                                + Add Bullet
+                              </Button>
                             </div>
                           </div>
                         ))}
@@ -1425,14 +1640,46 @@ export default function ResumesPage() {
                     </button>
 
                     {collapsibles.skills && (
-                      <div className="p-4 space-y-1.5 select-none">
-                        <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Skills tags (Comma-separated)</label>
-                        <Input
-                          placeholder="e.g. React, TypeScript, Node.js, Next.js, Python"
-                          value={editorData.skills.join(", ")}
-                          onChange={(e) => handleSkillsChange(e.target.value)}
-                          className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
-                        />
+                      <div className="p-4 space-y-4 select-none">
+                        {editorData.skills.map((group) => (
+                          <div key={group.id} className="border border-white/5 bg-[#070814]/30 rounded-lg p-3 space-y-3 relative">
+                            <button
+                              onClick={() => removeSkillGroup(group.id)}
+                              className="absolute top-2 right-2 text-slate-500 hover:text-red-400"
+                              title="Delete Group"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div className="space-y-1">
+                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Category</label>
+                                <Input
+                                  placeholder="e.g. Languages"
+                                  value={group.category}
+                                  onChange={(e) => handleSkillGroupChange(group.id, "category", e.target.value)}
+                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Skills (Comma-separated)</label>
+                                <Input
+                                  placeholder="e.g. React, Node.js"
+                                  value={group.list.join(", ")}
+                                  onChange={(e) => handleSkillGroupChange(group.id, "list", e.target.value)}
+                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+
+                        <Button
+                          onClick={addSkillGroup}
+                          className="w-full bg-[#12132d]/40 border border-white/5 text-slate-300 hover:text-white h-8 text-[11px] font-bold rounded-lg"
+                        >
+                          + Add Skill Group
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -1451,14 +1698,32 @@ export default function ResumesPage() {
                     </button>
 
                     {collapsibles.certifications && (
-                      <div className="p-4 space-y-1.5 select-none">
-                        <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Certifications (Comma-separated)</label>
-                        <Input
-                          placeholder="e.g. AWS Certified Solutions Architect, Certified Scrum Master"
-                          value={editorData.certifications.join(", ")}
-                          onChange={(e) => handleCertificationsChange(e.target.value)}
-                          className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
-                        />
+                      <div className="p-4 space-y-3 select-none">
+                        <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Certifications Bullets</label>
+                        {editorData.certifications.map((cert, idx) => (
+                          <div key={idx} className="flex gap-2 items-center">
+                            <span className="text-slate-500 text-xs select-none">•</span>
+                            <Input
+                              value={cert}
+                              onChange={(e) => handleCertificationItemChange(idx, e.target.value)}
+                              className="h-8 flex-1 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                              placeholder="e.g. AWS Certified Solutions Architect"
+                            />
+                            <button
+                              onClick={() => removeCertificationItem(idx)}
+                              className="text-slate-600 hover:text-red-400 p-1"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          onClick={addCertificationItem}
+                          className="bg-[#12132d]/40 border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3 animate-none"
+                        >
+                          + Add Certification
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -1477,14 +1742,32 @@ export default function ResumesPage() {
                     </button>
 
                     {collapsibles.languages && (
-                      <div className="p-4 space-y-1.5 select-none">
-                        <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Languages (Comma-separated)</label>
-                        <Input
-                          placeholder="e.g. English, Spanish, French"
-                          value={editorData.languages.join(", ")}
-                          onChange={(e) => handleLanguagesChange(e.target.value)}
-                          className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
-                        />
+                      <div className="p-4 space-y-3 select-none">
+                        <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Languages Bullets</label>
+                        {editorData.languages.map((lang, idx) => (
+                          <div key={idx} className="flex gap-2 items-center">
+                            <span className="text-slate-500 text-xs select-none">•</span>
+                            <Input
+                              value={lang}
+                              onChange={(e) => handleLanguageItemChange(idx, e.target.value)}
+                              className="h-8 flex-1 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                              placeholder="e.g. English"
+                            />
+                            <button
+                              onClick={() => removeLanguageItem(idx)}
+                              className="text-slate-600 hover:text-red-400 p-1"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          onClick={addLanguageItem}
+                          className="bg-[#12132d]/40 border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3"
+                        >
+                          + Add Language
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -1503,14 +1786,32 @@ export default function ResumesPage() {
                     </button>
 
                     {collapsibles.achievements && (
-                      <div className="p-4 space-y-1.5 select-none">
-                        <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Achievements (Comma-separated)</label>
-                        <Input
-                          placeholder="e.g. Won 1st place in Smart India Hackathon, Published research paper on Machine Learning"
-                          value={editorData.achievements.join(", ")}
-                          onChange={(e) => handleAchievementsChange(e.target.value)}
-                          className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
-                        />
+                      <div className="p-4 space-y-3 select-none">
+                        <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Achievements Bullets</label>
+                        {editorData.achievements.map((ach, idx) => (
+                          <div key={idx} className="flex gap-2 items-center">
+                            <span className="text-slate-500 text-xs select-none">•</span>
+                            <Input
+                              value={ach}
+                              onChange={(e) => handleAchievementItemChange(idx, e.target.value)}
+                              className="h-8 flex-1 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                              placeholder="e.g. Won 1st place in Smart India Hackathon"
+                            />
+                            <button
+                              onClick={() => removeAchievementItem(idx)}
+                              className="text-slate-600 hover:text-red-400 p-1"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          onClick={addAchievementItem}
+                          className="bg-[#12132d]/40 border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3"
+                        >
+                          + Add Achievement
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -1628,13 +1929,22 @@ export default function ResumesPage() {
                           {editorData.projects.map(proj => (
                             <div key={proj.id} className="space-y-0.5">
                               <div className="flex justify-between items-baseline font-bold">
-                                <span>{proj.name} {proj.role ? `— ${proj.role}` : ""}</span>
+                                <span>
+                                  {proj.name}
+                                  {proj.techStack ? " | " : ""}
+                                  {proj.techStack && <span className="font-normal italic">{proj.techStack}</span>}
+                                  {proj.link && <span className="font-normal text-[10px] text-slate-500 ml-1">({proj.link})</span>}
+                                </span>
                                 <span className="font-normal italic text-[10px]">{proj.date}</span>
                               </div>
-                              {proj.description && (
-                                <p className="text-justify leading-relaxed pl-1 text-[11px] text-slate-700">
-                                  {proj.description}
-                                </p>
+                              {proj.bullets && proj.bullets.length > 0 && (
+                                <ul className="list-disc pl-4 space-y-0.5">
+                                  {proj.bullets.filter(Boolean).map((bullet, idx) => (
+                                    <li key={idx} className="text-justify leading-relaxed">
+                                      {bullet}
+                                    </li>
+                                  ))}
+                                </ul>
                               )}
                             </div>
                           ))}
@@ -1643,14 +1953,18 @@ export default function ResumesPage() {
                     )}
 
                     {/* Skills Section */}
-                    {editorData.skills.length > 0 && editorData.skills[0] && (
+                    {editorData.skills.length > 0 && (
                       <div className="space-y-1">
                         <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5">
                           Skills
                         </h2>
-                        <p className="leading-relaxed">
-                          {editorData.skills.join(", ")}
-                        </p>
+                        <div className="space-y-0.5">
+                          {editorData.skills.map(group => (
+                            <p key={group.id} className="leading-relaxed">
+                              <span className="font-bold">{group.category}:</span> {group.list.join(", ")}
+                            </p>
+                          ))}
+                        </div>
                       </div>
                     )}
 
@@ -1661,7 +1975,7 @@ export default function ResumesPage() {
                           Certifications
                         </h2>
                         <ul className="list-disc pl-4 space-y-0.5">
-                          {editorData.certifications.map((cert, idx) => (
+                          {editorData.certifications.filter(Boolean).map((cert, idx) => (
                             <li key={idx} className="leading-relaxed">
                               {cert}
                             </li>
@@ -1676,9 +1990,13 @@ export default function ResumesPage() {
                         <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5">
                           Languages
                         </h2>
-                        <p className="leading-relaxed">
-                          {editorData.languages.join(", ")}
-                        </p>
+                        <ul className="list-disc pl-4 space-y-0.5">
+                          {editorData.languages.filter(Boolean).map((lang, idx) => (
+                            <li key={idx} className="leading-relaxed">
+                              {lang}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
 
@@ -1689,7 +2007,7 @@ export default function ResumesPage() {
                           Achievements
                         </h2>
                         <ul className="list-disc pl-4 space-y-0.5">
-                          {editorData.achievements.map((ach, idx) => (
+                          {editorData.achievements.filter(Boolean).map((ach, idx) => (
                             <li key={idx} className="leading-relaxed">
                               {ach}
                             </li>
