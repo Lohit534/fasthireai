@@ -140,6 +140,34 @@ export default function AdminMessagesPage() {
     }
   };
 
+  const handleDeleteTicket = async () => {
+    if (!selectedTicket) return;
+    if (!confirm("Are you sure you want to delete this ticket permanently?")) return;
+
+    try {
+      const res = await fetch("/api/support/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "delete",
+          messageId: selectedTicket.id,
+        })
+      });
+
+      if (res.ok) {
+        toast.success("Ticket deleted successfully.");
+        const remaining = tickets.filter(t => t.id !== selectedTicket.id);
+        setTickets(remaining);
+        setSelectedTicket(remaining.length > 0 ? remaining[0] : null);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "Failed to delete ticket.");
+      }
+    } catch (err) {
+      toast.error("Connection error deleting ticket.");
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#060713]">
@@ -282,13 +310,23 @@ export default function AdminMessagesPage() {
                         <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Submitted By</span>
                         <h3 className="font-extrabold text-white text-base mt-0.5">{selectedTicket.userEmail}</h3>
                       </div>
-                      <Badge className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
-                        selectedTicket.status === "pending"
-                          ? "bg-amber-500/10 border border-amber-500/25 text-amber-400 animate-pulse"
-                          : "bg-emerald-500/10 border border-emerald-500/25 text-emerald-400"
-                      }`}>
-                        {selectedTicket.status === "pending" ? "Awaiting Reply" : "Resolved"}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
+                          selectedTicket.status === "pending"
+                            ? "bg-amber-500/10 border border-amber-500/25 text-amber-400 animate-pulse"
+                            : "bg-emerald-500/10 border border-emerald-500/25 text-emerald-400"
+                        }`}>
+                          {selectedTicket.status === "pending" ? "Awaiting Reply" : "Resolved"}
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleDeleteTicket}
+                          className="h-7 px-3 text-[10px] font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 rounded-full transition-colors"
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </div>
 
                     {/* Attached details metadata (2 properties) */}

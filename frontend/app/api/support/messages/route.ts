@@ -139,6 +139,20 @@ export async function POST(request: NextRequest) {
       if (error) throw error;
       
       return NextResponse.json({ success: true, message: data });
+    } else if (body.action === "delete") {
+      if (!isOwner) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      const { messageId } = body;
+      if (!messageId) {
+        return NextResponse.json({ error: "messageId is required." }, { status: 400 });
+      }
+
+      const { error } = await admin.from("Resume").delete().eq("id", messageId);
+      if (error) throw error;
+
+      return NextResponse.json({ success: true });
     } else {
       const { message, userPlan, userCredits } = body;
       if (!message || typeof message !== "string") {
