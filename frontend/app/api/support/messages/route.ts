@@ -57,14 +57,38 @@ export async function GET(request: NextRequest) {
     }
 
     const isOwner = isOwnerEmail(user.email);
-    const messages = readMessages();
+    const admin = getAdminClient() as any;
 
-    if (isOwner) {
-      return NextResponse.json(messages);
-    } else {
-      const userMsgs = messages.filter((m) => m.userId === user.id);
-      return NextResponse.json(userMsgs);
+    let query = admin.from("Resume").select("*").eq("jobTitle", "SUPPORT_TICKET").order("createdAt", { ascending: false });
+    
+    if (!isOwner) {
+      query = query.eq("userId", user.id);
     }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const messages = (data || []).map((row: any) => {
+      try {
+        const meta = JSON.parse(row.jobDescription || "{}");
+        return {
+          id: row.id,
+          userId: row.userId,
+          userEmail: meta.userEmail,
+          userPlan: meta.userPlan,
+          userCredits: meta.userCredits,
+          message: row.originalText,
+          reply: row.optimizedText || null,
+          status: meta.status,
+          createdAt: row.createdAt,
+          repliedAt: meta.repliedAt
+        };
+      } catch (e) {
+        return null;
+      }
+    }).filter(Boolean);
+
+    return NextResponse.json(messages);
   } catch (error: any) {
     logger.error("[messages-api] GET Unhandled error:", error?.message);
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
@@ -82,7 +106,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const isOwner = isOwnerEmail(user.email);
-    const messages = readMessages();
+    const admin = getAdminClient() as any;
 
     if (body.action === "reply") {
       if (!isOwner) {
@@ -94,40 +118,67 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "messageId and replyText are required." }, { status: 400 });
       }
 
-      const msgIndex = messages.findIndex((m) => m.id === messageId);
-      if (msgIndex === -1) {
-        return NextResponse.json({ error: "Message not found." }, { status: 404 });
-      }
+      // Fetch existing
+      const { data: existing } = await admin.from("Resume").select("*").eq("id", messageId).single();
+      if (!existing) return NextResponse.json({ error: "Message not found." }, { status: 404 });
 
-      messages[msgIndex].reply = replyText;
-      messages[msgIndex].status = "replied";
-      messages[msgIndex].repliedAt = new Date().toISOString();
+      const meta = JSON.parse(existing.jobDescription || "{}");
+      meta.status = "replied";
+      meta.repliedAt = new Date().toISOString();
 
-      writeMessages(messages);
-      return NextResponse.json({ success: true, message: messages[msgIndex] });
+      const { data, error } = await admin
+        .from("Resume")
+        .update({
+          optimizedText: replyText,
+          jobDescription: JSON.stringify(meta)
+        })
+        .eq("id", messageId)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      return NextResponse.json({ success: true, message: data });
     } else {
       const { message, userPlan, userCredits } = body;
       if (!message || typeof message !== "string") {
         return NextResponse.json({ error: "Message is required." }, { status: 400 });
       }
 
-      const newMsg = {
-        id: generateUUID(),
-        userId: user.id,
+      const meta = {
         userEmail: user.email,
         userPlan: userPlan || "free",
         userCredits: userCredits !== undefined ? userCredits : 0,
-        message: message.trim(),
-        reply: null,
         status: "pending",
-        createdAt: new Date().toISOString(),
         repliedAt: null
       };
 
-      messages.unshift(newMsg);
-      writeMessages(messages);
+      const newTicket = {
+        userId: user.id,
+        jobTitle: "SUPPORT_TICKET",
+        company: "FASTHIRE_SUPPORT",
+        originalText: message.trim(),
+        jobDescription: JSON.stringify(meta),
+        optimizedText: "",
+        scoreBefore: 0,
+        scoreAfter: 0,
+        keywordsBefore: 0,
+        keywordsAfter: 0,
+        impactBefore: 0,
+        impactAfter: 0,
+        keywordsAdded: [],
+        createdAt: new Date().toISOString()
+      };
 
-      return NextResponse.json({ success: true, message: newMsg });
+      const { data, error } = await admin
+        .from("Resume")
+        .insert(newTicket)
+        .select()
+        .single();
+        
+      if (error) throw error;
+
+      return NextResponse.json({ success: true, message: data });
     }
   } catch (error: any) {
     logger.error("[messages-api] POST Unhandled error:", error?.message);

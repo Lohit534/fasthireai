@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
         .from("Resume")
         .select("*")
         .eq("userId", activeUserId)
+        .neq("jobTitle", "SUPPORT_TICKET")
         .order("createdAt", { ascending: false });
       if (!error && data) {
         dbData = data;
