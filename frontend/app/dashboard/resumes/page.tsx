@@ -30,7 +30,10 @@ import {
   FolderGit,
   Wrench,
   Check,
-  AlertCircle
+  AlertCircle,
+  Award,
+  Languages,
+  Trophy
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
@@ -49,6 +52,9 @@ interface StructuredResume {
   education: { id: string; school: string; degree: string; field: string; date: string; description: string }[];
   projects: { id: string; name: string; role: string; date: string; description: string }[];
   skills: string[];
+  certifications: string[];
+  languages: string[];
+  achievements: string[];
 }
 
 export default function ResumesPage() {
@@ -61,7 +67,7 @@ export default function ResumesPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [activePlan, setActivePlan] = useState("free");
-
+ 
   // View state: list vs editor split screen
   const [editingResume, setEditingResume] = useState<ResumeRecord | null>(null);
   const [editorData, setEditorData] = useState<StructuredResume | null>(null);
@@ -76,7 +82,10 @@ export default function ResumesPage() {
     experience: true,
     education: true,
     projects: true,
-    skills: true
+    skills: true,
+    certifications: true,
+    languages: true,
+    achievements: true
   });
 
   // Load initial list
@@ -159,7 +168,10 @@ export default function ResumesPage() {
       experience: [],
       education: [],
       projects: [],
-      skills: []
+      skills: [],
+      certifications: [],
+      languages: [],
+      achievements: []
     };
 
     if (lines.length > 0 && lines[0]) {
@@ -226,6 +238,15 @@ export default function ResumesPage() {
         continue;
       } else if (upper === "SKILLS" || upper === "TECHNICAL SKILLS" || upper === "CORE COMPETENCIES" || upper === "KEY SKILLS") {
         currentSection = "skills";
+        continue;
+      } else if (upper === "CERTIFICATIONS" || upper === "COURSES" || upper === "CERTIFICATE" || upper === "CREDENTIALS") {
+        currentSection = "certifications";
+        continue;
+      } else if (upper === "LANGUAGES") {
+        currentSection = "languages";
+        continue;
+      } else if (upper === "ACHIEVEMENTS" || upper === "HONORS" || upper === "AWARDS" || upper === "HONORS & AWARDS") {
+        currentSection = "achievements";
         continue;
       }
 
@@ -294,6 +315,22 @@ export default function ResumesPage() {
         const cleanSkillLine = line.replace(/^\*\*Technical Skills:\*\*\s*|^\*\*Skills:\*\*\s*/i, "").trim();
         const skillsList = cleanSkillLine.split(",").map(s => s.trim()).filter(Boolean);
         resume.skills = [...resume.skills, ...skillsList];
+      } else if (currentSection === "certifications") {
+        const cleanLine = line.replace(/^[•\-*\u2022\s]+/, "").trim();
+        if (cleanLine) {
+          resume.certifications = [...resume.certifications, cleanLine];
+        }
+      } else if (currentSection === "languages") {
+        const cleanLine = line.replace(/^[•\-*\u2022\s]+/, "").trim();
+        if (cleanLine) {
+          const langs = cleanLine.split(",").map(l => l.trim()).filter(Boolean);
+          resume.languages = [...resume.languages, ...langs];
+        }
+      } else if (currentSection === "achievements") {
+        const cleanLine = line.replace(/^[•\-*\u2022\s]+/, "").trim();
+        if (cleanLine) {
+          resume.achievements = [...resume.achievements, cleanLine];
+        }
       }
     }
 
@@ -351,6 +388,27 @@ export default function ResumesPage() {
     if (data.skills.length > 0) {
       text += `SKILLS\n`;
       text += `${data.skills.join(", ")}\n\n`;
+    }
+
+    if (data.certifications && data.certifications.length > 0) {
+      text += `CERTIFICATIONS\n`;
+      data.certifications.forEach(cert => {
+        text += `• ${cert}\n`;
+      });
+      text += `\n`;
+    }
+
+    if (data.languages && data.languages.length > 0) {
+      text += `LANGUAGES\n`;
+      text += `${data.languages.join(", ")}\n\n`;
+    }
+
+    if (data.achievements && data.achievements.length > 0) {
+      text += `ACHIEVEMENTS\n`;
+      data.achievements.forEach(ach => {
+        text += `• ${ach}\n`;
+      });
+      text += `\n`;
     }
     
     return text.trim();
@@ -707,6 +765,30 @@ export default function ResumesPage() {
     if (!editorData) return;
     const skillsList = value.split(",").map(s => s.trim());
     const updated = { ...editorData, skills: skillsList };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  const handleCertificationsChange = (value: string) => {
+    if (!editorData) return;
+    const certList = value.split(",").map(s => s.trim());
+    const updated = { ...editorData, certifications: certList };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  const handleLanguagesChange = (value: string) => {
+    if (!editorData) return;
+    const langList = value.split(",").map(s => s.trim());
+    const updated = { ...editorData, languages: langList };
+    setEditorData(updated);
+    saveEditorData(updated);
+  };
+
+  const handleAchievementsChange = (value: string) => {
+    if (!editorData) return;
+    const achList = value.split(",").map(s => s.trim());
+    const updated = { ...editorData, achievements: achList };
     setEditorData(updated);
     saveEditorData(updated);
   };
@@ -1354,6 +1436,84 @@ export default function ResumesPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Accordion 7: Certifications */}
+                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => toggleCollapsible("certifications")}
+                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Award className="h-4 w-4 text-violet-500" />
+                        Certifications
+                      </span>
+                      {collapsibles.certifications ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
+
+                    {collapsibles.certifications && (
+                      <div className="p-4 space-y-1.5 select-none">
+                        <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Certifications (Comma-separated)</label>
+                        <Input
+                          placeholder="e.g. AWS Certified Solutions Architect, Certified Scrum Master"
+                          value={editorData.certifications.join(", ")}
+                          onChange={(e) => handleCertificationsChange(e.target.value)}
+                          className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Accordion 8: Languages */}
+                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => toggleCollapsible("languages")}
+                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Languages className="h-4 w-4 text-violet-500" />
+                        Languages
+                      </span>
+                      {collapsibles.languages ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
+
+                    {collapsibles.languages && (
+                      <div className="p-4 space-y-1.5 select-none">
+                        <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Languages (Comma-separated)</label>
+                        <Input
+                          placeholder="e.g. English, Spanish, French"
+                          value={editorData.languages.join(", ")}
+                          onChange={(e) => handleLanguagesChange(e.target.value)}
+                          className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Accordion 9: Achievements */}
+                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => toggleCollapsible("achievements")}
+                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Trophy className="h-4 w-4 text-violet-500" />
+                        Achievements
+                      </span>
+                      {collapsibles.achievements ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
+
+                    {collapsibles.achievements && (
+                      <div className="p-4 space-y-1.5 select-none">
+                        <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Achievements (Comma-separated)</label>
+                        <Input
+                          placeholder="e.g. Won 1st place in Smart India Hackathon, Published research paper on Machine Learning"
+                          value={editorData.achievements.join(", ")}
+                          onChange={(e) => handleAchievementsChange(e.target.value)}
+                          className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
 
@@ -1491,6 +1651,50 @@ export default function ResumesPage() {
                         <p className="leading-relaxed">
                           {editorData.skills.join(", ")}
                         </p>
+                      </div>
+                    )}
+
+                    {/* Certifications Section */}
+                    {editorData.certifications && editorData.certifications.length > 0 && editorData.certifications[0] && (
+                      <div className="space-y-1">
+                        <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5">
+                          Certifications
+                        </h2>
+                        <ul className="list-disc pl-4 space-y-0.5">
+                          {editorData.certifications.map((cert, idx) => (
+                            <li key={idx} className="leading-relaxed">
+                              {cert}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Languages Section */}
+                    {editorData.languages && editorData.languages.length > 0 && editorData.languages[0] && (
+                      <div className="space-y-1">
+                        <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5">
+                          Languages
+                        </h2>
+                        <p className="leading-relaxed">
+                          {editorData.languages.join(", ")}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Achievements Section */}
+                    {editorData.achievements && editorData.achievements.length > 0 && editorData.achievements[0] && (
+                      <div className="space-y-1">
+                        <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5">
+                          Achievements
+                        </h2>
+                        <ul className="list-disc pl-4 space-y-0.5">
+                          {editorData.achievements.map((ach, idx) => (
+                            <li key={idx} className="leading-relaxed">
+                              {ach}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
 

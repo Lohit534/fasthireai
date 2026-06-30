@@ -341,7 +341,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
               </>
             ) : (
               <div className="flex items-center gap-3 select-none">
-                <Link href="/auth/login" className="text-xs font-bold text-slate-400 hover:text-white transition-colors">
+                <Link href="/dashboard/pricing" className="text-xs font-bold text-slate-400 hover:text-white transition-colors">
                   Pricing
                 </Link>
                 <Link href="/auth/login">

@@ -77,6 +77,56 @@ function wordWrap(text: string, maxChars: number): string[] {
   return lines.length ? lines : [""];
 }
 
+function measureRichTextWidth(text: string, fontSize: number, defaultBold: boolean): number {
+  const regex = /(\*\*.*?\*\*)/g;
+  const parts = text.split(regex);
+  let totalW = 0;
+  for (const part of parts) {
+    if (!part) continue;
+    let isBold = defaultBold;
+    let textChunk = part;
+    if (part.startsWith("**") && part.endsWith("**")) {
+      isBold = true;
+      textChunk = part.slice(2, -2);
+    }
+    totalW += textChunk.length * fontSize * (isBold ? CH_BOLD : CH_NORMAL);
+  }
+  return totalW;
+}
+
+function drawRichText(
+  cmds: string[],
+  x: number,
+  yPos: number,
+  fontSize: number,
+  defaultBold: boolean,
+  markdownText: string
+) {
+  const regex = /(\*\*.*?\*\*)/g;
+  const parts = markdownText.split(regex);
+  let curX = x;
+  
+  for (const part of parts) {
+    if (!part) continue;
+    
+    let isBold = defaultBold;
+    let textChunk = part;
+    
+    if (part.startsWith("**") && part.endsWith("**")) {
+      isBold = true;
+      textChunk = part.slice(2, -2);
+    }
+    
+    const font = isBold ? "F2" : "F1";
+    const safeS = pdfStr(textChunk);
+    
+    cmds.push(`BT /${font} ${fontSize} Tf ${curX.toFixed(1)} ${yPos.toFixed(1)} Td (${safeS}) Tj ET`);
+    
+    const approxW = textChunk.length * fontSize * (isBold ? CH_BOLD : CH_NORMAL);
+    curX += approxW;
+  }
+}
+
 // ─── Parsed line types ────────────────────────────────────────────────────────
 
 interface PdfLine {
@@ -140,14 +190,14 @@ function parseResume(raw: string): PdfLine[] {
 
     // Bullet
     if (/^[•\-*>\u2022]\s/.test(t)) {
-      const txt = latinSafe(stripMarkdown(t.replace(/^[•\-*>\u2022]\s*/, "")));
+      const txt = latinSafe(t.replace(/^[•\-*>\u2022]\s*/, ""));
       out.push({ text: txt, type: "bullet" });
       continue;
     }
 
     // Bold role/company lines (e.g. **Company Name** | Title)
     const wasBold = /^\*\*/.test(t) || /^\*[^*]/.test(t);
-    const clean = latinSafe(stripMarkdown(t));
+    const clean = latinSafe(t);
     out.push({ text: clean, type: wasBold ? "role" : "body" });
   }
 
@@ -226,15 +276,37 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
           break;
         }
 
-        case "role": {
-          // Bold role/company line — italic-style with inline wrapping
+        case "role":
+        case "body": {
           const sz = 10;
-          const maxC = charsPerLine(sz, true);
-          const wrapped = wordWrap(line.text, maxC);
-          for (const w of wrapped) {
+          const isRole = line.type === "role";
+          
+          // Split by 3 or more spaces to detect columns (e.g. title left, date right)
+          const columns = line.text.split(/\s{3,}/);
+          if (columns.length >= 2) {
+            const left = columns[0];
+            const right = columns.slice(1).join("   ");
+            
             if (needsNewPage(sz * 1.4)) break;
-            text(w, ML, y, sz, true, false);
+            
+            // Render left column starting at ML
+            drawRichText(cmds, ML, y, sz, isRole, left);
+            
+            // Render right column right-aligned (ends at W - MR)
+            const rightW = measureRichTextWidth(right, sz, false);
+            const rightX = W - MR - rightW;
+            
+            drawRichText(cmds, rightX, y, sz, false, right);
             y -= sz * 1.4;
+          } else {
+            // No column split, wrap and render
+            const maxC = charsPerLine(sz, isRole);
+            const wrapped = wordWrap(line.text, maxC);
+            for (const w of wrapped) {
+              if (needsNewPage(sz * 1.4)) break;
+              drawRichText(cmds, ML, y, sz, isRole, w);
+              y -= sz * 1.4;
+            }
           }
           break;
         }
@@ -249,22 +321,10 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
             if (wi === 0) {
               // Bullet dot
               cmds.push(`BT /F1 ${sz} Tf ${(ML + 4).toFixed(1)} ${y.toFixed(1)} Td (-) Tj ET`);
-              text(wrapped[wi], INDENT, y, sz, false, false);
+              drawRichText(cmds, INDENT, y, sz, false, wrapped[wi]);
             } else {
-              text(wrapped[wi], INDENT, y, sz, false, false);
+              drawRichText(cmds, INDENT, y, sz, false, wrapped[wi]);
             }
-            y -= sz * 1.35;
-          }
-          break;
-        }
-
-        case "body": {
-          const sz = 10;
-          const maxC = charsPerLine(sz, false);
-          const wrapped = wordWrap(line.text, maxC);
-          for (const w of wrapped) {
-            if (needsNewPage(sz * 1.35)) break;
-            text(w, ML, y, sz, false, false);
             y -= sz * 1.35;
           }
           break;

@@ -174,8 +174,7 @@ export default function PricingPage() {
       try {
         const { data, error } = await supabase.auth.getUser();
         if (error || !data?.user) {
-          toast.error("Please sign in to view pricing packages.");
-          router.push("/auth/login");
+          setAuthLoading(false);
           return;
         }
         setUserId(data.user.id);
@@ -204,14 +203,18 @@ export default function PricingPage() {
         const cycle = localStorage.getItem(`fastHire_billingCycle_${data.user.id}`) as "monthly" | "yearly" || "monthly";
         setBillingCycle(cycle);
       } catch (err) {
-        toast.error("Verification failed.");
-        router.push("/auth/login");
+        setAuthLoading(false);
       }
     }
     checkUser();
   }, [router]);
 
   const handlePlanAction = async (plan: Plan) => {
+    if (!userId) {
+      toast.error("Please sign in to subscribe to a plan.");
+      router.push("/auth/login");
+      return;
+    }
     if (isOwner) {
       if (plan.id === currentPlan) {
         toast.success(`You are already simulated on the ${plan.name}.`);
