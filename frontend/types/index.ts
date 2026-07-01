@@ -46,6 +46,7 @@ export interface CreditInfo {
   freeRemaining: number;
   resetAt: Date | string;
   isOwner?: boolean;
+  isFirst50?: boolean;
 }
 
 export interface ApiResponse<T> {

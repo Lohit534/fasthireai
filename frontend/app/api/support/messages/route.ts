@@ -13,40 +13,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isOwnerEmail } from "@/types";
 import { logger } from "@/lib/logger";
 import { generateUUID } from "@/lib/utils";
-import fs from "fs";
-import path from "path";
 import { getAdminClient } from "@/lib/supabase/admin";
-
-const DATA_DIR = path.join(process.cwd(), "data");
-const FILE_PATH = path.join(DATA_DIR, "support_messages.json");
-
-function readMessages(): any[] {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    if (!fs.existsSync(FILE_PATH)) {
-      fs.writeFileSync(FILE_PATH, JSON.stringify([]), "utf8");
-      return [];
-    }
-    const data = fs.readFileSync(FILE_PATH, "utf8");
-    return JSON.parse(data || "[]");
-  } catch (e) {
-    logger.error("[messages-api] Read failed:", e);
-    return [];
-  }
-}
-
-function writeMessages(messages: any[]) {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    fs.writeFileSync(FILE_PATH, JSON.stringify(messages, null, 2), "utf8");
-  } catch (e) {
-    logger.error("[messages-api] Write failed:", e);
-  }
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -58,15 +25,23 @@ export async function GET(request: NextRequest) {
     }
 
     const isOwner = isOwnerEmail(user.email);
-    const messages = readMessages();
+    const adminSupabase = getAdminClient();
 
-    let userMessages = messages;
+    let query = adminSupabase
+      .from("Resume")
+      .select("*")
+      .eq("jobTitle", "SUPPORT_TICKET")
+      .order("createdAt", { ascending: false });
+
     if (!isOwner) {
-      userMessages = messages.filter(m => m.userId === user.id);
+      query = query.eq("userId", user.id);
     }
 
+    const { data, error } = await query;
+    if (error) throw error;
+
     // Map to the expected output format
-    const formattedMessages = userMessages.map((row: any) => {
+    const formattedMessages = (data || []).map((row: any) => {
       try {
         const meta = JSON.parse(row.jobDescription || "{}");
         return {
@@ -86,9 +61,6 @@ export async function GET(request: NextRequest) {
       }
     }).filter(Boolean) as any[];
 
-    // Sort by createdAt descending
-    formattedMessages.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
     return NextResponse.json(formattedMessages);
   } catch (error: any) {
     logger.error("[messages-api] GET Unhandled error:", error?.message);
@@ -107,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const isOwner = isOwnerEmail(user.email);
-    const messages = readMessages();
+    const adminSupabase = getAdminClient();
 
     if (body.action === "reply") {
       if (!isOwner) {
@@ -119,24 +91,34 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "messageId and replyText are required." }, { status: 400 });
       }
 
-      const existingIndex = messages.findIndex(m => m.id === messageId);
-      if (existingIndex === -1) {
+      const { data: existing, error: getErr } = await adminSupabase
+        .from("Resume")
+        .select("*")
+        .eq("id", messageId)
+        .eq("jobTitle", "SUPPORT_TICKET")
+        .single();
+      
+      if (getErr || !existing) {
         return NextResponse.json({ error: "Message not found." }, { status: 404 });
       }
 
-      const existing = messages[existingIndex];
       const meta = JSON.parse(existing.jobDescription || "{}");
       meta.status = "replied";
       meta.repliedAt = new Date().toISOString();
 
-      messages[existingIndex] = {
-        ...existing,
-        optimizedText: replyText,
-        jobDescription: JSON.stringify(meta)
-      };
+      const { data: updated, error: updateErr } = await adminSupabase
+        .from("Resume")
+        .update({
+          optimizedText: replyText,
+          jobDescription: JSON.stringify(meta)
+        })
+        .eq("id", messageId)
+        .select()
+        .single();
 
-      writeMessages(messages);
-      return NextResponse.json({ success: true, message: messages[existingIndex] });
+      if (updateErr) throw updateErr;
+
+      return NextResponse.json({ success: true, message: updated });
     } else if (body.action === "delete") {
       if (!isOwner) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -147,8 +129,12 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "messageId is required." }, { status: 400 });
       }
 
-      const updatedMessages = messages.filter(m => m.id !== messageId);
-      writeMessages(updatedMessages);
+      const { error: delErr } = await adminSupabase
+        .from("Resume")
+        .delete()
+        .eq("id", messageId);
+      
+      if (delErr) throw delErr;
 
       return NextResponse.json({ success: true });
     } else {
@@ -179,14 +165,18 @@ export async function POST(request: NextRequest) {
         keywordsAfter: 0,
         impactBefore: 0,
         impactAfter: 0,
-        keywordsAdded: [],
-        createdAt: new Date().toISOString()
+        keywordsAdded: []
       };
 
-      messages.push(newTicket);
-      writeMessages(messages);
+      const { data, error } = await adminSupabase
+        .from("Resume")
+        .insert(newTicket)
+        .select()
+        .single();
+      
+      if (error) throw error;
 
-      return NextResponse.json({ success: true, message: newTicket });
+      return NextResponse.json({ success: true, message: data });
     }
   } catch (error: any) {
     logger.error("[messages-api] POST Unhandled error:", error?.message);

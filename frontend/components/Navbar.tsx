@@ -125,8 +125,9 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
   // Calculations for credit percentage
   const freeRemaining = credits?.freeRemaining ?? 1;
   const freeUsed = credits?.freeUsed ?? 1;
-  const totalFree = 2;
+  const totalFree = credits?.isFirst50 ? 15 : 2;
   const usedPercent = Math.min(100, Math.max(0, Math.round((freeUsed / totalFree) * 100)));
+  const isPremium = credits?.isFirst50 || (credits?.paidCredits ?? 0) > 0;
 
   return (
     <>
@@ -222,7 +223,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                           {user.email}
                         </div>
                         <div className="text-[10px] text-slate-500 font-semibold mt-0.5 uppercase tracking-wider">
-                          {credits?.isOwner ? "Owner (Unlimited)" : `Free • ${freeRemaining} left`}
+                          {credits?.isOwner ? "Owner (Unlimited)" : `${isPremium ? "Premium" : "Free"} • ${freeRemaining} left`}
                         </div>
                       </div>
 
