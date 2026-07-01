@@ -15,6 +15,40 @@ import { logger } from "@/lib/logger";
 import { generateUUID } from "@/lib/utils";
 import { getAdminClient } from "@/lib/supabase/admin";
 
+// Helper to resolve active user record ID in public.User by authenticated email, creating it if missing
+async function getActiveUserId(user: any): Promise<string> {
+  let activeUserId = user.id;
+  if (user.email) {
+    try {
+      const admin = getAdminClient() as any;
+      const { data: existingUser } = await admin
+        .from("User")
+        .select("id")
+        .eq("email", user.email.toLowerCase().trim())
+        .maybeSingle();
+
+      if (existingUser) {
+        activeUserId = existingUser.id;
+      } else {
+        const { error: insertUserErr } = await admin
+          .from("User")
+          .insert({
+            id: user.id,
+            email: user.email.toLowerCase().trim(),
+            name: user.user_metadata?.full_name || null,
+            createdAt: new Date().toISOString(),
+          });
+        if (insertUserErr) {
+          logger.error("[messages-api] Failed to insert missing User record:", insertUserErr.message);
+        }
+      }
+    } catch (e: any) {
+      logger.error(`[messages-api] User resolution query crashed: ${e.message}`);
+    }
+  }
+  return activeUserId;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = createClient();
@@ -151,9 +185,11 @@ export async function POST(request: NextRequest) {
         repliedAt: null
       };
 
+      const activeUserId = await getActiveUserId(user);
+
       const newTicket = {
         id: generateUUID(),
-        userId: user.id,
+        userId: activeUserId,
         jobTitle: "SUPPORT_TICKET",
         company: "FASTHIRE_SUPPORT",
         originalText: message.trim(),
