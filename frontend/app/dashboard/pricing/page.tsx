@@ -306,63 +306,88 @@ export default function PricingPage() {
 
     // Check if Razorpay script is loaded in window
     if (typeof (window as any).Razorpay !== "undefined") {
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_mockkey12345",
-        amount: priceNum * 100, // in paisa
-        currency: "INR",
-        name: "FastHire-AI",
-        description: `${selectedPlan.name} (${billingCycle})`,
-        image: "https://qasfeyddyolpdvmiogkl.supabase.co/storage/v1/object/public/assets/logo.png",
-        handler: async function (response: any) {
-          try {
-            const res = await fetch("/api/credits", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ planId: selectedPlan.id })
-            });
+      try {
+        // 1. Create order server-side
+        const orderRes = await fetch("/api/payment/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ planId: selectedPlan.id, billingCycle }),
+        });
 
-            if (!res.ok) {
-              const errData = await res.json().catch(() => ({}));
-              throw new Error(errData.error || "Failed to update credits");
-            }
-
-            localStorage.setItem(`fastHire_plan_${userId}`, selectedPlan.id);
-            localStorage.setItem(`fastHire_billingCycle_${userId}`, billingCycle);
-            localStorage.setItem(`fastHire_planDate_${userId}`, new Date().toISOString());
-            setCurrentPlan(selectedPlan.id);
-
-            const limitValue = selectedPlan.id === "premium" ? 15 : selectedPlan.id === "promax" ? 999999 : 999999;
-            const creditsObject = {
-              freeUsed: 0,
-              paidCredits: limitValue,
-              freeRemaining: limitValue,
-              resetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-            };
-            localStorage.setItem(`fastHire_mockCredits_${userId}`, JSON.stringify(creditsObject));
-
-            toast.success(`Payment successful! Welcome to FastHire ${selectedPlan.name}.`);
-            setIsCheckoutOpen(false);
-          } catch (err: any) {
-            toast.error(err.message || "Payment processed but server update failed.");
-          } finally {
-            setCheckoutLoading(false);
-          }
-        },
-        prefill: {
-          email: userEmail
-        },
-        theme: {
-          color: "#7c3aed"
-        },
-        modal: {
-          ondismiss: function () {
-            setCheckoutLoading(false);
-          }
+        if (!orderRes.ok) {
+          const err = await orderRes.json().catch(() => ({}));
+          throw new Error(err.error || "Failed to create payment order.");
         }
-      };
 
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
+        const { orderId, amount, currency, keyId } = await orderRes.json();
+
+        // 2. Open Razorpay checkout with real order ID
+        const options = {
+          key: keyId,
+          amount,
+          currency,
+          order_id: orderId,
+          name: "FastHire AI",
+          description: `${selectedPlan.name} (${billingCycle})`,
+          image: "https://qasfeyddyolpdvmiogkl.supabase.co/storage/v1/object/public/assets/logo.png",
+          handler: async function (response: any) {
+            try {
+              // 3. Verify payment server-side (HMAC signature check)
+              const verifyRes = await fetch("/api/payment/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  planId: selectedPlan.id,
+                  billingCycle,
+                }),
+              });
+
+              if (!verifyRes.ok) {
+                const errData = await verifyRes.json().catch(() => ({}));
+                throw new Error(errData.error || "Payment verification failed.");
+              }
+
+              // 4. Update local state
+              localStorage.setItem(`fastHire_plan_${userId}`, selectedPlan.id);
+              localStorage.setItem(`fastHire_billingCycle_${userId}`, billingCycle);
+              localStorage.setItem(`fastHire_planDate_${userId}`, new Date().toISOString());
+              setCurrentPlan(selectedPlan.id);
+
+              const limitValue = selectedPlan.id === "premium" ? 15 : 999999;
+              const creditsObject = {
+                freeUsed: 0,
+                paidCredits: limitValue,
+                freeRemaining: limitValue,
+                resetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+              };
+              localStorage.setItem(`fastHire_mockCredits_${userId}`, JSON.stringify(creditsObject));
+
+              toast.success(`🎉 Payment verified! Welcome to FastHire ${selectedPlan.name}.`);
+              setIsCheckoutOpen(false);
+            } catch (err: any) {
+              toast.error(err.message || "Payment processed but verification failed. Contact support.");
+            } finally {
+              setCheckoutLoading(false);
+            }
+          },
+          prefill: { email: userEmail },
+          theme: { color: "#7c3aed" },
+          modal: {
+            ondismiss: function () {
+              setCheckoutLoading(false);
+            }
+          }
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+      } catch (err: any) {
+        toast.error(err.message || "Failed to initialize payment.");
+        setCheckoutLoading(false);
+      }
     } else {
       // Sandbox fallback simulated Razorpay checkout window
       toast.success("Razorpay library loaded. Initializing payment dashboard...");
