@@ -74,5 +74,5 @@ export const OWNER_EMAIL = "lohithpeyyala@gmail.com";
 export const isOwnerEmail = (email?: string): boolean => {
   if (!email) return false;
   const e = email.toLowerCase().trim();
-  return e === "lohithpeyyala@gmail.com" || e === "lohtithpeyyala@gmail.com" || e === "demo@fasthire.ai";
+  return e === "lohithpeyyala@gmail.com" || e === "lohtithpeyyala@gmail.com";
 };
