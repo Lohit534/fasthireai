@@ -194,14 +194,23 @@ function parseResume(raw: string): PdfLine[] {
 
     // Bullet
     if (/^[•\-*>\u2022]\s/.test(t)) {
-      const txt = latinSafe(t.replace(/^[•\-*>\u2022]\s*/, ""));
+      const txt = latinSafe(stripMarkdown(t.replace(/^[•\-*>\u2022]\s*/, "")));
       out.push({ text: txt, type: "bullet" });
       continue;
     }
 
     // Bold role/company lines (e.g. **Company Name** | Title)
-    const wasBold = /^\*\*/.test(t) || /^\*[^*]/.test(t);
-    const clean = latinSafe(t);
+    // Keep ** markers so drawRichText can handle bold segments, but clean stray single *
+    const wasBold = /^\*\*/.test(t);
+    // For role lines: keep ** delimiters for drawRichText, only strip stray single *
+    // For plain body lines: strip all markdown
+    let clean: string;
+    if (wasBold) {
+      // Replace single stray asterisks (not part of **) while preserving ** pairs
+      clean = latinSafe(t.replace(/(?<!\*)\*(?!\*)/g, ""));
+    } else {
+      clean = latinSafe(stripMarkdown(t));
+    }
     out.push({ text: clean, type: wasBold ? "role" : "body" });
   }
 

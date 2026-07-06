@@ -82,7 +82,7 @@ export default function BulletImprover({ resumeText, jobDescription, onChange }:
         if (credRes.ok) {
           const creds = await credRes.json();
           const storedPlan = localStorage.getItem(`fastHire_plan_${user.id}`) || "free";
-          if (creds.isOwner || storedPlan === "premium" || storedPlan === "promax" || creds.paidCredits > 0) {
+          if (creds.isOwner || creds.isFirst50 || storedPlan === "premium" || storedPlan === "promax" || creds.paidCredits > 0) {
             isFree = false;
           }
         }

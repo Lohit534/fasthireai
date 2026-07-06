@@ -147,6 +147,19 @@ export default function DashboardPage() {
     toast.success("Workspace cleared.");
   };
 
+  const handleReScoreBoth = async (newOriginalText: string) => {
+    try {
+      const [beforeRes, afterRes] = await Promise.all([
+        fetch("/api/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeText: newOriginalText, jobDescription }) }),
+        optimizeResult?.optimizedText
+          ? fetch("/api/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeText: optimizeResult.optimizedText, jobDescription }) })
+          : Promise.resolve(null),
+      ]);
+      if (beforeRes.ok) setBeforeScore(await beforeRes.json());
+      if (afterRes && afterRes.ok) setAfterScore(await afterRes.json());
+    } catch {}
+  };
+
   const handleReScoreBefore = async (newText: string) => {
     try {
       const res = await fetch("/api/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeText: newText, jobDescription }) });
@@ -406,7 +419,7 @@ export default function DashboardPage() {
                 <BulletImprover
                   resumeText={resumeText}
                   jobDescription={jobDescription}
-                  onChange={(newText) => { setResumeText(newText); handleReScoreBefore(newText); }}
+                  onChange={(newText) => { setResumeText(newText); handleReScoreBoth(newText); }}
                 />
               </div>
             </div>
