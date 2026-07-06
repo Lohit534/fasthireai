@@ -24,8 +24,16 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    logger.info("[payment/create-order] Auth check:", {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      authError: authError?.message || authError
+    });
+
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized", debug: authError?.message }, { status: 401 });
     }
 
     const body = await request.json();
