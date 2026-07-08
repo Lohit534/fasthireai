@@ -423,14 +423,18 @@ export default function ResumesPage() {
         }
         
         if (title) {
-          text += `**${title}**   ${edu.date}\n`;
-          if (edu.school) text += `${edu.school}\n`;
+          text += `**${title}**\n`;
+          if (edu.school) {
+            text += `**${edu.school}**   ${edu.date}\n`;
+          } else {
+            text += `**Unknown School**   ${edu.date}\n`;
+          }
         } else {
           text += `**${edu.school}**   ${edu.date}\n`;
         }
         
         if (edu.gpa) {
-          text += `CGPA: ${edu.gpa}\n`;
+          text += `**CGPA: ${edu.gpa}**\n`;
         }
         if (edu.description) {
           text += `${edu.description}\n`;
@@ -444,7 +448,7 @@ export default function ResumesPage() {
       data.projects.forEach(proj => {
         let leftPart = `**${proj.name}**`;
         if (proj.techStack) {
-          leftPart += ` | *${proj.techStack}*`;
+          leftPart += `   **| ${proj.techStack}**`;
         }
         if (proj.link) {
           leftPart += ` (${proj.link})`;

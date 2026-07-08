@@ -89,8 +89,8 @@ export async function generateDOCX(resumeText: string): Promise<Buffer> {
             })
           );
         } else {
-          // Replace pipe symbols with em-dashes
-          let contactLine = line.replace(/ \| /g, " — ");
+          // Keep the vertical pipe symbols
+          let contactLine = line;
           children.push(
             new Paragraph({
               alignment: AlignmentType.CENTER,

@@ -39,7 +39,8 @@ import {
   Check,
   Copy,
   ChevronDown,
-  Calendar
+  Calendar,
+  Lightbulb
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
@@ -400,73 +401,62 @@ export default function DashboardPage() {
 
         {/* ── LOADING OVERLAY ─────────────────────────────────────── */}
         {optimizing && (
-          <div className="fixed inset-0 bg-[#040d1a]/95 backdrop-blur-lg z-50 flex items-center justify-center p-6">
-            <div className="max-w-[420px] w-full relative">
-              {/* Glow behind card */}
-              <div className="absolute -inset-8 bg-cyan-500/5 rounded-full blur-3xl" />
-              <div className="relative bg-[#071525] border border-cyan-500/15 p-8 rounded-2xl shadow-2xl space-y-6">
-                {/* Icon */}
-                <div className="flex flex-col items-center gap-3">
-                  <div className="relative h-14 w-14">
-                    <div className="absolute inset-0 rounded-full bg-cyan-500/10 border border-cyan-500/20 animate-pulse" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Zap className="h-6 w-6 text-cyan-400" />
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <h3 className="font-black text-white text-base tracking-tight">Beating the ATS</h3>
-                    <p className="text-[11px] text-slate-400 mt-1">Tailoring your resume for the target role...</p>
-                  </div>
-                </div>
-
-                {/* Progress bar */}
-                <div className="space-y-2">
-                  <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-700"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-[10px] font-bold">
-                    <span className="text-cyan-400">{loadingMessage}</span>
-                    <span className="text-slate-500">{progress}%</span>
-                  </div>
-                </div>
-
-                {/* Steps */}
-                <div className="space-y-2.5 border-t border-white/5 pt-4">
-                  {[
-                    { label: "Reading your resume", thresh: 10 },
-                    { label: "Parsing the job description", thresh: 25 },
-                    { label: "Finding your strongest stories", thresh: 40 },
-                    { label: "Rewriting the impact", thresh: 55 },
-                    { label: "Aligning to ATS keywords", thresh: 70 },
-                    { label: "Polishing the output", thresh: 85 },
-                    { label: "Almost ready...", thresh: 95 },
-                  ].map((step, idx) => {
-                    const done = progress > step.thresh;
-                    const active = progress >= step.thresh && !done;
-                    return (
-                      <div key={idx} className="flex items-center gap-3">
-                        <div className={`h-4 w-4 rounded-full border flex items-center justify-center text-[9px] font-black shrink-0 transition-all ${
-                          done ? "bg-cyan-500/15 border-cyan-500/40 text-cyan-400"
-                          : active ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-400 animate-pulse"
-                          : "bg-slate-900 border-white/5 text-slate-600"
-                        }`}>
-                          {done ? "✓" : idx + 1}
-                        </div>
-                        <span className={`text-[11px] font-semibold transition-all ${
-                          done ? "text-slate-500 line-through decoration-slate-700"
-                          : active ? "text-white"
-                          : "text-slate-600"
-                        }`}>
-                          {step.label}
-                        </span>
-                      </div>
-                    );
-                  })}
+          <div className="fixed inset-0 bg-[#060713] z-50 flex flex-col items-center justify-center p-6 select-none animate-in fade-in duration-300">
+            <div className="max-w-[480px] w-full text-center space-y-6">
+              
+              {/* Circular lightbulb spinner styled after Image 1 */}
+              <div className="relative h-24 w-24 flex items-center justify-center mx-auto">
+                {/* Rotating progress border track */}
+                <div className="absolute inset-0 rounded-full border-4 border-slate-900" />
+                <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-violet-500 border-r-violet-500/80 animate-spin" />
+                
+                {/* Inner center with lightbulb */}
+                <div className="relative h-16 w-16 rounded-full bg-[#0a0c1a] flex items-center justify-center border border-white/5 shadow-inner">
+                  <Lightbulb className="h-7 w-7 text-cyan-400 animate-pulse" />
                 </div>
               </div>
+
+              {/* Status messages */}
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold text-white tracking-tight">
+                  {loadingMessage}
+                </h3>
+                <p className="text-xs text-slate-500 font-semibold tracking-wide">
+                  Usually takes 15–25 seconds
+                </p>
+              </div>
+
+              {/* Step indicator pagination dots (Horizontal pill for active) */}
+              {(() => {
+                const currentStepIdx = 
+                  progress <= 15 ? 0 :
+                  progress <= 30 ? 1 :
+                  progress <= 45 ? 2 :
+                  progress <= 60 ? 3 :
+                  progress <= 75 ? 4 :
+                  progress <= 90 ? 5 : 6;
+                return (
+                  <div className="flex items-center justify-center gap-1.5 mt-8">
+                    {[0, 1, 2, 3, 4, 5, 6].map((i) => {
+                      const isActive = i === currentStepIdx;
+                      return isActive ? (
+                        <div key={i} className="h-1.5 w-4.5 rounded-full bg-violet-500 transition-all duration-300" />
+                      ) : (
+                        <div key={i} className="h-1.5 w-1.5 rounded-full bg-slate-800 transition-all duration-300" />
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+
+              {/* Slim progress bar at bottom */}
+              <div className="w-56 h-1 bg-slate-900 rounded-full overflow-hidden mx-auto border border-white/5">
+                <div 
+                  className="h-full bg-violet-500 rounded-full transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+
             </div>
           </div>
         )}

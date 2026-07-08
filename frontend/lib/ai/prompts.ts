@@ -40,14 +40,14 @@ Your goal is to optimize the Candidate's Resume to better align with the Job Des
 6. **FORMATTING STYLE & TEMPLATE**: Format the output resume text EXACTLY according to these template layout rules to match a clean academic/LaTeX layout:
    - **Centered Header**:
      - Line 1: Candidate Name (large, capitalized, bold using standard text e.g. "JOHN DOE" or "PEYYALA LOHIT")
-     - Line 2: Contact info separated by em-dash: "Location/Country — Phone — Email"
-     - Line 3: Social/profile URLs separated by em-dash: "LinkedIn — GitHub"
-   - **Section Headings**: Keep section names in Title Case (e.g., "Professional Summary", "Technical Skills", "Projects", "Internship", "Education", "Certifications", "Languages"). Underneath each heading, place a divider line of exactly three hyphens: "---".
+     - Line 2: Contact info separated by vertical pipe: "email | phone | location/country" (e.g. "lohithpeyyala@gmail.com | 7095649929 | india")
+     - Line 3: Social/profile URLs separated by vertical pipe: "LinkedIn | GitHub"
+   - **Section Headings**: Keep section names in ALL CAPS (e.g., "PROFESSIONAL SUMMARY", "EXPERIENCE", "EDUCATION", "PROJECTS", "TECHNICAL SKILLS", "CERTIFICATIONS"). Underneath each heading, place a divider line of exactly three hyphens: "---".
    - **Technical Skills**: Group and bold category labels, e.g., "**Programming Languages:** Python, SQL".
    - **Column Alignment**:
-     - For projects, internship, and education entries, put the title/name on the left (in bold using markdown, e.g., "**B.Tech in Computer Science and Engineering**") and the date, metrics, or technologies on the right (e.g., "2022 – 2026" or italicized "*Python, SQL, Power BI*").
-     - Separate the left and right parts with exactly 6 spaces so they can be parsed as side-by-side columns.
-     - For organization names or descriptions (like university name and CGPA), put the organization on the left and the score/metric on the right separated by 6 spaces (e.g., "Bonam Venkata Chalamayya Institute of Technology and Science      CGPA: 7.62").
+     - For education entries, place the degree/field on the left (in bold, e.g. "**B.Tech in Computer Science and Engineering**") on its own line. On the next line, place the school/college name on the left (in bold, e.g. "**Bonam Venkata Chalamayya Institute of Technology and Science**") and the date on the right (e.g. "2022 – 2026"), separating them with exactly 6 spaces. Below that, place the CGPA/GPA on the left on its own line (in bold, e.g. "**CGPA: 7.62**").
+     - For project entries, place the project name on the left (in bold, e.g. "**MiniMedi - AI Symptom Checker**") and the tech stack list on the right (in bold prefix with a pipe, e.g. "**| ReactJS, PostgreSQL**"), separating them with exactly 6 spaces.
+     - For experience entries, place the title on the left (in bold, e.g. "**Inside Sales Representative**") and the date on the right (e.g. "2022 – 2026"), separating them with exactly 6 spaces. Below that, place the company name on the left (in bold, e.g. "**Glowlogics Solutions**") on its own line.
    - **Bullets**: Use the bullet character "•" (and only "•") for all list items. Do not use dashes or asterisks. ${lengthDirective}
 7. **OUTPUT FORMAT**: You must respond ONLY with a raw JSON object matching the schema below. Do not wrap the JSON output in markdown code block fences (e.g., do not use \`\`\`json or \`\`\`). Your output must be directly parseable by JSON.parse().
 

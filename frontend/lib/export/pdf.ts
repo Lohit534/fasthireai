@@ -176,7 +176,7 @@ function parseResume(raw: string): PdfLine[] {
 
     // Contact line(s) (before first section header)
     if (nameSet && !headerDone && !isH2 && !isAllCaps && !isSetext) {
-      const contact = latinSafe(stripMarkdown(t).replace(/ \| /g, "  |  "));
+      const contact = latinSafe(stripMarkdown(t));
       out.push({ text: contact, type: "contact" });
       continue;
     }
@@ -307,15 +307,6 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
         case "body": {
           const sz = 11.5;
           const isRole = line.type === "role";
-          
-          if (line.text.startsWith("CGPA:") || line.text.startsWith("GPA:")) {
-            ensureSpace(sz * 1.4);
-            const textW = measureRichTextWidth(line.text, sz, false);
-            const rightX = W - MR - textW;
-            drawRichText(pagesCmds[curPage], rightX, y, sz, false, line.text);
-            y -= sz * 1.4;
-            break;
-          }
           
           // Split by 3 or more spaces to detect columns (e.g. title left, date right)
           const columns = line.text.split(/\s{3,}/);
