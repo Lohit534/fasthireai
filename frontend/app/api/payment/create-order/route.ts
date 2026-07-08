@@ -82,7 +82,10 @@ export async function POST(request: NextRequest) {
     if (!rzpRes.ok) {
       const err = await rzpRes.json().catch(() => ({}));
       logger.error("[payment/create-order] Razorpay order creation failed:", err);
-      return NextResponse.json({ error: "Failed to create payment order." }, { status: 500 });
+      return NextResponse.json({
+        error: "Failed to create payment order.",
+        details: err?.error?.description || err?.error || "Unknown Razorpay error"
+      }, { status: 500 });
     }
 
     const order = await rzpRes.json();
