@@ -129,6 +129,16 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
   const usedPercent = Math.min(100, Math.max(0, Math.round((freeUsed / totalFree) * 100)));
   const isPremium = credits?.isFirst50 || (credits?.paidCredits ?? 0) > 0;
 
+  // Calculate dynamic days left until credit reset (30 days cycle logic)
+  const getDaysLeft = () => {
+    if (!credits?.resetAt) return 30;
+    const resetDate = new Date(credits.resetAt);
+    const diffTime = resetDate.getTime() - Date.now();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 30;
+  };
+  const daysLeft = getDaysLeft();
+
   return (
     <>
       <nav className="border-b border-white/5 bg-[#060713]/80 text-slate-100 sticky top-0 z-50 backdrop-blur-md bg-opacity-80">
@@ -186,7 +196,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                           style={{ width: `${usedPercent}%` }}
                         />
                       </div>
-                      <span>{usedPercent}% used - resets 10d left</span>
+                      <span>{usedPercent}% used - resets {daysLeft}d left</span>
                     </>
                   )}
                 </div>
