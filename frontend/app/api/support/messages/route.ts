@@ -23,20 +23,34 @@ async function getActiveUserId(user: any): Promise<string> {
       const admin = getAdminClient() as any;
       const { data: existingUser } = await admin
         .from("User")
-        .select("id")
+        .select("id, createdAt")
         .eq("email", user.email.toLowerCase().trim())
         .maybeSingle();
 
       if (existingUser) {
         activeUserId = existingUser.id;
+        
+        // Auto-heal: sync real signup time from Auth to public.User table to fix early adopter ranks (e.g. user 3)
+        if (user.created_at) {
+          const dbTime = existingUser.createdAt ? new Date(existingUser.createdAt).toISOString() : null;
+          const authTime = new Date(user.created_at).toISOString();
+          if (dbTime !== authTime) {
+            await admin
+              .from("User")
+              .update({ createdAt: authTime })
+              .eq("id", existingUser.id);
+            logger.info(`[messages-api] Healed signup time for user ${user.email}: ${dbTime} -> ${authTime}`);
+          }
+        }
       } else {
+        const signupTime = user.created_at ? new Date(user.created_at).toISOString() : new Date().toISOString();
         const { error: insertUserErr } = await admin
           .from("User")
           .insert({
             id: user.id,
             email: user.email.toLowerCase().trim(),
             name: user.user_metadata?.full_name || null,
-            createdAt: new Date().toISOString(),
+            createdAt: signupTime,
           });
         if (insertUserErr) {
           logger.error("[messages-api] Failed to insert missing User record:", insertUserErr.message);

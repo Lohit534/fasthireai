@@ -43,23 +43,37 @@ export async function GET(request: NextRequest) {
       if (user.email) {
         const { data: existingUser } = await admin
           .from("User")
-          .select("id")
+          .select("id, createdAt")
           .eq("email", user.email.toLowerCase().trim())
           .maybeSingle();
 
         if (existingUser) {
           activeUserId = existingUser.id;
           logger.info(`[credits] Found existing User record for email ${user.email} with ID ${existingUser.id}. Reusing this ID.`);
+          
+          // Auto-heal: sync real signup time from Auth to public.User table to fix early adopter ranks (e.g. user 3)
+          if (user.created_at) {
+            const dbTime = existingUser.createdAt ? new Date(existingUser.createdAt).toISOString() : null;
+            const authTime = new Date(user.created_at).toISOString();
+            if (dbTime !== authTime) {
+              await admin
+                .from("User")
+                .update({ createdAt: authTime })
+                .eq("id", existingUser.id);
+              logger.info(`[credits] Healed signup time for user ${user.email}: ${dbTime} -> ${authTime}`);
+            }
+          }
         } else {
-          // If the user doesn't exist, we insert a new record
-          logger.info(`[credits] Creating new User record for email ${user.email} with ID ${user.id}`);
+          // If the user doesn't exist, we insert a new record using their actual signup time
+          const signupTime = user.created_at ? new Date(user.created_at).toISOString() : now.toISOString();
+          logger.info(`[credits] Creating new User record for email ${user.email} with ID ${user.id} and signup time ${signupTime}`);
           const { error: insertUserErr } = await admin
             .from("User")
             .insert({
               id: user.id,
               email: user.email.toLowerCase().trim(),
               name: user.user_metadata?.full_name || null,
-              createdAt: now.toISOString(),
+              createdAt: signupTime,
             });
           if (insertUserErr) {
             logger.error("[credits] Failed to insert new User record:", insertUserErr.message);
