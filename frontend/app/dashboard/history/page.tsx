@@ -648,7 +648,7 @@ function HistoryRow({
   return (
     <button
       onClick={onClick}
-      className="group w-full text-left rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-300 relative overflow-hidden bg-[#0e0f21]/40 border border-white/5 hover:border-violet-500/30"
+      className="group w-full text-left rounded-xl py-2.5 px-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all duration-300 relative overflow-hidden bg-[#0e0f21]/40 border border-white/5 hover:border-violet-500/30"
     >
       {/* Glow on hover */}
       <div
@@ -656,9 +656,9 @@ function HistoryRow({
         style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.03) 0%, transparent 65%)" }}
       />
 
-      <div className="flex items-center gap-4 min-w-0">
+      <div className="flex items-center gap-3 min-w-0">
         {/* Score comparison pill (Left side) */}
-        <div className="shrink-0 flex items-center gap-1.5 bg-[#070814]/60 border border-white/5 px-3 py-1.5 rounded-full select-none text-[11px] font-bold">
+        <div className="shrink-0 flex items-center gap-1.5 bg-[#070814]/60 border border-white/5 px-2.5 py-1 rounded-full select-none text-[10px] font-bold">
           <span style={{ color: beforeColor }}>{resume.scoreBefore}</span>
           <ArrowRight className="h-3 w-3 text-slate-500" />
           <span style={{ color: afterColor }}>{resume.scoreAfter}</span>
@@ -669,9 +669,9 @@ function HistoryRow({
           <h3 className="text-xs font-bold text-white truncate group-hover:text-violet-300 transition-colors">
             {resume.jobTitle || "Resume Optimization"}
           </h3>
-          <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-1 font-semibold">
+          <div className="flex items-center gap-2 text-[9px] text-slate-500 mt-0.5 font-semibold">
             <span className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
+              <Calendar className="h-2.5 w-2.5" />
               {formatDate(resume.createdAt)}
             </span>
             <span>&bull;</span>
@@ -681,11 +681,11 @@ function HistoryRow({
       </div>
 
       {/* Delta pill and Chevron (Right side) */}
-      <div className="flex items-center gap-3 self-end sm:self-auto">
-        <span className="text-[10px] font-black bg-emerald-500/10 border border-emerald-500/20 text-[#22c55e] px-2 py-0.5 rounded-full">
+      <div className="flex items-center gap-2.5 self-end sm:self-auto">
+        <span className="text-[9px] font-black bg-emerald-500/10 border border-emerald-500/20 text-[#22c55e] px-1.5 py-0.5 rounded-full">
           +{delta}
         </span>
-        <ChevronRight className="h-4 w-4 text-slate-600 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+        <ChevronRight className="h-3.5 w-3.5 text-slate-600 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all shrink-0" />
       </div>
     </button>
   );

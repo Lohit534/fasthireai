@@ -56,7 +56,9 @@ Your goal is to optimize the Candidate's Resume to better align with the Job Des
   "resume": "The entire optimized resume text as a single string, including sections, formatting, and newlines.",
   "keywordsAdded": ["Array", "of", "keywords", "from", "the", "missing", "list", "that", "you", "successfully", "integrated"],
   "changesCount": 5, // Total count of bullet points or sections modified
-  "summary": "A concise explanation of the changes made and how they improve the resume's alignment."
+  "summary": "A concise explanation of the changes made and how they improve the resume's alignment.",
+  "detectedJobTitle": "The job title or role name extracted from the target job description (e.g., Inside Sales Representative)",
+  "detectedCompany": "The company name extracted from the target job description (e.g., Glowlogics Solutions)"
 }
 
 ### INPUT DATA:

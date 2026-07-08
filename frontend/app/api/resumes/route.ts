@@ -40,6 +40,39 @@ async function getActiveUserId(user: any): Promise<string> {
   return activeUserId;
 }
 
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const activeUserId = await getActiveUserId(user);
+    const admin = getAdminClient() as any;
+
+    const { data, error } = await admin
+      .from("Resume")
+      .select("*")
+      .eq("userId", activeUserId)
+      .neq("jobTitle", "SUPPORT_TICKET")
+      .order("createdAt", { ascending: false });
+
+    if (error) {
+      logger.error("[api/resumes] GET fetch failed:", error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Filter to only include builder/manual resumes (empty jobDescription)
+    const builderResumes = (data || []).filter((r: any) => !r.jobDescription || r.jobDescription.trim() === "");
+    return NextResponse.json(builderResumes);
+  } catch (error: any) {
+    logger.error("[api/resumes] GET unhandled error:", error.message);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = createClient();

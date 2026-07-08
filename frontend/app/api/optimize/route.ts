@@ -216,6 +216,9 @@ export async function POST(request: NextRequest) {
     const generatedId = generateUUID();
     let resumeRecord: any = null;
 
+    const finalJobTitle = aiResult.detectedJobTitle || jobTitle || "Optimized Resume";
+    const finalCompany = aiResult.detectedCompany || company || "General Application";
+
     try {
       const { data, error: resumeInsertErr } = await admin
         .from("Resume")
@@ -224,8 +227,8 @@ export async function POST(request: NextRequest) {
           userId: activeUserId,
           originalText: resumeText,
           jobDescription: jobDescription,
-          jobTitle: jobTitle || "Optimized Resume",
-          company: company || "General Application",
+          jobTitle: finalJobTitle,
+          company: finalCompany,
           scoreBefore: scoreBefore.overall,
           scoreAfter: scoreAfter.overall,
           keywordsBefore: scoreBefore.foundKeywords.length,
@@ -262,8 +265,8 @@ export async function POST(request: NextRequest) {
         userId: activeUserId,
         originalText: resumeText,
         jobDescription: jobDescription,
-        jobTitle: jobTitle || `${jobTitle || "Resume Optimization"}`,
-        company: company || null,
+        jobTitle: finalJobTitle,
+        company: finalCompany,
         scoreBefore: scoreBefore.overall,
         scoreAfter: scoreAfter.overall,
         keywordsBefore: scoreBefore.foundKeywords.length,
@@ -291,6 +294,8 @@ export async function POST(request: NextRequest) {
       keywordsAdded: aiResult.keywordsAdded,
       changesCount: aiResult.changesCount,
       summary: aiResult.summary,
+      jobTitle: finalJobTitle,
+      company: finalCompany,
     });
   } catch (error: any) {
     logger.error("[optimize] Unhandled error:", error?.message, "\nStack:", error?.stack?.split("\n").slice(0, 4).join("\n"));

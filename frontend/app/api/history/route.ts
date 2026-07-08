@@ -55,7 +55,8 @@ export async function GET(request: NextRequest) {
         .neq("jobTitle", "SUPPORT_TICKET")
         .order("createdAt", { ascending: false });
       if (!error && data) {
-        dbData = data;
+        // Filter to only include optimized resumes (non-empty job description)
+        dbData = data.filter((r: any) => r.jobDescription && r.jobDescription.trim() !== "");
       } else if (error) {
         logger.warn("[history] DB fetch returned error:", error.message);
       }
@@ -69,7 +70,12 @@ export async function GET(request: NextRequest) {
       if (fs.existsSync(FILE_PATH)) {
         const fileContent = fs.readFileSync(FILE_PATH, "utf8");
         const allResumes = JSON.parse(fileContent || "[]");
-        localData = allResumes.filter((r: any) => r.userId === activeUserId || r.userId === user.id);
+        // Deduplicate and filter to only include optimized resumes (non-empty job description)
+        localData = allResumes.filter((r: any) => 
+          (r.userId === activeUserId || r.userId === user.id) &&
+          r.jobDescription && 
+          r.jobDescription.trim() !== ""
+        );
       }
     } catch (jsonErr: any) {
       logger.warn("[history] Local JSON read failed:", jsonErr.message);

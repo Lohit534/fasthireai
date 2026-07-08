@@ -125,7 +125,7 @@ export default function ResumesPage() {
         let dbData: any[] = [];
         let dbError: any = null;
         try {
-          const historyRes = await fetch("/api/history");
+          const historyRes = await fetch("/api/resumes");
           if (historyRes.ok) {
             dbData = await historyRes.json();
           } else {

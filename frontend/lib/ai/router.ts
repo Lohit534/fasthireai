@@ -7,6 +7,8 @@ interface AIResult {
   keywordsAdded: string[];
   changesCount: number;
   summary: string;
+  detectedJobTitle?: string;
+  detectedCompany?: string;
 }
 
 export async function callAI(prompt: string, rawText = ""): Promise<AIResult> {
@@ -14,7 +16,9 @@ export async function callAI(prompt: string, rawText = ""): Promise<AIResult> {
     resume: rawText,
     keywordsAdded: [],
     changesCount: 0,
-    summary: "Optimized."
+    summary: "Optimized.",
+    detectedJobTitle: "Optimized Resume",
+    detectedCompany: "General Application"
   };
 
   const hasGroq = !!process.env.GROQ_API_KEY;
