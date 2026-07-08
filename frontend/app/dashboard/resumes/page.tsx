@@ -689,6 +689,33 @@ export default function ResumesPage() {
   // Auto-Improve Professional Summary
   const handleImproveSummary = async () => {
     if (!editorData) return;
+
+    // Check if free user is attempting to use the Pro feature
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const credRes = await fetch("/api/credits");
+        let isFree = true;
+        if (credRes.ok) {
+          const creds = await credRes.json();
+          const storedPlan = localStorage.getItem(`fastHire_plan_${user.id}`) || "free";
+          if (creds.isOwner || creds.isFirst50 || storedPlan === "premium" || storedPlan === "promax" || creds.paidCredits > 0) {
+            isFree = false;
+          }
+        }
+        
+        if (isFree) {
+          toast.error("Auto-Improve is a Premium Pro/Pro Max feature. Redirecting to upgrades...");
+          setTimeout(() => {
+            window.location.href = "/dashboard/pricing";
+          }, 1500);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed checking user plan:", e);
+    }
+
     setActionLoading("improve-summary");
 
     try {
@@ -773,10 +800,10 @@ export default function ResumesPage() {
     if (!editorData) return;
     const newExp = {
       id: Math.random().toString(36).substr(2, 9),
-      company: "New Company",
-      title: "Software Developer",
-      date: "Jan 2024 - Present",
-      bullets: ["Developed frontend UI components."]
+      company: "",
+      title: "",
+      date: "",
+      bullets: [""]
     };
     const updated = { ...editorData, experience: [...editorData.experience, newExp] };
     setEditorData(updated);
@@ -806,10 +833,10 @@ export default function ResumesPage() {
     if (!editorData) return;
     const newEdu = {
       id: Math.random().toString(36).substr(2, 9),
-      school: "Tech Institute",
-      degree: "B.S.",
-      field: "Computer Engineering",
-      date: "2018 - 2022",
+      school: "",
+      degree: "",
+      field: "",
+      date: "",
       gpa: "",
       description: ""
     };
@@ -841,11 +868,11 @@ export default function ResumesPage() {
     if (!editorData) return;
     const newProj = {
       id: Math.random().toString(36).substr(2, 9),
-      name: "FastHire AI Platform",
-      techStack: "React, Node.js",
-      link: "github.com/username/project",
-      date: "June 2026",
-      bullets: ["AI-driven ATS optimization dashboard."]
+      name: "",
+      techStack: "",
+      link: "",
+      date: "",
+      bullets: [""]
     };
     const updated = { ...editorData, projects: [...editorData.projects, newProj] };
     setEditorData(updated);
