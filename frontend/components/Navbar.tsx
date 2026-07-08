@@ -117,7 +117,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
     { label: "Resumes", href: "/dashboard/resumes" },
     { label: "Job Tracker", href: "/dashboard/job-tracker" },
     { label: "History", href: "/dashboard/history" },
-    ...(credits?.isOwner ? [{ label: "Admin Messages", href: "/dashboard/admin/messages" }] : []),
+    ...(credits?.isOwner ? [{ label: "Admin Dashboard", href: "/dashboard/admin" }] : []),
     { label: "Pricing", href: "/dashboard/pricing" },
     { label: "Billing", href: "/dashboard/billing" },
   ];
@@ -202,7 +202,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                 </div>
 
                 {/* Upgrade Button */}
-                <Link href="/dashboard/pricing">
+                <Link href="/dashboard/pricing" className="hidden sm:block">
                   <Button 
                     size="sm" 
                     className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-8 text-[11px] rounded-full px-4 shadow-lg shadow-violet-600/10"
@@ -233,20 +233,25 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                           {user.email}
                         </div>
                         <div className="text-[10px] text-slate-500 font-semibold mt-0.5 uppercase tracking-wider">
-                          {credits?.isOwner ? "Owner (Unlimited)" : `${isPremium ? "Premium" : "Free"} • ${freeRemaining} left`}
+                          {credits?.isOwner ? "Owner Account" : `${isPremium ? "Premium" : "Free"} • ${freeRemaining} left`}
                         </div>
+                        {credits?.isOwner && (
+                          <div className="px-2 py-1 text-[9px] text-violet-400 font-black uppercase bg-violet-500/10 border border-violet-500/20 rounded-md text-center mt-1.5">
+                            👑 This is the Owner Account
+                          </div>
+                        )}
                       </div>
 
                       {/* Main links list */}
                       <div className="space-y-0.5">
                         {credits?.isOwner && (
                           <Link 
-                            href="/dashboard/admin/messages" 
+                            href="/dashboard/admin" 
                             onClick={() => setIsDropdownOpen(false)}
                             className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 transition-colors"
                           >
                             <ShieldCheck className="h-4 w-4 text-violet-400" />
-                            Admin Messages
+                            Admin Dashboard
                           </Link>
                         )}
                         <Link 
