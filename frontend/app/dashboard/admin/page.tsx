@@ -62,6 +62,7 @@ export default function UnifiedAdminDashboard() {
 
   // Users Tab States
   const [users, setUsers] = useState<UserRecord[]>([]);
+  const [analytics, setAnalytics] = useState<any>({ totalOptimizations: 0, totalTickets: 0 });
   const [usersLoading, setUsersLoading] = useState(true);
   const [userSearch, setUserSearch] = useState("");
   const [planFilter, setPlanFilter] = useState<"all" | "owner" | "promax" | "premium" | "free">("all");
@@ -117,7 +118,8 @@ export default function UnifiedAdminDashboard() {
       const res = await fetch("/api/admin/users");
       if (res.ok) {
         const data = await res.json();
-        setUsers(data);
+        setUsers(data.users || []);
+        setAnalytics(data.analytics || { totalOptimizations: 0, totalTickets: 0 });
       } else {
         toast.error("Failed to load users list.");
       }
@@ -336,7 +338,7 @@ export default function UnifiedAdminDashboard() {
 
         {/* TAB 1: USERS & PRICING LEVEL */}
         {activeTab === "users" && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-in fade-in duration-200">
             
             {/* KPI Cards row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 select-none">
@@ -363,133 +365,219 @@ export default function UnifiedAdminDashboard() {
               })}
             </div>
 
-            {/* Filter controls */}
-            <div className="bg-[#0e0f21]/30 border border-white/5 rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+            {/* Dashboard Analytics Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
-              {/* Search */}
-              <div className="relative w-full md:max-w-md">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                <Input
-                  placeholder="Search user by name or email address..."
-                  value={userSearch}
-                  onChange={(e) => setUserSearch(e.target.value)}
-                  className="h-10 pl-10 border-white/5 bg-[#08091a] text-slate-200 placeholder:text-slate-600 rounded-xl text-xs w-full"
-                />
-              </div>
+              {/* Subscription distribution cards */}
+              <Card className="bg-[#0e0f21]/30 border border-white/5 rounded-2xl">
+                <CardContent className="p-6 space-y-6">
+                  <div>
+                    <h3 className="text-sm font-bold text-white">Subscription distribution</h3>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Ratio of active users per pricing level plan.</p>
+                  </div>
 
-              {/* Plan dropdown filters */}
-              <div className="flex items-center gap-2 w-full md:w-auto">
-                <Filter className="h-4 w-4 text-slate-500 shrink-0" />
-                <div className="flex bg-[#08091a] border border-white/5 p-1 rounded-xl w-full md:w-auto">
-                  {(["all", "owner", "promax", "premium", "free"] as const).map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setPlanFilter(tab)}
-                      className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all ${
-                        planFilter === tab
-                          ? "bg-violet-600 text-white"
-                          : "text-slate-500 hover:text-white"
-                      }`}
-                    >
-                      {tab}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                  <div className="space-y-4">
+                    {/* Pro Max */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs font-bold">
+                        <span className="text-indigo-400 flex items-center gap-1.5">
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Pro Max Tier
+                        </span>
+                        <span>{promaxUsers} users ({totalUsers > 0 ? Math.round((promaxUsers / totalUsers) * 100) : 0}%)</span>
+                      </div>
+                      <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden border border-white/5">
+                        <div 
+                          className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full" 
+                          style={{ width: `${totalUsers > 0 ? (promaxUsers / totalUsers) * 100 : 0}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Premium Pro */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs font-bold">
+                        <span className="text-cyan-400 flex items-center gap-1.5">
+                          <CheckCircle className="h-3.5 w-3.5" />
+                          Premium Pro Plan
+                        </span>
+                        <span>{premiumUsers} users ({totalUsers > 0 ? Math.round((premiumUsers / totalUsers) * 100) : 0}%)</span>
+                      </div>
+                      <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden border border-white/5">
+                        <div 
+                          className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full" 
+                          style={{ width: `${totalUsers > 0 ? (premiumUsers / totalUsers) * 100 : 0}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Free Tier */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs font-bold">
+                        <span className="text-slate-400 flex items-center gap-1.5">
+                          <UserIcon className="h-3.5 w-3.5" />
+                          Free Career Tier
+                        </span>
+                        <span>{freeUsers} users ({totalUsers > 0 ? Math.round((freeUsers / totalUsers) * 100) : 0}%)</span>
+                      </div>
+                      <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden border border-white/5">
+                        <div 
+                          className="h-full bg-slate-700 rounded-full" 
+                          style={{ width: `${totalUsers > 0 ? (freeUsers / totalUsers) * 100 : 0}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Platform performance usage analytics */}
+              <Card className="bg-[#0e0f21]/30 border border-white/5 rounded-2xl">
+                <CardContent className="p-6 space-y-6">
+                  <div>
+                    <h3 className="text-sm font-bold text-white">Platform Load &amp; Activity</h3>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Key resume optimize operation and credits metrics.</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-[#08091a] border border-white/5 p-4 rounded-xl space-y-1">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Total Resume Scans</span>
+                      <span className="text-lg font-black text-white">{analytics.totalOptimizations} scans</span>
+                    </div>
+
+                    <div className="bg-[#08091a] border border-white/5 p-4 rounded-xl space-y-1">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Support Tickets Logged</span>
+                      <span className="text-lg font-black text-white">{analytics.totalTickets} tickets</span>
+                    </div>
+
+                    <div className="bg-[#08091a] border border-white/5 p-4 rounded-xl space-y-1">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Total Paid Credits active</span>
+                      <span className="text-lg font-black text-white">
+                        {users.reduce((acc, u) => acc + (u.paidCredits > 9999 ? 0 : u.paidCredits), 0)} credits
+                      </span>
+                    </div>
+
+                    <div className="bg-[#08091a] border border-white/5 p-4 rounded-xl space-y-1">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Avg. Free Credits used</span>
+                      <span className="text-lg font-black text-white">
+                        {totalUsers > 0 ? (users.reduce((acc, u) => acc + u.freeUsed, 0) / totalUsers).toFixed(1) : "0.0"} scans
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
             </div>
 
-            {/* Users listing table */}
-            {usersLoading ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-3">
-                <Loader2 className="h-8 w-8 text-violet-500 animate-spin" />
-                <p className="text-xs text-slate-500 font-semibold">Loading users listings...</p>
-              </div>
-            ) : filteredUsers.length === 0 ? (
-              <div className="text-center py-20 bg-[#0e0f21]/20 border border-dashed border-white/5 rounded-2xl">
-                <Users className="h-10 w-10 text-slate-600 mx-auto mb-2" />
-                <p className="text-xs text-slate-500 font-semibold">No registered users matched the search.</p>
-              </div>
-            ) : (
-              <div className="border border-white/5 bg-[#0e0f21]/20 rounded-2xl overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-white/5 bg-white/2 text-[10px] font-black text-slate-400 uppercase tracking-wider select-none">
-                        <th className="py-4 px-6">User profile</th>
-                        <th className="py-4 px-6">Date Registered</th>
-                        <th className="py-4 px-6">Pricing Level / Plan</th>
-                        <th className="py-4 px-6">Credits Quota</th>
-                        <th className="py-4 px-6 text-right">Modify System Tier</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5 text-xs text-slate-300">
-                      {filteredUsers.map((u) => {
-                        const isOwnerUser = u.plan === "owner";
-                        return (
-                          <tr key={u.id} className="hover:bg-white/1 transition-colors">
-                            <td className="py-4 px-6">
-                              <div>
-                                <span className="font-extrabold text-white block">{u.name || "Anonymous User"}</span>
-                                <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">{u.email}</span>
-                              </div>
-                            </td>
-                            <td className="py-4 px-6 text-slate-400 font-semibold">
-                              <span className="flex items-center gap-1.5">
-                                <Calendar className="h-3.5 w-3.5 text-slate-600" />
-                                {new Date(u.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
-                              </span>
-                            </td>
-                            <td className="py-4 px-6">
-                              {u.plan === "owner" ? (
-                                <Badge className="bg-violet-500/10 border-violet-500/20 text-violet-400 font-bold text-[9px] uppercase tracking-wide">Owner Account</Badge>
-                              ) : u.plan === "promax" ? (
-                                <Badge className="bg-indigo-500/10 border-indigo-500/20 text-indigo-400 font-bold text-[9px] uppercase tracking-wide">Pro Max</Badge>
-                              ) : u.plan === "premium" ? (
-                                <Badge className="bg-cyan-500/10 border-cyan-500/20 text-cyan-400 font-bold text-[9px] uppercase tracking-wide">Premium Pro</Badge>
-                              ) : (
-                                <Badge className="bg-slate-500/10 border-slate-500/20 text-slate-400 font-bold text-[9px] uppercase tracking-wide">Free Tier</Badge>
-                              )}
-                            </td>
-                            <td className="py-4 px-6">
-                              {isOwnerUser ? (
-                                <span className="font-extrabold text-violet-400">Unlimited</span>
-                              ) : (
-                                <div>
-                                  <span className="font-bold text-white">{u.paidCredits > 9999 ? "Unlimited" : `${u.paidCredits} Paid`}</span>
-                                  <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">{u.freeUsed} Free Credits Used</span>
-                                </div>
-                              )}
-                            </td>
-                            <td className="py-4 px-6 text-right">
-                              {isOwnerUser ? (
-                                <span className="text-[10px] text-slate-500 font-bold">Immutable System Owner</span>
-                              ) : (
-                                <div className="flex items-center justify-end gap-1.5">
-                                  {updatingPlanId === u.id ? (
-                                    <Loader2 className="h-4 w-4 text-violet-500 animate-spin mr-3" />
-                                  ) : (
-                                    <select
-                                      value={u.plan}
-                                      onChange={(e) => handleUpdateUserPlan(u.id, e.target.value as any)}
-                                      className="bg-[#08091a] text-slate-300 border border-white/10 rounded-lg px-2 py-1 text-[10px] font-bold focus:outline-none focus:border-violet-500"
-                                    >
-                                      <option value="free">Free Tier</option>
-                                      <option value="premium">Premium Pro</option>
-                                      <option value="promax">Pro Max</option>
-                                    </select>
-                                  )}
-                                </div>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+            {/* Interactive User Billing Controls Panel (No raw tables) */}
+            <Card className="bg-[#0e0f21]/30 border border-white/5 rounded-2xl">
+              <CardContent className="p-6 space-y-4">
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Search className="h-4 w-4 text-violet-400" />
+                    Billing &amp; Subscription Modifier
+                  </h3>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Search a registered user by email or name to modify credit levels or plan tiers.</p>
                 </div>
-              </div>
-            )}
+
+                {/* Filter / Search input */}
+                <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                  <div className="relative w-full">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <Input
+                      placeholder="Type email address or profile name to manage..."
+                      value={userSearch}
+                      onChange={(e) => setUserSearch(e.target.value)}
+                      className="h-10 pl-10 border-white/5 bg-[#08091a] text-slate-200 placeholder:text-slate-600 rounded-xl text-xs w-full"
+                    />
+                  </div>
+                </div>
+
+                {/* Lookup output cards */}
+                {usersLoading ? (
+                  <div className="flex flex-col items-center justify-center py-10 gap-2">
+                    <Loader2 className="h-6 w-6 text-violet-500 animate-spin" />
+                    <p className="text-[10px] text-slate-500 font-semibold">Running lookups...</p>
+                  </div>
+                ) : userSearch.trim() === "" ? (
+                  <div className="text-center py-12 border border-dashed border-white/5 bg-[#08091a]/20 rounded-xl select-none">
+                    <UserIcon className="h-8 w-8 text-slate-700 mx-auto mb-2" />
+                    <p className="text-xs text-slate-500 font-bold">Billing Lookup Panel</p>
+                    <p className="text-[10px] text-slate-600 mt-0.5">Enter a user name or email address above to inspect and modify plan tiers.</p>
+                  </div>
+                ) : filteredUsers.length === 0 ? (
+                  <div className="text-center py-12 border border-dashed border-white/5 bg-[#08091a]/20 rounded-xl select-none">
+                    <AlertCircle className="h-8 w-8 text-slate-700 mx-auto mb-2" />
+                    <p className="text-xs text-slate-500 font-semibold">No registered users matched "{userSearch}"</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredUsers.map((u) => {
+                      const isOwnerUser = u.plan === "owner";
+                      return (
+                        <div key={u.id} className="bg-[#08091a] border border-white/5 rounded-xl p-4 space-y-4 hover:border-white/10 transition-colors">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <span className="font-extrabold text-white text-xs block truncate">{u.name || "Anonymous User"}</span>
+                              <span className="text-[10px] text-slate-500 font-semibold block truncate mt-0.5">{u.email}</span>
+                            </div>
+                            {u.plan === "owner" ? (
+                              <Badge className="bg-violet-500/10 border-violet-500/20 text-violet-400 font-bold text-[8px] uppercase tracking-wide shrink-0">Owner</Badge>
+                            ) : u.plan === "promax" ? (
+                              <Badge className="bg-indigo-500/10 border-indigo-500/20 text-indigo-400 font-bold text-[8px] uppercase tracking-wide shrink-0">Pro Max</Badge>
+                            ) : u.plan === "premium" ? (
+                              <Badge className="bg-cyan-500/10 border-cyan-500/20 text-cyan-400 font-bold text-[8px] uppercase tracking-wide shrink-0">Premium Pro</Badge>
+                            ) : (
+                              <Badge className="bg-slate-500/10 border-slate-500/20 text-slate-400 font-bold text-[8px] uppercase tracking-wide shrink-0">Free Tier</Badge>
+                            )}
+                          </div>
+
+                          <div className="border-t border-white/5 pt-3 space-y-2 text-[10px] font-semibold text-slate-400">
+                            <div className="flex justify-between">
+                              <span>Registered:</span>
+                              <span className="text-white">
+                                {new Date(u.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Free scans:</span>
+                              <span className="text-white">{u.freeUsed} used</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Paid balance:</span>
+                              <span className="text-white">{u.paidCredits > 9999 ? "Unlimited" : `${u.paidCredits} Paid`}</span>
+                            </div>
+                          </div>
+
+                          <div className="border-t border-white/5 pt-3 flex items-center justify-between">
+                            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Modify Plan</span>
+                            {isOwnerUser ? (
+                              <span className="text-[9px] text-slate-600 font-bold uppercase">Immutable Owner</span>
+                            ) : (
+                              <div className="flex items-center gap-1.5">
+                                {updatingPlanId === u.id ? (
+                                  <Loader2 className="h-3 w-3 text-violet-500 animate-spin mr-1" />
+                                ) : (
+                                  <select
+                                    value={u.plan}
+                                    onChange={(e) => handleUpdateUserPlan(u.id, e.target.value as any)}
+                                    className="bg-[#0d0e22] text-slate-300 border border-white/10 rounded-lg px-2 py-0.5 text-[9px] font-bold focus:outline-none focus:border-violet-500 cursor-pointer"
+                                  >
+                                    <option value="free">Free Tier</option>
+                                    <option value="premium">Premium Pro</option>
+                                    <option value="promax">Pro Max</option>
+                                  </select>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
           </div>
         )}

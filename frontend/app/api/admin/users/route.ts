@@ -66,7 +66,25 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json(merged);
+    // Fetch optimizations count
+    const { count: totalOptimizations } = await admin
+      .from("Resume")
+      .select("id", { count: "exact", head: true })
+      .neq("jobTitle", "SUPPORT_TICKET");
+
+    // Fetch tickets count
+    const { count: totalTickets } = await admin
+      .from("Resume")
+      .select("id", { count: "exact", head: true })
+      .eq("jobTitle", "SUPPORT_TICKET");
+
+    return NextResponse.json({
+      users: merged,
+      analytics: {
+        totalOptimizations: totalOptimizations || 0,
+        totalTickets: totalTickets || 0,
+      }
+    });
   } catch (error: any) {
     logger.error("[admin/users] GET unhandled error:", error.message);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
