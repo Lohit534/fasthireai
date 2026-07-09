@@ -112,15 +112,16 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
   };
 
   // Nav links definitions
-  const links = [
-    { label: "Optimize", href: "/dashboard" },
-    { label: "Resumes", href: "/dashboard/resumes" },
-    { label: "Job Tracker", href: "/dashboard/job-tracker" },
-    { label: "History", href: "/dashboard/history" },
-    ...(credits?.isOwner ? [{ label: "Admin Dashboard", href: "/dashboard/admin" }] : []),
-    { label: "Pricing", href: "/dashboard/pricing" },
-    { label: "Billing", href: "/dashboard/billing" },
-  ];
+  const links = credits?.isOwner
+    ? [{ label: "Admin Dashboard", href: "/dashboard/admin" }]
+    : [
+        { label: "Optimize", href: "/dashboard" },
+        { label: "Resumes", href: "/dashboard/resumes" },
+        { label: "Job Tracker", href: "/dashboard/job-tracker" },
+        { label: "History", href: "/dashboard/history" },
+        { label: "Pricing", href: "/dashboard/pricing" },
+        { label: "Billing", href: "/dashboard/billing" },
+      ];
 
   // Calculations for credit percentage
   const freeRemaining = credits?.freeRemaining ?? 1;
@@ -202,14 +203,16 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                 </div>
 
                 {/* Upgrade Button */}
-                <Link href="/dashboard/pricing" className="hidden sm:block">
-                  <Button 
-                    size="sm" 
-                    className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-8 text-[11px] rounded-full px-4 shadow-lg shadow-violet-600/10"
-                  >
-                    Upgrade
-                  </Button>
-                </Link>
+                {!credits?.isOwner && (
+                  <Link href="/dashboard/pricing" className="hidden sm:block">
+                    <Button 
+                      size="sm" 
+                      className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-8 text-[11px] rounded-full px-4 shadow-lg shadow-violet-600/10"
+                    >
+                      Upgrade
+                    </Button>
+                  </Link>
+                )}
 
                 {/* Profile circular avatar dropdown container */}
                 <div className="relative" ref={dropdownRef}>
@@ -244,7 +247,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
 
                       {/* Main links list */}
                       <div className="space-y-0.5">
-                        {credits?.isOwner && (
+                        {credits?.isOwner ? (
                           <Link 
                             href="/dashboard/admin" 
                             onClick={() => setIsDropdownOpen(false)}
@@ -253,55 +256,58 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                             <ShieldCheck className="h-4 w-4 text-violet-400" />
                             Admin Dashboard
                           </Link>
+                        ) : (
+                          <>
+                            <Link 
+                              href="/dashboard" 
+                              onClick={() => setIsDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                            >
+                              <Compass className="h-4 w-4 text-slate-400" />
+                              Optimize Resume
+                            </Link>
+                            <Link 
+                              href="/dashboard/resumes" 
+                              onClick={() => setIsDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                            >
+                              <FileText className="h-4 w-4 text-slate-400" />
+                              My Resumes
+                            </Link>
+                            <Link 
+                              href="/dashboard/job-tracker" 
+                              onClick={() => setIsDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                            >
+                              <Briefcase className="h-4 w-4 text-slate-400" />
+                              Job Tracker
+                            </Link>
+                            <Link 
+                              href="/dashboard/pricing" 
+                              onClick={() => setIsDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                            >
+                              <Sparkles className="h-4 w-4 text-slate-400" />
+                              Pro Max Plan
+                            </Link>
+                            <Link 
+                              href="/dashboard/pricing" 
+                              onClick={() => setIsDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                            >
+                              <DollarSign className="h-4 w-4 text-slate-400" />
+                              Pricing
+                            </Link>
+                            <Link 
+                              href="/dashboard/billing" 
+                              onClick={() => setIsDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                            >
+                              <CreditCard className="h-4 w-4 text-slate-400" />
+                              Billing &amp; Usage
+                            </Link>
+                          </>
                         )}
-                        <Link 
-                          href="/dashboard" 
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-                        >
-                          <Compass className="h-4 w-4 text-slate-400" />
-                          Optimize Resume
-                        </Link>
-                        <Link 
-                          href="/dashboard/resumes" 
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-                        >
-                          <FileText className="h-4 w-4 text-slate-400" />
-                          My Resumes
-                        </Link>
-                        <Link 
-                          href="/dashboard/job-tracker" 
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-                        >
-                          <Briefcase className="h-4 w-4 text-slate-400" />
-                          Job Tracker
-                        </Link>
-                        <Link 
-                          href="/dashboard/pricing" 
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-                        >
-                          <Sparkles className="h-4 w-4 text-slate-400" />
-                          Pro Max Plan
-                        </Link>
-                        <Link 
-                          href="/dashboard/pricing" 
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-                        >
-                          <DollarSign className="h-4 w-4 text-slate-400" />
-                          Pricing
-                        </Link>
-                        <Link 
-                          href="/dashboard/billing" 
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-                        >
-                          <CreditCard className="h-4 w-4 text-slate-400" />
-                          Billing &amp; Usage
-                        </Link>
                       </div>
 
                       {/* Divider */}

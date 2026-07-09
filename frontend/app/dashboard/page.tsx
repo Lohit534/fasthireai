@@ -385,8 +385,21 @@ export default function DashboardPage() {
     );
   }
 
+  useEffect(() => {
+    if (userPlan === "owner") {
+      router.replace("/dashboard/admin");
+    }
+  }, [userPlan, router]);
+
   if (userPlan === "owner") {
-    return <UnifiedAdminDashboard />;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#060713]">
+        <div className="text-center space-y-2">
+          <Loader2 className="h-8 w-8 text-violet-600 animate-spin mx-auto" />
+          <p className="text-xs text-slate-500 font-semibold font-sans">Redirecting to Admin Control...</p>
+        </div>
+      </div>
+    );
   }
 
   const hasResults = !optimizing && (optimizeResult || beforeScore);
