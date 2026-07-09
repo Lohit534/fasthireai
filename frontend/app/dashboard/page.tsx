@@ -153,11 +153,6 @@ export default function DashboardPage() {
     checkAuth();
   }, [router]);
 
-  useEffect(() => {
-    if (userPlan === "owner") {
-      router.replace("/dashboard/admin");
-    }
-  }, [userPlan, router]);
 
   const handleOptimize = async () => {
     if (!resumeText?.trim()) {
@@ -391,16 +386,6 @@ export default function DashboardPage() {
     );
   }
 
-  if (userPlan === "owner") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#060713]">
-        <div className="text-center space-y-2">
-          <Loader2 className="h-8 w-8 text-violet-600 animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-semibold font-sans">Redirecting to Admin Control...</p>
-        </div>
-      </div>
-    );
-  }
 
   const hasResults = !optimizing && (optimizeResult || beforeScore);
 
