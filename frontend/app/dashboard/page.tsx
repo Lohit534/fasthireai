@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
+import UnifiedAdminDashboard from "./admin/page";
 
 /* ─── helpers ─────────────────────────────────────── */
 function scoreColor(n: number) {
@@ -382,6 +383,10 @@ export default function DashboardPage() {
         </div>
       </div>
     );
+  }
+
+  if (userPlan === "owner") {
+    return <UnifiedAdminDashboard />;
   }
 
   const hasResults = !optimizing && (optimizeResult || beforeScore);
