@@ -153,6 +153,12 @@ export default function DashboardPage() {
     checkAuth();
   }, [router]);
 
+  useEffect(() => {
+    if (userPlan === "owner") {
+      router.replace("/dashboard/admin");
+    }
+  }, [userPlan, router]);
+
   const handleOptimize = async () => {
     if (!resumeText?.trim()) {
       toast.error("Add your resume first.");
@@ -384,12 +390,6 @@ export default function DashboardPage() {
       </div>
     );
   }
-
-  useEffect(() => {
-    if (userPlan === "owner") {
-      router.replace("/dashboard/admin");
-    }
-  }, [userPlan, router]);
 
   if (userPlan === "owner") {
     return (
