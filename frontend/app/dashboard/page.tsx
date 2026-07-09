@@ -137,10 +137,10 @@ export default function DashboardPage() {
             const creditsData = await creditsRes.json();
             if (creditsData.isOwner) {
               setUserPlan("owner");
-            } else if (creditsData.paidCredits === 15) {
-              setUserPlan("premium");
-            } else if (creditsData.paidCredits > 100) {
+            } else if (creditsData.paidCredits > 900000) {
               setUserPlan("promax");
+            } else if (creditsData.paidCredits > 0) {
+              setUserPlan("premium");
             } else {
               setUserPlan("free");
             }

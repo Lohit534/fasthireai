@@ -82,9 +82,12 @@ export default function BillingPage() {
             if (res.ok) {
               const apiCredits = await res.json();
               setCredits(apiCredits);
-              if (apiCredits.isFirst50) {
+              if (apiCredits.isFirst50 || (apiCredits.paidCredits > 0 && apiCredits.paidCredits <= 900000)) {
                 localStorage.setItem(`fastHire_plan_${user.id}`, "premium");
                 setActivePlan("premium");
+              } else if (apiCredits.paidCredits > 900000) {
+                localStorage.setItem(`fastHire_plan_${user.id}`, "promax");
+                setActivePlan("promax");
               }
             } else {
               setCredits({

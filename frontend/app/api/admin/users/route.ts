@@ -52,10 +52,10 @@ export async function GET(request: NextRequest) {
       let plan = "free";
       if (isOwnerEmail(u.email)) {
         plan = "owner";
-      } else if (credit.paidCredits === 15) {
-        plan = "premium";
-      } else if (credit.paidCredits > 100) {
+      } else if (credit.paidCredits > 900000) {
         plan = "promax";
+      } else if (credit.paidCredits > 0) {
+        plan = "premium";
       }
 
       return {
@@ -123,19 +123,36 @@ export async function POST(request: NextRequest) {
     const admin = getAdminClient() as any;
     const now = new Date();
 
-    const { data, error } = await admin
+    // Fetch existing credit row to avoid not-null primary key constraint failures
+    const { data: existingCredit } = await admin
       .from("Credit")
-      .upsert(
-        {
+      .select("id")
+      .eq("userId", targetUserId)
+      .maybeSingle();
+
+    let query;
+    if (existingCredit) {
+      query = admin
+        .from("Credit")
+        .update({
+          paidCredits: paidCredits,
+          resetAt: now.toISOString(),
+        })
+        .eq("userId", targetUserId);
+    } else {
+      const newId = "credit-" + Math.random().toString(36).substring(2, 11);
+      query = admin
+        .from("Credit")
+        .insert({
+          id: newId,
           userId: targetUserId,
           freeUsed: 0,
           paidCredits: paidCredits,
           resetAt: now.toISOString(),
-        },
-        { onConflict: "userId" }
-      )
-      .select()
-      .single();
+        });
+    }
+
+    const { data, error } = await query.select().single();
 
     if (error) {
       logger.error("[admin/users] POST update plan failed:", error.message);

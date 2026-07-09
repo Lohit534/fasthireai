@@ -78,8 +78,12 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
         if (res.ok) {
           const data = await res.json();
           setCredits(data);
-          if (data.isFirst50 && userId) {
-            localStorage.setItem(`fastHire_plan_${userId}`, "premium");
+          if (userId) {
+            if (data.isFirst50 || (data.paidCredits > 0 && data.paidCredits <= 900000)) {
+              localStorage.setItem(`fastHire_plan_${userId}`, "premium");
+            } else if (data.paidCredits > 900000) {
+              localStorage.setItem(`fastHire_plan_${userId}`, "promax");
+            }
           }
         }
       } catch (err) {

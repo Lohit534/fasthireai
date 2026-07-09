@@ -260,19 +260,36 @@ export async function POST(request: NextRequest) {
     }
 
     // Upsert or update the credit row
-    const { data, error } = await admin
+    // Fetch existing credit row to avoid not-null primary key constraint failures
+    const { data: existingCredit } = await admin
       .from("Credit")
-      .upsert(
-        {
+      .select("id")
+      .eq("userId", activeUserId)
+      .maybeSingle();
+
+    let query;
+    if (existingCredit) {
+      query = admin
+        .from("Credit")
+        .update({
+          paidCredits: paidCredits,
+          resetAt: now.toISOString(),
+        })
+        .eq("userId", activeUserId);
+    } else {
+      const newId = "credit-" + Math.random().toString(36).substring(2, 11);
+      query = admin
+        .from("Credit")
+        .insert({
+          id: newId,
           userId: activeUserId,
           freeUsed: 0,
           paidCredits: paidCredits,
           resetAt: now.toISOString(),
-        },
-        { onConflict: "userId" }
-      )
-      .select()
-      .single();
+        });
+    }
+
+    const { data, error } = await query.select().single();
 
     if (error) {
       logger.error("[credits] POST update error:", error.message);

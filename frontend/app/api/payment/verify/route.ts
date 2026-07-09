@@ -72,17 +72,36 @@ export async function POST(request: NextRequest) {
 
     // ── 3. Upsert credits directly ─────────────────────────────────────────────
     const paidCredits = PLAN_CREDITS[planId] ?? 0;
-    const { error: creditErr } = await admin
+    // Fetch existing credit row to avoid not-null primary key constraint failures
+    const { data: existingCredit } = await admin
       .from("Credit")
-      .upsert(
-        {
+      .select("id")
+      .eq("userId", activeUserId)
+      .maybeSingle();
+
+    let query;
+    if (existingCredit) {
+      query = admin
+        .from("Credit")
+        .update({
+          paidCredits: paidCredits,
+          resetAt: new Date().toISOString(),
+        })
+        .eq("userId", activeUserId);
+    } else {
+      const newId = "credit-" + Math.random().toString(36).substring(2, 11);
+      query = admin
+        .from("Credit")
+        .insert({
+          id: newId,
           userId: activeUserId,
           freeUsed: 0,
-          paidCredits,
+          paidCredits: paidCredits,
           resetAt: new Date().toISOString(),
-        },
-        { onConflict: "userId" }
-      );
+        });
+    }
+
+    const { error: creditErr } = await query;
 
     if (creditErr) {
       logger.error("[payment/verify] Credits upsert failed:", creditErr.message);
