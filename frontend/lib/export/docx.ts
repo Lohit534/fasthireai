@@ -31,12 +31,30 @@ function parseTextRuns(text: string, baseOptions: any = {}): TextRun[] {
   return runs;
 }
 
-export async function generateDOCX(resumeText: string): Promise<Buffer> {
+export async function generateDOCX(resumeText: string, watermarked = false): Promise<Buffer> {
   try {
-    logger.info("Initializing DOCX generation with custom parsing...");
+    logger.info(`Initializing DOCX generation with custom parsing (watermarked=${watermarked})...`);
     const lines = resumeText.split(/\r?\n/).map(line => line.trim());
     const children: Paragraph[] = [];
-    
+
+    if (watermarked) {
+      children.push(
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [
+            new TextRun({
+              text: "FASTHIRE AI - FREE TIER WATERMARK (UPGRADE TO PRO TO REMOVE)",
+              font: "Times New Roman",
+              size: 20,
+              bold: true,
+              color: "FF0000"
+            })
+          ],
+          spacing: { after: 120 }
+        })
+      );
+    }
+
     let name = "";
     let headerEnded = false;
 

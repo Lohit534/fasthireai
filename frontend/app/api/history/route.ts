@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/logger";
+import { isOwnerEmail } from "@/types";
 
 import fs from "fs";
 import path from "path";
@@ -92,7 +93,39 @@ export async function GET(request: NextRequest) {
     // Sort by createdAt descending
     combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    return NextResponse.json(combined);
+    // Resolve plan tier to determine retention cutoff
+    let retentionMonths = 1; // Default free: 1 month
+    const isOwner = isOwnerEmail(user.email);
+    if (!isOwner) {
+      try {
+        const admin = getAdminClient() as any;
+        const { data: creditRow } = await admin
+          .from("Credit")
+          .select("paidCredits")
+          .eq("userId", activeUserId)
+          .maybeSingle();
+        const paidCredits = creditRow?.paidCredits ?? 0;
+        if (paidCredits >= 900000) {
+          retentionMonths = 4;
+        } else if (paidCredits > 0) {
+          retentionMonths = 2;
+        }
+      } catch (e) {
+        logger.warn("[history] Failed to fetch credits for retention:", e);
+      }
+    }
+
+    let filtered = combined;
+    if (!isOwner) {
+      const cutoffDate = new Date();
+      cutoffDate.setMonth(cutoffDate.getMonth() - retentionMonths);
+      filtered = combined.filter((r) => {
+        const itemDate = new Date(r.createdAt);
+        return itemDate >= cutoffDate;
+      });
+    }
+
+    return NextResponse.json(filtered);
   } catch (error: any) {
     logger.error("[history] GET Unhandled error:", error?.message);
     return NextResponse.json(

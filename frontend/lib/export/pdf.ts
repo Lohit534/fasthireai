@@ -219,9 +219,9 @@ function parseResume(raw: string): PdfLine[] {
 
 // ─── PDF Builder ─────────────────────────────────────────────────────────────
 
-export async function generatePDF(resumeText: string): Promise<Buffer> {
+export async function generatePDF(resumeText: string, watermarked = false): Promise<Buffer> {
   try {
-    logger.info("Generating LaTeX-style PDF via pure-JS builder...");
+    logger.info(`Generating LaTeX-style PDF via pure-JS builder (watermarked=${watermarked})...`);
 
     const lines = parseResume(resumeText);
 
@@ -394,7 +394,10 @@ export async function generatePDF(resumeText: string): Promise<Buffer> {
       const pageObjId = 3 + i * 2;
       const contentObjId = 4 + i * 2;
       
-      const pageStreamContent = pagesCmds[i].join("\n");
+      let pageStreamContent = pagesCmds[i].join("\n");
+      if (watermarked) {
+        pageStreamContent += "\nq 0.9 g BT /F2 40 Tf 0.707 0.707 -0.707 0.707 100 300 Tm (FASTHIRE AI - FREE TIER WATERMARK) Tj ET Q";
+      }
       const pageStreamBuf     = Buffer.from(pageStreamContent, "latin1");
       const pageStreamLen     = pageStreamBuf.length;
 

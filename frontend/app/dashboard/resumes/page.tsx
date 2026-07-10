@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ResumeRecord } from "@/types";
+import { ResumeRecord, isOwnerEmail } from "@/types";
 import { logger } from "@/lib/logger";
 import { formatDate, generateUUID } from "@/lib/utils";
 import { 
@@ -544,6 +544,22 @@ export default function ResumesPage() {
   // Create New Resume Card Trigger
   const handleCreateNewResume = async () => {
     if (!userId) return;
+
+    // Enforce resumes built from scratch limit (Free: 2, Pro: 20, Pro Max: 40)
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const isOwner = user?.email ? isOwnerEmail(user.email) : false;
+      if (!isOwner) {
+        const maxResumes = activePlan === "free" ? 2 : activePlan === "premium" ? 20 : 40;
+        if (resumes.length >= maxResumes) {
+          toast.error(`Resume limit reached. Your plan allows building up to ${maxResumes} resumes from scratch.`);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Error checking resumes limit client-side:", e);
+    }
+
     setActionLoading("create");
 
     const defaultText = ``;

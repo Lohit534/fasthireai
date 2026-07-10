@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/logger";
 import { generateUUID } from "@/lib/utils";
+import { isOwnerEmail } from "@/types";
 
 // Helper to resolve active user record ID in public.User by authenticated email, creating it if missing
 async function getActiveUserId(user: any): Promise<string> {
@@ -86,6 +87,40 @@ export async function POST(request: NextRequest) {
     const activeUserId = await getActiveUserId(user);
 
     const admin = getAdminClient() as any;
+
+    // Enforce resumes built from scratch limit (empty jobDescription)
+    const isOwner = isOwnerEmail(user.email);
+    if (!isOwner && (!body.jobDescription || body.jobDescription.trim() === "")) {
+      const { data: creditRow } = await admin
+        .from("Credit")
+        .select("paidCredits")
+        .eq("userId", activeUserId)
+        .maybeSingle();
+      const paidCredits = creditRow?.paidCredits ?? 0;
+
+      let tier = "free";
+      if (paidCredits >= 900000) tier = "promax";
+      else if (paidCredits > 0) tier = "premium";
+
+      const maxResumes = tier === "free" ? 2 : tier === "premium" ? 20 : 40;
+
+      const { data: existingResumes } = await admin
+        .from("Resume")
+        .select("id, jobDescription")
+        .eq("userId", activeUserId);
+
+      const builderCount = (existingResumes || []).filter(
+        (r: any) => !r.jobDescription || r.jobDescription.trim() === ""
+      ).length;
+
+      if (builderCount >= maxResumes) {
+        return NextResponse.json(
+          { error: `Resume limit reached. Your plan allows building up to ${maxResumes} resumes from scratch.` },
+          { status: 403 }
+        );
+      }
+    }
+
     const { data, error } = await admin
       .from("Resume")
       .insert({

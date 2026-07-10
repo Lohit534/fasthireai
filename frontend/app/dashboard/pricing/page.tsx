@@ -184,9 +184,9 @@ export default function PricingPage() {
           if (res.ok) {
             const apiCredits = await res.json();
             if (apiCredits.isOwner) setIsOwner(true);
-            // Detect first-50 users: paidCredits >= 365 (1 year grant)
             if (apiCredits.paidCredits >= 365 || apiCredits.isFirst50) setIsFirst50(true);
-            const plan = localStorage.getItem(`fastHire_plan_${data.user.id}`) || "free";
+            const plan = apiCredits.planId || localStorage.getItem(`fastHire_plan_${data.user.id}`) || "free";
+            localStorage.setItem(`fastHire_plan_${data.user.id}`, plan);
             setCurrentPlan(plan);
           } else {
             const plan = localStorage.getItem(`fastHire_plan_${data.user.id}`) || "free";

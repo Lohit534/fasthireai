@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
         freeRemaining: 999999,
         resetAt: new Date().toISOString(),
         isOwner: true,
+        planId: "promax",
       });
     }
 
@@ -169,7 +170,15 @@ export async function GET(request: NextRequest) {
 
     if (isNewMonth) {
       freeUsed = 0;
-      paidCredits = isFirst50 ? 365 : creditRow.paidCredits;
+      if (isFirst50) {
+        paidCredits = 365;
+      } else if (creditRow.paidCredits > 0 && creditRow.paidCredits < 900000) {
+        paidCredits = 15;
+      } else if (creditRow.paidCredits >= 900000) {
+        paidCredits = 999999;
+      } else {
+        paidCredits = 0;
+      }
       await admin
         .from("Credit")
         .update({ 
@@ -180,6 +189,13 @@ export async function GET(request: NextRequest) {
         .eq("userId", activeUserId);
     }
 
+    let planId = "free";
+    if (isFirst50 || (paidCredits > 0 && paidCredits < 900000)) {
+      planId = "premium";
+    } else if (paidCredits >= 900000) {
+      planId = "promax";
+    }
+
     return NextResponse.json({
       freeUsed,
       paidCredits,
@@ -187,6 +203,7 @@ export async function GET(request: NextRequest) {
       resetAt: isNewMonth ? now.toISOString() : creditRow.resetAt,
       isOwner: false,
       isFirst50: isFirst50,
+      planId,
     });
   } catch (error: any) {
     logger.error("[credits] GET Unhandled error:", error?.message);

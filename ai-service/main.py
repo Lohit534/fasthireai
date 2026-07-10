@@ -85,8 +85,11 @@ def semantic_score(resume_text: str, job_description: str) -> int:
         emb1 = sbert.encode(resume_text, convert_to_tensor=True)
         emb2 = sbert.encode(job_description, convert_to_tensor=True)
         cosine_score = util.cos_sim(emb1, emb2)
-        score = float(cosine_score[0][0]) * 100
-        # Bound score between 0 and 100
+        raw_score = float(cosine_score[0][0])
+        if raw_score <= 0.2:
+            score = raw_score * 200
+        else:
+            score = 40 + ((raw_score - 0.2) / 0.4) * 55
         return max(0, min(100, round(score)))
     except Exception:
         return 0

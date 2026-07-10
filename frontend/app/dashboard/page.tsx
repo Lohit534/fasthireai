@@ -16,7 +16,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ATSScore } from "@/types";
+import { ATSScore, isOwnerEmail } from "@/types";
 import { saveAs } from "file-saver";
 import {
   Sparkles,
@@ -325,6 +325,27 @@ export default function DashboardPage() {
   };
 
   const handleGenerateRoadmap = async (skill: string) => {
+    const isOwner = userPlan === "owner" || (user?.email && isOwnerEmail(user.email));
+    if (!isOwner) {
+      const monthKey = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+      const limit = userPlan === "free" ? 0 : userPlan === "premium" ? 15 : 30;
+      const storageKey = `fastHire_roadmaps_count_${user.id}_${monthKey}`;
+      const currentCount = parseInt(localStorage.getItem(storageKey) || "0", 10);
+      
+      if (currentCount >= limit) {
+        if (userPlan === "free") {
+          toast.error("Skills learning roadmaps are a Pro/Pro Max feature. Please upgrade to continue.");
+        } else {
+          toast.error(`You have reached your monthly limit of ${limit} roadmaps for the ${userPlan === "premium" ? "Premium Pro" : "Pro Max"} plan.`);
+        }
+        setTimeout(() => {
+          router.push("/dashboard/pricing");
+        }, 2000);
+        return;
+      }
+      localStorage.setItem(storageKey, (currentCount + 1).toString());
+    }
+
     setSelectedRoadmapSkill(skill);
     setRoadmapLoading(true);
     setRoadmapContent(null);
@@ -350,6 +371,27 @@ export default function DashboardPage() {
   };
 
   const handleGenerateCoverLetter = async () => {
+    const isOwner = userPlan === "owner" || (user?.email && isOwnerEmail(user.email));
+    if (!isOwner) {
+      const monthKey = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+      const limit = userPlan === "free" ? 0 : userPlan === "premium" ? 5 : 15;
+      const storageKey = `fastHire_coverLetters_count_${user.id}_${monthKey}`;
+      const currentCount = parseInt(localStorage.getItem(storageKey) || "0", 10);
+      
+      if (currentCount >= limit) {
+        if (userPlan === "free") {
+          toast.error("Cover letter generation is a Pro/Pro Max feature. Please upgrade to continue.");
+        } else {
+          toast.error(`You have reached your monthly limit of ${limit} cover letters for the ${userPlan === "premium" ? "Premium Pro" : "Pro Max"} plan.`);
+        }
+        setTimeout(() => {
+          router.push("/dashboard/pricing");
+        }, 2000);
+        return;
+      }
+      localStorage.setItem(storageKey, (currentCount + 1).toString());
+    }
+
     setGeneratingLetter(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1800));

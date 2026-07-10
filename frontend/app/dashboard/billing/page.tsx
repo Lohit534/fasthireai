@@ -63,33 +63,29 @@ export default function BillingPage() {
         setUserId(user.id);
         setAuthLoading(false);
 
-        // 1. Plan Tier Loading
-        const plan = localStorage.getItem(`fastHire_plan_${user.id}`) || "free";
-        setActivePlan(plan);
-        const cycle = localStorage.getItem(`fastHire_billingCycle_${user.id}`) || "monthly";
-        setBillingCycle(cycle);
+        // 1. Plan Tier & Credits Loading directly from DB
+        let currentPlan = "free";
+        let currentCycle = localStorage.getItem(`fastHire_billingCycle_${user.id}`) || "monthly";
+        setBillingCycle(currentCycle);
 
-        // 2. Credits setup
-        const creditsData = localStorage.getItem(`fastHire_mockCredits_${user.id}`);
-        if (creditsData) {
-          try {
-            setCredits(JSON.parse(creditsData));
-          } catch (e) {}
-        } else {
-          // Fetch from live database if available, otherwise mock
-          try {
-            const res = await fetch("/api/credits");
-            if (res.ok) {
-              const apiCredits = await res.json();
-              setCredits(apiCredits);
-              if (apiCredits.isFirst50 || (apiCredits.paidCredits > 0 && apiCredits.paidCredits <= 900000)) {
-                localStorage.setItem(`fastHire_plan_${user.id}`, "premium");
-                setActivePlan("premium");
-              } else if (apiCredits.paidCredits > 900000) {
-                localStorage.setItem(`fastHire_plan_${user.id}`, "promax");
-                setActivePlan("promax");
-              }
-            } else {
+        try {
+          const res = await fetch("/api/credits");
+          if (res.ok) {
+            const apiCredits = await res.json();
+            setCredits(apiCredits);
+            currentPlan = apiCredits.planId || "free";
+            localStorage.setItem(`fastHire_plan_${user.id}`, currentPlan);
+          } else {
+            throw new Error("Failed to fetch credits");
+          }
+        } catch (err) {
+          // Fallback to local storage mock values
+          currentPlan = localStorage.getItem(`fastHire_plan_${user.id}`) || "free";
+          const creditsData = localStorage.getItem(`fastHire_mockCredits_${user.id}`);
+          if (creditsData) {
+            try {
+              setCredits(JSON.parse(creditsData));
+            } catch (e) {
               setCredits({
                 freeUsed: 0,
                 paidCredits: 2,
@@ -97,7 +93,7 @@ export default function BillingPage() {
                 resetAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString()
               });
             }
-          } catch (err) {
+          } else {
             setCredits({
               freeUsed: 0,
               paidCredits: 2,
@@ -107,6 +103,8 @@ export default function BillingPage() {
           }
         }
 
+        setActivePlan(currentPlan);
+
 
 
         // 4. Invoices creation
@@ -115,13 +113,13 @@ export default function BillingPage() {
           { id: "inv_2", date: "2026-05-15", description: "FastHire Premium Monthly Subscription", amount: "₹99.00", status: "paid" }
         ];
 
-        if (plan === "team" || plan === "promax") {
+        if (currentPlan === "team" || currentPlan === "promax") {
           invoiceHistory.unshift({
             id: "inv_3", date: "2026-06-20", description: "FastHire Pro Max Setup Package", amount: "₹199.00", status: "paid"
           });
         }
 
-        if (plan !== "free") {
+        if (currentPlan !== "free") {
           setInvoices(invoiceHistory);
         } else {
           setInvoices([]);
