@@ -88,11 +88,17 @@ export default function BulletImprover({ resumeText, jobDescription, onChange }:
         }
         
         if (isFree) {
-          toast.error("Auto-Improve is a Premium Pro/Pro Max feature. Redirecting to upgrades...");
-          setTimeout(() => {
-            window.location.href = "/dashboard/pricing";
-          }, 1500);
-          return;
+          const key = `fastHire_free_auto_improvements_${user.id}`;
+          const currentCount = parseInt(localStorage.getItem(key) || "0", 10);
+          if (currentCount >= 2) {
+            toast.error("You have used your 2 free auto-improvements. Upgrade to Premium Pro or Pro Max for unlimited auto-improvements!");
+            setTimeout(() => {
+              window.location.href = "/dashboard/pricing";
+            }, 2500);
+            return;
+          }
+          localStorage.setItem(key, (currentCount + 1).toString());
+          toast.success(`Using free auto-improvement (${currentCount + 1}/2)...`);
         }
       }
     } catch (e) {

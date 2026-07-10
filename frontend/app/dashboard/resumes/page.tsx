@@ -292,15 +292,32 @@ export default function ResumesPage() {
           }
         } else {
           const parts = line.split(/\s{3,}| \| /);
-          const headerParts = (parts[0] || "").replace(/^\*\*|\*\*$/g, "").split(" - ");
-          const degreeAndField = parts[1] || headerParts[1] || "";
-          const fieldParts = degreeAndField.split(" in ");
+          let school = "";
+          let degree = "";
+          let field = "";
+          let date = "";
+
+          if (parts.length >= 4) {
+            school = (parts[0] || "").replace(/^\*\*|\*\*$/g, "").trim();
+            degree = (parts[1] || "").replace(/^\*\*|\*\*$/g, "").trim();
+            field = (parts[2] || "").replace(/^\*\*|\*\*$/g, "").trim();
+            date = (parts[3] || "").replace(/^[\*\_]+|[\*\_]+$/g, "").trim();
+          } else {
+            const headerParts = (parts[0] || "").replace(/^\*\*|\*\*$/g, "").split(" - ");
+            school = (headerParts[0] || "").replace(/^\*\*|\*\*$/g, "").trim();
+            const degreeAndField = parts[1] || headerParts[1] || "";
+            const fieldParts = degreeAndField.split(" in ");
+            degree = (fieldParts[0] || "").replace(/^\*\*|\*\*$/g, "").trim();
+            field = (fieldParts[1] || "").replace(/^\*\*|\*\*$/g, "").trim();
+            date = (parts[2] || "").replace(/^[\*\_]+|[\*\_]+$/g, "").trim();
+          }
+
           currentEdu = {
             id: Math.random().toString(36).substr(2, 9),
-            school: (headerParts[0] || "").replace(/^\*\*|\*\*$/g, "").trim(),
-            degree: (fieldParts[0] || "").replace(/^\*\*|\*\*$/g, "").trim(),
-            field: (fieldParts[1] || "").replace(/^\*\*|\*\*$/g, "").trim(),
-            date: (parts[2] || "").replace(/^[\*\_]+|[\*\_]+$/g, "").trim(),
+            school,
+            degree,
+            field,
+            date,
             gpa: "",
             description: ""
           };
