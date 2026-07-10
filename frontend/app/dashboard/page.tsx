@@ -596,53 +596,6 @@ export default function DashboardPage() {
             {resultsTab === "improve" ? (
               /* TAB 1: INTERACTIVE EDITOR & BULLET IMPROVER */
               <div className="space-y-6 animate-in fade-in duration-200">
-                {/* Side-by-side editor */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 select-none">
-                  {/* Original */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-slate-500" />
-                      <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest">Original Resume</span>
-                    </div>
-                    <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
-                  </div>
-
-                  {/* Optimized */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                        <span className="text-[10px] font-bold uppercase text-cyan-500 tracking-widest">AI-Optimized Resume</span>
-                      </div>
-                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
-                        ATS-Tailored ✓
-                      </span>
-                    </div>
-                    <OptimizedResume
-                      text={optimizeResult.optimizedText}
-                      resumeId={optimizeResult.resumeId}
-                      onChange={(newText) => {
-                        setOptimizeResult((prev: any) => ({ ...prev, optimizedText: newText }));
-                        handleReScoreAfter(newText);
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Score + Keywords */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 border-t border-white/5 pt-6">
-                  <div className="lg:col-span-8">
-                    <ScoreCard before={beforeScore} after={afterScore} loading={optimizing} />
-                  </div>
-                  <div className="lg:col-span-4 flex flex-col gap-4">
-                    {afterScore && (
-                      <div className="flex-1 bg-[#071525]/60 border border-white/5 rounded-2xl p-4">
-                        <KeywordBadges added={optimizeResult.keywordsAdded || []} missing={afterScore.missingKeywords} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
                 {/* Bullet Improver */}
                 <div className="bg-[#071525]/60 border border-white/5 rounded-2xl p-6 space-y-4">
                   <div className="flex items-center justify-between">
@@ -659,40 +612,16 @@ export default function DashboardPage() {
                   </div>
                   <div className="bg-[#040d1a]/60 border border-white/5 p-4 rounded-xl">
                     <BulletImprover
-                      resumeText={resumeText}
+                      resumeText={optimizeResult.optimizedText}
                       jobDescription={jobDescription}
-                      onChange={(newText) => { setResumeText(newText); handleReScoreBoth(newText); }}
+                      onChange={(newText) => {
+                        setOptimizeResult((prev: any) => ({ ...prev, optimizedText: newText }));
+                        handleReScoreAfter(newText);
+                        setResultsTab("preview");
+                      }}
                     />
                   </div>
                 </div>
-
-                {/* AI Summary */}
-                {optimizeResult.summary && (
-                  <div className="bg-[#071525]/60 border border-white/5 rounded-2xl p-6 space-y-4">
-                    <div className="flex items-center gap-2.5">
-                      <div className="h-8 w-8 rounded-lg bg-indigo-500/10 border border-indigo-500/15 flex items-center justify-center">
-                        <FileText className="h-4 w-4 text-indigo-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-extrabold text-white">What Changed</h3>
-                        <p className="text-[10px] text-slate-500 font-medium">AI summary of every optimization made</p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">{optimizeResult.summary}</p>
-                    {optimizeResult.keywordsAdded?.length > 0 && (
-                      <div className="space-y-2">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Keywords Added</span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {optimizeResult.keywordsAdded.map((kw: string) => (
-                            <span key={kw} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-semibold">
-                              + {kw}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             ) : (
               /* TAB 2: PREMIUM 3-COLUMN DOCUMENT PREVIEW & EXPORT */
