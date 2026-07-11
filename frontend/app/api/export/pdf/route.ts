@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Parse Request Body
     const body = await request.json();
-    const { resumeId, text } = body;
+    const { resumeId, text, type = "optimized" } = body;
     if (!resumeId && !text) {
       return NextResponse.json({ error: "Missing resumeId or text content" }, { status: 400 });
     }
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       // 3. Fetch Resume and Verify Ownership
       const { data: resume, error: fetchErr } = await admin
         .from("Resume")
-        .select("id, userId, optimizedText")
+        .select("id, userId, originalText, optimizedText")
         .eq("id", resumeId)
         .maybeSingle();
 
@@ -74,19 +74,20 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
 
-      textToExport = resume.optimizedText || "";
+      textToExport = type === "original" ? (resume.originalText || "") : (resume.optimizedText || "");
     }
 
     // 4. Generate PDF Document
-    logger.info(`Generating PDF export for user ${user.email}, Resume ID ${resumeId || "direct-text"} (watermarked=${watermarked})`);
+    logger.info(`Generating PDF export for user ${user.email}, Resume ID ${resumeId || "direct-text"} (type=${type}, watermarked=${watermarked})`);
     const pdfBuffer = await generatePDF(textToExport, watermarked);
 
     // 5. Return PDF download
+    const filename = type === "original" ? "resume-original.pdf" : "resume-optimized-fasthire.pdf";
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": 'attachment; filename="resume-optimized.pdf"',
+        "Content-Disposition": `attachment; filename="${filename}"`,
       },
     });
   } catch (error: any) {

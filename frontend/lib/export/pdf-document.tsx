@@ -11,137 +11,173 @@ function cleanMarkdown(s: string): string {
     .trim();
 }
 
-interface ParsedSection {
-  title: string;
-  items: Array<{
-    type: "bullet" | "body";
-    text: string;
-  }>;
+interface PDFLineNode {
+  type: "name" | "contact" | "header" | "experience_title" | "experience_subtitle" | "bullet" | "body" | "spacer";
+  text: string;
 }
 
-export function parseResumeToSections(text: string) {
-  const lines = text.split(/\r?\n/).map(l => l.trim());
-  let name = "";
-  const rawContactLines: string[] = [];
-  const sections: ParsedSection[] = [];
-  let currentSection: ParsedSection | null = null;
-  let headerEnded = false;
+export function parseResumeToNodes(text: string): PDFLineNode[] {
+  const rawLines = text.split(/\r?\n/);
+  const nodes: PDFLineNode[] = [];
+  let nameFound = false;
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line) continue;
+  // Phone regex matching format
+  const phonePattern = /\b(?:\+?\d{1,3}[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/;
 
-    // Detect divider lines
-    if (/^[=\-\*_]{3,}$/.test(line)) {
+  for (let i = 0; i < rawLines.length; i++) {
+    const line = rawLines[i].trim();
+
+    if (line === "") {
+      nodes.push({ type: "spacer", text: "" });
       continue;
     }
 
-    const isAllCaps = line === line.toUpperCase() && line.length > 3 && /[A-Z]/.test(line) && !/^[•\-*\u2022]/.test(line) && !/^\d/.test(line);
+    // 1. Detect Name (First non-empty line)
+    if (!nameFound) {
+      nodes.push({ type: "name", text: cleanMarkdown(line) });
+      nameFound = true;
+      continue;
+    }
 
-    if (!headerEnded) {
-      if (isAllCaps || line.startsWith("#")) {
-        headerEnded = true;
-      } else if (!name) {
-        name = cleanMarkdown(line.replace(/^[#\s\-\*\_]+|[\#\s\-\*\_]+$/g, ""));
-        continue;
+    // 2. Detect Contact
+    const containsAt = line.includes("@");
+    const containsPhone = phonePattern.test(line);
+    const containsPipe = line.includes("|");
+
+    if (containsAt || containsPhone || containsPipe) {
+      if (containsPipe) {
+        const parts = line.split("|").map(p => cleanMarkdown(p)).filter(Boolean);
+        nodes.push({ type: "contact", text: parts.join("  |  ") });
       } else {
-        rawContactLines.push(line);
-        continue;
+        nodes.push({ type: "contact", text: cleanMarkdown(line) });
       }
+      continue;
     }
 
-    if (isAllCaps || line.startsWith("#")) {
-      const title = cleanMarkdown(line.replace(/^#+\s*/, "").replace(/:$/, ""));
-      currentSection = { title: title.toUpperCase(), items: [] };
-      sections.push(currentSection);
-    } else {
-      const isBullet = /^[•\-*\u2022]/.test(line);
-      const cleanText = cleanMarkdown(line.replace(/^[•\-*\u2022\s]+/, ""));
-      if (!cleanText) continue;
+    // 3. Detect Section Header (ALL CAPS, length > 3, contains letters, no bullet markers)
+    const isBulletMarker = /^[•\-\*\–\u2022]/.test(line);
+    const hasLetters = /[A-Za-z]/.test(line);
+    const isAllCaps = line === line.toUpperCase() && line.length > 3 && hasLetters && !isBulletMarker;
 
-      const item = {
-        type: (isBullet ? "bullet" : "body") as "bullet" | "body",
-        text: cleanText
-      };
-
-      if (!currentSection) {
-        currentSection = { title: "SUMMARY", items: [] };
-        sections.push(currentSection);
-      }
-      currentSection.items.push(item);
+    if (isAllCaps) {
+      nodes.push({ type: "header", text: cleanMarkdown(line) });
+      continue;
     }
+
+    // 4. Detect Bullet Point
+    if (isBulletMarker) {
+      const cleanBullet = cleanMarkdown(line.replace(/^[•\-\*\–\u2022\s]+/, ""));
+      nodes.push({ type: "bullet", text: cleanBullet });
+      continue;
+    }
+
+    // 5. Multi-line bullet continuation check
+    const lastNode = nodes[nodes.length - 1];
+    if (lastNode && lastNode.type === "bullet") {
+      lastNode.text += " " + cleanMarkdown(line);
+      continue;
+    }
+
+    // 6. Experience Block Detection
+    if (line.includes("|")) {
+      const parts = line.split("|").map(p => cleanMarkdown(p)).filter(Boolean);
+      nodes.push({ type: "experience_title", text: parts.join(" | ") });
+      
+      let nextLineIndex = i + 1;
+      while (nextLineIndex < rawLines.length && rawLines[nextLineIndex].trim() === "") {
+        nextLineIndex++;
+      }
+      if (nextLineIndex < rawLines.length) {
+        const nextLine = rawLines[nextLineIndex].trim();
+        if (nextLine.includes("|") && !nextLine.includes("@") && !phonePattern.test(nextLine)) {
+          const subParts = nextLine.split("|").map(p => cleanMarkdown(p)).filter(Boolean);
+          nodes.push({ type: "experience_subtitle", text: subParts.join(" | ") });
+          i = nextLineIndex;
+          continue;
+        }
+      }
+      continue;
+    }
+
+    // Default fallback: render as normal text paragraph
+    nodes.push({ type: "body", text: cleanMarkdown(line) });
   }
 
-  // Flatten contact info and remove duplicate pipe separators
-  const contactLines: string[] = [];
-  rawContactLines.forEach(line => {
-    const parts = line.split("|").map(p => cleanMarkdown(p)).filter(Boolean);
-    contactLines.push(...parts);
-  });
-
-  if (!name) {
-    name = "Resume Document";
-  }
-
-  return { name, contactLines, sections };
+  return nodes;
 }
 
 // React PDF StyleSheet meeting exact specifications
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 40,
-    paddingBottom: 40,
-    paddingLeft: 30,
-    paddingRight: 30,
+    paddingTop: 36,
+    paddingBottom: 36,
+    paddingLeft: 40,
+    paddingRight: 40,
     fontFamily: "Helvetica",
-    fontSize: 11,
     color: "#000000",
-    lineHeight: 1.3,
-  },
-  headerContainer: {
-    marginBottom: 12,
-    alignItems: "center",
   },
   name: {
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: "Helvetica-Bold",
-    marginBottom: 4,
+    color: "#000000",
     textAlign: "center",
+    marginBottom: 4,
+    lineHeight: 1.4,
   },
   contact: {
-    fontSize: 10,
-    color: "#555555",
+    fontSize: 9.5,
+    color: "#444444",
     textAlign: "center",
+    marginBottom: 12,
+    lineHeight: 1.4,
   },
-  sectionContainer: {
-    marginBottom: 10,
-  },
-  sectionHeader: {
-    fontSize: 12,
+  header: {
+    fontSize: 11,
     fontFamily: "Helvetica-Bold",
     textTransform: "uppercase",
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.75,
     borderBottomColor: "#000000",
-    marginTop: 8,
-    marginBottom: 8,
+    marginTop: 12,
+    marginBottom: 5,
     paddingBottom: 2,
+    lineHeight: 1.4,
   },
-  itemRow: {
+  experienceTitle: {
+    fontSize: 10.5,
+    fontFamily: "Helvetica-Bold",
+    color: "#000000",
+    marginBottom: 1,
+    lineHeight: 1.4,
+  },
+  experienceSubtitle: {
+    fontSize: 10,
+    color: "#555555",
+    marginBottom: 3,
+    lineHeight: 1.4,
+  },
+  bulletRow: {
     flexDirection: "row",
-    marginBottom: 4, // 4pt spacing between bullets
-    paddingLeft: 8,
+    marginBottom: 2.5,
+    paddingLeft: 12,
   },
   bulletPrefix: {
-    width: 12,
+    width: 10,
     fontSize: 10,
+    lineHeight: 1.4,
   },
   bulletText: {
     flex: 1,
     fontSize: 10,
+    lineHeight: 1.4,
   },
   bodyText: {
-    fontSize: 11,
-    marginBottom: 4,
+    fontSize: 10,
+    color: "#000000",
+    marginBottom: 3,
+    lineHeight: 1.4,
+  },
+  spacer: {
+    height: 4,
   },
   watermark: {
     position: "absolute",
@@ -157,50 +193,69 @@ const styles = StyleSheet.create({
   }
 });
 
-interface ResumeProps {
-  name: string;
-  contactLines: string[];
-  sections: Array<{
-    title: string;
-    items: Array<{
-      type: "bullet" | "body";
-      text: string;
-    }>;
-  }>;
+interface ResumePDFProps {
+  text: string;
   watermarked?: boolean;
 }
 
-const ResumePDFDocument: React.FC<ResumeProps> = ({ name, contactLines, sections, watermarked }) => {
+const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text, watermarked }) => {
+  const nodes = parseResumeToNodes(text);
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {watermarked && (
           <Text style={styles.watermark}>FASTHIRE AI - FREE TIER WATERMARK</Text>
         )}
-        <View style={styles.headerContainer}>
-          <Text style={styles.name}>{name}</Text>
-          <Text style={styles.contact}>{contactLines.join(" | ")}</Text>
-        </View>
-        
-        {sections.map((section, sIdx) => (
-          <View key={sIdx} style={styles.sectionContainer} wrap={false}>
-            <Text style={styles.sectionHeader}>{section.title}</Text>
-            {section.items.map((item, iIdx) => {
-              if (item.type === "bullet") {
-                return (
-                  <View key={iIdx} style={styles.itemRow}>
-                    <Text style={styles.bulletPrefix}>•</Text>
-                    <Text style={styles.bulletText}>{item.text}</Text>
-                  </View>
-                );
-              } else {
-                return (
-                  <Text key={iIdx} style={styles.bodyText}>{item.text}</Text>
-                );
-              }
-            })}
-          </View>
-        ))}
+        {nodes.map((node, idx) => {
+          switch (node.type) {
+            case "name":
+              return (
+                <Text key={idx} style={styles.name}>
+                  {node.text}
+                </Text>
+              );
+            case "contact":
+              return (
+                <Text key={idx} style={styles.contact}>
+                  {node.text}
+                </Text>
+              );
+            case "header":
+              return (
+                <Text key={idx} style={styles.header}>
+                  {node.text}
+                </Text>
+              );
+            case "experience_title":
+              return (
+                <Text key={idx} style={styles.experienceTitle}>
+                  {node.text}
+                </Text>
+              );
+            case "experience_subtitle":
+              return (
+                <Text key={idx} style={styles.experienceSubtitle}>
+                  {node.text}
+                </Text>
+              );
+            case "bullet":
+              return (
+                <View key={idx} style={styles.bulletRow} wrap={false}>
+                  <Text style={styles.bulletPrefix}>•</Text>
+                  <Text style={styles.bulletText}>{node.text}</Text>
+                </View>
+              );
+            case "spacer":
+              return <View key={idx} style={styles.spacer} />;
+            default:
+              return (
+                <Text key={idx} style={styles.bodyText}>
+                  {node.text}
+                </Text>
+              );
+          }
+        })}
       </Page>
     </Document>
   );
@@ -209,12 +264,9 @@ const ResumePDFDocument: React.FC<ResumeProps> = ({ name, contactLines, sections
 export async function generatePDF(resumeText: string, watermarked = false): Promise<Buffer> {
   try {
     logger.info(`Generating react-pdf document (watermarked=${watermarked})...`);
-    const { name, contactLines, sections } = parseResumeToSections(resumeText);
     
     const element = React.createElement(ResumePDFDocument, {
-      name,
-      contactLines,
-      sections,
+      text: resumeText,
       watermarked
     });
     
