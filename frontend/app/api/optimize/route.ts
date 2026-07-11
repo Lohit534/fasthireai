@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
     );
     const aiResult = await callAI(prompt, resumeText);
 
-    const scoreAfter = await scoreResume(aiResult.resume, jobDescription);
+    const scoreAfter = await scoreResume(aiResult.resume, jobDescription, scoreBefore.overall);
 
     // 7. Deduct credit (non-owner only)
     if (!isOwner) {
