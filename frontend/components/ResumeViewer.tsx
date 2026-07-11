@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Copy, Check, FileText, Edit2, Play, Eye, Code } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { sanitizeResumeText } from "@/lib/ai/router";
 
 // Helper to strip markdown bold/italic tags
 function cleanMarkdown(s: string): string {
@@ -20,7 +21,8 @@ interface PDFLineNode {
 }
 
 export function parseResumeToNodes(text: string): PDFLineNode[] {
-  const rawLines = text.split(/\r?\n/);
+  const sanitized = sanitizeResumeText(text);
+  const rawLines = sanitized.split(/\r?\n/);
   const nodes: PDFLineNode[] = [];
   let nameFound = false;
 
@@ -221,7 +223,6 @@ interface ResumeViewerProps {
   text: string;
   originalText?: string;
   resumeId: string;
-  type: "original" | "optimized";
   jobDescription: string;
   onUpdateText?: (newText: string) => void;
   onReScored?: (newScore: number) => void;
@@ -231,7 +232,6 @@ export default function ResumeViewer({
   text,
   originalText,
   resumeId,
-  type,
   jobDescription,
   onUpdateText,
   onReScored
@@ -254,10 +254,10 @@ export default function ResumeViewer({
 
   // Debounced live scoring (800ms)
   useEffect(() => {
-    if (type !== "optimized" || !isEditing) return;
+    if (!isEditing) return;
 
     const handler = setTimeout(async () => {
-      if (!currentText.trim() || currentText === text) {
+       if (!currentText.trim() || currentText === text) {
         setLiveScore(null);
         return;
       }
@@ -280,7 +280,7 @@ export default function ResumeViewer({
     }, 800);
 
     return () => clearTimeout(handler);
-  }, [currentText, isEditing, type, text, jobDescription]);
+  }, [currentText, isEditing, text, jobDescription]);
 
   // Parse nodes for rendering
   const nodes = parseResumeToNodes(currentText);
@@ -297,7 +297,7 @@ export default function ResumeViewer({
 
   // Word-by-word diff highlighter helper
   const renderHighlightedText = (lineText: string) => {
-    if (type !== "optimized" || !originalText || originalWordsSet.size === 0) {
+    if (!originalText || originalWordsSet.size === 0) {
       return <span>{lineText}</span>;
     }
     const parts = lineText.split(/(\s+)/);
@@ -334,7 +334,7 @@ export default function ResumeViewer({
       const response = await fetch("/api/export/pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeId, type, text: currentText }),
+        body: JSON.stringify({ resumeId, type: "optimized", text: currentText }),
       });
 
       if (!response.ok) throw new Error("PDF download failed");
@@ -343,7 +343,7 @@ export default function ResumeViewer({
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = type === "original" ? "resume-original.pdf" : "resume-optimized-fasthire.pdf";
+      link.download = "resume-optimized-fasthire.pdf";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -435,17 +435,15 @@ export default function ResumeViewer({
             </button>
           </div>
 
-          {type === "optimized" && (
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${
-                isEditing ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-400" : "bg-[#0b1c30] border-white/5 text-slate-400 hover:text-white"
-              }`}
-            >
-              <Edit2 className="h-3.5 w-3.5" />
-              {isEditing ? "Stop Editing" : "Edit Resume"}
-            </button>
-          )}
+          <button
+            onClick={() => setIsEditing(!isEditing)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${
+              isEditing ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-400" : "bg-[#0b1c30] border-white/5 text-slate-400 hover:text-white"
+            }`}
+          >
+            <Edit2 className="h-3.5 w-3.5" />
+            {isEditing ? "Stop Editing" : "Edit Resume"}
+          </button>
         </div>
 
         {/* Action Downloads / Copy */}
@@ -467,17 +465,15 @@ export default function ResumeViewer({
             Download PDF
           </Button>
 
-          {type === "optimized" && (
-            <Button
-              onClick={handleDownloadDOCX}
-              disabled={docxLoading}
-              variant="outline"
-              className="border-white/10 text-slate-300 hover:bg-white/5 font-bold text-xs h-9 rounded-xl flex items-center justify-center gap-1.5 px-4 bg-transparent"
-            >
-              {docxLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-4 w-4" />}
-              Download DOCX
-            </Button>
-          )}
+          <Button
+            onClick={handleDownloadDOCX}
+            disabled={docxLoading}
+            variant="outline"
+            className="border-white/10 text-slate-300 hover:bg-white/5 font-bold text-xs h-9 rounded-xl flex items-center justify-center gap-1.5 px-4 bg-transparent"
+          >
+            {docxLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-4 w-4" />}
+            Download DOCX
+          </Button>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { Document, Page, Text, View, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
 import { logger } from "../logger";
+import { sanitizeResumeText } from "../ai/router";
 
 // Helper to strip markdown bold/italic tags
 function cleanMarkdown(s: string): string {
@@ -17,7 +18,8 @@ interface PDFLineNode {
 }
 
 export function parseResumeToNodes(text: string): PDFLineNode[] {
-  const rawLines = text.split(/\r?\n/);
+  const sanitized = sanitizeResumeText(text);
+  const rawLines = sanitized.split(/\r?\n/);
   const nodes: PDFLineNode[] = [];
   let nameFound = false;
 

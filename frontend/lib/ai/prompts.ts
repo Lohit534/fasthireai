@@ -37,17 +37,29 @@ Your goal is to optimize the Candidate's Resume to better align with the Job Des
 3. **STRONG ACTION VERBS**: Rewrite weak or passive bullet points in the experience or project sections to start with strong action verbs (e.g., "automated", "refactored", "implemented", "scaled").
 4. **NO ARTIFICIAL QUANTIFICATION**: Add quantification (numbers, percentages, metrics) ONLY where it is clearly implied by the context. Do not invent arbitrary numbers (e.g., do not randomly change "improved speed" to "improved speed by 47%").
 5. **PRESERVE STRUCTURE**: Keep all original sections (Experience, Projects, Education, etc.) intact.
-6. **FORMATTING STYLE & TEMPLATE**: Format the output resume text EXACTLY according to these template layout rules to match a clean academic/LaTeX layout:
+6. **CRITICAL OUTPUT RULES**:
+   - Return PLAIN TEXT ONLY — no LaTeX, no markdown, no HTML
+   - Do NOT use \textbf{}, \section{}, \begin{}, \end{}, \\, \item, \resumeItem, or ANY LaTeX commands
+   - Do NOT use **, ##, __, or any markdown syntax
+   - Section headers: write in ALL CAPS plain text only
+     Example: EXPERIENCE  not  \section{Experience}
+   - Bullet points: start with • character only
+     Example: • Built a REST API  not  \item Built a REST API
+   - Name: first line, plain text only
+   - Dates and locations: plain text separated by | character
+     Example: Software Engineer | Google | Jan 2023 – Dec 2024
+   - The output must be readable as plain text with zero special formatting characters
+7. **FORMATTING STYLE & TEMPLATE**: Format the output resume text EXACTLY according to these template layout rules:
    - **Centered Header**:
-     - Line 1: Candidate Name (large, capitalized, bold using standard text e.g. "JOHN DOE" or "PEYYALA LOHIT")
+     - Line 1: Candidate Name (large, capitalized, e.g. "JOHN DOE" or "PEYYALA LOHIT")
      - Line 2: Contact info separated by vertical pipe: "email | phone | location/country" (e.g. "lohithpeyyala@gmail.com | 7095649929 | india")
      - Line 3: Social/profile URLs separated by vertical pipe: "LinkedIn | GitHub"
-   - **Section Headings**: Keep section names in ALL CAPS (e.g., "PROFESSIONAL SUMMARY", "EXPERIENCE", "EDUCATION", "PROJECTS", "TECHNICAL SKILLS", "CERTIFICATIONS"). Underneath each heading, place a divider line of exactly three hyphens: "---".
-   - **Technical Skills**: Group and bold category labels, e.g., "**Programming Languages:** Python, SQL".
+   - **Section Headings**: Keep section names in ALL CAPS (e.g., "PROFESSIONAL SUMMARY", "EXPERIENCE", "EDUCATION", "PROJECTS", "TECHNICAL SKILLS", "CERTIFICATIONS").
+   - **Technical Skills**: Group category labels, e.g., "Programming Languages: Python, SQL".
    - **Column Alignment**:
-     - For education entries, place the degree/field on the left (in bold, e.g. "**B.Tech in Computer Science and Engineering**") on its own line. On the next line, place the school/college name on the left (in bold, e.g. "**Bonam Venkata Chalamayya Institute of Technology and Science**") and the date on the right (e.g. "2022 – 2026"), separating them with exactly 6 spaces. Below that, place the CGPA/GPA on the left on its own line (in bold, e.g. "**CGPA: 7.62**").
-     - For project entries, place the project name on the left (in bold, e.g. "**MiniMedi - AI Symptom Checker**") and the tech stack list on the right (in bold prefix with a pipe, e.g. "**| ReactJS, PostgreSQL**"), separating them with exactly 6 spaces.
-     - For experience entries, place the title on the left (in bold, e.g. "**Inside Sales Representative**") and the date on the right (e.g. "2022 – 2026"), separating them with exactly 6 spaces. Below that, place the company name on the left (in bold, e.g. "**Glowlogics Solutions**") on its own line.
+     - For education entries, place the degree/field on the left (e.g. "B.Tech in Computer Science and Engineering") on its own line. On the next line, place the school/college name on the left (e.g. "Bonam Venchalayya Institute of Tech") and the date on the right (e.g. "2022 – 2026"), separating them with exactly 6 spaces. Below that, place the CGPA/GPA on the left on its own line (e.g. "CGPA: 7.62").
+     - For project entries, place the project name on the left (e.g. "MiniMedi - AI Symptom Checker") and the tech stack list on the right (prefix with a pipe, e.g. "| ReactJS, PostgreSQL"), separating them with exactly 6 spaces.
+     - For experience entries, place the title on the left (e.g. "Inside Sales Representative") and the date on the right (e.g. "2022 – 2026"), separating them with exactly 6 spaces. Below that, place the company name on the left (e.g. "Glowlogics Solutions") on its own line.
    - **Bullets**: Use the bullet character "•" (and only "•") for all list items. Do not use dashes or asterisks. ${lengthDirective}
 7. **OUTPUT FORMAT**: You must respond ONLY with a raw JSON object matching the schema below. Do not wrap the JSON output in markdown code block fences (e.g., do not use \`\`\`json or \`\`\`). Your output must be directly parseable by JSON.parse().
 

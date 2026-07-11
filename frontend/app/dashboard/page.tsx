@@ -7,11 +7,12 @@ import { useResumeStore } from "@/store/useResumeStore";
 import Navbar from "@/components/Navbar";
 import ResumeInput from "@/components/ResumeInput";
 import JobDescriptionInput from "@/components/JobDescriptionInput";
-import BulletImprover from "@/components/BulletImprover";
-import OptimizedResume from "@/components/OptimizedResume";
 import ScoreCard from "@/components/ScoreCard";
 import KeywordBadges from "@/components/KeywordBadges";
 import ResumeViewer from "@/components/ResumeViewer";
+import ImprovementModal from "@/components/ImprovementModal";
+import LoadingOverlay from "@/components/LoadingOverlay";
+import ManualImproveView from "@/components/ManualImproveView";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
@@ -123,7 +124,10 @@ export default function DashboardPage() {
   const [generatingLetter, setGeneratingLetter] = useState(false);
   const [showRoadmapAccordion, setShowRoadmapAccordion] = useState(false);
   const [showCoverLetterAccordion, setShowCoverLetterAccordion] = useState(false);
-  const [resultsTab, setResultsTab] = useState<"score" | "original" | "optimized">("score");
+  const [resultsTab, setResultsTab] = useState<"score" | "optimized">("score");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isManualFlow, setIsManualFlow] = useState(false);
+  const [isAILoading, setIsAILoading] = useState(false);
 
   useEffect(() => {
     async function checkAuth() {
@@ -159,24 +163,15 @@ export default function DashboardPage() {
   }, [router]);
 
 
-  const handleOptimize = async () => {
-    if (!resumeText?.trim()) {
-      toast.error("Add your resume first.");
-      return;
-    }
-    if (!jobDescription?.trim()) {
-      toast.error("Paste the job description to match against.");
-      return;
-    }
-
+  const runAIAutoImprove = async (targetResumeText = resumeText) => {
+    setIsModalOpen(false);
+    setIsAILoading(true);
     setOptimizing(true);
     setBeforeScore(null);
     setAfterScore(null);
     setOptimizeResult(null);
     setTrackerAdded(false);
-    setProgress(10);
-    setLoadingMessage("Reading your resume");
-
+    
     // Clear detail view states
     setCopied(false);
     setRoadmapContent(null);
@@ -186,21 +181,11 @@ export default function DashboardPage() {
     setShowCoverLetterAccordion(false);
 
     try {
-      const t1 = setTimeout(() => { setProgress(25); setLoadingMessage("Parsing the job description"); }, 1500);
-      const t2 = setTimeout(() => { setProgress(40); setLoadingMessage("Finding your strongest stories"); }, 3000);
-      const t3 = setTimeout(() => { setProgress(55); setLoadingMessage("Rewriting the impact"); }, 4500);
-      const t4 = setTimeout(() => { setProgress(70); setLoadingMessage("Aligning to ATS keywords"); }, 6000);
-      const t5 = setTimeout(() => { setProgress(85); setLoadingMessage("Polishing the output"); }, 7500);
-      const t6 = setTimeout(() => { setProgress(95); setLoadingMessage("Almost ready..."); }, 9000);
-
       const response = await fetch("/api/optimize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText, jobDescription, instructions, lengthOption }),
+        body: JSON.stringify({ resumeText: targetResumeText, jobDescription, instructions, lengthOption }),
       });
-
-      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
-      clearTimeout(t4); clearTimeout(t5); clearTimeout(t6);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -208,30 +193,89 @@ export default function DashboardPage() {
         throw new Error(errorData.error || "Optimization failed.");
       }
 
-      setProgress(98);
-      setLoadingMessage("Finalizing your results...");
-
       const data = await response.json();
       setOptimizeResult(data);
 
       const [beforeRes, afterRes] = await Promise.all([
-        fetch("/api/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeText, jobDescription }) }),
+        fetch("/api/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeText: targetResumeText, jobDescription }) }),
         fetch("/api/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeText: data.optimizedText, jobDescription }) }),
       ]);
 
-      if (beforeRes.ok) setBeforeScore(await beforeRes.json());
-      if (afterRes.ok) setAfterScore(await afterRes.json());
+      let beforeScoreVal = 0;
+      let afterScoreVal = 0;
 
-      setProgress(100);
+      if (beforeRes.ok) {
+        const scoreData = await beforeRes.json();
+        setBeforeScore(scoreData);
+        beforeScoreVal = scoreData.overall;
+      }
+      if (afterRes.ok) {
+        const scoreData = await afterRes.json();
+        setAfterScore(scoreData);
+        afterScoreVal = scoreData.overall;
+      }
+
       setRefreshKey((p) => p + 1);
       setResultsTab("score");
-      toast.success("Resume optimized! 🎯");
+      setIsManualFlow(false);
+      toast.success(`🎉 Resume optimized! Score: ${beforeScoreVal} → ${afterScoreVal}`);
     } catch (err: any) {
       toast.error(err.message || "Something went wrong.");
       setOptimizeResult(null);
     } finally {
-      setTimeout(() => { setOptimizing(false); setProgress(0); }, 500);
+      setIsAILoading(false);
+      setOptimizing(false);
     }
+  };
+
+  const runManualImprove = async () => {
+    setIsModalOpen(false);
+    setOptimizing(true);
+    setBeforeScore(null);
+    setAfterScore(null);
+    setOptimizeResult(null);
+    setTrackerAdded(false);
+    
+    // Clear detail view states
+    setCopied(false);
+    setRoadmapContent(null);
+    setSelectedRoadmapSkill(null);
+    setCoverLetterGenerated(null);
+    setShowRoadmapAccordion(false);
+    setShowCoverLetterAccordion(false);
+
+    try {
+      const response = await fetch("/api/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeText, jobDescription })
+      });
+
+      if (!response.ok) {
+        throw new Error("Scoring failed.");
+      }
+
+      const data = await response.json();
+      setBeforeScore(data);
+      setIsManualFlow(true);
+      toast.success("Manual Guidance View loaded! ✏️");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to retrieve score.");
+    } finally {
+      setOptimizing(false);
+    }
+  };
+
+  const handleOptimize = async () => {
+    if (!resumeText?.trim()) {
+      toast.error("Add your resume first.");
+      return;
+    }
+    if (!jobDescription?.trim()) {
+      toast.error("Paste the job description to match against.");
+      return;
+    }
+    setIsModalOpen(true);
   };
 
   const handleReset = () => {
@@ -242,6 +286,9 @@ export default function DashboardPage() {
     setAfterScore(null);
     setOptimizeResult(null);
     setTrackerAdded(false);
+    setIsManualFlow(false);
+    setIsModalOpen(false);
+    setIsAILoading(false);
     toast.success("Workspace cleared.");
   };
 
@@ -577,7 +624,18 @@ export default function DashboardPage() {
         )}
 
         {/* ── RESULTS WORKSPACE ───────────────────────────────────── */}
-        {hasResults && optimizeResult ? (
+        {isManualFlow ? (
+          <ManualImproveView
+            resumeText={resumeText}
+            jobDescription={jobDescription}
+            beforeScore={beforeScore?.overall || 0}
+            missingKeywords={beforeScore?.missingKeywords || []}
+            resumeId={optimizeResult?.resumeId || ""}
+            onSwitchToAI={(editedText) => {
+              runAIAutoImprove(editedText);
+            }}
+          />
+        ) : hasResults && optimizeResult ? (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Top Tracker Banner Message */}
             {!trackerAdded && (
@@ -638,7 +696,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Tabs switcher */}
-            <div className="flex flex-col sm:flex-row bg-[#0d0e22] border border-white/5 p-1 rounded-xl w-full select-none gap-1">
+            <div className="flex bg-[#0d0e22] border border-white/5 p-1 rounded-xl w-full select-none gap-1">
               <button
                 onClick={() => setResultsTab("score")}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
@@ -648,16 +706,6 @@ export default function DashboardPage() {
                 }`}
               >
                 📊 Score Analysis
-              </button>
-              <button
-                onClick={() => setResultsTab("original")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
-                  resultsTab === "original"
-                    ? "bg-violet-600 text-white shadow-md shadow-violet-600/10"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                📄 Original Resume
               </button>
               <button
                 onClick={() => setResultsTab("optimized")}
@@ -675,6 +723,28 @@ export default function DashboardPage() {
             <div className="w-full">
               {resultsTab === "score" && (
                 <div className="space-y-6 animate-in fade-in duration-200">
+                  {/* Summary Card */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-[#0b0c1e] border border-white/5 p-5 rounded-2xl flex flex-col justify-center">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">Keywords Injected</span>
+                      <span className="text-lg font-black text-emerald-400">
+                        {optimizeResult.keywordsAdded?.length || 0} Keywords
+                      </span>
+                    </div>
+                    <div className="bg-[#0b0c1e] border border-white/5 p-5 rounded-2xl flex flex-col justify-center">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">Bullets Rewritten</span>
+                      <span className="text-lg font-black text-violet-400">
+                        {optimizeResult.changesCount || 3} Bullets
+                      </span>
+                    </div>
+                    <div className="bg-[#0b0c1e] border border-white/5 p-5 rounded-2xl flex flex-col justify-center">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">AI Match Summary</span>
+                      <p className="text-xs text-slate-300 leading-relaxed font-semibold">
+                        {optimizeResult.summary || "Your resume bullets and formatting have been adjusted to pass ATS checks."}
+                      </p>
+                    </div>
+                  </div>
+
                   {/* Score Card */}
                   <ScoreCard before={beforeScore} after={afterScore} />
                   
@@ -838,24 +908,12 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {resultsTab === "original" && (
-                <div className="animate-in fade-in duration-200">
-                  <ResumeViewer
-                    text={resumeText}
-                    resumeId={optimizeResult.resumeId}
-                    type="original"
-                    jobDescription={jobDescription}
-                  />
-                </div>
-              )}
-
               {resultsTab === "optimized" && (
                 <div className="animate-in fade-in duration-200">
                   <ResumeViewer
                     text={optimizeResult.optimizedText}
                     originalText={resumeText}
                     resumeId={optimizeResult.resumeId}
-                    type="optimized"
                     jobDescription={jobDescription}
                     onUpdateText={(newText) => {
                       setOptimizeResult((prev: any) => ({ ...prev, optimizedText: newText }));
@@ -992,6 +1050,22 @@ export default function DashboardPage() {
         )}
 
       </main>
+
+      {/* Choice Modal */}
+      <ImprovementModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSelectOption={(option) => {
+          if (option === "ai") {
+            runAIAutoImprove();
+          } else {
+            runManualImprove();
+          }
+        }}
+      />
+
+      {/* Loading Overlay */}
+      {isAILoading && <LoadingOverlay />}
     </div>
   );
 }
