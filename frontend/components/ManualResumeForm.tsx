@@ -8,7 +8,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
-import { parseResumeIntoBlocks } from "@/lib/export/pdf-document";
+import { parseResumeIntoBlocks, parseLaTeXToPlainText } from "@/lib/export/pdf-document";
+import { convertBlocksToLaTeX } from "@/components/ResumeViewer";
 
 interface ManualResumeFormProps {
   resumeText: string;
@@ -29,8 +30,17 @@ export default function ManualResumeForm({
   onSwitchToAI,
   onBackToEditor
 }: ManualResumeFormProps) {
-  // Current text being edited (Overleaf style)
-  const [currentText, setCurrentText] = useState(resumeText);
+  // Current text being edited (Overleaf style LaTeX code)
+  const [currentText, setCurrentText] = useState(() => {
+    const initialBlocks = parseResumeIntoBlocks(resumeText);
+    const nameBlock = initialBlocks.find(n => n.type === "name");
+    const contactBlock = initialBlocks.find(n => n.type === "contact");
+    const nameText = nameBlock && nameBlock.type === "name" ? nameBlock.text : "Resume Document";
+    const contactText = contactBlock && contactBlock.type === "contact"
+      ? contactBlock.segments.map(s => s.text).join(" | ")
+      : "";
+    return convertBlocksToLaTeX(nameText, contactText, initialBlocks);
+  });
 
   // Keyword analysis states
   const [matchedKeywords, setMatchedKeywords] = useState<string[]>([]);
@@ -43,7 +53,7 @@ export default function ManualResumeForm({
 
   // Run ATS scorer to extract matched/missing keywords on mount or text changes
   useEffect(() => {
-    if (!currentText.trim() || currentText === resumeText) {
+    if (!currentText.trim()) {
       setScore(beforeScore);
       setMissingKeywords(initialMissingKeywords);
       setMatchedKeywords([]);
@@ -53,10 +63,11 @@ export default function ManualResumeForm({
     const fetchLatestScores = async () => {
       setIsScoring(true);
       try {
+        const plainText = parseLaTeXToPlainText(currentText);
         const res = await fetch("/api/score", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ resumeText: currentText, jobDescription })
+          body: JSON.stringify({ resumeText: plainText, jobDescription })
         });
         if (res.ok) {
           const scoreData = await res.json();
@@ -124,10 +135,11 @@ export default function ManualResumeForm({
   const handleDownloadPDF = async () => {
     setPdfLoading(true);
     try {
-      const response = await fetch("/api/export/pdf", {
+      const plainText = parseLaTeXToPlainText(currentText);
+      const response = await fetch("/api/export/pdf/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeId, type: "optimized", text: currentText }),
+        body: JSON.stringify({ text: plainText }),
       });
 
       if (!response.ok) throw new Error("PDF download failed");
@@ -150,7 +162,8 @@ export default function ManualResumeForm({
   };
 
   const handleOptimizeAI = () => {
-    onSwitchToAI(currentText);
+    const plainText = parseLaTeXToPlainText(currentText);
+    onSwitchToAI(plainText);
   };
 
   const inspectATSCompliance = () => {
@@ -168,15 +181,19 @@ export default function ManualResumeForm({
     if (!contactBlock) {
       issues.push({ id: "contact_missing", type: "error", msg: "Contact info (email, phone, location) is missing." });
     } else {
-      const text = contactBlock.text;
-      if (!text.includes("@")) {
+      const segments = contactBlock.type === "contact" ? contactBlock.segments : [];
+      const hasEmail = segments.some(s => s.url && s.url.startsWith("mailto:"));
+      const hasPhone = segments.some(s => s.url && s.url.startsWith("tel:"));
+      const hasLinks = segments.some(s => s.isLink && !s.url?.startsWith("mailto:") && !s.url?.startsWith("tel:"));
+      
+      if (!hasEmail) {
         issues.push({ id: "email", type: "error", msg: "Provide a valid email address." });
       }
-      if (!/\+?\d[\d\s\-\(\)]{7,}/.test(text)) {
+      if (!hasPhone) {
         issues.push({ id: "phone", type: "warning", msg: "Phone number is missing or invalid." });
       }
-      if (!text.includes("|")) {
-        issues.push({ id: "contact_pipes", type: "warning", msg: "Pipes '|' make contact fields look cleaner on one line." });
+      if (!hasLinks) {
+        issues.push({ id: "contact_pipes", type: "warning", msg: "Include links (LinkedIn/GitHub) in your contact header." });
       }
     }
 
@@ -185,40 +202,21 @@ export default function ManualResumeForm({
     let missingDates = false;
     let shortTenureWarning = false;
 
-    let inExperience = false;
-    let currentJobTitle = "";
-    blocks.forEach((block, idx) => {
-      if (block.type === "section") {
-        const text = block.text.toLowerCase();
-        inExperience = text.includes("experience") || text.includes("internship");
-      }
-      if (inExperience) {
-        if (block.type === "jobTitle") {
-          currentJobTitle = block.text;
-          let foundDate = false;
-          for (let j = idx + 1; j < Math.min(blocks.length, idx + 4); j++) {
-            const targetBlock = blocks[j];
-            if (targetBlock && targetBlock.type === "dateLocation") {
-              foundDate = true;
-              const dateStr = targetBlock.text;
-              const matchesFormat = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|20\d{2})/i.test(dateStr);
-              if (!matchesFormat) {
-                datePatternError = true;
-              }
-            }
+    blocks.forEach((block) => {
+      if (block.type === "job") {
+        if (!block.dates || !block.dates.trim()) {
+          missingDates = true;
+        } else {
+          const matchesFormat = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|20\d{2})/i.test(block.dates);
+          if (!matchesFormat) {
+            datePatternError = true;
           }
-          if (!foundDate) {
-            missingDates = true;
-          }
-          if (currentJobTitle.toLowerCase().includes("intern") || currentJobTitle.toLowerCase().includes("internship")) {
-            let bulletsCount = 0;
-            for (let j = idx + 1; j < blocks.length; j++) {
-              if (blocks[j].type === "section" || blocks[j].type === "jobTitle") break;
-              if (blocks[j].type === "bullet") bulletsCount++;
-            }
-            if (bulletsCount < 2) {
-              shortTenureWarning = true;
-            }
+        }
+        
+        if (block.title.toLowerCase().includes("intern") || block.company.toLowerCase().includes("intern") ||
+            block.title.toLowerCase().includes("internship") || block.company.toLowerCase().includes("internship")) {
+          if (block.bullets.length < 2) {
+            shortTenureWarning = true;
           }
         }
       }
@@ -235,14 +233,10 @@ export default function ManualResumeForm({
     }
 
     // 4. Project tech stack check
-    let inProjects = false;
     let projectMissingTech = false;
     blocks.forEach((block) => {
-      if (block.type === "section") {
-        inProjects = block.text.toLowerCase().includes("projects");
-      }
-      if (inProjects && block.type === "jobTitle") {
-        if (!block.text.includes("|")) {
+      if (block.type === "project") {
+        if (!block.tech || !block.tech.trim()) {
           projectMissingTech = true;
         }
       }
@@ -265,18 +259,26 @@ export default function ManualResumeForm({
     let missingMetrics = false;
     let hasBullets = false;
 
+    const checkBulletText = (bText: string) => {
+      hasBullets = true;
+      const clean = bText.replace(/^[•\-\*–\s]+/, "").trim();
+      const firstWord = clean.split(/\s+/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
+      
+      if (firstWord && !STRONG_ACTION_VERBS.includes(firstWord)) {
+        missingActionVerb = true;
+      }
+      if (!/\d+/.test(clean)) {
+        missingMetrics = true;
+      }
+    };
+
     blocks.forEach((block) => {
       if (block.type === "bullet") {
-        hasBullets = true;
-        const clean = block.text.replace(/^[•\-\*–\s]+/, "").trim();
-        const firstWord = clean.split(/\s+/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
-        
-        if (firstWord && !STRONG_ACTION_VERBS.includes(firstWord)) {
-          missingActionVerb = true;
-        }
-        if (!/\d+/.test(clean)) {
-          missingMetrics = true;
-        }
+        checkBulletText(block.text);
+      } else if (block.type === "job") {
+        block.bullets.forEach(checkBulletText);
+      } else if (block.type === "project") {
+        block.bullets.forEach(checkBulletText);
       }
     });
 
@@ -301,13 +303,9 @@ export default function ManualResumeForm({
 
     // 6. Skills count check
     let skillsCount = 0;
-    let inSkills = false;
     blocks.forEach((block) => {
-      if (block.type === "section") {
-        inSkills = block.text.toLowerCase().includes("skills");
-      }
-      if (inSkills && (block.type === "normal" || block.type === "bullet")) {
-        const list = block.text.split(",").map(s => s.trim()).filter(Boolean);
+      if (block.type === "skillLine") {
+        const list = block.value.split(",").map(s => s.trim()).filter(Boolean);
         skillsCount += list.length;
       }
     });
@@ -322,7 +320,8 @@ export default function ManualResumeForm({
     return issues;
   };
 
-  const blocks = parseResumeIntoBlocks(currentText);
+  const plainText = parseLaTeXToPlainText(currentText);
+  const blocks = parseResumeIntoBlocks(plainText);
 
   return (
     <div className="space-y-6">
@@ -399,48 +398,99 @@ export default function ManualResumeForm({
                   );
                 case "contact":
                   return (
-                    <div key={idx} className="text-[9px] text-center text-slate-600 mb-2 leading-normal select-text font-serif">
-                      {block.text}
+                    <div key={idx} className="flex justify-center flex-wrap text-[9px] text-center text-slate-600 mb-2 leading-normal select-text font-serif">
+                      {block.segments.map((seg, sIdx) => {
+                        const el = seg.isLink && seg.url ? (
+                          <a key={sIdx} href={seg.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                            {seg.text}
+                          </a>
+                        ) : (
+                          <span key={sIdx}>{seg.text}</span>
+                        );
+                        if (sIdx < block.segments.length - 1) {
+                          return (
+                            <React.Fragment key={sIdx}>
+                              {el}
+                              <span className="mx-1 text-slate-400">—</span>
+                            </React.Fragment>
+                          );
+                        }
+                        return el;
+                      })}
                     </div>
                   );
                 case "section":
                   return (
-                    <h2 key={idx} className="text-[11px] font-bold text-black border-b border-black mt-2 mb-1 pb-0.5 leading-normal select-text font-serif uppercase">
+                    <h2 key={idx} className="text-[11px] font-bold text-black border-b border-black mt-2 mb-1 pb-0.5 leading-normal select-text font-serif">
                       {block.text}
                     </h2>
                   );
-                case "jobTitle":
-                  if (block.text.includes('|')) {
-                    const parts = block.text.split('|').map(p => p.trim());
-                    const left = parts.slice(0, -1).join(" | ");
-                    const right = parts[parts.length - 1];
-                    return (
-                      <div key={idx} className="flex justify-between text-[10px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
-                        <span>{left}</span>
-                        <span className="font-normal text-slate-700">{right}</span>
-                      </div>
-                    );
-                  }
+                case "summary":
                   return (
-                    <div key={idx} className="text-[10px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
+                    <p key={idx} className="text-[9.5px] mb-0.5 text-slate-800 leading-normal select-text font-serif">
                       {block.text}
+                    </p>
+                  );
+                case "skillLine":
+                  return (
+                    <div key={idx} className="flex text-[9.5px] mb-0.5 leading-normal select-text font-serif">
+                      <span className="font-bold text-black w-[120px] shrink-0">{block.label}:</span>
+                      <span className="text-slate-800 flex-1">{block.value}</span>
                     </div>
                   );
-                case "dateLocation":
-                  if (block.text.includes('|')) {
-                    const parts = block.text.split('|').map(p => p.trim());
-                    const left = parts.slice(0, -1).join(" | ");
-                    const right = parts[parts.length - 1];
-                    return (
-                      <div key={idx} className="flex justify-between text-[9px] text-slate-500 mb-0.5 leading-normal select-text font-serif">
-                        <span>{left}</span>
-                        <span>{right}</span>
-                      </div>
-                    );
-                  }
+                case "project":
                   return (
-                    <div key={idx} className="text-[9px] text-slate-500 mb-0.5 leading-normal select-text font-serif">
-                      {block.text}
+                    <div key={idx} className="mb-1.5">
+                      <div className="flex justify-between text-[10px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
+                        <div className="flex items-center gap-1">
+                          <span>{block.name}</span>
+                          {block.projectUrl && (
+                            <a href={block.projectUrl} target="_blank" rel="noopener noreferrer" className="text-[9px] text-blue-600 underline font-normal">
+                              {block.projectUrl}
+                            </a>
+                          )}
+                        </div>
+                        {block.tech && (
+                          <span className="font-normal italic text-slate-600">{block.tech}</span>
+                        )}
+                      </div>
+                      {block.bullets.map((bullet, bIdx) => (
+                        <div key={bIdx} className="flex items-start text-[9.5px] mb-0.5 pl-3 leading-normal select-text font-serif">
+                          <span className="w-2.5 shrink-0 select-none text-black">•</span>
+                          <span className="flex-1 text-slate-800">{bullet}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                case "job":
+                  return (
+                    <div key={idx} className="mb-1.5">
+                      <div className="flex justify-between text-[10px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
+                        <span>{block.title}</span>
+                        <span className="font-normal text-slate-700">{block.dates}</span>
+                      </div>
+                      <div className="text-[9.5px] italic text-slate-700 mb-0.5 leading-normal select-text font-serif">
+                        {block.company}
+                      </div>
+                      {block.bullets.map((bullet, bIdx) => (
+                        <div key={bIdx} className="flex items-start text-[9.5px] mb-0.5 pl-3 leading-normal select-text font-serif">
+                          <span className="w-2.5 shrink-0 select-none text-black">•</span>
+                          <span className="flex-1 text-slate-800">{bullet}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                case "education":
+                  return (
+                    <div key={idx} className="mb-1.5">
+                      <div className="flex justify-between text-[10px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
+                        <span>{block.degree}</span>
+                        <span className="font-normal text-slate-700">{block.dates}</span>
+                      </div>
+                      <div className="flex justify-between text-[9.5px] text-slate-800 leading-normal select-text font-serif">
+                        <span>{block.school}</span>
+                        <span>{block.gpa}</span>
+                      </div>
                     </div>
                   );
                 case "bullet":
@@ -450,25 +500,28 @@ export default function ManualResumeForm({
                       <span className="flex-1 text-slate-800">{block.text}</span>
                     </div>
                   );
+                case "cert":
+                  return (
+                    <div key={idx} className="text-[9.5px] text-slate-800 mb-0.5 leading-normal select-text font-serif">
+                      {block.text}
+                    </div>
+                  );
+                case "link":
+                  return (
+                    <a key={idx} href={block.url} target="_blank" rel="noopener noreferrer" className="text-[9.5px] text-blue-600 underline mb-0.5 block leading-normal select-text font-serif">
+                      {block.label}
+                    </a>
+                  );
                 case "spacer":
                   return <div key={idx} className="h-0.5" />;
-                default:
-                  if (block.text.includes('|') && block.text.length < 150) {
-                    const parts = block.text.split('|').map(p => p.trim());
-                    const left = parts.slice(0, -1).join(" | ");
-                    const right = parts[parts.length - 1];
-                    return (
-                      <div key={idx} className="flex justify-between text-[9px] text-slate-500 mb-0.5 leading-normal select-text font-serif">
-                        <span>{left}</span>
-                        <span>{right}</span>
-                      </div>
-                    );
-                  }
+                case "normal":
                   return (
                     <p key={idx} className="text-[9.5px] mb-0.5 text-slate-800 leading-normal select-text font-serif">
                       {block.text}
                     </p>
                   );
+                default:
+                  return null;
               }
             })}
           </div>

@@ -37,7 +37,8 @@ Your goal is to optimize the Candidate's Resume to better align with the Job Des
 3. **STRONG ACTION VERBS**: Rewrite weak or passive bullet points in the experience or project sections to start with strong action verbs (e.g., "automated", "refactored", "implemented", "scaled").
 4. **NO ARTIFICIAL QUANTIFICATION**: Add quantification (numbers, percentages, metrics) ONLY where it is clearly implied by the context. Do not invent arbitrary numbers (e.g., do not randomly change "improved speed" to "improved speed by 47%").
 5. **PRESERVE STRUCTURE**: Keep all original sections (Experience, Projects, Education, etc.) intact.
-6. **CRITICAL OUTPUT RULES**:
+6. **PRESERVE ALL LINKS**: Keep all URLs exactly as written. Do not remove, shorten, or modify any URLs. Keep LinkedIn, GitHub, and project URLs intact.
+7. **CRITICAL OUTPUT RULES**:
    - Return PLAIN TEXT ONLY — no LaTeX, no markdown, no HTML
    - Do NOT use \textbf{}, \section{}, \begin{}, \end{}, \\, \item, \resumeItem, or ANY LaTeX commands
    - Do NOT use **, ##, __, or any markdown syntax

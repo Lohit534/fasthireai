@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      logger.warn("Unauthorized attempt to export PDF");
+      logger.warn("Unauthorized attempt to directly generate PDF");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -45,49 +45,25 @@ export async function POST(request: NextRequest) {
 
     // 2. Parse Request Body
     const body = await request.json();
-    const { resumeId, type = "optimized" } = body;
-    if (!resumeId) {
-      return NextResponse.json({ error: "Missing resumeId" }, { status: 400 });
+    const { text } = body;
+    if (!text) {
+      return NextResponse.json({ error: "Missing text content" }, { status: 400 });
     }
 
-    // 3. Fetch Resume and Verify Ownership
-    const { data: resume, error: fetchErr } = await admin
-      .from("Resume")
-      .select("id, userId, originalText, optimizedText")
-      .eq("id", resumeId)
-      .maybeSingle();
+    // 3. Generate PDF Document
+    logger.info(`Generating direct PDF for user ${user.email} (watermarked=${watermarked})`);
+    const pdfBuffer = await generatePDF(text, watermarked);
 
-    if (fetchErr) {
-      logger.error("Resume fetch error:", fetchErr.message);
-      return NextResponse.json({ error: "Database error fetching resume." }, { status: 500 });
-    }
-
-    if (!resume) {
-      return NextResponse.json({ error: "Resume not found" }, { status: 404 });
-    }
-
-    if (resume.userId !== activeUserId) {
-      logger.warn(`User ${user.email} (activeUserId: ${activeUserId}) attempted to export unauthorized resume ${resumeId} owned by ${resume.userId}`);
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const textToExport = type === "original" ? (resume.originalText || "") : (resume.optimizedText || "");
-
-    // 4. Generate PDF Document
-    logger.info(`Generating PDF export for user ${user.email}, Resume ID ${resumeId} (type=${type}, watermarked=${watermarked})`);
-    const pdfBuffer = await generatePDF(textToExport, watermarked);
-
-    // 5. Return PDF download
-    const filename = type === "original" ? "resume-original.pdf" : "resume-optimized-fasthire.pdf";
+    // 4. Return PDF download
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": `attachment; filename="resume.pdf"`,
       },
     });
   } catch (error: any) {
-    logger.error("Failed to export PDF resume file:", error);
+    logger.error("Failed to generate direct PDF:", error);
     return NextResponse.json(
       { error: "Internal server error during PDF generation." },
       { status: 500 }

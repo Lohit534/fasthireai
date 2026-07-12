@@ -6,7 +6,7 @@ import { Loader2, Copy, Check, FileText, Edit2, Play, Eye, Code } from "lucide-r
 import { toast } from "react-hot-toast";
 import { sanitizeResumeText } from "@/lib/ai/router";
 
-import { parseResumeIntoBlocks, ResumeBlock } from "@/lib/export/pdf-document";
+import { parseResumeIntoBlocks, ResumeBlock, parseLaTeXToPlainText } from "@/lib/export/pdf-document";
 
 // Helper to strip markdown bold/italic tags
 function cleanMarkdown(s: string): string {
@@ -67,44 +67,57 @@ export function convertBlocksToLaTeX(name: string, contactLine: string, blocks: 
 
 `;
 
-  let inList = false;
-
   for (const block of blocks) {
     if (block.type === "name" || block.type === "contact" || block.type === "spacer") {
       continue;
     }
 
     if (block.type === "section") {
-      if (inList) {
-        latex += "\\end{itemize}\n\\vspace{-5pt}\n";
-        inList = false;
-      }
       latex += `\n\\section{${escapeLaTeX(block.text)}}\n`;
-    } else if (block.type === "jobTitle") {
-      if (inList) {
-        latex += "\\end{itemize}\n\\vspace{-5pt}\n";
-        inList = false;
-      }
-      latex += `\\vspace{4pt}\n\\textbf{${escapeLaTeX(block.text)}}\\\\\n`;
-    } else if (block.type === "dateLocation") {
-      latex += `{\\small \\textit{${escapeLaTeX(block.text)}}}\\\\\n`;
-    } else if (block.type === "bullet") {
-      if (!inList) {
+    } else if (block.type === "summary") {
+      latex += `${escapeLaTeX(block.text)}\\\\\n`;
+    } else if (block.type === "skillLine") {
+      latex += `\\textbf{${escapeLaTeX(block.label)}}: ${escapeLaTeX(block.value)}\\\\\n`;
+    } else if (block.type === "job") {
+      latex += `\\vspace{4pt}\n\\textbf{${escapeLaTeX(block.title)}} \\hfill {\\small ${escapeLaTeX(block.dates)}}\\\\\n`;
+      latex += `\\textit{${escapeLaTeX(block.company)}}\\\\\n`;
+      if (block.bullets.length > 0) {
         latex += "\\begin{itemize}[leftmargin=0.15in, label=\\textbullet]\n";
-        inList = true;
-      }
-      latex += `  \\item ${escapeLaTeX(block.text)}\n`;
-    } else if (block.type === "normal") {
-      if (inList) {
+        for (const bullet of block.bullets) {
+          latex += `  \\item ${escapeLaTeX(bullet)}\n`;
+        }
         latex += "\\end{itemize}\n\\vspace{-5pt}\n";
-        inList = false;
       }
+    } else if (block.type === "project") {
+      latex += `\\vspace{4pt}\n\\textbf{${escapeLaTeX(block.name)}}`;
+      if (block.projectUrl) {
+        latex += ` \\href{${block.projectUrl}}{${escapeLaTeX(block.projectUrl)}}`;
+      }
+      if (block.tech) {
+        latex += ` \\hfill {\\small \\textit{${escapeLaTeX(block.tech)}}}`;
+      }
+      latex += "\\\\\n";
+      if (block.bullets.length > 0) {
+        latex += "\\begin{itemize}[leftmargin=0.15in, label=\\textbullet]\n";
+        for (const bullet of block.bullets) {
+          latex += `  \\item ${escapeLaTeX(bullet)}\n`;
+        }
+        latex += "\\end{itemize}\n\\vspace{-5pt}\n";
+      }
+    } else if (block.type === "education") {
+      latex += `\\vspace{4pt}\n\\textbf{${escapeLaTeX(block.degree)}} \\hfill {\\small ${escapeLaTeX(block.dates)}}\\\\\n`;
+      latex += `\\textit{${escapeLaTeX(block.school)}} \\hfill {\\small ${escapeLaTeX(block.gpa)}}\\\\\n`;
+    } else if (block.type === "bullet") {
+      latex += "\\begin{itemize}[leftmargin=0.15in, label=\\textbullet]\n";
+      latex += `  \\item ${escapeLaTeX(block.text)}\n`;
+      latex += "\\end{itemize}\n\\vspace{-5pt}\n";
+    } else if (block.type === "cert") {
+      latex += `${escapeLaTeX(block.text)}\\\\\n`;
+    } else if (block.type === "link") {
+      latex += `\\href{${block.url}}{${escapeLaTeX(block.label)}}\\\\\n`;
+    } else if (block.type === "normal") {
       latex += `${escapeLaTeX(block.text)}\\\\\n`;
     }
-  }
-
-  if (inList) {
-    latex += "\\end{itemize}\n";
   }
 
   latex += "\n\\end{document}\n";
@@ -156,31 +169,79 @@ export default function ResumeViewer({
   const [scoringLive, setScoringLive] = useState(false);
 
   useEffect(() => {
-    setCurrentText(text);
-    setLiveScore(null);
-  }, [text]);
-
-  useEffect(() => {
-    if (defaultEditMode !== undefined) {
-      setIsEditing(defaultEditMode);
+    if (defaultEditMode) {
+      const blocks = parseResumeIntoBlocks(text);
+      const nameBlock = blocks.find(n => n.type === "name");
+      const contactBlock = blocks.find(n => n.type === "contact");
+      const nameText = nameBlock ? (nameBlock.type === "name" ? nameBlock.text : "Resume Document") : "Resume Document";
+      const contactText = contactBlock && contactBlock.type === "contact"
+        ? contactBlock.segments.map(s => s.text).join(" | ")
+        : "";
+      const latex = convertBlocksToLaTeX(nameText, contactText, blocks);
+      setCurrentText(latex);
+      setIsEditing(true);
+    } else {
+      setCurrentText(text);
+      setIsEditing(false);
     }
-  }, [defaultEditMode]);
+    setLiveScore(null);
+  }, [text, defaultEditMode]);
+
+  const enterEditMode = () => {
+    const blocks = parseResumeIntoBlocks(currentText);
+    const nameBlock = blocks.find(n => n.type === "name");
+    const contactBlock = blocks.find(n => n.type === "contact");
+    const nameText = nameBlock ? (nameBlock.type === "name" ? nameBlock.text : "Resume Document") : "Resume Document";
+    const contactText = contactBlock && contactBlock.type === "contact"
+      ? contactBlock.segments.map(s => s.text).join(" | ")
+      : "";
+    const latex = convertBlocksToLaTeX(nameText, contactText, blocks);
+    setCurrentText(latex);
+    setIsEditing(true);
+  };
+
+  const handleCompile = async () => {
+    setScoringLive(true);
+    try {
+      const plainText = parseLaTeXToPlainText(currentText);
+      const res = await fetch("/api/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeText: plainText, jobDescription })
+      });
+      if (res.ok) {
+        const scoreData = await res.json();
+        setLiveScore(scoreData.overall);
+        if (onReScored) onReScored(scoreData.overall);
+      }
+      setCurrentText(plainText);
+      setIsEditing(false);
+      setViewMode("styled");
+      if (onUpdateText) onUpdateText(plainText);
+      toast.success("Compiled successfully! Styled preview updated.");
+    } catch (err) {
+      toast.error("Compilation / scoring failed.");
+    } finally {
+      setScoringLive(false);
+    }
+  };
 
   // Debounced live scoring (800ms)
   useEffect(() => {
     if (!isEditing) return;
 
     const handler = setTimeout(async () => {
-       if (!currentText.trim() || currentText === text) {
+      if (!currentText.trim()) {
         setLiveScore(null);
         return;
       }
       setScoringLive(true);
       try {
+        const plainText = parseLaTeXToPlainText(currentText);
         const res = await fetch("/api/score", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ resumeText: currentText, jobDescription })
+          body: JSON.stringify({ resumeText: plainText, jobDescription })
         });
         if (res.ok) {
           const scoreData = await res.json();
@@ -194,7 +255,7 @@ export default function ResumeViewer({
     }, 800);
 
     return () => clearTimeout(handler);
-  }, [currentText, isEditing, text, jobDescription]);
+  }, [currentText, isEditing, jobDescription]);
 
   // Parse blocks for rendering
   const blocks = parseResumeIntoBlocks(currentText);
@@ -202,8 +263,10 @@ export default function ResumeViewer({
   // Extract name and contact for header
   const nameBlock = blocks.find(n => n.type === "name");
   const contactBlock = blocks.find(n => n.type === "contact");
-  const nameText = nameBlock ? nameBlock.text : "Resume Document";
-  const contactText = contactBlock ? contactBlock.text : "";
+  const nameText = nameBlock ? (nameBlock.type === "name" ? nameBlock.text : "Resume Document") : "Resume Document";
+  const contactText = contactBlock && contactBlock.type === "contact"
+    ? contactBlock.segments.map(s => s.text).join(" | ")
+    : "";
 
   // Set up original words Set for diff highlighting
   const originalClean = (originalText || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ");
@@ -245,10 +308,11 @@ export default function ResumeViewer({
   const handleDownloadPDF = async () => {
     setPdfLoading(true);
     try {
-      const response = await fetch("/api/export/pdf", {
+      const plainText = isEditing ? parseLaTeXToPlainText(currentText) : currentText;
+      const response = await fetch("/api/export/pdf/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeId, type: "optimized", text: currentText }),
+        body: JSON.stringify({ text: plainText }),
       });
 
       if (!response.ok) throw new Error("PDF download failed");
@@ -299,19 +363,19 @@ export default function ResumeViewer({
   };
 
   const handleReScore = async () => {
-    if (currentText === text) return;
     setScoringLive(true);
     try {
+      const plainText = isEditing ? parseLaTeXToPlainText(currentText) : currentText;
       const res = await fetch("/api/score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText: currentText, jobDescription })
+        body: JSON.stringify({ resumeText: plainText, jobDescription })
       });
       if (res.ok) {
         const scoreData = await res.json();
         setLiveScore(scoreData.overall);
         if (onReScored) onReScored(scoreData.overall);
-        if (onUpdateText) onUpdateText(currentText);
+        if (onUpdateText) onUpdateText(plainText);
         toast.success(`Score updated to ${scoreData.overall}! 🎯`);
       }
     } catch (err) {
@@ -331,33 +395,50 @@ export default function ResumeViewer({
           <div className="flex bg-[#070814] border border-white/5 p-1 rounded-lg select-none">
             <button
               onClick={() => setViewMode("styled")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                viewMode === "styled" ? "bg-violet-600 text-white" : "text-slate-400 hover:text-white"
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === "styled" ? "bg-violet-600 text-white" : "text-slate-400 hover:text-white"
+                }`}
             >
               <Eye className="h-3.5 w-3.5" />
               Styled View
             </button>
             <button
               onClick={() => setViewMode("latex")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                viewMode === "latex" ? "bg-violet-600 text-white" : "text-slate-400 hover:text-white"
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === "latex" ? "bg-violet-600 text-white" : "text-slate-400 hover:text-white"
+                }`}
             >
               <Code className="h-3.5 w-3.5" />
               LaTeX Code
             </button>
           </div>
 
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${
-              isEditing ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-400" : "bg-[#0b1c30] border-white/5 text-slate-400 hover:text-white"
-            }`}
-          >
-            <Edit2 className="h-3.5 w-3.5" />
-            {isEditing ? "Stop Editing" : "Edit Resume"}
-          </button>
+          {isEditing ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCompile}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md cursor-pointer"
+              >
+                <Play className="h-3.5 w-3.5 fill-current" />
+                Run (Compile)
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentText(text);
+                  setIsEditing(false);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/5 bg-[#0b1c30] text-slate-400 hover:text-white text-xs font-bold transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={enterEditMode}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/5 bg-[#0b1c30] text-slate-400 hover:text-white text-xs font-bold transition-all cursor-pointer"
+            >
+              <Edit2 className="h-3.5 w-3.5" />
+              Edit Resume
+            </button>
+          )}
         </div>
 
         {/* Action Downloads / Copy */}
@@ -369,7 +450,7 @@ export default function ResumeViewer({
             {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
             {copied ? "Copied!" : "Copy Source"}
           </button>
-          
+
           <Button
             onClick={handleDownloadPDF}
             disabled={pdfLoading}
@@ -412,10 +493,11 @@ export default function ResumeViewer({
           {currentText !== text && (
             <Button
               size="sm"
-              onClick={handleReScore}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] h-7 px-3 rounded-lg"
+              onClick={handleCompile}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] h-7 px-3 rounded-lg flex items-center gap-1"
             >
-              Re-score My Edits
+              <Play className="h-3 w-3 fill-current" />
+              Compile & Preview
             </Button>
           )}
         </div>
@@ -438,7 +520,7 @@ export default function ResumeViewer({
         ) : (
           /* Render visual styling matching the LaTeX-style PDF engine output */
           <div className="w-full max-w-4xl mx-auto bg-white text-slate-900 border border-slate-200 rounded-xl p-8 shadow-2xl font-serif select-text relative leading-normal">
-            
+
             {blocks.map((block, idx) => {
               switch (block.type) {
                 case "name":
@@ -449,8 +531,25 @@ export default function ResumeViewer({
                   );
                 case "contact":
                   return (
-                    <div key={idx} className="text-[9.5px] text-center text-slate-600 mb-3 leading-normal select-text font-serif">
-                      {block.text}
+                    <div key={idx} className="flex justify-center flex-wrap text-[9.5px] text-center text-slate-600 mb-3 leading-normal select-text font-serif">
+                      {block.segments.map((seg, sIdx) => {
+                        const el = seg.isLink && seg.url ? (
+                          <a key={sIdx} href={seg.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                            {seg.text}
+                          </a>
+                        ) : (
+                          <span key={sIdx}>{seg.text}</span>
+                        );
+                        if (sIdx < block.segments.length - 1) {
+                          return (
+                            <React.Fragment key={sIdx}>
+                              {el}
+                              <span className="mx-1 text-slate-400">—</span>
+                            </React.Fragment>
+                          );
+                        }
+                        return el;
+                      })}
                     </div>
                   );
                 case "section":
@@ -459,38 +558,72 @@ export default function ResumeViewer({
                       {block.text}
                     </h2>
                   );
-                case "jobTitle":
-                  if (block.text.includes('|')) {
-                    const parts = block.text.split('|').map(p => p.trim());
-                    const left = parts.slice(0, -1).join(" | ");
-                    const right = parts[parts.length - 1];
-                    return (
-                      <div key={idx} className="flex justify-between text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
-                        <span>{renderHighlightedText(left)}</span>
-                        <span className="font-normal text-slate-700">{renderHighlightedText(right)}</span>
-                      </div>
-                    );
-                  }
+                case "summary":
                   return (
-                    <div key={idx} className="text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
+                    <p key={idx} className="text-[10px] mb-1 text-slate-800 leading-normal select-text font-serif">
                       {renderHighlightedText(block.text)}
+                    </p>
+                  );
+                case "skillLine":
+                  return (
+                    <div key={idx} className="flex text-[10px] mb-1 leading-normal select-text font-serif">
+                      <span className="font-bold text-black w-[140px] shrink-0">{block.label}:</span>
+                      <span className="text-slate-800 flex-1">{renderHighlightedText(block.value)}</span>
                     </div>
                   );
-                case "dateLocation":
-                  if (block.text.includes('|')) {
-                    const parts = block.text.split('|').map(p => p.trim());
-                    const left = parts.slice(0, -1).join(" | ");
-                    const right = parts[parts.length - 1];
-                    return (
-                      <div key={idx} className="flex justify-between text-[9.5px] text-slate-500 mb-1 leading-normal select-text font-serif">
-                        <span>{renderHighlightedText(left)}</span>
-                        <span>{renderHighlightedText(right)}</span>
-                      </div>
-                    );
-                  }
+                case "project":
                   return (
-                    <div key={idx} className="text-[9.5px] text-slate-500 mb-1 leading-normal select-text font-serif">
-                      {renderHighlightedText(block.text)}
+                    <div key={idx} className="mb-2">
+                      <div className="flex justify-between text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
+                        <div className="flex items-center gap-1.5">
+                          <span>{block.name}</span>
+                          {block.projectUrl && (
+                            <a href={block.projectUrl} target="_blank" rel="noopener noreferrer" className="text-[9.5px] text-blue-600 underline font-normal">
+                              {block.projectUrl}
+                            </a>
+                          )}
+                        </div>
+                        {block.tech && (
+                          <span className="font-normal italic text-slate-600">{renderHighlightedText(block.tech)}</span>
+                        )}
+                      </div>
+                      {block.bullets.map((bullet, bIdx) => (
+                        <div key={bIdx} className="flex items-start text-[10px] mb-0.5 pl-3 leading-normal select-text font-serif">
+                          <span className="w-3 shrink-0 select-none text-black font-serif">•</span>
+                          <span className="flex-1 text-slate-800 font-serif">{renderHighlightedText(bullet)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                case "job":
+                  return (
+                    <div key={idx} className="mb-2">
+                      <div className="flex justify-between text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
+                        <span>{renderHighlightedText(block.title)}</span>
+                        <span className="font-normal text-slate-700">{renderHighlightedText(block.dates)}</span>
+                      </div>
+                      <div className="text-[10px] italic text-slate-700 mb-1 leading-normal select-text font-serif">
+                        {renderHighlightedText(block.company)}
+                      </div>
+                      {block.bullets.map((bullet, bIdx) => (
+                        <div key={bIdx} className="flex items-start text-[10px] mb-0.5 pl-3 leading-normal select-text font-serif">
+                          <span className="w-3 shrink-0 select-none text-black font-serif">•</span>
+                          <span className="flex-1 text-slate-800 font-serif">{renderHighlightedText(bullet)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                case "education":
+                  return (
+                    <div key={idx} className="mb-2">
+                      <div className="flex justify-between text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
+                        <span>{renderHighlightedText(block.degree)}</span>
+                        <span className="font-normal text-slate-700">{renderHighlightedText(block.dates)}</span>
+                      </div>
+                      <div className="flex justify-between text-[10px] text-slate-800 leading-normal select-text font-serif">
+                        <span>{renderHighlightedText(block.school)}</span>
+                        <span>{renderHighlightedText(block.gpa)}</span>
+                      </div>
                     </div>
                   );
                 case "bullet":
@@ -500,25 +633,22 @@ export default function ResumeViewer({
                       <span className="flex-1 text-slate-800 font-serif">{renderHighlightedText(block.text)}</span>
                     </div>
                   );
+                case "cert":
+                  return (
+                    <div key={idx} className="text-[10px] text-slate-800 mb-0.5 leading-normal select-text font-serif">
+                      {renderHighlightedText(block.text)}
+                    </div>
+                  );
+                case "link":
+                  return (
+                    <a key={idx} href={block.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-600 underline mb-0.5 block leading-normal select-text font-serif">
+                      {block.label}
+                    </a>
+                  );
                 case "spacer":
                   return <div key={idx} className="h-1" />;
                 default:
-                  if (block.text.includes('|') && block.text.length < 150) {
-                    const parts = block.text.split('|').map(p => p.trim());
-                    const left = parts.slice(0, -1).join(" | ");
-                    const right = parts[parts.length - 1];
-                    return (
-                      <div key={idx} className="flex justify-between text-[9.5px] text-slate-500 mb-1 leading-normal select-text font-serif">
-                        <span>{renderHighlightedText(left)}</span>
-                        <span>{renderHighlightedText(right)}</span>
-                      </div>
-                    );
-                  }
-                  return (
-                    <p key={idx} className="text-[10px] mb-1 text-slate-800 leading-normal select-text font-serif">
-                      {renderHighlightedText(block.text)}
-                    </p>
-                  );
+                  return null;
               }
             })}
           </div>

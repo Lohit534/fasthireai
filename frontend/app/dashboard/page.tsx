@@ -10,7 +10,6 @@ import JobDescriptionInput from "@/components/JobDescriptionInput";
 import ScoreCard from "@/components/ScoreCard";
 import KeywordBadges from "@/components/KeywordBadges";
 import ResumeViewer from "@/components/ResumeViewer";
-import ImprovementModal from "@/components/ImprovementModal";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import ManualResumeForm from "@/components/ManualResumeForm";
 import { Button } from "@/components/ui/button";
@@ -224,25 +223,19 @@ export default function DashboardPage() {
 
       setRefreshKey((p) => p + 1);
 
-      const isLowQuality = afterScoreVal < 70 || missingCount > 10;
-      if (isLowQuality) {
-        setShowIntermediateScreen(true);
-        setIsManualFlow(false);
-      } else {
-        setShowIntermediateScreen(false);
-        setResultsTab("score");
-        setIsManualFlow(false);
-        setForceEditMode(false);
-        // Scroll to top of page
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        setTimeout(() => {
-          resultsRef.current?.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start' 
-          });
-        }, 100);
-        toast.success(`🎉 Resume optimized! Score: ${beforeScoreVal} → ${afterScoreVal}`);
-      }
+      setShowIntermediateScreen(false);
+      setResultsTab("optimized");
+      setIsManualFlow(false);
+      setForceEditMode(false);
+      // Scroll to top of page
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 100);
+      toast.success(`🎉 Resume optimized! Score: ${beforeScoreVal} → ${afterScoreVal}`);
     } catch (err: any) {
       toast.error(err.message || "Something went wrong.");
       setOptimizeResult(null);
@@ -299,7 +292,7 @@ export default function DashboardPage() {
       toast.error("Paste the job description to match against.");
       return;
     }
-    setIsModalOpen(true);
+    runAIAutoImprove(resumeText);
   };
 
   const handleReset = () => {
@@ -1146,19 +1139,6 @@ export default function DashboardPage() {
         )}
 
       </main>
-
-      {/* Choice Modal */}
-      <ImprovementModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSelectOption={(option) => {
-          if (option === "ai") {
-            runAIAutoImprove();
-          } else {
-            runManualImprove();
-          }
-        }}
-      />
 
       {/* Loading Overlay */}
       {isAILoading && <LoadingOverlay />}
