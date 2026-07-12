@@ -734,18 +734,22 @@ export default function HistoryPage() {
         }
 
         // Fetch plan/credits details
-        const creditsRes = await fetch("/api/credits");
-        if (creditsRes.ok) {
-          const creditsData = await creditsRes.json();
-          if (creditsData.isOwner) {
-            setUserPlan("owner");
-          } else if (creditsData.paidCredits > 900000) {
-            setUserPlan("promax");
-          } else if (creditsData.paidCredits > 0) {
-            setUserPlan("premium");
-          } else {
-            setUserPlan("free");
+        try {
+          const creditsRes = await fetch("/api/credits");
+          if (creditsRes.ok) {
+            const creditsData = await creditsRes.json();
+            if (creditsData.isOwner) {
+              setUserPlan("owner");
+            } else if (creditsData.paidCredits > 900000) {
+              setUserPlan("promax");
+            } else if (creditsData.paidCredits > 0) {
+              setUserPlan("premium");
+            } else {
+              setUserPlan("free");
+            }
           }
+        } catch (creditsErr) {
+          console.error("Failed to load credits:", creditsErr);
         }
 
         if (!active) return;

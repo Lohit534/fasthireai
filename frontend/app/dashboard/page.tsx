@@ -119,11 +119,13 @@ export default function DashboardPage() {
         if (error || !data?.user) {
           toast.error("Please sign in to continue.");
           router.push("/auth/login");
-        } else {
-          setUser(data.user);
-          setAuthLoading(false);
-          
-          // Fetch plan/credits details
+          return;
+        }
+        setUser(data.user);
+        setAuthLoading(false);
+
+        // Fetch plan/credits details safely in separate block
+        try {
           const creditsRes = await fetch("/api/credits");
           if (creditsRes.ok) {
             const creditsData = await creditsRes.json();
@@ -137,8 +139,11 @@ export default function DashboardPage() {
               setUserPlan("free");
             }
           }
+        } catch (creditsErr) {
+          console.error("Failed to load credits info:", creditsErr);
         }
-      } catch {
+      } catch (err) {
+        console.error("Auth check failed:", err);
         router.push("/auth/login");
       }
     }

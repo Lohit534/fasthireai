@@ -2,16 +2,20 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
-  // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get("next") ?? "/dashboard";
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get("code");
+  const next = requestUrl.searchParams.get("next") ?? "/dashboard";
 
   if (code) {
     const supabase = createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      let protocol = requestUrl.protocol;
+      if (!requestUrl.hostname.includes("localhost")) {
+        protocol = "https:";
+      }
+      const redirectUrl = `${protocol}//${requestUrl.host}${next}`;
+      return NextResponse.redirect(redirectUrl);
     }
   }
 
@@ -19,8 +23,18 @@ export async function GET(request: Request) {
   // Redirect to dashboard anyway if we are using the mock mode
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-project.supabase.co";
   if (supabaseUrl.includes("placeholder-project")) {
-    return NextResponse.redirect(`${origin}${next}`);
+    let protocol = requestUrl.protocol;
+    if (!requestUrl.hostname.includes("localhost")) {
+      protocol = "https:";
+    }
+    const redirectUrl = `${protocol}//${requestUrl.host}${next}`;
+    return NextResponse.redirect(redirectUrl);
   }
 
-  return NextResponse.redirect(`${origin}/auth/login?error=auth-code-error`);
+  let protocol = requestUrl.protocol;
+  if (!requestUrl.hostname.includes("localhost")) {
+    protocol = "https:";
+  }
+  const errorRedirectUrl = `${protocol}//${requestUrl.host}/auth/login?error=auth-code-error`;
+  return NextResponse.redirect(errorRedirectUrl);
 }

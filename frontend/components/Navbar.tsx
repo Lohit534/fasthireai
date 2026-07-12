@@ -191,14 +191,16 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
 
 
                 {/* Upgrade Button */}
-                <Link href="/dashboard/pricing" className="hidden sm:block">
-                  <Button 
-                    size="sm" 
-                    className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-8 text-[11px] rounded-full px-4 shadow-lg shadow-violet-600/10"
-                  >
-                    Upgrade
-                  </Button>
-                </Link>
+                {!credits?.isOwner && (
+                  <Link href="/dashboard/pricing" className="hidden sm:block">
+                    <Button 
+                      size="sm" 
+                      className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-8 text-[11px] rounded-full px-4 shadow-lg shadow-violet-600/10"
+                    >
+                      Upgrade
+                    </Button>
+                  </Link>
+                )}
 
                 {/* Profile circular avatar dropdown container */}
                 <div className="relative" ref={dropdownRef}>
@@ -267,14 +269,16 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                           <Briefcase className="h-4 w-4 text-slate-400" />
                           Job Tracker
                         </Link>
-                        <Link 
-                          href="/dashboard/pricing" 
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-                        >
-                          <Sparkles className="h-4 w-4 text-slate-400" />
-                          Pro Max Plan
-                        </Link>
+                        {!credits?.isOwner && (
+                          <Link 
+                            href="/dashboard/pricing" 
+                            onClick={() => setIsDropdownOpen(false)}
+                            className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                          >
+                            <Sparkles className="h-4 w-4 text-slate-400" />
+                            Pro Max Plan
+                          </Link>
+                        )}
                         <Link 
                           href="/dashboard/pricing" 
                           onClick={() => setIsDropdownOpen(false)}
