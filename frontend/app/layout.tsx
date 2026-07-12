@@ -18,8 +18,10 @@ export default function RootLayout({
     <html lang="en" className="h-full">
       <body className="min-h-screen bg-[#040d1a] text-foreground flex flex-col antialiased font-sans">
         <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
-        <div className="flex flex-col min-h-screen">
-          {children}
+        <div className="flex flex-col min-h-screen flex-1">
+          <main className="flex-1 flex flex-col">
+            {children}
+          </main>
           <Footer />
         </div>
       </body>

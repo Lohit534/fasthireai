@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { useResumeStore } from "@/store/useResumeStore";
@@ -12,7 +12,7 @@ import KeywordBadges from "@/components/KeywordBadges";
 import ResumeViewer from "@/components/ResumeViewer";
 import ImprovementModal from "@/components/ImprovementModal";
 import LoadingOverlay from "@/components/LoadingOverlay";
-import ManualImproveView from "@/components/ManualImproveView";
+import ManualResumeForm from "@/components/ManualResumeForm";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,7 +45,9 @@ import {
   Copy,
   ChevronDown,
   Calendar,
-  Lightbulb
+  Lightbulb,
+  AlertTriangle,
+  Edit2
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
@@ -128,6 +130,9 @@ export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isManualFlow, setIsManualFlow] = useState(false);
   const [isAILoading, setIsAILoading] = useState(false);
+  const [showIntermediateScreen, setShowIntermediateScreen] = useState(false);
+  const [forceEditMode, setForceEditMode] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function checkAuth() {
@@ -203,6 +208,7 @@ export default function DashboardPage() {
 
       let beforeScoreVal = 0;
       let afterScoreVal = 0;
+      let missingCount = 0;
 
       if (beforeRes.ok) {
         const scoreData = await beforeRes.json();
@@ -213,12 +219,30 @@ export default function DashboardPage() {
         const scoreData = await afterRes.json();
         setAfterScore(scoreData);
         afterScoreVal = scoreData.overall;
+        missingCount = scoreData.missingKeywords?.length || 0;
       }
 
       setRefreshKey((p) => p + 1);
-      setResultsTab("score");
-      setIsManualFlow(false);
-      toast.success(`🎉 Resume optimized! Score: ${beforeScoreVal} → ${afterScoreVal}`);
+
+      const isLowQuality = afterScoreVal < 70 || missingCount > 10;
+      if (isLowQuality) {
+        setShowIntermediateScreen(true);
+        setIsManualFlow(false);
+      } else {
+        setShowIntermediateScreen(false);
+        setResultsTab("score");
+        setIsManualFlow(false);
+        setForceEditMode(false);
+        // Scroll to top of page
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => {
+          resultsRef.current?.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }, 100);
+        toast.success(`🎉 Resume optimized! Score: ${beforeScoreVal} → ${afterScoreVal}`);
+      }
     } catch (err: any) {
       toast.error(err.message || "Something went wrong.");
       setOptimizeResult(null);
@@ -623,9 +647,79 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ── RESULTS WORKSPACE ───────────────────────────────────── */}
-        {isManualFlow ? (
-          <ManualImproveView
+        {showIntermediateScreen ? (
+          <div className="max-w-2xl mx-auto bg-[#0b0c1e] border border-white/5 rounded-2xl p-8 space-y-6 text-center shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="h-16 w-16 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center mx-auto text-amber-400">
+              <AlertTriangle className="h-8 w-8 animate-bounce" />
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">
+                ⚠️ Your score improved to {afterScore?.overall || 0}
+              </h2>
+              <p className="text-sm text-slate-400 font-medium">
+                but there's still room to improve!
+              </p>
+            </div>
+
+            <div className="bg-[#070814] border border-white/5 rounded-xl p-4 max-w-md mx-auto">
+              <span className="text-2xl font-black text-rose-400 block">
+                {afterScore?.missingKeywords?.length || 0}
+              </span>
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                Keywords still missing from your resume
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto">
+              You can manually add the missing keywords to instantly boost your ATS compatibility score, or proceed directly to your detailed report.
+            </p>
+
+            <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
+              <Button
+                onClick={() => {
+                  setShowIntermediateScreen(false);
+                  setResultsTab("optimized");
+                  setForceEditMode(true);
+                  // Scroll to top
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  setTimeout(() => {
+                    resultsRef.current?.scrollIntoView({ 
+                      behavior: 'smooth', 
+                      block: 'start' 
+                    });
+                  }, 100);
+                  toast.success("Edit mode enabled! ✏️ Add the missing keywords shown in the analysis.");
+                }}
+                className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs h-11 px-6 rounded-xl flex items-center gap-2"
+              >
+                <Edit2 className="h-4 w-4" />
+                ✏️ Manually add missing keywords
+              </Button>
+
+              <Button
+                onClick={() => {
+                  setShowIntermediateScreen(false);
+                  setResultsTab("score");
+                  setForceEditMode(false);
+                  // Scroll to top
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  setTimeout(() => {
+                    resultsRef.current?.scrollIntoView({ 
+                      behavior: 'smooth', 
+                      block: 'start' 
+                    });
+                  }, 100);
+                }}
+                variant="outline"
+                className="border-white/10 text-slate-300 hover:bg-white/5 font-bold text-xs h-11 px-6 rounded-xl bg-transparent"
+              >
+                ✅ I'm happy with this score
+              </Button>
+            </div>
+          </div>
+        ) : isManualFlow ? (
+          <ManualResumeForm
             resumeText={resumeText}
             jobDescription={jobDescription}
             beforeScore={beforeScore?.overall || 0}
@@ -634,9 +728,10 @@ export default function DashboardPage() {
             onSwitchToAI={(editedText) => {
               runAIAutoImprove(editedText);
             }}
+            onBackToEditor={() => setIsManualFlow(false)}
           />
         ) : hasResults && optimizeResult ? (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div ref={resultsRef} className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Top Tracker Banner Message */}
             {!trackerAdded && (
               <div className="bg-gradient-to-r from-cyan-950/20 via-[#0a0f1d] to-transparent border border-cyan-500/10 rounded-2xl p-4 flex items-center justify-between gap-4 select-none">
@@ -915,6 +1010,7 @@ export default function DashboardPage() {
                     originalText={resumeText}
                     resumeId={optimizeResult.resumeId}
                     jobDescription={jobDescription}
+                    defaultEditMode={forceEditMode}
                     onUpdateText={(newText) => {
                       setOptimizeResult((prev: any) => ({ ...prev, optimizedText: newText }));
                     }}

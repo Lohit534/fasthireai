@@ -3,183 +3,175 @@ import { Document, Page, Text, View, StyleSheet, renderToBuffer } from "@react-p
 import { logger } from "../logger";
 import { sanitizeResumeText } from "../ai/router";
 
-// Helper to strip markdown bold/italic tags
-function cleanMarkdown(s: string): string {
-  return s
-    .replace(/\*\*/g, "")
-    .replace(/\*/g, "")
-    .replace(/`/g, "")
+export function preprocessResumeText(text: string): string {
+  const sanitized = sanitizeResumeText(text);
+  return sanitized
+    // Force section headers to new lines
+    .replace(/(PROFESSIONAL SUMMARY|SUMMARY|EDUCATION|EXPERIENCE|PROJECTS|SKILLS|TECHNICAL SKILLS|CERTIFICATIONS|ACHIEVEMENTS|LANGUAGES|INTERESTS|VOLUNTEER|PUBLICATIONS|AWARDS)/gi, '\n\n$1\n')
+    // Split contact info by | onto same line but separated
+    .replace(/\|/g, ' | ')
+    // Force bullet points to new lines
+    .replace(/•/g, '\n•')
+    .replace(/·/g, '\n•')
+    // Split lines that have CAPS WORD immediately after lowercase
+    // e.g. "environment.EDUCATIONBTech" → split at CAPS
+    .replace(/([a-z\.\,\)])([A-Z]{2,})/g, '$1\n\n$2')
+    // Split when year pattern appears mid-sentence
+    .replace(/(\d{4})\s*([A-Z][a-z])/g, '$1\n$2')
+    // Remove multiple spaces
+    .replace(/  +/g, ' ')
+    // Remove more than 2 consecutive newlines
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
-interface PDFLineNode {
-  type: "name" | "contact" | "header" | "experience_title" | "experience_subtitle" | "bullet" | "body" | "spacer";
-  text: string;
-}
+export type ResumeBlock = 
+  | { type: 'name'; text: string }
+  | { type: 'contact'; text: string }
+  | { type: 'section'; text: string }
+  | { type: 'bullet'; text: string }
+  | { type: 'jobTitle'; text: string }
+  | { type: 'dateLocation'; text: string }
+  | { type: 'normal'; text: string }
+  | { type: 'spacer' }
 
-export function parseResumeToNodes(text: string): PDFLineNode[] {
-  const sanitized = sanitizeResumeText(text);
-  const rawLines = sanitized.split(/\r?\n/);
-  const nodes: PDFLineNode[] = [];
-  let nameFound = false;
+export function parseResumeIntoBlocks(raw: string): ResumeBlock[] {
+  const text = preprocessResumeText(raw);
+  const lines = text.split('\n');
+  const blocks: ResumeBlock[] = [];
+  let isFirstLine = true;
 
-  // Phone regex matching format
-  const phonePattern = /\b(?:\+?\d{1,3}[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/;
-
-  for (let i = 0; i < rawLines.length; i++) {
-    const line = rawLines[i].trim();
-
-    if (line === "") {
-      nodes.push({ type: "spacer", text: "" });
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) {
+      blocks.push({ type: 'spacer' });
       continue;
     }
 
-    // 1. Detect Name (First non-empty line)
-    if (!nameFound) {
-      nodes.push({ type: "name", text: cleanMarkdown(line) });
-      nameFound = true;
+    // First non-empty line = name
+    if (isFirstLine) {
+      blocks.push({ type: 'name', text: line });
+      isFirstLine = false;
       continue;
     }
 
-    // 2. Detect Contact
-    const containsAt = line.includes("@");
-    const containsPhone = phonePattern.test(line);
-    const containsPipe = line.includes("|");
-
-    if (containsAt || containsPhone || containsPipe) {
-      if (containsPipe) {
-        const parts = line.split("|").map(p => cleanMarkdown(p)).filter(Boolean);
-        nodes.push({ type: "contact", text: parts.join("  |  ") });
-      } else {
-        nodes.push({ type: "contact", text: cleanMarkdown(line) });
-      }
+    // Contact line — contains @ or phone or LinkedIn or GitHub
+    if (
+      line.includes('@') ||
+      /\+?\d[\d\s\-\(\)]{7,}/.test(line) ||
+      line.toLowerCase().includes('linkedin') ||
+      line.toLowerCase().includes('github') ||
+      (line.includes('|') && line.length < 120)
+    ) {
+      blocks.push({ type: 'contact', text: line });
       continue;
     }
 
-    // 3. Detect Section Header (ALL CAPS, length > 3, contains letters, no bullet markers)
-    const isBulletMarker = /^[•\-\*\–\u2022]/.test(line);
-    const hasLetters = /[A-Za-z]/.test(line);
-    const isAllCaps = line === line.toUpperCase() && line.length > 3 && hasLetters && !isBulletMarker;
-
+    // Section header — ALL CAPS, no punctuation, short
+    const isAllCaps = line === line.toUpperCase() && 
+      line.length > 2 && 
+      line.length < 50 &&
+      !/^\d/.test(line);
     if (isAllCaps) {
-      nodes.push({ type: "header", text: cleanMarkdown(line) });
+      blocks.push({ type: 'section', text: line });
       continue;
     }
 
-    // 4. Detect Bullet Point
-    if (isBulletMarker) {
-      const cleanBullet = cleanMarkdown(line.replace(/^[•\-\*\–\u2022\s]+/, ""));
-      nodes.push({ type: "bullet", text: cleanBullet });
+    // Bullet point
+    if (/^[•\-\*–]\s/.test(line)) {
+      blocks.push({ 
+        type: 'bullet', 
+        text: line.replace(/^[•\-\*–]\s*/, '').trim() 
+      });
       continue;
     }
 
-    // 5. Multi-line bullet continuation check
-    const lastNode = nodes[nodes.length - 1];
-    if (lastNode && lastNode.type === "bullet") {
-      lastNode.text += " " + cleanMarkdown(line);
+    // Date/location line — contains year range or "Present"
+    if (
+      /\d{4}\s*[–\-]\s*(\d{4}|Present|Current)/i.test(line) ||
+      /Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/i.test(line)
+    ) {
+      blocks.push({ type: 'dateLocation', text: line });
       continue;
     }
 
-    // 6. Experience Block Detection
-    if (line.includes("|")) {
-      const parts = line.split("|").map(p => cleanMarkdown(p)).filter(Boolean);
-      nodes.push({ type: "experience_title", text: parts.join(" | ") });
-      
-      let nextLineIndex = i + 1;
-      while (nextLineIndex < rawLines.length && rawLines[nextLineIndex].trim() === "") {
-        nextLineIndex++;
-      }
-      if (nextLineIndex < rawLines.length) {
-        const nextLine = rawLines[nextLineIndex].trim();
-        if (nextLine.includes("|") && !nextLine.includes("@") && !phonePattern.test(nextLine)) {
-          const subParts = nextLine.split("|").map(p => cleanMarkdown(p)).filter(Boolean);
-          nodes.push({ type: "experience_subtitle", text: subParts.join(" | ") });
-          i = nextLineIndex;
-          continue;
-        }
-      }
+    // Job title line — contains | between role and company
+    if (line.includes('|') && line.length < 100) {
+      blocks.push({ type: 'jobTitle', text: line });
       continue;
     }
 
-    // Default fallback: render as normal text paragraph
-    nodes.push({ type: "body", text: cleanMarkdown(line) });
+    // Everything else = normal text
+    blocks.push({ type: 'normal', text: line });
   }
 
-  return nodes;
+  return blocks;
 }
 
-// React PDF StyleSheet meeting exact specifications
 const styles = StyleSheet.create({
   page: {
+    fontFamily: 'Helvetica',
+    fontSize: 10,
     paddingTop: 36,
-    paddingBottom: 36,
-    paddingLeft: 40,
-    paddingRight: 40,
-    fontFamily: "Helvetica",
-    color: "#000000",
+    paddingBottom: 48,
+    paddingHorizontal: 42,
+    color: '#000000',
+    lineHeight: 1.4,
   },
   name: {
-    fontSize: 20,
-    fontFamily: "Helvetica-Bold",
-    color: "#000000",
-    textAlign: "center",
+    fontSize: 18,
+    fontFamily: 'Helvetica-Bold',
+    textAlign: 'center',
     marginBottom: 4,
-    lineHeight: 1.4,
   },
   contact: {
     fontSize: 9.5,
-    color: "#444444",
-    textAlign: "center",
+    textAlign: 'center',
+    color: '#444444',
     marginBottom: 12,
-    lineHeight: 1.4,
   },
-  header: {
-    fontSize: 11,
-    fontFamily: "Helvetica-Bold",
-    textTransform: "uppercase",
+  section: {
+    fontSize: 10.5,
+    fontFamily: 'Helvetica-Bold',
+    textTransform: 'uppercase',
     borderBottomWidth: 0.75,
-    borderBottomColor: "#000000",
+    borderBottomColor: '#000000',
+    borderBottomStyle: 'solid',
+    paddingBottom: 2,
     marginTop: 12,
     marginBottom: 5,
-    paddingBottom: 2,
-    lineHeight: 1.4,
   },
-  experienceTitle: {
+  jobTitle: {
     fontSize: 10.5,
-    fontFamily: "Helvetica-Bold",
-    color: "#000000",
+    fontFamily: 'Helvetica-Bold',
     marginBottom: 1,
-    lineHeight: 1.4,
   },
-  experienceSubtitle: {
-    fontSize: 10,
-    color: "#555555",
-    marginBottom: 3,
-    lineHeight: 1.4,
+  dateLocation: {
+    fontSize: 9.5,
+    color: '#555555',
+    marginBottom: 4,
   },
   bulletRow: {
-    flexDirection: "row",
-    marginBottom: 2.5,
-    paddingLeft: 12,
+    flexDirection: 'row',
+    marginBottom: 3,
+    paddingLeft: 8,
   },
-  bulletPrefix: {
-    width: 10,
+  bulletDot: {
+    width: 12,
     fontSize: 10,
-    lineHeight: 1.4,
   },
   bulletText: {
     flex: 1,
     fontSize: 10,
     lineHeight: 1.4,
   },
-  bodyText: {
+  normal: {
     fontSize: 10,
-    color: "#000000",
     marginBottom: 3,
     lineHeight: 1.4,
   },
   spacer: {
-    height: 4,
+    marginBottom: 4,
   },
   watermark: {
     position: "absolute",
@@ -201,7 +193,7 @@ interface ResumePDFProps {
 }
 
 const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text, watermarked }) => {
-  const nodes = parseResumeToNodes(text);
+  const blocks = parseResumeIntoBlocks(text);
 
   return (
     <Document>
@@ -209,53 +201,57 @@ const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text, watermarked }) => {
         {watermarked && (
           <Text style={styles.watermark}>FASTHIRE AI - FREE TIER WATERMARK</Text>
         )}
-        {nodes.map((node, idx) => {
-          switch (node.type) {
-            case "name":
+        {blocks.map((block, i) => {
+          switch (block.type) {
+            case 'name':
               return (
-                <Text key={idx} style={styles.name}>
-                  {node.text}
+                <Text key={i} style={styles.name}>
+                  {block.text}
                 </Text>
               );
-            case "contact":
+            case 'contact':
               return (
-                <Text key={idx} style={styles.contact}>
-                  {node.text}
+                <Text key={i} style={styles.contact}>
+                  {block.text}
                 </Text>
               );
-            case "header":
+            case 'section':
               return (
-                <Text key={idx} style={styles.header}>
-                  {node.text}
+                <Text key={i} style={styles.section}>
+                  {block.text}
                 </Text>
               );
-            case "experience_title":
+            case 'jobTitle':
               return (
-                <Text key={idx} style={styles.experienceTitle}>
-                  {node.text}
+                <Text key={i} style={styles.jobTitle}>
+                  {block.text}
                 </Text>
               );
-            case "experience_subtitle":
+            case 'dateLocation':
               return (
-                <Text key={idx} style={styles.experienceSubtitle}>
-                  {node.text}
+                <Text key={i} style={styles.dateLocation}>
+                  {block.text}
                 </Text>
               );
-            case "bullet":
+            case 'bullet':
               return (
-                <View key={idx} style={styles.bulletRow} wrap={false}>
-                  <Text style={styles.bulletPrefix}>•</Text>
-                  <Text style={styles.bulletText}>{node.text}</Text>
+                <View key={i} style={styles.bulletRow} wrap={false}>
+                  <Text style={styles.bulletDot}>•</Text>
+                  <Text style={styles.bulletText}>
+                    {block.text}
+                  </Text>
                 </View>
               );
-            case "spacer":
-              return <View key={idx} style={styles.spacer} />;
-            default:
+            case 'normal':
               return (
-                <Text key={idx} style={styles.bodyText}>
-                  {node.text}
+                <Text key={i} style={styles.normal}>
+                  {block.text}
                 </Text>
               );
+            case 'spacer':
+              return <View key={i} style={styles.spacer} />;
+            default:
+              return null;
           }
         })}
       </Page>
