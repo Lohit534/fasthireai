@@ -188,22 +188,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
           <div className="flex items-center gap-4">
             {user ? (
               <>
-                {/* Credit usage pill widget */}
-                <div className="hidden sm:flex items-center gap-2.5 bg-[#15172b]/50 border border-white/5 px-3 py-1.5 rounded-full select-none text-[11px] font-semibold text-slate-400">
-                  {credits?.isOwner ? (
-                    <span className="text-violet-400 font-extrabold uppercase tracking-wide">Owner Account &bull; Unlimited</span>
-                  ) : (
-                    <>
-                      <div className="h-2 w-14 bg-slate-800 rounded-full overflow-hidden border border-white/5">
-                        <div 
-                          className="h-full bg-gradient-to-r from-violet-500 to-indigo-500" 
-                          style={{ width: `${usedPercent}%` }}
-                        />
-                      </div>
-                      <span>{usedPercent}% used - resets {daysLeft}d left</span>
-                    </>
-                  )}
-                </div>
+
 
                 {/* Upgrade Button */}
                 <Link href="/dashboard/pricing" className="hidden sm:block">

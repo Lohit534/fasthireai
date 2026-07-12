@@ -213,24 +213,10 @@ export async function scoreResume(
     else if (score.keywordMatch > 70) score.overall += 5;
     score.overall = Math.max(0, Math.min(100, score.overall));
 
-    if (scoreBefore !== undefined && scoreBefore < 50) {
-      if (score.overall < 72) {
-        score.overall = 72;
-        if (score.semanticMatch < 72) score.semanticMatch = 72;
-        if (score.keywordMatch < 70) score.keywordMatch = 70;
-      }
-    }
     return score;
   } catch (error) {
     logger.warn("Python Scorer API failed or timed out. Falling back to local score logic.", error);
     const score = localScore(resumeText, jobDescription);
-    if (scoreBefore !== undefined && scoreBefore < 50) {
-      if (score.overall < 72) {
-        score.overall = 72;
-        if (score.semanticMatch < 72) score.semanticMatch = 72;
-        if (score.keywordMatch < 70) score.keywordMatch = 70;
-      }
-    }
     return score;
   }
 }

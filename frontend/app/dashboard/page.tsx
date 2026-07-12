@@ -7,7 +7,6 @@ import { useResumeStore } from "@/store/useResumeStore";
 import Navbar from "@/components/Navbar";
 import ResumeInput from "@/components/ResumeInput";
 import JobDescriptionInput from "@/components/JobDescriptionInput";
-import ScoreCard from "@/components/ScoreCard";
 import KeywordBadges from "@/components/KeywordBadges";
 import ResumeViewer from "@/components/ResumeViewer";
 import BulletImprover from "@/components/BulletImprover";
@@ -30,17 +29,48 @@ import {
   ArrowRight,
   Lock,
   GraduationCap,
-  Sparkle,
   Briefcase,
   X,
   ChevronDown,
-  AlertTriangle,
   ChevronRight,
   Shield
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
 import UnifiedAdminDashboard from "./admin/page";
+
+/* ─── helpers ─────────────────────────────────────── */
+function scoreColor(n: number) {
+  if (n >= 75) return { ring: "#22c55e", bg: "rgba(34,197,94,0.08)", text: "#22c55e", border: "rgba(34,197,94,0.2)" };
+  if (n >= 50) return { ring: "#f59e0b", bg: "rgba(245,158,11,0.08)", text: "#f59e0b", border: "rgba(245,158,11,0.2)" };
+  return { ring: "#ef4444", bg: "rgba(239,68,68,0.08)", text: "#ef4444", border: "rgba(239,68,68,0.2)" };
+}
+
+function CircleGauge({ value, label, size = 100 }: { value: number; label: string; size?: number }) {
+  const { ring, bg, text } = scoreColor(value);
+  const r = (size - 12) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (value / 100) * circ;
+
+  return (
+    <div className="flex flex-col items-center gap-2 select-none">
+      <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="-rotate-90 absolute inset-0">
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth={6} />
+          <circle
+            cx={size / 2} cy={size / 2} r={r}
+            fill="none" stroke={ring} strokeWidth={6}
+            strokeDasharray={circ} strokeDashoffset={offset}
+            strokeLinecap="round"
+            className="transition-all duration-1000 ease-out"
+          />
+        </svg>
+        <span className="relative text-2xl font-black tracking-tight" style={{ color: text }}>{value}</span>
+      </div>
+      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{label}</span>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -215,13 +245,6 @@ export default function DashboardPage() {
     } catch {}
   };
 
-  const handleReScoreAfter = async (newText: string) => {
-    try {
-      const res = await fetch("/api/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeText: newText, jobDescription }) });
-      if (res.ok) setAfterScore(await res.json());
-    } catch {}
-  };
-
   const handleAddToTracker = () => {
     if (!user || !optimizeResult) return;
     const currentJobsString = localStorage.getItem(`fastHire_jobs_${user.id}`) || "[]";
@@ -352,6 +375,7 @@ export default function DashboardPage() {
   }
 
   const hasResults = !optimizing && (optimizeResult || beforeScore);
+  const delta = afterScore && beforeScore ? afterScore.overall - beforeScore.overall : 0;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#040d1a] text-slate-100 font-sans">
@@ -519,10 +543,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <h2 className="text-lg font-black text-white tracking-tight">
-                    Score: {beforeScore?.overall || 0} &rarr; {afterScore?.overall || 0} 
-                    <span className="text-emerald-400 ml-2 font-black">
-                      (+{(afterScore?.overall ?? 0) - (beforeScore?.overall ?? 0)} pts) 🎉
-                    </span>
+                    ATS Optimization Complete
                   </h2>
                   <p className="text-xs text-slate-400 font-medium">Your resume has been optimized with target keywords and metrics.</p>
                 </div>
@@ -541,21 +562,217 @@ export default function DashboardPage() {
             {/* Top Row: Edit & review workspace split */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
-              {/* Left Pane: Current raw editor */}
-              <div className="lg:col-span-6 space-y-4">
-                <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider select-none">Candidate Current Text</h4>
-                <ResumeInput
-                  value={resumeText}
-                  onChange={(newVal) => {
-                    setResumeText(newVal);
-                    handleReScoreBefore(newVal);
-                  }}
-                  disabled={optimizing}
-                />
+              {/* Left Column: ATS Score circle gauges and keywords */}
+              <div className="lg:col-span-5 space-y-6">
+                
+                {/* Score circular gauges (like in History DetailView) */}
+                <Card className="border-white/5 bg-[#0e0f21]/50 shadow-xl rounded-2xl overflow-hidden">
+                  <CardContent className="p-6 space-y-6">
+                    <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2 select-none">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      ATS Match Score Comparison
+                    </h3>
+
+                    <div className="flex items-center justify-around gap-4 bg-[#070814]/40 border border-white/5 rounded-2xl p-5">
+                      <CircleGauge value={beforeScore?.overall || 0} label="Original" size={80} />
+                      <div className="flex flex-col items-center gap-1 shrink-0 select-none">
+                        <div className="h-8 w-8 rounded-full bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400">
+                          <ArrowRight className="h-4 w-4 animate-pulse" />
+                        </div>
+                        <span className="text-[10px] font-black text-emerald-400">+{delta} pts</span>
+                      </div>
+                      <CircleGauge value={afterScore?.overall || 0} label="Optimized" size={80} />
+                    </div>
+
+                    <p className="text-[10px] text-slate-500 leading-relaxed font-semibold bg-white/2 p-2.5 rounded-lg border border-white/5 text-center select-none">
+                      Industry Standard ATS Scorer Rubric. Overlap analysis shows your keyword matching has been successfully enhanced.
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Keywords Badges */}
+                {afterScore && (
+                  <div className="bg-[#0e0f21]/50 border border-white/5 rounded-2xl p-5 shadow-xl select-none">
+                    <KeywordBadges
+                      added={optimizeResult?.keywordsAdded || []}
+                      missing={afterScore.missingKeywords}
+                    />
+                  </div>
+                )}
+
+                {/* Summary of Changes Done */}
+                {optimizeResult?.summary && (
+                  <Card className="border-white/5 bg-[#0e0f21]/50 shadow-xl rounded-2xl overflow-hidden select-none">
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4.5 w-4.5 text-violet-400" />
+                        <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">AI Optimization Summary</h3>
+                      </div>
+                      <div className="bg-[#070814]/40 border border-white/5 p-4 rounded-xl">
+                        <p className="text-xs text-slate-300 leading-relaxed font-semibold">
+                          {optimizeResult.summary}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Bottom Accordions */}
+                <div className="space-y-3 select-none">
+                  
+                  {/* Accordion 1: Skills Learning Roadmap (PRO) */}
+                  <div className="border border-white/5 bg-[#071525]/40 rounded-2xl overflow-hidden transition-all duration-300">
+                    <button
+                      onClick={() => setShowRoadmapAccordion(!showRoadmapAccordion)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-white/2 transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-xl bg-cyan-600/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                          <GraduationCap className="h-4.5 w-4.5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-xs font-bold text-white">Skills Learning Roadmap</h4>
+                            <Badge className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold border-cyan-500/20">PRO</Badge>
+                          </div>
+                          <p className="text-[10px] text-slate-500 mt-0.5">Generate a step-by-step master plan to learn target job keywords.</p>
+                        </div>
+                      </div>
+                      <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${showRoadmapAccordion ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {showRoadmapAccordion && (
+                      <div className="p-5 border-t border-white/5 bg-[#050e18]/40 space-y-4">
+                        {userPlan === "free" ? (
+                          <div className="text-center py-6 max-w-md mx-auto space-y-3">
+                            <Lock className="h-8 w-8 text-cyan-400 mx-auto" />
+                            <h5 className="text-xs font-bold text-white">Pro Access Required</h5>
+                            <p className="text-[10px] text-slate-500 leading-relaxed">Upgrade to our premium plan to unlock step-by-step custom learning roadmaps for every missing keyword.</p>
+                            <Link href="/dashboard/pricing" className="inline-block pt-1">
+                              <Button className="h-8 text-[10px] font-bold bg-cyan-600 hover:bg-cyan-500">Upgrade to Pro</Button>
+                            </Link>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Select a keyword to build roadmap:</span>
+                              <div className="flex flex-wrap gap-2">
+                                {afterScore?.missingKeywords && afterScore.missingKeywords.length > 0 ? (
+                                  afterScore.missingKeywords.slice(0, 3).map((skill: string) => (
+                                    <button
+                                      key={skill}
+                                      onClick={() => handleGenerateRoadmap(skill)}
+                                      className={`text-[10px] font-semibold py-1.5 px-3 rounded-xl border transition-all ${
+                                        selectedRoadmapSkill === skill
+                                          ? "bg-cyan-500/15 border-cyan-500/40 text-cyan-400"
+                                          : "bg-[#0b1c30] border-white/5 text-slate-400 hover:text-white"
+                                      }`}
+                                    >
+                                      {skill}
+                                    </button>
+                                  ))
+                                ) : (
+                                  <span className="text-[10px] text-slate-500 italic">No missing keywords found to build a roadmap.</span>
+                                )}
+                              </div>
+                            </div>
+
+                            {roadmapLoading && (
+                              <div className="flex items-center gap-2 text-[10px] text-slate-400 py-4 justify-center bg-[#050e18] border border-white/5 rounded-xl">
+                                <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+                                <span>Building custom skills roadmap...</span>
+                              </div>
+                            )}
+
+                            {roadmapContent && (
+                              <div className="bg-[#050e18] border border-white/5 p-4 rounded-xl text-xs text-slate-300 leading-relaxed space-y-2 select-text font-sans">
+                                <pre className="whitespace-pre-wrap font-sans select-text">{roadmapContent}</pre>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Accordion 2: Cover Letter Generator (PRO) */}
+                  <div className="border border-white/5 bg-[#071525]/40 rounded-2xl overflow-hidden transition-all duration-300">
+                    <button
+                      onClick={() => setShowCoverLetterAccordion(!showCoverLetterAccordion)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-white/2 transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-xl bg-cyan-600/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                          <FileText className="h-4.5 w-4.5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-xs font-bold text-white">Tailored Cover Letter</h4>
+                            <Badge className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold border-cyan-500/20">PRO</Badge>
+                          </div>
+                          <p className="text-[10px] text-slate-500 mt-0.5">Generate a customized cover letter mapped to the target job description.</p>
+                        </div>
+                      </div>
+                      <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${showCoverLetterAccordion ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {showCoverLetterAccordion && (
+                      <div className="p-5 border-t border-white/5 bg-[#050e18]/40 space-y-4">
+                        {userPlan === "free" ? (
+                          <div className="text-center py-6 max-w-md mx-auto space-y-3">
+                            <Lock className="h-8 w-8 text-cyan-400 mx-auto" />
+                            <h5 className="text-xs font-bold text-white">Pro Access Required</h5>
+                            <p className="text-[10px] text-slate-500 leading-relaxed">Upgrade to our premium plan to unlock automated custom cover letters matched perfectly to your target role.</p>
+                            <Link href="/dashboard/pricing" className="inline-block pt-1">
+                              <Button className="h-8 text-[10px] font-bold bg-cyan-600 hover:bg-cyan-500">Upgrade to Pro</Button>
+                            </Link>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {!coverLetterGenerated && !generatingLetter && (
+                              <Button
+                                onClick={handleGenerateCoverLetter}
+                                className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs h-9 rounded-lg"
+                              >
+                                Generate Cover Letter
+                              </Button>
+                            )}
+
+                            {generatingLetter && (
+                              <div className="flex items-center gap-2 text-[10px] text-slate-400 py-4 justify-center bg-[#050e18] border border-white/5 rounded-xl">
+                                <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+                                <span>Drafting tailored cover letter...</span>
+                              </div>
+                            )}
+
+                            {coverLetterGenerated && (
+                              <div className="space-y-3 select-text">
+                                <div className="bg-[#050e18] border border-white/5 p-4 rounded-xl text-xs text-slate-300 leading-relaxed space-y-2 select-text font-serif">
+                                  <pre className="whitespace-pre-wrap font-serif select-text">{coverLetterGenerated}</pre>
+                                </div>
+                                <Button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(coverLetterGenerated);
+                                    toast.success("Cover letter copied to clipboard!");
+                                  }}
+                                  className="bg-[#0b1c30] border border-white/5 text-slate-300 hover:text-white hover:bg-white/5 text-[10px] h-8 rounded-lg"
+                               >
+                                 Copy Cover Letter
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+
               </div>
 
-              {/* Right Pane: AI Optimized Text directly */}
-              <div className="lg:col-span-6 space-y-4">
+              {/* Right Column: AI Optimized styled Preview */}
+              <div className="lg:col-span-7 space-y-4">
                 <ResumeViewer
                   text={optimizeResult.optimizedText}
                   originalText={resumeText}
@@ -566,24 +783,7 @@ export default function DashboardPage() {
 
             </div>
 
-            {/* Score Comparisons and Keyword Badges */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch pt-4 border-t border-white/5 select-none">
-              <div>
-                <ScoreCard before={beforeScore} after={afterScore} loading={optimizing} />
-              </div>
-              <div>
-                {afterScore && (
-                  <div className="h-full bg-slate-950/40 border border-white/5 rounded-2xl p-5">
-                    <KeywordBadges
-                      added={optimizeResult?.keywordsAdded || []}
-                      missing={afterScore.missingKeywords}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Interactive Bullet Point Reviewer / Improver */}
+            {/* Interactive Bullet Point Reviewer / Improver (Below Columns) */}
             <Card className="border-white/5 bg-[#0e0f21]/40 shadow-xl rounded-2xl overflow-hidden mt-6">
               <CardContent className="p-6 space-y-4 text-slate-100">
                 <div className="flex items-center justify-between select-none">
@@ -611,174 +811,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Summary of Changes Done */}
-            {optimizeResult?.summary && (
-              <Card className="border-white/5 bg-[#0e0f21]/40 shadow-xl rounded-2xl overflow-hidden mt-6 select-none">
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-violet-400" />
-                    <h3 className="text-sm font-extrabold text-white">Summary of AI Optimizations Done</h3>
-                  </div>
-                  <div className="bg-[#0b0c1e] border border-white/5 p-5 rounded-xl">
-                    <p className="text-xs text-slate-300 leading-relaxed font-semibold">
-                      {optimizeResult.summary}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Bottom Accordions */}
-            <div className="space-y-3 select-none">
-              
-              {/* Accordion 1: Skills Learning Roadmap (PRO) */}
-              <div className="border border-white/5 bg-[#071525]/40 rounded-2xl overflow-hidden transition-all duration-300">
-                <button
-                  onClick={() => setShowRoadmapAccordion(!showRoadmapAccordion)}
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-white/2 transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-xl bg-cyan-600/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-                      <GraduationCap className="h-4.5 w-4.5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-xs font-bold text-white">Skills Learning Roadmap</h4>
-                        <Badge className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold border-cyan-500/20">PRO</Badge>
-                      </div>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Generate a step-by-step master plan to learn target job keywords.</p>
-                    </div>
-                  </div>
-                  <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${showRoadmapAccordion ? "rotate-180" : ""}`} />
-                </button>
-
-                {showRoadmapAccordion && (
-                  <div className="p-5 border-t border-white/5 bg-[#050e18]/40 space-y-4">
-                    {userPlan === "free" ? (
-                      <div className="text-center py-6 max-w-md mx-auto space-y-3">
-                        <Lock className="h-8 w-8 text-cyan-400 mx-auto" />
-                        <h5 className="text-xs font-bold text-white">Pro Access Required</h5>
-                        <p className="text-[10px] text-slate-500 leading-relaxed">Upgrade to our premium plan to unlock step-by-step custom learning roadmaps for every missing keyword.</p>
-                        <Link href="/dashboard/pricing" className="inline-block pt-1">
-                          <Button className="h-8 text-[10px] font-bold bg-cyan-600 hover:bg-cyan-500">Upgrade to Pro</Button>
-                        </Link>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Select a keyword to build roadmap:</span>
-                          <div className="flex flex-wrap gap-2">
-                            {afterScore?.missingKeywords && afterScore.missingKeywords.length > 0 ? (
-                              afterScore.missingKeywords.slice(0, 3).map((skill: string) => (
-                                <button
-                                  key={skill}
-                                  onClick={() => handleGenerateRoadmap(skill)}
-                                  className={`text-[10px] font-semibold py-1.5 px-3 rounded-xl border transition-all ${
-                                    selectedRoadmapSkill === skill
-                                      ? "bg-cyan-500/15 border-cyan-500/40 text-cyan-400"
-                                      : "bg-[#0b1c30] border-white/5 text-slate-400 hover:text-white"
-                                  }`}
-                                >
-                                  {skill}
-                                </button>
-                              ))
-                            ) : (
-                              <span className="text-[10px] text-slate-500 italic">No missing keywords found to build a roadmap.</span>
-                            )}
-                          </div>
-                        </div>
-
-                        {roadmapLoading && (
-                          <div className="flex items-center gap-2 text-[10px] text-slate-400 py-4 justify-center bg-[#050e18] border border-white/5 rounded-xl">
-                            <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
-                            <span>Building custom skills roadmap...</span>
-                          </div>
-                        )}
-
-                        {roadmapContent && (
-                          <div className="bg-[#050e18] border border-white/5 p-4 rounded-xl text-xs text-slate-300 leading-relaxed space-y-2 select-text font-sans">
-                            <pre className="whitespace-pre-wrap font-sans select-text">{roadmapContent}</pre>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Accordion 2: Cover Letter Generator (PRO) */}
-              <div className="border border-white/5 bg-[#071525]/40 rounded-2xl overflow-hidden transition-all duration-300">
-                <button
-                  onClick={() => setShowCoverLetterAccordion(!showCoverLetterAccordion)}
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-white/2 transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-xl bg-cyan-600/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-                      <FileText className="h-4.5 w-4.5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-xs font-bold text-white">Tailored Cover Letter</h4>
-                        <Badge className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold border-cyan-500/20">PRO</Badge>
-                      </div>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Generate a customized cover letter mapped to the target job description.</p>
-                    </div>
-                  </div>
-                  <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${showCoverLetterAccordion ? "rotate-180" : ""}`} />
-                </button>
-
-                {showCoverLetterAccordion && (
-                  <div className="p-5 border-t border-white/5 bg-[#050e18]/40 space-y-4">
-                    {userPlan === "free" ? (
-                      <div className="text-center py-6 max-w-md mx-auto space-y-3">
-                        <Lock className="h-8 w-8 text-cyan-400 mx-auto" />
-                        <h5 className="text-xs font-bold text-white">Pro Access Required</h5>
-                        <p className="text-[10px] text-slate-500 leading-relaxed">Upgrade to our premium plan to unlock automated custom cover letters matched perfectly to your target role.</p>
-                        <Link href="/dashboard/pricing" className="inline-block pt-1">
-                          <Button className="h-8 text-[10px] font-bold bg-cyan-600 hover:bg-cyan-500">Upgrade to Pro</Button>
-                        </Link>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {!coverLetterGenerated && !generatingLetter && (
-                          <Button
-                            onClick={handleGenerateCoverLetter}
-                            className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs h-9 rounded-lg"
-                          >
-                            Generate Cover Letter
-                          </Button>
-                        )}
-
-                        {generatingLetter && (
-                          <div className="flex items-center gap-2 text-[10px] text-slate-400 py-4 justify-center bg-[#050e18] border border-white/5 rounded-xl">
-                            <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
-                            <span>Drafting tailored cover letter...</span>
-                          </div>
-                        )}
-
-                        {coverLetterGenerated && (
-                          <div className="space-y-3 select-text">
-                            <div className="bg-[#050e18] border border-white/5 p-4 rounded-xl text-xs text-slate-300 leading-relaxed space-y-2 select-text font-serif">
-                              <pre className="whitespace-pre-wrap font-serif select-text">{coverLetterGenerated}</pre>
-                            </div>
-                            <Button
-                              onClick={() => {
-                                navigator.clipboard.writeText(coverLetterGenerated);
-                                toast.success("Cover letter copied to clipboard!");
-                              }}
-                              className="bg-[#0b1c30] border border-white/5 text-slate-300 hover:text-white hover:bg-white/5 text-[10px] h-8 rounded-lg"
-                            >
-                              Copy Cover Letter
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-            </div>
           </div>
         ) : (
           

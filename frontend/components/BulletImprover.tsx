@@ -40,7 +40,7 @@ export default function BulletImprover({ resumeText, jobDescription, onChange }:
 
   // 1. Parse text to extract bullet lines
   const lines = resumeText.split(/\r?\n/);
-  
+
   // Find index of lines that look like bullet points
   const bulletItems = lines
     .map((line, index) => {
@@ -55,7 +55,7 @@ export default function BulletImprover({ resumeText, jobDescription, onChange }:
   const checkBullet = (text: string) => {
     // Clean bullet symbols for analysis
     const cleanText = text.replace(/^\s*([-*•+]|(\d+\.))\s+/, "");
-    
+
     // Check Action Verbs
     const verbs = extractActionVerbs(cleanText);
     const hasVerb = verbs.length > 0;
@@ -86,7 +86,7 @@ export default function BulletImprover({ resumeText, jobDescription, onChange }:
             isFree = false;
           }
         }
-        
+
         if (isFree) {
           toast.error("Auto-Improve is a Premium Pro/Pro Max feature. Redirecting to upgrades...");
           setTimeout(() => {
@@ -100,7 +100,7 @@ export default function BulletImprover({ resumeText, jobDescription, onChange }:
     }
 
     const { cleanText } = checkBullet(rawLine);
-    
+
     setLoadingMap((prev) => ({ ...prev, [bulletIdx]: true }));
     try {
       const response = await fetch("/api/improve-bullet", {
@@ -132,12 +132,12 @@ export default function BulletImprover({ resumeText, jobDescription, onChange }:
     const markerMatch = rawLine.match(/^(\s*([-*•+]|(\d+\.))\s*)/);
     const marker = markerMatch ? markerMatch[1] : "- ";
     const cleanNewBullet = improvedText.replace(/^\s*([-*•+]|(\d+\.))\s*/, "");
-    
+
     const nextLines = [...lines];
     nextLines[bulletIdx] = `${marker}${cleanNewBullet}`;
-    
+
     onChange(nextLines.join("\n"));
-    
+
     // Clear state
     setImprovements((prev) => {
       const next = { ...prev };
@@ -218,7 +218,7 @@ export default function BulletImprover({ resumeText, jobDescription, onChange }:
           return (
             <Card key={index} className="border-gray-200 bg-white hover:shadow-md transition-all rounded-2xl overflow-hidden">
               <CardContent className="p-5 space-y-4">
-                
+
                 {/* Bullet Display */}
                 <div className="flex items-start gap-3">
                   <div className="mt-1 font-bold text-indigo-500 shrink-0 select-none">•</div>
@@ -229,7 +229,7 @@ export default function BulletImprover({ resumeText, jobDescription, onChange }:
 
                 {/* Score indicators & Action items */}
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                  
+
                   {/* Score badges */}
                   <div className="flex items-center gap-2">
                     {hasVerb ? (
@@ -273,7 +273,7 @@ export default function BulletImprover({ resumeText, jobDescription, onChange }:
                       ) : (
                         <>
                           <Sparkles className="h-3 w-3 mr-1.5" />
-                          ΓÜí Auto-Improve
+                          Auto-Improve
                         </>
                       )}
                     </Button>
