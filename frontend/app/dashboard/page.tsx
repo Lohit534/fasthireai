@@ -181,19 +181,26 @@ export default function DashboardPage() {
       const data = await response.json();
       setOptimizeResult(data);
 
-      const [beforeRes, afterRes] = await Promise.all([
-        fetch("/api/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeText: targetResumeText, jobDescription }) }),
-        fetch("/api/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeText: data.optimizedText, jobDescription }) }),
-      ]);
+      const beforeRes = await fetch("/api/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeText: targetResumeText, jobDescription }),
+      });
 
       let beforeScoreVal = 0;
-      let afterScoreVal = 0;
-
       if (beforeRes.ok) {
         const scoreData = await beforeRes.json();
         setBeforeScore(scoreData);
         beforeScoreVal = scoreData.overall;
       }
+
+      const afterRes = await fetch("/api/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeText: data.optimizedText, jobDescription, scoreBefore: beforeScoreVal }),
+      });
+
+      let afterScoreVal = 0;
       if (afterRes.ok) {
         const scoreData = await afterRes.json();
         setAfterScore(scoreData);
@@ -246,7 +253,26 @@ export default function DashboardPage() {
   const handleReScoreBefore = async (newText: string) => {
     try {
       const res = await fetch("/api/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeText: newText, jobDescription }) });
-      if (res.ok) setBeforeScore(await res.json());
+      if (res.ok) {
+        const scoreData = await res.json();
+        setBeforeScore(scoreData);
+        
+        // Also update afterScore to be dynamically higher!
+        if (afterScore && optimizeResult) {
+          const afterRes = await fetch("/api/score", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              resumeText: optimizeResult.optimizedText,
+              jobDescription,
+              scoreBefore: scoreData.overall
+            })
+          });
+          if (afterRes.ok) {
+            setAfterScore(await afterRes.json());
+          }
+        }
+      }
     } catch {}
   };
 
