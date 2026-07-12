@@ -41,6 +41,12 @@ export function parseResumeIntoBlocks(raw: string): ResumeBlock[] {
   const blocks: ResumeBlock[] = [];
   let isFirstLine = true;
 
+  const SECTION_KEYWORDS = [
+    "professional summary", "summary", "education", "experience", "work experience",
+    "projects", "skills", "technical skills", "certifications", "achievements",
+    "languages", "interests", "volunteer", "publications", "awards", "internship"
+  ];
+
   for (const rawLine of lines) {
     const line = rawLine.trim();
     if (!line) {
@@ -61,18 +67,17 @@ export function parseResumeIntoBlocks(raw: string): ResumeBlock[] {
       /\+?\d[\d\s\-\(\)]{7,}/.test(line) ||
       line.toLowerCase().includes('linkedin') ||
       line.toLowerCase().includes('github') ||
-      (line.includes('|') && line.length < 120)
+      (line.includes('|') && line.length < 120 && (line.toLowerCase().includes('india') || line.toLowerCase().includes('usa') || line.toLowerCase().includes('http')))
     ) {
       blocks.push({ type: 'contact', text: line });
       continue;
     }
 
-    // Section header — ALL CAPS, no punctuation, short
-    const isAllCaps = line === line.toUpperCase() && 
-      line.length > 2 && 
-      line.length < 50 &&
-      !/^\d/.test(line);
-    if (isAllCaps) {
+    // Section header — Title Case or ALL CAPS matching known sections
+    const isSectionHeader = SECTION_KEYWORDS.includes(line.toLowerCase()) ||
+      (line === line.toUpperCase() && line.length > 2 && line.length < 50 && !/^\d/.test(line));
+
+    if (isSectionHeader) {
       blocks.push({ type: 'section', text: line });
       continue;
     }
@@ -110,17 +115,17 @@ export function parseResumeIntoBlocks(raw: string): ResumeBlock[] {
 
 const styles = StyleSheet.create({
   page: {
-    fontFamily: 'Helvetica',
+    fontFamily: 'Times-Roman',
     fontSize: 10,
     paddingTop: 36,
-    paddingBottom: 48,
-    paddingHorizontal: 42,
+    paddingBottom: 36,
+    paddingHorizontal: 40,
     color: '#000000',
-    lineHeight: 1.4,
+    lineHeight: 1.3,
   },
   name: {
     fontSize: 18,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Times-Bold',
     textAlign: 'center',
     marginBottom: 4,
   },
@@ -128,47 +133,49 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     textAlign: 'center',
     color: '#444444',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   section: {
-    fontSize: 10.5,
-    fontFamily: 'Helvetica-Bold',
-    textTransform: 'uppercase',
-    borderBottomWidth: 0.75,
+    fontSize: 12,
+    fontFamily: 'Times-Bold',
+    borderBottomWidth: 0.5,
     borderBottomColor: '#000000',
     borderBottomStyle: 'solid',
     paddingBottom: 2,
-    marginTop: 12,
-    marginBottom: 5,
+    marginTop: 10,
+    marginBottom: 4,
   },
   jobTitle: {
     fontSize: 10.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Times-Bold',
     marginBottom: 1,
   },
   dateLocation: {
     fontSize: 9.5,
-    color: '#555555',
+    color: '#333333',
     marginBottom: 4,
   },
   bulletRow: {
     flexDirection: 'row',
-    marginBottom: 3,
+    marginBottom: 2,
     paddingLeft: 8,
   },
   bulletDot: {
     width: 12,
     fontSize: 10,
+    fontFamily: 'Times-Roman',
   },
   bulletText: {
     flex: 1,
     fontSize: 10,
-    lineHeight: 1.4,
+    lineHeight: 1.3,
+    fontFamily: 'Times-Roman',
   },
   normal: {
     fontSize: 10,
-    marginBottom: 3,
-    lineHeight: 1.4,
+    marginBottom: 2,
+    lineHeight: 1.3,
+    fontFamily: 'Times-Roman',
   },
   spacer: {
     marginBottom: 4,
@@ -179,12 +186,35 @@ const styles = StyleSheet.create({
     left: "10%",
     width: "80%",
     fontSize: 32,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Times-Bold",
     color: "#e0e0e0",
     textAlign: "center",
     transform: "rotate(-30deg)",
     opacity: 0.7,
-  }
+  },
+  flexRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  jobTitleLeft: {
+    fontSize: 10.5,
+    fontFamily: 'Times-Bold',
+  },
+  jobTitleRight: {
+    fontSize: 10,
+    fontFamily: 'Times-Roman',
+  },
+  dateLocationLeft: {
+    fontSize: 9.5,
+    color: '#333333',
+    fontFamily: 'Times-Roman',
+  },
+  dateLocationRight: {
+    fontSize: 9.5,
+    color: '#333333',
+    fontFamily: 'Times-Roman',
+  },
 });
 
 interface ResumePDFProps {
@@ -222,12 +252,34 @@ const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text, watermarked }) => {
                 </Text>
               );
             case 'jobTitle':
+              if (block.text.includes('|')) {
+                const parts = block.text.split('|').map(p => p.trim());
+                const left = parts.slice(0, -1).join(" | ");
+                const right = parts[parts.length - 1];
+                return (
+                  <View key={i} style={styles.flexRow}>
+                    <Text style={styles.jobTitleLeft}>{left}</Text>
+                    <Text style={styles.jobTitleRight}>{right}</Text>
+                  </View>
+                );
+              }
               return (
                 <Text key={i} style={styles.jobTitle}>
                   {block.text}
                 </Text>
               );
             case 'dateLocation':
+              if (block.text.includes('|')) {
+                const parts = block.text.split('|').map(p => p.trim());
+                const left = parts.slice(0, -1).join(" | ");
+                const right = parts[parts.length - 1];
+                return (
+                  <View key={i} style={styles.flexRow}>
+                    <Text style={styles.dateLocationLeft}>{left}</Text>
+                    <Text style={styles.dateLocationRight}>{right}</Text>
+                  </View>
+                );
+              }
               return (
                 <Text key={i} style={styles.dateLocation}>
                   {block.text}
@@ -243,6 +295,17 @@ const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text, watermarked }) => {
                 </View>
               );
             case 'normal':
+              if (block.text.includes('|') && block.text.length < 150) {
+                const parts = block.text.split('|').map(p => p.trim());
+                const left = parts.slice(0, -1).join(" | ");
+                const right = parts[parts.length - 1];
+                return (
+                  <View key={i} style={styles.flexRow}>
+                    <Text style={styles.dateLocationLeft}>{left}</Text>
+                    <Text style={styles.dateLocationRight}>{right}</Text>
+                  </View>
+                );
+              }
               return (
                 <Text key={i} style={styles.normal}>
                   {block.text}

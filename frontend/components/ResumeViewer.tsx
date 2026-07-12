@@ -437,58 +437,90 @@ export default function ResumeViewer({
           </div>
         ) : (
           /* Render visual styling matching the LaTeX-style PDF engine output */
-          <div className="w-full max-w-4xl mx-auto bg-white text-slate-900 border border-slate-200 rounded-xl p-8 shadow-2xl font-sans select-text relative leading-normal">
+          <div className="w-full max-w-4xl mx-auto bg-white text-slate-900 border border-slate-200 rounded-xl p-8 shadow-2xl font-serif select-text relative leading-normal">
             
             {blocks.map((block, idx) => {
               switch (block.type) {
                 case "name":
                   return (
-                    <h1 key={idx} className="text-xl font-bold text-center text-black mb-1 leading-normal select-text">
+                    <h1 key={idx} className="text-xl font-bold text-center text-black mb-1 leading-normal select-text font-serif">
                       {block.text}
                     </h1>
                   );
                 case "contact":
                   return (
-                    <div key={idx} className="text-[9.5px] text-center text-slate-600 mb-3 leading-normal select-text">
+                    <div key={idx} className="text-[9.5px] text-center text-slate-600 mb-3 leading-normal select-text font-serif">
                       {block.text}
                     </div>
                   );
                 case "section":
                   return (
-                    <h2 key={idx} className="text-xs font-bold text-black uppercase border-b border-black mt-3 mb-1.5 pb-0.5 leading-normal select-text">
+                    <h2 key={idx} className="text-xs font-bold text-black border-b border-black mt-3 mb-1.5 pb-0.5 leading-normal select-text font-serif">
                       {block.text}
                     </h2>
                   );
                 case "jobTitle":
+                  if (block.text.includes('|')) {
+                    const parts = block.text.split('|').map(p => p.trim());
+                    const left = parts.slice(0, -1).join(" | ");
+                    const right = parts[parts.length - 1];
+                    return (
+                      <div key={idx} className="flex justify-between text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
+                        <span>{renderHighlightedText(left)}</span>
+                        <span className="font-normal text-slate-700">{renderHighlightedText(right)}</span>
+                      </div>
+                    );
+                  }
                   return (
-                    <div key={idx} className="text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text">
+                    <div key={idx} className="text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
                       {renderHighlightedText(block.text)}
                     </div>
                   );
                 case "dateLocation":
+                  if (block.text.includes('|')) {
+                    const parts = block.text.split('|').map(p => p.trim());
+                    const left = parts.slice(0, -1).join(" | ");
+                    const right = parts[parts.length - 1];
+                    return (
+                      <div key={idx} className="flex justify-between text-[9.5px] text-slate-500 mb-1 leading-normal select-text font-serif">
+                        <span>{renderHighlightedText(left)}</span>
+                        <span>{renderHighlightedText(right)}</span>
+                      </div>
+                    );
+                  }
                   return (
-                    <div key={idx} className="text-[9.5px] text-slate-500 mb-1 leading-normal select-text">
+                    <div key={idx} className="text-[9.5px] text-slate-500 mb-1 leading-normal select-text font-serif">
                       {renderHighlightedText(block.text)}
                     </div>
                   );
                 case "bullet":
                   return (
-                    <div key={idx} className="flex items-start text-[10px] mb-0.5 pl-3 leading-normal select-text">
-                      <span className="w-3 shrink-0 select-none text-black">•</span>
-                      <span className="flex-1 text-slate-800">{renderHighlightedText(block.text)}</span>
+                    <div key={idx} className="flex items-start text-[10px] mb-0.5 pl-3 leading-normal select-text font-serif">
+                      <span className="w-3 shrink-0 select-none text-black font-serif">•</span>
+                      <span className="flex-1 text-slate-800 font-serif">{renderHighlightedText(block.text)}</span>
                     </div>
                   );
                 case "spacer":
                   return <div key={idx} className="h-1" />;
                 default:
+                  if (block.text.includes('|') && block.text.length < 150) {
+                    const parts = block.text.split('|').map(p => p.trim());
+                    const left = parts.slice(0, -1).join(" | ");
+                    const right = parts[parts.length - 1];
+                    return (
+                      <div key={idx} className="flex justify-between text-[9.5px] text-slate-500 mb-1 leading-normal select-text font-serif">
+                        <span>{renderHighlightedText(left)}</span>
+                        <span>{renderHighlightedText(right)}</span>
+                      </div>
+                    );
+                  }
                   return (
-                    <p key={idx} className="text-[10px] mb-1 text-slate-800 leading-normal select-text">
+                    <p key={idx} className="text-[10px] mb-1 text-slate-800 leading-normal select-text font-serif">
                       {renderHighlightedText(block.text)}
                     </p>
                   );
               }
             })}
-
           </div>
         )}
       </div>
