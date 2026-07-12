@@ -16,7 +16,7 @@ async function callPythonScorer(resumeText: string, jobDescription: string): Pro
   if (!baseUrl) {
     throw new Error("HF_AI_API_URL environment variable is missing.");
   }
-  
+
   const url = `${baseUrl.replace(/\/$/, "")}/score`;
   logger.info("Calling Python Scorer API at:", url);
 
@@ -161,9 +161,9 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
   // 5. Overall — rebalanced weights (Semantic 40%, Keyword 30%, Impact 20%, Formatting 10% + density bonus)
   let overall = Math.round(
     (semanticMatch * 0.40) +
-    (keywordMatch  * 0.30) +
+    (keywordMatch * 0.30) +
     (impactBullets * 0.20) +
-    (formatting    * 0.10)
+    (formatting * 0.10)
   );
 
   // Keyword Density Bonus
@@ -195,7 +195,7 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
   };
 }
 
-function getDeterministicScore(text: string, minScore = 75, maxScore = 90): number {
+function getDeterministicScore(text: string, minScore = 70, maxScore = 90): number {
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
     const char = text.charCodeAt(i);
@@ -233,10 +233,10 @@ export async function scoreResume(
   if (scoreBefore !== undefined) {
     const minVal = Math.max(75, scoreBefore + 2);
     const maxVal = Math.max(90, Math.min(100, scoreBefore + 12));
-    
+
     // Compute deterministic score from the optimized resume text
     const targetScore = getDeterministicScore(resumeText, minVal, maxVal);
-    
+
     if (score.overall < targetScore) {
       score.overall = targetScore;
       if (score.semanticMatch < targetScore) {
