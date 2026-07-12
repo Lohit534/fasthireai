@@ -98,6 +98,143 @@ export default function ManualResumeForm({
   // Download states
   const [pdfLoading, setPdfLoading] = useState(false);
 
+  const inspectATSCompliance = () => {
+    const issues: { id: string; type: "success" | "warning" | "error"; msg: string }[] = [];
+
+    // 1. Personal details email, phone, location checks
+    if (!personal.name) {
+      issues.push({ id: "name", type: "error", msg: "Full Name is missing (critical for resume header)." });
+    }
+    if (!personal.email || !/\S+@\S+\.\S+/.test(personal.email)) {
+      issues.push({ id: "email", type: "error", msg: "Provide a valid email address (e.g. name@domain.com)." });
+    }
+    if (!personal.phone) {
+      issues.push({ id: "phone", type: "warning", msg: "Phone number is missing." });
+    }
+    if (!personal.location) {
+      issues.push({ id: "location", type: "warning", msg: "Location is missing (city, state or country)." });
+    }
+
+    // 2. Internship / Job tenure years checks
+    let datePatternError = false;
+    let shortTenureWarning = false;
+    let missingDates = false;
+
+    experiences.forEach((exp) => {
+      if (!exp.startDate || (!exp.endDate && !exp.current)) {
+        missingDates = true;
+      }
+      
+      const dateStr = `${exp.startDate} ${exp.endDate || ""}`;
+      // Check date format: Jan 2022, etc. (e.g. Month Year format or YYYY)
+      const matchesFormat = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|20\d{2})/i.test(dateStr);
+      if (exp.startDate && !matchesFormat) {
+        datePatternError = true;
+      }
+
+      // Check tenure guidelines
+      if (exp.title.toLowerCase().includes("intern") || exp.title.toLowerCase().includes("internship")) {
+        // If it's an internship, make sure they mention tech stack & deliverables
+        if (!exp.bullets || exp.bullets.split("\n").length < 2) {
+          shortTenureWarning = true;
+        }
+      }
+    });
+
+    if (missingDates && experiences.length > 0) {
+      issues.push({ id: "dates_missing", type: "error", msg: "Some experience entries are missing start/end dates." });
+    }
+    if (datePatternError) {
+      issues.push({ id: "date_pattern", type: "warning", msg: "Use standard date format (e.g., 'Jan 2022' or '2022') for ATS parsing." });
+    }
+    if (shortTenureWarning) {
+      issues.push({ id: "short_tenure", type: "warning", msg: "Internship bullets should detail the exact deliverables and team collaboration." });
+    }
+
+    // 3. Project tech stack check
+    let projectMissingTech = false;
+    projects.forEach(p => {
+      if (!p.technologies || p.technologies.trim().split(",").filter(Boolean).length < 2) {
+        projectMissingTech = true;
+      }
+    });
+    if (projectMissingTech && projects.length > 0) {
+      issues.push({ id: "proj_tech", type: "warning", msg: "List specific languages or frameworks in project technologies stack." });
+    }
+
+    // 4. Bullet sentence quality (Action Verbs and numerical metrics checklist)
+    const STRONG_ACTION_VERBS = [
+      "designed", "developed", "implemented", "managed", "led", "created", 
+      "built", "engineered", "optimized", "reduced", "increased", "automated", 
+      "refactored", "scaled", "collaborated", "coordinated", "improved", 
+      "accelerated", "accomplished", "achieved", "analyzed", "delivered", 
+      "established", "formulated", "generated", "launched", "maximized", 
+      "pioneered", "restructured", "streamlined", "transformed"
+    ];
+
+    let missingActionVerb = false;
+    let missingMetrics = false;
+    let hasBullets = false;
+
+    const allBullets: string[] = [];
+    experiences.forEach(e => {
+      if (e.bullets) {
+        allBullets.push(...e.bullets.split("\n").filter(Boolean));
+      }
+    });
+    projects.forEach(p => {
+      if (p.description) {
+        allBullets.push(...p.description.split("\n").filter(Boolean));
+      }
+    });
+
+    if (allBullets.length > 0) {
+      hasBullets = true;
+      allBullets.forEach(bullet => {
+        const clean = bullet.replace(/^[•\-\*–\s]+/, "").trim();
+        if (!clean) return;
+        const firstWord = clean.split(/\s+/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
+        
+        if (firstWord && !STRONG_ACTION_VERBS.includes(firstWord)) {
+          missingActionVerb = true;
+        }
+
+        // Check for numbers (quantification metrics)
+        const hasNumber = /\d+/.test(clean);
+        if (!hasNumber) {
+          missingMetrics = true;
+        }
+      });
+    }
+
+    if (hasBullets) {
+      if (missingActionVerb) {
+        issues.push({ 
+          id: "action_verb", 
+          type: "warning", 
+          msg: "Start experience and project bullet points with a strong Action Verb (e.g. 'Developed', 'Managed')." 
+        });
+      }
+      if (missingMetrics) {
+        issues.push({ 
+          id: "metrics", 
+          type: "warning", 
+          msg: "Quantify your achievements (e.g., 'increased speed by 25%', 'reduced cost by $4k') for ATS weight." 
+        });
+      }
+    } else {
+      issues.push({ id: "no_bullets", type: "error", msg: "Add bullet points to experience or project entries detailing achievements." });
+    }
+
+    // 5. Technical skills count check
+    const skillsList = skillsText.split(",").map(s => s.trim()).filter(Boolean);
+    if (skillsList.length < 5) {
+      issues.push({ id: "skills_count", type: "warning", msg: "Include at least 5-10 technical skills relevant to the role." });
+    }
+
+    return issues;
+  };
+
   // Initialize and Pre-fill form from original resume plain text
   useEffect(() => {
     try {
@@ -1032,6 +1169,38 @@ export default function ManualResumeForm({
 
         {/* Right Guidance Sidebar (1/3 width) */}
         <div className="space-y-4">
+          {/* Real-time ATS Compliance Inspector */}
+          <div className="bg-[#071525]/70 border border-white/6 rounded-2xl p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-cyan-400" />
+              <h4 className="font-bold text-xs text-white uppercase tracking-wider">ATS Inspector</h4>
+            </div>
+            
+            <p className="text-[10px] text-slate-400 leading-normal">
+              Real-time inspection of your form data against standard ATS parsing guidelines:
+            </p>
+
+            <div className="space-y-3">
+              {inspectATSCompliance().map((issue) => {
+                const iconColor = 
+                  issue.type === "success" ? "text-emerald-400 bg-emerald-500/10" :
+                  issue.type === "warning" ? "text-amber-400 bg-amber-500/10" :
+                  "text-rose-400 bg-rose-500/10";
+                
+                return (
+                  <div key={issue.id} className="flex gap-2.5 items-start text-left">
+                    <span className={`h-4.5 w-4.5 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold ${iconColor}`}>
+                      {issue.type === "success" ? "✓" : issue.type === "warning" ? "!" : "✗"}
+                    </span>
+                    <span className="text-[10px] text-slate-300 leading-normal font-medium">
+                      {issue.msg}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Missing Keywords Box */}
           <div className="bg-[#071525]/70 border border-white/6 rounded-2xl p-5 space-y-4">
             <div className="flex items-center gap-2">
