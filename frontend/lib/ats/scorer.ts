@@ -209,7 +209,8 @@ function getDeterministicScore(text: string, minScore = 70, maxScore = 90): numb
 export async function scoreResume(
   resumeText: string,
   jobDescription: string,
-  scoreBefore?: number
+  scoreBefore?: number,
+  bulletImprovementsCount?: number
 ): Promise<ATSScore> {
   let score: ATSScore;
   try {
@@ -233,10 +234,14 @@ export async function scoreResume(
   if (scoreBefore !== undefined) {
     const minVal = Math.max(75, scoreBefore + 2);
     const maxVal = Math.max(90, Math.min(100, scoreBefore + 12));
-
+    
     // Compute deterministic score from the optimized resume text
-    const targetScore = getDeterministicScore(resumeText, minVal, maxVal);
-
+    let targetScore = getDeterministicScore(resumeText, minVal, maxVal);
+    
+    if (bulletImprovementsCount) {
+      targetScore = Math.min(100, targetScore + Math.round(bulletImprovementsCount * 0.75));
+    }
+    
     if (score.overall < targetScore) {
       score.overall = targetScore;
       if (score.semanticMatch < targetScore) {
@@ -244,6 +249,14 @@ export async function scoreResume(
       }
       if (score.keywordMatch < targetScore - 5) {
         score.keywordMatch = Math.max(0, targetScore - 3);
+      }
+    }
+  } else {
+    // Add progress metric to original score if they manually accepted auto-improvements
+    if (bulletImprovementsCount) {
+      score.overall = Math.min(100, score.overall + Math.round(bulletImprovementsCount * 0.75));
+      if (score.semanticMatch < score.overall) {
+        score.semanticMatch = Math.min(100, score.overall + 2);
       }
     }
   }

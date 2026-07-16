@@ -23,7 +23,7 @@ import { toast } from "react-hot-toast";
 interface BulletImproverProps {
   resumeText: string;
   jobDescription: string;
-  onChange: (updatedText: string) => void;
+  onChange: (updatedText: string, wasImproved?: boolean) => void;
 }
 
 interface ImprovementResult {
@@ -136,7 +136,7 @@ export default function BulletImprover({ resumeText, jobDescription, onChange }:
     const nextLines = [...lines];
     nextLines[bulletIdx] = `${marker}${cleanNewBullet}`;
 
-    onChange(nextLines.join("\n"));
+    onChange(nextLines.join("\n"), true);
 
     // Clear state
     setImprovements((prev) => {

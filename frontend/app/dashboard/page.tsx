@@ -100,6 +100,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [userPlan, setUserPlan] = useState<string>("free");
   const [trackerAdded, setTrackerAdded] = useState(false);
+  const [bulletImprovementsCount, setBulletImprovementsCount] = useState(0);
 
   // Roadmap & Cover letter generator states
   const [selectedRoadmapSkill, setSelectedRoadmapSkill] = useState<string | null>(null);
@@ -157,6 +158,7 @@ export default function DashboardPage() {
     setAfterScore(null);
     setOptimizeResult(null);
     setTrackerAdded(false);
+    setBulletImprovementsCount(0);
     
     // Clear detail view states
     setRoadmapContent(null);
@@ -247,12 +249,22 @@ export default function DashboardPage() {
     setOptimizeResult(null);
     setTrackerAdded(false);
     setIsAILoading(false);
+    setBulletImprovementsCount(0);
     toast.success("Workspace cleared.");
   };
 
-  const handleReScoreBefore = async (newText: string) => {
+  const handleReScoreBefore = async (newText: string, currentImprovementsCount?: number) => {
+    const impCount = currentImprovementsCount ?? bulletImprovementsCount;
     try {
-      const res = await fetch("/api/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeText: newText, jobDescription }) });
+      const res = await fetch("/api/score", { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify({ 
+          resumeText: newText, 
+          jobDescription,
+          bulletImprovementsCount: impCount
+        }) 
+      });
       if (res.ok) {
         const scoreData = await res.json();
         setBeforeScore(scoreData);
@@ -265,7 +277,8 @@ export default function DashboardPage() {
             body: JSON.stringify({
               resumeText: optimizeResult.optimizedText,
               jobDescription,
-              scoreBefore: scoreData.overall
+              scoreBefore: scoreData.overall,
+              bulletImprovementsCount: impCount
             })
           });
           if (afterRes.ok) {
@@ -831,9 +844,14 @@ export default function DashboardPage() {
                   <BulletImprover
                     resumeText={resumeText}
                     jobDescription={jobDescription}
-                    onChange={(newText) => {
+                    onChange={(newText, wasImproved) => {
                       setResumeText(newText);
-                      handleReScoreBefore(newText);
+                      let newCount = bulletImprovementsCount;
+                      if (wasImproved) {
+                        newCount += 1;
+                        setBulletImprovementsCount(newCount);
+                      }
+                      handleReScoreBefore(newText, newCount);
                     }}
                   />
                 </div>

@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Parse Request Body
     const body = await request.json();
-    const { resumeText, jobDescription, scoreBefore } = body;
+    const { resumeText, jobDescription, scoreBefore, bulletImprovementsCount } = body;
 
     // 3. Input Validation
     if (!resumeText || typeof resumeText !== "string" || resumeText.trim().length < MIN_RESUME_CHARS) {
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     logger.info(`Auth verified for User ${user.email}. Scoring resume...`);
 
     // 4. Scoring (Always free, no Prisma write or credit deductions)
-    const scoreResult = await scoreResume(resumeText, jobDescription, scoreBefore);
+    const scoreResult = await scoreResume(resumeText, jobDescription, scoreBefore, bulletImprovementsCount);
 
     return NextResponse.json(scoreResult);
   } catch (error: any) {

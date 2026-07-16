@@ -77,7 +77,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
 
             {/* Left: Copy + CTAs */}
-            <div className="lg:col-span-6 space-y-7 text-left">
+            <div className="lg:col-span-6 space-y-7 text-left animate-fade-in-up">
               {/* Status pill */}
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/8 border border-cyan-500/20 text-cyan-400 text-[10px] font-bold uppercase tracking-widest">
                 <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
@@ -145,11 +145,11 @@ export default function LandingPage() {
             </div>
 
             {/* Right: Score cards mockup */}
-            <div className="lg:col-span-6 relative flex justify-center lg:justify-end">
-              <div className="relative w-full max-w-[420px] h-[360px]">
+            <div className="lg:col-span-6 relative flex justify-center lg:justify-end animate-fade-in-up delay-200">
+              <div className="relative w-full max-w-[420px] h-[360px] animate-float">
 
                 {/* BEFORE card */}
-                <div className="absolute top-4 left-0 w-[240px] bg-[#071525]/90 border border-white/8 backdrop-blur-xl p-5 rounded-2xl shadow-2xl rotate-[-3deg]">
+                <div className="absolute top-4 left-0 w-[240px] bg-[#071525]/90 border border-white/8 backdrop-blur-xl p-5 rounded-2xl shadow-2xl rotate-[-3deg] hover-lift">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Before</span>
                     <span className="text-[11px] font-black text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full">34%</span>
@@ -164,7 +164,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* AFTER card */}
-                <div className="absolute bottom-4 right-0 w-[260px] bg-[#071a14]/90 border border-cyan-500/15 backdrop-blur-xl p-6 rounded-2xl shadow-2xl rotate-[2deg]">
+                <div className="absolute bottom-4 right-0 w-[260px] bg-[#071a14]/90 border border-cyan-500/15 backdrop-blur-xl p-6 rounded-2xl shadow-2xl rotate-[2deg] hover-lift">
                   <div className="absolute -top-3 -right-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-black text-[10px] px-2.5 py-1 rounded-full shadow-lg shadow-cyan-500/20">
                     +57 pts ↑
                   </div>
