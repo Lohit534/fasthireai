@@ -39,62 +39,7 @@ import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { formatDate } from "@/lib/utils";
 import ScrollFadeIn from "@/components/ScrollFadeIn";
-
-/* ─── helpers ─────────────────────────────────────── */
-function scoreColor(n: number) {
-  if (n >= 75) return { ring: "#22c55e", bg: "rgba(34,197,94,0.08)", text: "#22c55e", border: "rgba(34,197,94,0.2)" };
-  if (n >= 50) return { ring: "#f59e0b", bg: "rgba(245,158,11,0.08)", text: "#f59e0b", border: "rgba(245,158,11,0.2)" };
-  return { ring: "#ef4444", bg: "rgba(239,68,68,0.08)", text: "#ef4444", border: "rgba(239,68,68,0.2)" };
-}
-
-function CircleGauge({ value, label, size = 100 }: { value: number; label: string; size?: number }) {
-  const [displayValue, setDisplayValue] = useState(0);
-
-  useEffect(() => {
-    let start = 0;
-    const end = value;
-    if (end === 0) {
-      setDisplayValue(0);
-      return;
-    }
-    const duration = 800; // Animate over 800ms
-    const increment = end / (duration / 16); // ~60fps
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= end) {
-        setDisplayValue(end);
-        clearInterval(timer);
-      } else {
-        setDisplayValue(Math.floor(start));
-      }
-    }, 16);
-    return () => clearInterval(timer);
-  }, [value]);
-
-  const { ring, bg, text } = scoreColor(value);
-  const r = (size - 12) / 2;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (displayValue / 100) * circ;
-
-  return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="-rotate-90 absolute inset-0">
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth={6} />
-          <circle
-            cx={size / 2} cy={size / 2} r={r}
-            fill="none" stroke={ring} strokeWidth={6}
-            strokeDasharray={circ} strokeDashoffset={offset}
-            strokeLinecap="round"
-            className="transition-all duration-150 ease-out"
-          />
-        </svg>
-        <span className="relative text-2xl font-black tracking-tight animate-pulse-subtle" style={{ color: text }}>{displayValue}</span>
-      </div>
-      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{label}</span>
-    </div>
-  );
-}
+import CircleGauge, { scoreColor } from "@/components/CircleGauge";
 
 interface DetailViewProps {
   resume: ResumeRecord;
@@ -830,7 +775,7 @@ export default function HistoryPage() {
             />
           ) : (
             /* List optimizations dashboard view (Image 1 mockup styled) */
-            <div className="space-y-8 animate-in fade-in duration-200">
+            <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-200">
               {/* Header */}
               <div className="flex items-center justify-between gap-4">
                 <div>
@@ -879,12 +824,13 @@ export default function HistoryPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {resumes.map((resume) => (
-                    <HistoryRow
-                      key={resume.id}
-                      resume={resume}
-                      onClick={() => setSelected(resume)}
-                    />
+                  {resumes.map((resume, index) => (
+                    <ScrollFadeIn key={resume.id} delay={index * 60} direction="up">
+                      <HistoryRow
+                        resume={resume}
+                        onClick={() => setSelected(resume)}
+                      />
+                    </ScrollFadeIn>
                   ))}
 
                   {/* Centered Pagination text */}

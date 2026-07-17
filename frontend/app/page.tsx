@@ -21,6 +21,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import ScrollFadeIn from "@/components/ScrollFadeIn";
+import CircleGauge from "@/components/CircleGauge";
 
 const SAMPLE_RESUME = `# Alex Rivera
 Full Stack Engineer
@@ -204,11 +205,9 @@ export default function LandingPage() {
           {/* Side-by-side circles */}
           <div className="flex flex-row items-center justify-center gap-8 md:gap-16">
             {/* Before circle */}
-            <div className="flex flex-col items-center gap-4">
-              <div className="flex items-center justify-center h-32 w-32 rounded-full border-4 border-red-500/30 bg-red-500/8 shadow-lg shadow-red-500/10">
-                <span className="text-5xl font-black text-red-500">34</span>
-              </div>
-              <p className="text-xs text-slate-500 font-semibold text-center">Before · 14 keywords missing</p>
+            <div className="flex flex-col items-center gap-2">
+              <CircleGauge value={34} label="Before" size={110} />
+              <p className="text-[10px] text-slate-500 font-semibold text-center mt-1">14 keywords missing</p>
             </div>
 
             {/* Connector arrow */}
@@ -219,11 +218,9 @@ export default function LandingPage() {
             </div>
 
             {/* After circle */}
-            <div className="flex flex-col items-center gap-4">
-              <div className="flex items-center justify-center h-32 w-32 rounded-full border-4 border-emerald-500/30 bg-emerald-500/8 shadow-lg shadow-emerald-500/10">
-                <span className="text-5xl font-black text-emerald-400">91</span>
-              </div>
-              <p className="text-xs text-slate-500 font-semibold text-center">After · ATS-ready ✓</p>
+            <div className="flex flex-col items-center gap-2">
+              <CircleGauge value={91} label="After" size={110} />
+              <p className="text-[10px] text-slate-500 font-semibold text-center mt-1">ATS-ready ✓</p>
             </div>
           </div>
         </div>
