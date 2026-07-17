@@ -20,6 +20,7 @@ import {
   HelpCircle
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import ScrollFadeIn from "@/components/ScrollFadeIn";
 
 interface Plan {
   id: "free" | "premium" | "promax";
@@ -457,7 +458,7 @@ export default function PricingPage() {
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-10">
 
         {/* Title details */}
-        <div className="text-center space-y-4">
+        <ScrollFadeIn className="text-center space-y-4">
           <h1 className="text-3xl md:text-4.5xl font-black text-white tracking-tight leading-none">
             Unlock Full <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-indigo-400 bg-clip-text text-transparent">FastHire Premium</span>
           </h1>
@@ -489,10 +490,10 @@ export default function PricingPage() {
               </Badge>
             </button>
           </div>
-        </div>
+        </ScrollFadeIn>
 
         {/* Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto w-full items-stretch">
+        <ScrollFadeIn className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto w-full items-stretch">
           {PLANS.map((plan) => {
             const isActive = currentPlan === plan.id;
             const price = billingCycle === "monthly" ? plan.priceMonthly : plan.priceYearly;
@@ -593,7 +594,7 @@ export default function PricingPage() {
               </Card>
             );
           })}
-        </div>
+        </ScrollFadeIn>
 
         {/* Security badges & Trust banners */}
         <div className="flex flex-col items-center justify-center gap-4 text-center mt-6 select-none max-w-lg mx-auto">

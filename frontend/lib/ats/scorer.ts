@@ -251,14 +251,6 @@ export async function scoreResume(
         score.keywordMatch = Math.max(0, targetScore - 3);
       }
     }
-  } else {
-    // Add progress metric to original score if they manually accepted auto-improvements
-    if (bulletImprovementsCount) {
-      score.overall = Math.min(100, score.overall + Math.round(bulletImprovementsCount * 0.75));
-      if (score.semanticMatch < score.overall) {
-        score.semanticMatch = Math.min(100, score.overall + 2);
-      }
-    }
   }
 
   return score;

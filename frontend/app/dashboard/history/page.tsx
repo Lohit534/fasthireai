@@ -38,6 +38,7 @@ import {
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { formatDate } from "@/lib/utils";
+import ScrollFadeIn from "@/components/ScrollFadeIn";
 
 /* ─── helpers ─────────────────────────────────────── */
 function scoreColor(n: number) {
@@ -47,10 +48,33 @@ function scoreColor(n: number) {
 }
 
 function CircleGauge({ value, label, size = 100 }: { value: number; label: string; size?: number }) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = value;
+    if (end === 0) {
+      setDisplayValue(0);
+      return;
+    }
+    const duration = 800; // Animate over 800ms
+    const increment = end / (duration / 16); // ~60fps
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setDisplayValue(end);
+        clearInterval(timer);
+      } else {
+        setDisplayValue(Math.floor(start));
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [value]);
+
   const { ring, bg, text } = scoreColor(value);
   const r = (size - 12) / 2;
   const circ = 2 * Math.PI * r;
-  const offset = circ - (value / 100) * circ;
+  const offset = circ - (displayValue / 100) * circ;
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -62,10 +86,10 @@ function CircleGauge({ value, label, size = 100 }: { value: number; label: strin
             fill="none" stroke={ring} strokeWidth={6}
             strokeDasharray={circ} strokeDashoffset={offset}
             strokeLinecap="round"
-            className="transition-all duration-1000 ease-out"
+            className="transition-all duration-150 ease-out"
           />
         </svg>
-        <span className="relative text-2xl font-black tracking-tight" style={{ color: text }}>{value}</span>
+        <span className="relative text-2xl font-black tracking-tight animate-pulse-subtle" style={{ color: text }}>{displayValue}</span>
       </div>
       <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{label}</span>
     </div>
@@ -795,81 +819,83 @@ export default function HistoryPage() {
       <Navbar />
 
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 py-10 select-text">
-        {selected ? (
-          /* Detailed 3-Column optimization report (Image 2 mockup styled) */
-          <DetailView
-            resume={selected}
-            userPlan={userPlan}
-            onBack={() => setSelected(null)}
-            onRestore={() => handleRestore(selected)}
-          />
-        ) : (
-          /* List optimizations dashboard view (Image 1 mockup styled) */
-          <div className="space-y-8 animate-in fade-in duration-200">
-            {/* Header */}
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-xl bg-violet-500/10 border border-violet-500/25 flex items-center justify-center text-violet-400">
-                    <History className="h-4.5 w-4.5" />
+        <ScrollFadeIn>
+          {selected ? (
+            /* Detailed 3-Column optimization report (Image 2 mockup styled) */
+            <DetailView
+              resume={selected}
+              userPlan={userPlan}
+              onBack={() => setSelected(null)}
+              onRestore={() => handleRestore(selected)}
+            />
+          ) : (
+            /* List optimizations dashboard view (Image 1 mockup styled) */
+            <div className="space-y-8 animate-in fade-in duration-200">
+              {/* Header */}
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-xl bg-violet-500/10 border border-violet-500/25 flex items-center justify-center text-violet-400">
+                      <History className="h-4.5 w-4.5" />
+                    </div>
+                    <h1 className="text-xl font-black text-white tracking-tight">Resume History</h1>
                   </div>
-                  <h1 className="text-xl font-black text-white tracking-tight">Resume History</h1>
+                  <p className="text-xs text-slate-400 mt-1 ml-10">
+                    {resumes.length > 0
+                      ? `${resumes.length} optimization${resumes.length !== 1 ? "s" : ""} — click any row to view details`
+                      : "Your resume optimizations will appear here"}
+                  </p>
                 </div>
-                <p className="text-xs text-slate-400 mt-1 ml-10">
-                  {resumes.length > 0
-                    ? `${resumes.length} optimization${resumes.length !== 1 ? "s" : ""} — click any row to view details`
-                    : "Your resume optimizations will appear here"}
-                </p>
-              </div>
 
-              <Link href="/dashboard">
-                <Button className="h-9 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-violet-600/15">
-                  <Plus className="h-4 w-4 mr-1.5" />
-                  New Resume
-                </Button>
-              </Link>
-            </div>
-
-            {/* Content list */}
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-24 gap-3">
-                <Loader2 className="h-8 w-8 text-violet-500 animate-spin" />
-                <p className="text-xs text-slate-500 font-semibold">Loading history...</p>
-              </div>
-            ) : resumes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-2xl p-16 text-center border border-dashed border-white/5 bg-[#0e0f21]/20">
-                <div className="h-14 w-14 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mb-4">
-                  <AlertCircle className="h-6 w-6 text-violet-400" />
-                </div>
-                <h3 className="text-sm font-bold text-white mb-1">No optimizations yet</h3>
-                <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
-                  Upload your resume and a job description to run your first AI-powered optimization.
-                </p>
-                <Link href="/dashboard" className="mt-5">
-                  <Button className="font-bold text-xs bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl px-4 py-2">
+                <Link href="/dashboard">
+                  <Button className="h-9 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-violet-600/15">
                     <Plus className="h-4 w-4 mr-1.5" />
-                    Start Optimizing
+                    New Resume
                   </Button>
                 </Link>
               </div>
-            ) : (
-              <div className="space-y-3">
-                {resumes.map((resume) => (
-                  <HistoryRow
-                    key={resume.id}
-                    resume={resume}
-                    onClick={() => setSelected(resume)}
-                  />
-                ))}
 
-                {/* Centered Pagination text */}
-                <p className="text-center text-[10px] text-slate-500 pt-6 font-semibold uppercase tracking-wider select-none">
-                  Page 1 of 1 &bull; {resumes.length} total scan{resumes.length !== 1 ? "s" : ""}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
+              {/* Content list */}
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-24 gap-3">
+                  <Loader2 className="h-8 w-8 text-violet-500 animate-spin" />
+                  <p className="text-xs text-slate-500 font-semibold">Loading history...</p>
+                </div>
+              ) : resumes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-2xl p-16 text-center border border-dashed border-white/5 bg-[#0e0f21]/20">
+                  <div className="h-14 w-14 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mb-4">
+                    <AlertCircle className="h-6 w-6 text-violet-400" />
+                  </div>
+                  <h3 className="text-sm font-bold text-white mb-1">No optimizations yet</h3>
+                  <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+                    Upload your resume and a job description to run your first AI-powered optimization.
+                  </p>
+                  <Link href="/dashboard" className="mt-5">
+                    <Button className="font-bold text-xs bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl px-4 py-2">
+                      <Plus className="h-4 w-4 mr-1.5" />
+                      Start Optimizing
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {resumes.map((resume) => (
+                    <HistoryRow
+                      key={resume.id}
+                      resume={resume}
+                      onClick={() => setSelected(resume)}
+                    />
+                  ))}
+
+                  {/* Centered Pagination text */}
+                  <p className="text-center text-[10px] text-slate-500 pt-6 font-semibold uppercase tracking-wider select-none">
+                    Page 1 of 1 &bull; {resumes.length} total scan{resumes.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </ScrollFadeIn>
       </main>
     </div>
   );

@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Sparkles,
 } from "lucide-react";
+import ScrollFadeIn from "@/components/ScrollFadeIn";
 
 const SAMPLE_RESUME = `# Alex Rivera
 Full Stack Engineer
@@ -190,7 +191,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── SCORE LIFT SECTION ──────────────────────────────────── */}
-      <section className="py-20 border-b border-white/5 bg-[#040d1a]">
+      <ScrollFadeIn className="py-20 border-b border-white/5 bg-[#040d1a]">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center space-y-3">
             <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-500">Real Results</span>
@@ -226,11 +227,11 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-      </section>
+      </ScrollFadeIn>
 
 
       {/* ── HOW IT WORKS ────────────────────────────────────────── */}
-      <section className="py-20 border-b border-white/5">
+      <ScrollFadeIn className="py-20 border-b border-white/5">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center space-y-3">
             <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-500">Simple 3-Step Process</span>
@@ -277,10 +278,10 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+      </ScrollFadeIn>
 
       {/* ── WHY FASTHIRE ─────────────────────────────────────────── */}
-      <section className="py-20 border-b border-white/5 bg-[#040d1a]">
+      <ScrollFadeIn className="py-20 border-b border-white/5 bg-[#040d1a]">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center space-y-3">
             <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-500">Why FastHire</span>
@@ -303,10 +304,10 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+      </ScrollFadeIn>
 
       {/* ── CTA BLOCK ────────────────────────────────────────────── */}
-      <section className="py-20 text-center">
+      <ScrollFadeIn className="py-20 text-center">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/8 border border-cyan-500/20 text-cyan-400 text-[10px] font-bold uppercase tracking-widest mb-2">
             <Sparkles className="h-3 w-3" />
@@ -337,7 +338,7 @@ export default function LandingPage() {
             </button>
           </div>
         </div>
-      </section>
+      </ScrollFadeIn>
     </div>
   );
 }

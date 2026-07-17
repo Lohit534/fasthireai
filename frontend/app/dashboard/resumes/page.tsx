@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { ResumeRecord, isOwnerEmail } from "@/types";
 import { logger } from "@/lib/logger";
 import { formatDate, generateUUID } from "@/lib/utils";
+import ScrollFadeIn from "@/components/ScrollFadeIn";
 import { 
   Loader2, 
   ArrowLeft, 
@@ -1119,133 +1120,133 @@ export default function ResumesPage() {
           <Navbar />
 
           <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-6">
-            
-            {/* Header Details */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 select-none">
-                  My Resumes
-                </h1>
-                <p className="text-xs text-slate-400 font-semibold">
-                  {resumes.length} / {maxLimit} resumes
-                </p>
-              </div>
-
-              <Button
-                onClick={handleCreateNewResume}
-                disabled={actionLoading === "create" || resumes.length >= maxLimit}
-                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-9 text-xs rounded-full px-5 flex items-center gap-1.5 shadow-lg shadow-violet-600/10"
-              >
-                {actionLoading === "create" ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-                New Resume
-              </Button>
-            </div>
-
-            {/* Grid display options */}
-            {loading ? (
-              <div className="flex justify-center py-20">
-                <Loader2 className="h-8 w-8 text-violet-600 animate-spin" />
-              </div>
-            ) : resumes.length === 0 ? (
-              
-              /* Empty state listing card options */
-              <div className="flex flex-col items-center justify-center border border-dashed border-white/5 rounded-2xl p-12 text-center bg-[#0e0f21]/40 min-h-[380px]">
-                <FileText className="h-10 w-10 text-violet-500 mb-4 animate-pulse" />
-                <h3 className="font-extrabold text-white text-lg">No Resumes Found</h3>
-                <p className="text-xs text-slate-400 max-w-xs mt-1.5 leading-relaxed font-medium">
-                  Create your first resume structure to build customized applications.
-                </p>
-                <div className="mt-6">
-                  <Button 
-                    onClick={handleCreateNewResume}
-                    className="bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-full"
-                  >
-                    Get Started
-                  </Button>
+            <ScrollFadeIn className="flex flex-col gap-6 w-full">
+              {/* Header Details */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 select-none">
+                    My Resumes
+                  </h1>
+                  <p className="text-xs text-slate-400 font-semibold">
+                    {resumes.length} / {maxLimit} resumes
+                  </p>
                 </div>
+
+                <Button
+                  onClick={handleCreateNewResume}
+                  disabled={actionLoading === "create" || resumes.length >= maxLimit}
+                  className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-9 text-xs rounded-full px-5 flex items-center gap-1.5 shadow-lg shadow-violet-600/10"
+                >
+                  {actionLoading === "create" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  New Resume
+                </Button>
               </div>
 
-            ) : (
-
-              /* Cards listing dashboard grid (Image 1) */
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+              {/* Grid display options */}
+              {loading ? (
+                <div className="flex justify-center py-20">
+                  <Loader2 className="h-8 w-8 text-violet-600 animate-spin" />
+                </div>
+              ) : resumes.length === 0 ? (
                 
-                {resumes.map((resume) => {
-                  const parsedData = parseResumeText(resume.optimizedText || resume.originalText);
-                  const completionScore = calculateCompleteness(parsedData);
-                  const isDeleting = actionLoading === `delete-${resume.id}`;
-
-                  return (
-                    <Card
-                      key={resume.id}
-                      className="group relative border-white/5 bg-[#0e0f21]/50 hover:bg-[#12132d]/40 hover:border-violet-500/40 cursor-pointer overflow-hidden transition-all duration-300 rounded-2xl shadow-xl flex flex-col justify-between"
+                /* Empty state listing card options */
+                <div className="flex flex-col items-center justify-center border border-dashed border-white/5 rounded-2xl p-12 text-center bg-[#0e0f21]/40 min-h-[380px]">
+                  <FileText className="h-10 w-10 text-violet-500 mb-4 animate-pulse" />
+                  <h3 className="font-extrabold text-white text-lg">No Resumes Found</h3>
+                  <p className="text-xs text-slate-400 max-w-xs mt-1.5 leading-relaxed font-medium">
+                    Create your first resume structure to build customized applications.
+                  </p>
+                  <div className="mt-6">
+                    <Button 
+                      onClick={handleCreateNewResume}
+                      className="bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-full"
                     >
-                      <CardContent className="p-5 flex flex-col justify-between h-full min-h-[160px] space-y-4">
-                        
-                        <div className="flex justify-between items-start gap-4">
-                          <div className="space-y-1">
-                            <h3 className="font-bold text-base text-white truncate max-w-[150px]">
-                              {resume.jobTitle || "Untitled Resume"}
-                            </h3>
-                            <p className="text-[10px] text-slate-500 font-semibold select-none">
-                              Edited {formatDate(resume.createdAt)}
-                            </p>
-                          </div>
-                          
-                          {/* Circular completeness badge */}
-                          <div className="relative h-9 w-9 rounded-full bg-slate-950 flex items-center justify-center border border-white/10 text-[9px] font-black text-violet-400 select-none">
-                            {completionScore}%
-                          </div>
-                        </div>
-
-                        {/* Card controls footer (Image 1) */}
-                        <div className="flex gap-2 items-center pt-2 border-t border-white/5">
-                          <Button
-                            onClick={() => handleOpenEditor(resume)}
-                            variant="ghost"
-                            className="flex-1 bg-[#161730]/40 border border-slate-700/50 hover:border-slate-500 hover:bg-slate-800 text-slate-300 hover:text-white rounded-full h-8 text-[11px] font-bold gap-1.5"
-                          >
-                            <Edit3 className="h-3.5 w-3.5" />
-                            Edit
-                          </Button>
-                          <Button
-                            onClick={(e) => handleDeleteResume(e, resume.id)}
-                            disabled={isDeleting}
-                            variant="ghost"
-                            className="h-8 w-8 p-0 rounded-full hover:bg-red-500/10 text-slate-500 hover:text-red-400 border border-white/5"
-                            title="Remove resume"
-                          >
-                            {isDeleting ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-3.5 w-3.5" />
-                            )}
-                          </Button>
-                        </div>
-
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-
-                {/* Dashed placeholder template card */}
-                {resumes.length < maxLimit && (
-                  <div
-                    onClick={handleCreateNewResume}
-                    className="border border-dashed border-white/10 bg-[#0e0f21]/20 hover:bg-[#12132d]/20 hover:border-violet-500/40 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 min-h-[160px] select-none"
-                  >
-                    <Plus className="h-7 w-7 text-slate-500 group-hover:text-white mb-2" />
-                    <span className="font-bold text-xs text-slate-400">New Resume</span>
+                      Get Started
+                    </Button>
                   </div>
-                )}
+                </div>
 
-              </div>
-            )}
+              ) : (
 
+                /* Cards listing dashboard grid (Image 1) */
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+                  
+                  {resumes.map((resume) => {
+                    const parsedData = parseResumeText(resume.optimizedText || resume.originalText);
+                    const completionScore = calculateCompleteness(parsedData);
+                    const isDeleting = actionLoading === `delete-${resume.id}`;
+
+                    return (
+                      <Card
+                        key={resume.id}
+                        className="group relative border-white/5 bg-[#0e0f21]/50 hover:bg-[#12132d]/40 hover:border-violet-500/40 cursor-pointer overflow-hidden transition-all duration-300 rounded-2xl shadow-xl flex flex-col justify-between"
+                      >
+                        <CardContent className="p-5 flex flex-col justify-between h-full min-h-[160px] space-y-4">
+                          
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="space-y-1">
+                              <h3 className="font-bold text-base text-white truncate max-w-[150px]">
+                                {resume.jobTitle || "Untitled Resume"}
+                              </h3>
+                              <p className="text-[10px] text-slate-500 font-semibold select-none">
+                                Edited {formatDate(resume.createdAt)}
+                              </p>
+                            </div>
+                            
+                            {/* Circular completeness badge */}
+                            <div className="relative h-9 w-9 rounded-full bg-slate-950 flex items-center justify-center border border-white/10 text-[9px] font-black text-violet-400 select-none">
+                              {completionScore}%
+                            </div>
+                          </div>
+
+                          {/* Card controls footer (Image 1) */}
+                          <div className="flex gap-2 items-center pt-2 border-t border-white/5">
+                            <Button
+                              onClick={() => handleOpenEditor(resume)}
+                              variant="ghost"
+                              className="flex-1 bg-[#161730]/40 border border-slate-700/50 hover:border-slate-500 hover:bg-slate-800 text-slate-300 hover:text-white rounded-full h-8 text-[11px] font-bold gap-1.5"
+                            >
+                              <Edit3 className="h-3.5 w-3.5" />
+                              Edit
+                            </Button>
+                            <Button
+                              onClick={(e) => handleDeleteResume(e, resume.id)}
+                              disabled={isDeleting}
+                              variant="ghost"
+                              className="h-8 w-8 p-0 rounded-full hover:bg-red-500/10 text-slate-500 hover:text-red-400 border border-white/5"
+                              title="Remove resume"
+                            >
+                              {isDeleting ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          </div>
+
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+
+                  {/* Dashed placeholder template card */}
+                  {resumes.length < maxLimit && (
+                    <div
+                      onClick={handleCreateNewResume}
+                      className="border border-dashed border-white/10 bg-[#0e0f21]/20 hover:bg-[#12132d]/20 hover:border-violet-500/40 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 min-h-[160px] select-none"
+                    >
+                      <Plus className="h-7 w-7 text-slate-500 group-hover:text-white mb-2" />
+                      <span className="font-bold text-xs text-slate-400">New Resume</span>
+                    </div>
+                  )}
+
+                </div>
+              )}
+            </ScrollFadeIn>
           </main>
         </>
 

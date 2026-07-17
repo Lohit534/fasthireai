@@ -47,10 +47,33 @@ function scoreColor(n: number) {
 }
 
 function CircleGauge({ value, label, size = 100 }: { value: number; label: string; size?: number }) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = value;
+    if (end === 0) {
+      setDisplayValue(0);
+      return;
+    }
+    const duration = 800; // Animate over 800ms
+    const increment = end / (duration / 16); // ~60fps
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setDisplayValue(end);
+        clearInterval(timer);
+      } else {
+        setDisplayValue(Math.floor(start));
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [value]);
+
   const { ring, bg, text } = scoreColor(value);
   const r = (size - 12) / 2;
   const circ = 2 * Math.PI * r;
-  const offset = circ - (value / 100) * circ;
+  const offset = circ - (displayValue / 100) * circ;
 
   return (
     <div className="flex flex-col items-center gap-2 select-none">
@@ -62,10 +85,10 @@ function CircleGauge({ value, label, size = 100 }: { value: number; label: strin
             fill="none" stroke={ring} strokeWidth={6}
             strokeDasharray={circ} strokeDashoffset={offset}
             strokeLinecap="round"
-            className="transition-all duration-1000 ease-out"
+            className="transition-all duration-150 ease-out"
           />
         </svg>
-        <span className="relative text-2xl font-black tracking-tight" style={{ color: text }}>{value}</span>
+        <span className="relative text-2xl font-black tracking-tight animate-pulse-subtle" style={{ color: text }}>{displayValue}</span>
       </div>
       <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{label}</span>
     </div>

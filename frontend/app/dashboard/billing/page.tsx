@@ -28,6 +28,7 @@ import {
 import { toast } from "react-hot-toast";
 import Link from "next/link";
 import { CreditInfo } from "@/types";
+import ScrollFadeIn from "@/components/ScrollFadeIn";
 
 interface Invoice {
   id: string;
@@ -163,7 +164,7 @@ export default function BillingPage() {
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
         
         {/* Header Title */}
-        <div className="flex items-center gap-4">
+        <ScrollFadeIn className="flex items-center gap-4">
           <Link href="/dashboard">
             <Button variant="outline" size="sm" className="border-white/5 text-slate-300 hover:bg-white/5 h-9 w-9 p-0 rounded-full bg-transparent">
               <ArrowLeft className="h-4.5 w-4.5" />
@@ -177,10 +178,10 @@ export default function BillingPage() {
               Check your active plan quotas and view invoice histories.
             </p>
           </div>
-        </div>
+        </ScrollFadeIn>
 
         {/* Dashboard Split Widgets */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+        <ScrollFadeIn className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
           
           {/* Left Column: Sub details */}
           <div className="flex flex-col gap-6">
@@ -316,7 +317,7 @@ export default function BillingPage() {
               </div>
             </Card>
           </div>
-        </div>
+        </ScrollFadeIn>
       </main>
     </div>
   );
