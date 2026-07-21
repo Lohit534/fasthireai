@@ -72,6 +72,10 @@ export async function POST(request: NextRequest) {
 
     // ── 3. Upsert credits directly ─────────────────────────────────────────────
     const paidCredits = PLAN_CREDITS[planId] ?? 0;
+    const now = new Date();
+    const days = billingCycle === "yearly" ? 365 : 30;
+    const expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+
     // Fetch existing credit row to avoid not-null primary key constraint failures
     const { data: existingCredit } = await admin
       .from("Credit")
@@ -85,7 +89,9 @@ export async function POST(request: NextRequest) {
         .from("Credit")
         .update({
           paidCredits: paidCredits,
-          resetAt: new Date().toISOString(),
+          billingCycle: billingCycle || "monthly",
+          expiresAt: expiresAt.toISOString(),
+          resetAt: now.toISOString(),
         })
         .eq("userId", activeUserId);
     } else {
@@ -97,7 +103,9 @@ export async function POST(request: NextRequest) {
           userId: activeUserId,
           freeUsed: 0,
           paidCredits: paidCredits,
-          resetAt: new Date().toISOString(),
+          billingCycle: billingCycle || "monthly",
+          expiresAt: expiresAt.toISOString(),
+          resetAt: now.toISOString(),
         });
     }
 

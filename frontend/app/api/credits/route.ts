@@ -159,11 +159,45 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Check if plan has expired
+    let expiresAt = creditRow.expiresAt ? new Date(creditRow.expiresAt) : null;
+    let billingCycle = creditRow.billingCycle || "monthly";
+    let paidCredits = creditRow.paidCredits;
+    let freeUsed = creditRow.freeUsed;
+
+    // For first 50 users, if expiresAt is not set, set it to 1 year from signup time
+    if (isFirst50 && !expiresAt) {
+      const signupTime = new Date(creditRow.resetAt || now);
+      expiresAt = new Date(signupTime.getTime() + 365 * 24 * 60 * 60 * 1000);
+      await admin
+        .from("Credit")
+        .update({ expiresAt: expiresAt.toISOString(), billingCycle: "yearly" })
+        .eq("userId", activeUserId);
+    }
+
+    if (expiresAt && now > expiresAt) {
+      // Plan expired! Revert to free plan
+      paidCredits = 0;
+      billingCycle = "monthly";
+      expiresAt = null;
+      freeUsed = 0;
+
+      await admin
+        .from("Credit")
+        .update({
+          paidCredits: 0,
+          billingCycle: "monthly",
+          expiresAt: null,
+          freeUsed: 0,
+          resetAt: now.toISOString(),
+        })
+        .eq("userId", activeUserId);
+      
+      logger.info(`[credits] Plan expired for user ${user.email}. Reverted to free tier.`);
+    }
+
     // 4. Monthly reset check
     const resetAt = new Date(creditRow.resetAt);
-    let freeUsed = creditRow.freeUsed;
-    let paidCredits = creditRow.paidCredits;
-
     const isNewMonth =
       now.getMonth() !== resetAt.getMonth() ||
       now.getFullYear() !== resetAt.getFullYear();
@@ -172,9 +206,9 @@ export async function GET(request: NextRequest) {
       freeUsed = 0;
       if (isFirst50) {
         paidCredits = 365;
-      } else if (creditRow.paidCredits > 0 && creditRow.paidCredits < 900000) {
+      } else if (paidCredits > 0 && paidCredits < 900000) {
         paidCredits = 15;
-      } else if (creditRow.paidCredits >= 900000) {
+      } else if (paidCredits >= 900000) {
         paidCredits = 999999;
       } else {
         paidCredits = 0;
@@ -190,7 +224,7 @@ export async function GET(request: NextRequest) {
     }
 
     let planId = "free";
-    if (isFirst50 || (paidCredits > 0 && paidCredits < 900000)) {
+    if (paidCredits > 0 && paidCredits < 900000) {
       planId = "premium";
     } else if (paidCredits >= 900000) {
       planId = "promax";
@@ -199,11 +233,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       freeUsed,
       paidCredits,
-      freeRemaining: Math.max(0, (isFirst50 ? 15 : FREE_CREDITS_PER_MONTH) - freeUsed),
+      freeRemaining: Math.max(0, (planId !== "free" ? 15 : FREE_CREDITS_PER_MONTH) - freeUsed),
       resetAt: isNewMonth ? now.toISOString() : creditRow.resetAt,
       isOwner: false,
       isFirst50: isFirst50,
       planId,
+      billingCycle,
+      expiresAt: expiresAt ? expiresAt.toISOString() : null,
     });
   } catch (error: any) {
     logger.error("[credits] GET Unhandled error:", error?.message);
@@ -224,7 +260,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { planId } = await request.json();
+    const { planId, billingCycle = "monthly" } = await request.json();
     const isOwner = isOwnerEmail(user.email);
 
     // Owner is always unlimited - no credits update needed
@@ -268,12 +304,18 @@ export async function POST(request: NextRequest) {
       logger.error("[credits POST] Error during User resolution/insertion:", e.message);
     }
 
-    // Map planId to paidCredits
+    // Map planId to paidCredits and calculate expiration
     let paidCredits = 0;
+    let expiresAt: Date | null = null;
+
     if (planId === "premium") {
       paidCredits = 15;
+      const days = billingCycle === "yearly" ? 365 : 30;
+      expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
     } else if (planId === "team" || planId === "promax") {
       paidCredits = 999999;
+      const days = billingCycle === "yearly" ? 365 : 30;
+      expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
     }
 
     // Upsert or update the credit row
@@ -290,6 +332,8 @@ export async function POST(request: NextRequest) {
         .from("Credit")
         .update({
           paidCredits: paidCredits,
+          billingCycle: planId === "free" ? "monthly" : billingCycle,
+          expiresAt: expiresAt ? expiresAt.toISOString() : null,
           resetAt: now.toISOString(),
         })
         .eq("userId", activeUserId);
@@ -302,6 +346,8 @@ export async function POST(request: NextRequest) {
           userId: activeUserId,
           freeUsed: 0,
           paidCredits: paidCredits,
+          billingCycle: planId === "free" ? "monthly" : billingCycle,
+          expiresAt: expiresAt ? expiresAt.toISOString() : null,
           resetAt: now.toISOString(),
         });
     }

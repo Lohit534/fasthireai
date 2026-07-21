@@ -41,10 +41,12 @@ model Resume {
 }
 
 model Credit {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  freeUsed    Int      @default(0)
-  paidCredits Int      @default(0)
-  resetAt     DateTime @default(now())
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  freeUsed     Int       @default(0)
+  paidCredits  Int       @default(0)
+  resetAt      DateTime  @default(now())
+  billingCycle String?   @default("monthly")
+  expiresAt    DateTime?
 }

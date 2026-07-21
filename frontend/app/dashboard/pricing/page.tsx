@@ -147,6 +147,7 @@ export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [isOwner, setIsOwner] = useState(false);
   const [isFirst50, setIsFirst50] = useState(false);
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
 
   // Checkout Modal State
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
@@ -186,6 +187,7 @@ export default function PricingPage() {
             const apiCredits = await res.json();
             if (apiCredits.isOwner) setIsOwner(true);
             if (apiCredits.paidCredits >= 365 || apiCredits.isFirst50) setIsFirst50(true);
+            if (apiCredits.expiresAt) setExpiresAt(apiCredits.expiresAt);
             const plan = apiCredits.planId || localStorage.getItem(`fastHire_plan_${data.user.id}`) || "free";
             localStorage.setItem(`fastHire_plan_${data.user.id}`, plan);
             setCurrentPlan(plan);
@@ -525,7 +527,7 @@ export default function PricingPage() {
                 )}
 
                 {/* First 50 Users Banner (only on Premium card) */}
-                {plan.id === "premium" && isFirst50 && (
+                {plan.id === "premium" && isFirst50 && !isActive && (
                   <div className="mx-4 mt-4 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2">
                     <span className="text-base">🎁</span>
                     <div>
@@ -569,9 +571,16 @@ export default function PricingPage() {
                   {/* Actions CTA Trigger */}
                   <div className="space-y-2">
                     {isActive && (
-                      <div className="flex items-center justify-center gap-1.5 py-1.5 text-[10px] font-bold text-cyan-400">
-                        <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                        Currently Active Plan
+                      <div className="flex flex-col items-center justify-center gap-1 py-1.5 text-[10px] font-bold text-cyan-400">
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                          Currently Active Plan
+                        </div>
+                        {plan.id !== "free" && expiresAt && (
+                          <span className="text-slate-400 text-[9px] font-semibold mt-0.5">
+                            Plan ends: {new Date(expiresAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                          </span>
+                        )}
                       </div>
                     )}
                     <Button

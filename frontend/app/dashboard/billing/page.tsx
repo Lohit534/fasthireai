@@ -253,7 +253,12 @@ export default function BillingPage() {
                 <div className="border-t border-white/5 pt-4 flex items-center justify-between gap-4">
                   <div className="text-[11px] text-slate-400">
                     {activePlan !== "free" ? (
-                      <span>Renews automatically for <strong className="text-white">{activePlan === "premium" ? (billingCycle === "yearly" ? "₹166" : "₹99") : (billingCycle === "yearly" ? "₹332" : "₹199")}</strong> / {billingCycle === "yearly" ? "year" : "month"}</span>
+                      <div className="flex flex-col gap-0.5">
+                        <span>Renews automatically for <strong className="text-white">{activePlan === "premium" ? (billingCycle === "yearly" ? "₹166" : "₹99") : (billingCycle === "yearly" ? "₹332" : "₹199")}</strong> / {billingCycle === "yearly" ? "year" : "month"}</span>
+                        {credits?.expiresAt && (
+                          <span className="text-[10px] text-cyan-400">Plan expires: <strong>{new Date(credits.expiresAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</strong></span>
+                        )}
+                      </div>
                     ) : (
                       <span>Need more resumes to apply? Upgrade to a premium tier.</span>
                     )}

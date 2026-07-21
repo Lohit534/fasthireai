@@ -47,6 +47,9 @@ export interface CreditInfo {
   resetAt: Date | string;
   isOwner?: boolean;
   isFirst50?: boolean;
+  planId?: string;
+  billingCycle?: string;
+  expiresAt?: Date | string | null;
 }
 
 export interface ApiResponse<T> {
