@@ -232,8 +232,9 @@ const SECTION_NAMES = [
   'PUBLICATIONS', 'ACTIVITIES'
 ];
 
-const URL_REGEX = /https?:\/\/[^\s]+|www\.[^\s]+/g;
-const EMAIL_REGEX = /[\w\.-]+@[\w\.-]+\.\w+/g;
+const URL_REGEX_G = /https?:\/\/[^\s]+|www\.[^\s]+/g;
+const URL_REGEX = /https?:\/\/[^\s]+|www\.[^\s]+/i;
+const EMAIL_REGEX = /[\w\.-]+@[\w\.-]+\.\w+/i;
 
 export interface ContactSegment {
   text: string;
@@ -345,6 +346,9 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
           segments.push({ text: txt, url: `mailto:${emailMatch[0]}`, isLink: true });
         } else if (urlMatch) {
           segments.push({ text: txt, url: cleanUrl(urlMatch[0]), isLink: true });
+        } else if (txt.toLowerCase().includes('linkedin.com') || txt.toLowerCase().includes('github.com')) {
+          const clean = txt.startsWith('http') ? txt : 'https://' + txt;
+          segments.push({ text: txt, url: cleanUrl(clean), isLink: true });
         } else if (txt.toLowerCase().includes('linkedin') || txt.toLowerCase().includes('github')) {
           // If text mentions LinkedIn/GitHub but URL matches are implicit
           const implicitUrl = txt.toLowerCase().includes('linkedin') 
@@ -383,11 +387,14 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
     if (currentSection === 'TECHNICAL SKILLS' || currentSection === 'SKILLS' || currentSection === 'CORE SKILLS') {
       if (line.includes(':')) {
         const colonIdx = line.indexOf(':');
-        const label = line.substring(0, colonIdx).trim();
-        const value = line.substring(colonIdx + 1).trim();
+        const label = line.substring(0, colonIdx).replace(/^\*\*|\*\*$/g, "").trim();
+        const value = line.substring(colonIdx + 1).replace(/^\*\*|\*\*$/g, "").replace(/^[•\-\*–\s\u2022]+/, "").trim();
         blocks.push({ type: 'skillLine', label, value });
       } else {
-        blocks.push({ type: 'summary', text: line });
+        const cleanVal = line.replace(/^\*\*|\*\*$/g, "").replace(/^[•\-\*–\s\u2022]+/, "").trim();
+        if (cleanVal) {
+          blocks.push({ type: 'summary', text: cleanVal });
+        }
       }
       continue;
     }
@@ -411,8 +418,8 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
         } else {
           // Format: Role | Company or Role – Company
           const parts = line.split(/\s*(?:[|—–]|\s+-\s+)\s*/);
-          const title = parts[0]?.trim() || "Title";
-          const company = parts[1]?.trim() || "";
+          const title = parts[0]?.replace(/^[\*\_]+|[\*\_]+$/g, "").trim() || "Title";
+          const company = parts[1]?.replace(/^[\*\_]+|[\*\_]+$/g, "").trim() || "";
           
           // Peek next line to see if it is a date range
           let dates = "";
@@ -429,7 +436,7 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
             type: 'job',
             title,
             company,
-            dates,
+            dates: dates.replace(/^[\*\_]+|[\*\_]+$/g, "").trim(),
             bullets: []
           });
         }
@@ -463,8 +470,8 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
       if (!isBullet) {
         // Format: Project Name — Tech Stack or Project Name | Tech
         const parts = line.split(/\s*(?:[|—–]|\s+-\s+)\s*/);
-        const name = parts[0]?.trim() || "Project";
-        const tech = parts[1]?.trim() || "";
+        const name = parts[0]?.replace(/^[\*\_]+|[\*\_]+$/g, "").trim() || "Project";
+        const tech = parts[1]?.replace(/^[\*\_]+|[\*\_]+$/g, "").trim() || "";
         
         // Find URLs in project line
         let projectUrl: string | undefined;
@@ -511,37 +518,48 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
         'secondary', 'hsc', 'cbse', 'board', 'high school'
       ];
       
-      const isNewEntry = DEGREE_KEYWORDS.some(kw => lowerLine.includes(kw)) || 
-                         lowerLine.startsWith('b.') || lowerLine.startsWith('m.') ||
-                         !blocks.some(b => b.type === 'education');
+      let lastEdu: EducationBlock | undefined;
+      for (let i = blocks.length - 1; i >= 0; i--) {
+        if (blocks[i].type === 'education') {
+          lastEdu = blocks[i] as EducationBlock;
+          break;
+        }
+      }
+
+      const isNewEntry = (DEGREE_KEYWORDS.some(kw => lowerLine.includes(kw)) || 
+                          lowerLine.startsWith('b.') || lowerLine.startsWith('m.') ||
+                          !lastEdu) && (!lastEdu || lastEdu.school !== "");
       
       const dateRangeRegex = /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|20\d{2})\b[\s\-\–]+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|20\d{2}|Present)\b/i;
       const singleDateRegex = /\b(20\d{2})\b/;
-      const gpaRegex = /(GPA|CGPA|%)\s*:?\s*([\d\.]+)/i;
+      const gpaRegex = /(GPA|CGPA|%)\s*:?\s*([\d\.\%]+)/i;
       
-      let cleanText = line;
+      let cleanText = line.replace(/^\*\*|\*\*$/g, "").trim();
       let dates = "";
       let gpa = "";
       
       const dateMatch = line.match(dateRangeRegex);
       if (dateMatch) {
         dates = dateMatch[0];
-        cleanText = cleanText.replace(dateMatch[0], "");
+        cleanText = cleanText.replace(dateMatch[0], "").trim();
       } else {
         const singleMatch = line.match(singleDateRegex);
         if (singleMatch && (line.includes('-') || line.includes('–') || line.toLowerCase().includes('present'))) {
           const approxDateMatch = line.match(/(\b(20\d{2})\b.*?(\b(20\d{2})\b|Present))/i);
           if (approxDateMatch) {
             dates = approxDateMatch[0];
-            cleanText = cleanText.replace(approxDateMatch[0], "");
+            cleanText = cleanText.replace(approxDateMatch[0], "").trim();
           }
+        } else if (singleMatch) {
+          dates = singleMatch[0];
+          cleanText = cleanText.replace(singleMatch[0], "").trim();
         }
       }
       
       const gpaMatch = line.match(gpaRegex);
       if (gpaMatch) {
         gpa = gpaMatch[0];
-        cleanText = cleanText.replace(gpaMatch[0], "");
+        cleanText = cleanText.replace(gpaMatch[0], "").trim();
       }
       
       cleanText = cleanText.replace(/^[\s\|\-\–\—\:]+|[\s\|\-\–\—\:]+$/g, "").trim();
@@ -555,23 +573,12 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
           gpa: gpa
         });
       } else {
-        let lastEduIdx = -1;
-        for (let i = blocks.length - 1; i >= 0; i--) {
-          if (blocks[i].type === 'education') {
-            lastEduIdx = i;
-            break;
+        if (lastEdu) {
+          if (!lastEdu.school) {
+            lastEdu.school = cleanText;
           }
-        }
-        
-        if (lastEduIdx !== -1) {
-          const edu = blocks[lastEduIdx];
-          if (edu.type === 'education') {
-            if (!edu.school) {
-              edu.school = cleanText;
-            }
-            if (dates) edu.dates = dates;
-            if (gpa) edu.gpa = gpa;
-          }
+          if (dates) lastEdu.dates = dates;
+          if (gpa) lastEdu.gpa = gpa;
         } else {
           blocks.push({
             type: 'education',
@@ -613,7 +620,7 @@ interface BulletRowProps {
 
 const BulletRow: React.FC<BulletRowProps> = ({ text }) => {
   // Parse links inside bullet points dynamically
-  const urlMatches = text.match(URL_REGEX);
+  const urlMatches = text.match(URL_REGEX_G);
   
   if (urlMatches && urlMatches.length > 0) {
     const segments: React.ReactNode[] = [];
@@ -628,7 +635,7 @@ const BulletRow: React.FC<BulletRowProps> = ({ text }) => {
       const clean = cleanUrl(match);
       segments.push(
         <Link key={`link-${idx}`} src={clean} style={{ color: '#0000EE', textDecoration: 'underline' }}>
-          {match}
+          <Text style={{ color: '#0000EE', textDecoration: 'underline' }}>{match}</Text>
         </Link>
       );
       
@@ -682,7 +689,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
                     if (seg.isLink && seg.url) {
                       elements.push(
                         <Link key={`link-${sIdx}`} src={seg.url} style={styles.contactLink}>
-                          {seg.text}
+                          <Text style={styles.contactLink}>{seg.text}</Text>
                         </Link>
                       );
                     } else {
@@ -730,7 +737,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
                       <Text style={styles.projectTitle}>{block.name}</Text>
                       {block.projectUrl && (
                         <Link src={block.projectUrl} style={styles.projectLink}>
-                          {block.projectUrl}
+                          <Text style={styles.projectLink}>{block.projectUrl}</Text>
                         </Link>
                       )}
                     </View>
@@ -780,7 +787,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
             case 'link':
               return (
                 <Link key={i} src={block.url} style={styles.link}>
-                  {block.label}
+                  <Text style={styles.link}>{block.label}</Text>
                 </Link>
               );
             case 'spacer':

@@ -285,44 +285,95 @@ export default function ResumesPage() {
           resume.experience.push(currentExp);
         }
       } else if (currentSection === "education") {
-        if ((line.startsWith("*") && line.endsWith("*") || line.startsWith("_") && line.endsWith("_")) && currentEdu) {
-          currentEdu.date = line.replace(/^[\*\_]+|[\*\_]+$/g, "").trim();
-        } else if (line.toLowerCase().startsWith("cgpa:") || line.toLowerCase().startsWith("gpa:")) {
+        const lowerLine = line.toLowerCase();
+
+        // Match GPA/CGPA line
+        if (lowerLine.startsWith("cgpa:") || lowerLine.startsWith("gpa:")) {
           if (currentEdu) {
             currentEdu.gpa = line.replace(/^(cgpa|gpa):\s*/i, "").trim();
           }
+          continue;
+        }
+
+        // Check if this line is a new education entry
+        const DEGREE_KEYWORDS = [
+          'b.tech', 'btech', 'intermediate', 'ssc', 'b.s.', 'bs', 'bachelor', 'master', 
+          'm.tech', 'mtech', 'ph.d', 'phd', 'class xii', 'class x', 'diploma', 'matriculation', 
+          'secondary', 'hsc', 'cbse', 'board', 'high school', '10th', '12th', 'degree'
+        ];
+        
+        const isNewEntry = (DEGREE_KEYWORDS.some(kw => lowerLine.includes(kw)) || 
+                           lowerLine.startsWith('b.') || lowerLine.startsWith('m.') ||
+                           resume.education.length === 0) && (!currentEdu || currentEdu.school !== "");
+
+        // Parse date and GPA out of the line
+        let cleanText = line.replace(/^\*\*|\*\*$/g, "").trim();
+        let date = "";
+        let gpa = "";
+        
+        const dateRangeRegex = /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|20\d{2})\b[\s\-\–]+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|20\d{2}|Present)\b/i;
+        const singleDateRegex = /\b(20\d{2})\b/;
+        const gpaRegex = /(GPA|CGPA|%)\s*:?\s*([\d\.\%]+)/i;
+        
+        const dateMatch = line.match(dateRangeRegex);
+        if (dateMatch) {
+          date = dateMatch[0];
+          cleanText = cleanText.replace(dateMatch[0], "").trim();
         } else {
-          const parts = line.split(/\s{3,}| \| /);
-          let school = "";
-          let degree = "";
-          let field = "";
-          let date = "";
-
-          if (parts.length >= 4) {
-            school = (parts[0] || "").replace(/^\*\*|\*\*$/g, "").trim();
-            degree = (parts[1] || "").replace(/^\*\*|\*\*$/g, "").trim();
-            field = (parts[2] || "").replace(/^\*\*|\*\*$/g, "").trim();
-            date = (parts[3] || "").replace(/^[\*\_]+|[\*\_]+$/g, "").trim();
-          } else {
-            const headerParts = (parts[0] || "").replace(/^\*\*|\*\*$/g, "").split(" - ");
-            school = (headerParts[0] || "").replace(/^\*\*|\*\*$/g, "").trim();
-            const degreeAndField = parts[1] || headerParts[1] || "";
-            const fieldParts = degreeAndField.split(" in ");
-            degree = (fieldParts[0] || "").replace(/^\*\*|\*\*$/g, "").trim();
-            field = (fieldParts[1] || "").replace(/^\*\*|\*\*$/g, "").trim();
-            date = (parts[2] || "").replace(/^[\*\_]+|[\*\_]+$/g, "").trim();
+          const singleMatch = line.match(singleDateRegex);
+          if (singleMatch) {
+            date = singleMatch[0];
+            cleanText = cleanText.replace(singleMatch[0], "").trim();
           }
+        }
+        
+        const gpaMatch = line.match(gpaRegex);
+        if (gpaMatch) {
+          gpa = gpaMatch[2] || gpaMatch[0];
+          cleanText = cleanText.replace(gpaMatch[0], "").trim();
+        }
+        
+        cleanText = cleanText.replace(/^[\s\|\-\–\—\:]+|[\s\|\-\–\—\:]+$/g, "").trim();
 
+        if (isNewEntry) {
+          // Parse degree and field out of cleanText if it contains " in "
+          let degree = cleanText;
+          let field = "";
+          const inIndex = cleanText.toLowerCase().indexOf(" in ");
+          if (inIndex !== -1) {
+            degree = cleanText.substring(0, inIndex).trim();
+            field = cleanText.substring(inIndex + 4).trim();
+          }
+          
           currentEdu = {
             id: Math.random().toString(36).substr(2, 9),
-            school,
+            school: "",
             degree,
             field,
             date,
-            gpa: "",
+            gpa: gpa || "",
             description: ""
           };
           resume.education.push(currentEdu);
+        } else {
+          if (currentEdu) {
+            // This is the school line
+            currentEdu.school = cleanText;
+            if (date) currentEdu.date = date;
+            if (gpa) currentEdu.gpa = gpa;
+          } else {
+            // Fallback in case we don't have a current education block
+            currentEdu = {
+              id: Math.random().toString(36).substr(2, 9),
+              school: cleanText,
+              degree: "Education Details",
+              field: "",
+              date: date,
+              gpa: gpa || "",
+              description: ""
+            };
+            resume.education.push(currentEdu);
+          }
         }
       } else if (currentSection === "projects") {
         if (line.startsWith("•") || line.startsWith("-") || line.startsWith("*") && !line.endsWith("*")) {
@@ -435,24 +486,14 @@ export default function ResumesPage() {
     if (data.education.length > 0) {
       text += `EDUCATION\n`;
       data.education.forEach(edu => {
-        let title = "";
-        if (edu.degree || edu.field) {
-          title = `${edu.degree || ''}${edu.degree && edu.field ? ' in ' : ''}${edu.field || ''}`.trim();
-        }
+        const degreeText = edu.degree || "Degree";
+        const title = `${degreeText}${edu.field ? ' in ' : ''}${edu.field || ''}`.trim();
         
-        if (title) {
-          text += `**${title}**\n`;
-          if (edu.school) {
-            text += `**${edu.school}**   ${edu.date}\n`;
-          } else {
-            text += `**Unknown School**   ${edu.date}\n`;
-          }
-        } else {
-          text += `**${edu.school}**   ${edu.date}\n`;
-        }
+        text += `**${title}**   ${edu.date || ''}\n`.trim() + "\n";
+        text += `**${edu.school || 'Unknown School'}**\n`;
         
         if (edu.gpa) {
-          text += `**CGPA: ${edu.gpa}**\n`;
+          text += `CGPA: ${edu.gpa}\n`;
         }
         if (edu.description) {
           text += `${edu.description}\n`;
