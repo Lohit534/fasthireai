@@ -54,9 +54,23 @@ Requirements:
 - Experience leading microservice migrations and optimizing database query performance.
 - Familiarity with AI integrations and LLM prompt engineering is a major plus.`;
 
+import { supabase } from "@/lib/supabase/client";
+
 export default function LandingPage() {
   const router = useRouter();
   const { setResumeText, setJobDescription } = useResumeStore();
+
+  React.useEffect(() => {
+    async function checkLoggedIn() {
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (data?.user) {
+          router.replace("/dashboard");
+        }
+      } catch (e) {}
+    }
+    checkLoggedIn();
+  }, [router]);
 
   const handleTrySample = () => {
     router.push("/dashboard");

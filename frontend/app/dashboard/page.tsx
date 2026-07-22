@@ -92,6 +92,11 @@ export default function DashboardPage() {
           return;
         }
         setUser(data.user);
+        // Pre-load cached plan to prevent UI flash
+        const cachedPlan = localStorage.getItem(`fastHire_plan_${data.user.id}`);
+        if (cachedPlan) {
+          setUserPlan(cachedPlan);
+        }
         setAuthLoading(false);
 
         // Fetch plan/credits details safely in separate block
@@ -99,15 +104,18 @@ export default function DashboardPage() {
           const creditsRes = await fetch("/api/credits");
           if (creditsRes.ok) {
             const creditsData = await creditsRes.json();
+            let plan = "free";
             if (creditsData.isOwner) {
-              setUserPlan("owner");
+              plan = "owner";
             } else if (creditsData.paidCredits > 900000) {
-              setUserPlan("promax");
-            } else if (creditsData.paidCredits > 0) {
-              setUserPlan("premium");
+              plan = "promax";
+            } else if (creditsData.paidCredits > 0 || creditsData.isFirst50) {
+              plan = "premium";
             } else {
-              setUserPlan("free");
+              plan = creditsData.planId || localStorage.getItem(`fastHire_plan_${data.user.id}`) || "free";
             }
+            setUserPlan(plan);
+            localStorage.setItem(`fastHire_plan_${data.user.id}`, plan);
           }
         } catch (creditsErr) {
           console.error("Failed to load credits info:", creditsErr);

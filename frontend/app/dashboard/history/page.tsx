@@ -72,6 +72,14 @@ function DetailView({ resume, userPlan, onBack, onRestore }: DetailViewProps) {
   };
 
   const downloadFile = async (format: "pdf" | "docx") => {
+    if (userPlan === "free") {
+      toast.error("Optimized resume exports are available for Premium Pro & Pro Max members. Upgrade to Pro or download manual resumes in My Resumes!");
+      setTimeout(() => {
+        window.location.href = "/dashboard/pricing";
+      }, 1800);
+      return;
+    }
+
     if (format === "pdf") setPdfLoading(true);
     else setDocxLoading(true);
 

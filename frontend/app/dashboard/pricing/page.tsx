@@ -181,6 +181,14 @@ export default function PricingPage() {
         }
         setUserId(data.user.id);
 
+        // Pre-load cached plan and billing cycle immediately to eliminate UI flash
+        const cachedPlan = localStorage.getItem(`fastHire_plan_${data.user.id}`);
+        if (cachedPlan) {
+          setCurrentPlan(cachedPlan);
+        }
+        const cycle = localStorage.getItem(`fastHire_billingCycle_${data.user.id}`) as "monthly" | "yearly" || "monthly";
+        setBillingCycle(cycle);
+
         try {
           const res = await fetch("/api/credits");
           if (res.ok) {
@@ -188,23 +196,19 @@ export default function PricingPage() {
             if (apiCredits.isOwner) setIsOwner(true);
             if (apiCredits.paidCredits >= 365 || apiCredits.isFirst50) setIsFirst50(true);
             if (apiCredits.expiresAt) setExpiresAt(apiCredits.expiresAt);
-            const plan = apiCredits.planId || localStorage.getItem(`fastHire_plan_${data.user.id}`) || "free";
+            const plan = apiCredits.planId || cachedPlan || "free";
             localStorage.setItem(`fastHire_plan_${data.user.id}`, plan);
             setCurrentPlan(plan);
           } else {
-            const plan = localStorage.getItem(`fastHire_plan_${data.user.id}`) || "free";
+            const plan = cachedPlan || "free";
             setCurrentPlan(plan);
           }
         } catch (e) {
-          const plan = localStorage.getItem(`fastHire_plan_${data.user.id}`) || "free";
+          const plan = cachedPlan || "free";
           setCurrentPlan(plan);
         }
 
         setAuthLoading(false);
-
-        // Load billing cycle
-        const cycle = localStorage.getItem(`fastHire_billingCycle_${data.user.id}`) as "monthly" | "yearly" || "monthly";
-        setBillingCycle(cycle);
       } catch (err) {
         setAuthLoading(false);
       }
@@ -570,17 +574,11 @@ export default function PricingPage() {
 
                   {/* Actions CTA Trigger */}
                   <div className="space-y-2">
-                    {isActive && (
-                      <div className="flex flex-col items-center justify-center gap-1 py-1.5 text-[10px] font-bold text-cyan-400">
-                        <div className="flex items-center gap-1.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                          Currently Active Plan
-                        </div>
-                        {plan.id !== "free" && expiresAt && (
-                          <span className="text-slate-400 text-[9px] font-semibold mt-0.5">
-                            Plan ends: {new Date(expiresAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
-                          </span>
-                        )}
+                    {isActive && plan.id !== "free" && expiresAt && (
+                      <div className="flex flex-col items-center justify-center gap-0.5 py-1 text-xs font-semibold text-slate-400">
+                        <span>
+                          Plan ends: {new Date(expiresAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                        </span>
                       </div>
                     )}
                     <Button
@@ -595,7 +593,7 @@ export default function PricingPage() {
                     >
                       {isActive
                         ? (isOwner ? "✓ Active (Owner Unlimited)" : "✓ Your Current Plan")
-                        : (isOwner ? `Simulate ${plan.name}` : plan.cta)}
+                        : (isOwner ? `Simulate ${plan.name}` : (currentPlan !== "free" && plan.id !== "free" ? "Schedule Plan" : plan.cta))}
                     </Button>
                   </div>
 

@@ -25,7 +25,10 @@ import {
   Filter,
   Calendar,
   Layers,
-  ArrowRight
+  ArrowRight,
+  TrendingUp,
+  TrendingDown,
+  Wallet
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
@@ -340,6 +343,99 @@ export default function UnifiedAdminDashboard() {
         {activeTab === "users" && (
           <div className="space-y-6 animate-in fade-in duration-200">
             
+            {/* THIS MONTH Financial & Project Metrics Section */}
+            <div className="space-y-3 select-none">
+              <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                THIS MONTH
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                {/* Revenue Card */}
+                <Card className="bg-[#0e0f21]/60 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all">
+                  <CardContent className="p-5 space-y-3">
+                    <div className="flex items-center gap-2 text-slate-300 font-semibold text-sm">
+                      <div className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400">
+                        <TrendingUp className="h-4 w-4" />
+                      </div>
+                      <span>Revenue</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-black text-white">
+                        ₹{(premiumUsers * 99 + promaxUsers * 199).toLocaleString()}
+                      </div>
+                      <p className="text-xs text-slate-400 font-medium mt-1">
+                        {users.filter(u => u.plan !== "free").length} new projects
+                      </p>
+                      <p className="text-[10px] text-slate-500 italic mt-0.5">
+                        Sum of new project budgets this month
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Received Card */}
+                <Card className="bg-[#0e0f21]/60 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all">
+                  <CardContent className="p-5 space-y-3">
+                    <div className="flex items-center gap-2 text-slate-300 font-semibold text-sm">
+                      <div className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 font-bold text-xs">
+                        ₹
+                      </div>
+                      <span>Received</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-black text-white">
+                        ₹{(premiumUsers * 99 + promaxUsers * 199).toLocaleString()}
+                      </div>
+                      <p className="text-xs text-slate-400 font-medium mt-1">
+                        Payments collected this month
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Expenses Card */}
+                <Card className="bg-[#0e0f21]/60 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all">
+                  <CardContent className="p-5 space-y-3">
+                    <div className="flex items-center gap-2 text-slate-300 font-semibold text-sm">
+                      <div className="h-8 w-8 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+                        <TrendingDown className="h-4 w-4" />
+                      </div>
+                      <span>Expenses</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-black text-red-400">
+                        ₹0
+                      </div>
+                      <p className="text-xs text-slate-400 font-medium mt-1">
+                        Team payouts &amp; tools
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Money in account Card */}
+                <Card className="bg-emerald-950/30 border border-emerald-500/30 rounded-2xl overflow-hidden hover:border-emerald-500/50 transition-all">
+                  <CardContent className="p-5 space-y-3">
+                    <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                      <div className="h-8 w-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                        <Wallet className="h-4 w-4" />
+                      </div>
+                      <span>Money in account</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-black text-emerald-400">
+                        ₹{(premiumUsers * 99 + promaxUsers * 199).toLocaleString()}
+                      </div>
+                      <p className="text-xs text-emerald-500/80 font-medium mt-1">
+                        Received minus expenses
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+              </div>
+            </div>
+
             {/* KPI Cards row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 select-none">
               {[

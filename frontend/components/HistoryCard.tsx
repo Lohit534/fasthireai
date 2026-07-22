@@ -12,14 +12,24 @@ import { toast } from "react-hot-toast";
 
 interface HistoryCardProps {
   resume: ResumeRecord;
+  userPlan?: string;
   onSelect?: (resume: ResumeRecord) => void;
 }
 
-export default function HistoryCard({ resume, onSelect }: HistoryCardProps) {
+export default function HistoryCard({ resume, userPlan = "free", onSelect }: HistoryCardProps) {
   const [downloading, setDownloading] = useState(false);
 
   const handleDownload = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card select click
+
+    if (userPlan === "free") {
+      toast.error("Optimized resume downloads are for Pro & Pro Max members. Upgrade to Pro or download manual resumes in My Resumes!");
+      setTimeout(() => {
+        window.location.href = "/dashboard/pricing";
+      }, 1800);
+      return;
+    }
+
     setDownloading(true);
 
     try {

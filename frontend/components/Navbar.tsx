@@ -72,6 +72,13 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
   useEffect(() => {
     if (!user) return;
     const userId = user.id;
+
+    // Immediately load cached plan from localStorage to avoid UI flash
+    const cachedPlan = localStorage.getItem(`fastHire_plan_${userId}`);
+    if (cachedPlan === "premium" || cachedPlan === "promax" || cachedPlan === "owner") {
+      setCredits((prev) => prev || { isOwner: cachedPlan === "owner", paidCredits: cachedPlan === "promax" ? 999999 : 15, freeRemaining: 15, freeUsed: 0, resetAt: new Date().toISOString(), planId: cachedPlan });
+    }
+
     async function fetchCredits() {
       try {
         const res = await fetch("/api/credits");
@@ -151,7 +158,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
           
           {/* Left: Brand logo */}
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2 group select-none">
+            <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 group select-none">
               <img src="/logo.png" alt="FastHire Logo" className="h-5 w-5 rounded-full object-cover group-hover:scale-105 transition-transform" />
               <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
                 FastHire
@@ -167,7 +174,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                     <Link
                       key={link.label}
                       href={link.href}
-                      className={`relative flex items-center h-full px-3 text-xs font-bold transition-colors select-none ${
+                      className={`relative flex items-center h-full px-3 text-sm font-bold transition-colors select-none ${
                         isActive 
                           ? "text-white" 
                           : "text-slate-400 hover:text-white"
@@ -220,10 +227,10 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                       
                       {/* User title/credits summary */}
                        <div className="px-2.5 py-2 border-b border-white/5">
-                        <div className="text-xs font-bold text-white truncate max-w-full">
+                        <div className="text-sm font-bold text-white truncate max-w-full">
                           {user.email}
                         </div>
-                        <div className="text-[10px] text-slate-500 font-semibold mt-0.5 uppercase tracking-wider">
+                        <div className="text-xs text-slate-500 font-semibold mt-0.5 uppercase tracking-wider">
                           {credits?.isOwner ? "Owner Account" : `${isPremium ? "Premium" : "Free"} • ${freeRemaining} left`}
                         </div>
                         {credits?.isOwner && (
@@ -248,7 +255,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                         <Link 
                           href="/dashboard" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
                         >
                           <Compass className="h-4 w-4 text-slate-400" />
                           Optimize Resume
@@ -256,7 +263,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                         <Link 
                           href="/dashboard/resumes" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
                         >
                           <FileText className="h-4 w-4 text-slate-400" />
                           My Resumes
@@ -264,7 +271,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                         <Link 
                           href="/dashboard/job-tracker" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
                         >
                           <Briefcase className="h-4 w-4 text-slate-400" />
                           Job Tracker
@@ -273,7 +280,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                           <Link 
                             href="/dashboard/pricing" 
                             onClick={() => setIsDropdownOpen(false)}
-                            className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                            className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
                           >
                             <Sparkles className="h-4 w-4 text-slate-400" />
                             Pro Max Plan
@@ -282,7 +289,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                         <Link 
                           href="/dashboard/pricing" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
                         >
                           <DollarSign className="h-4 w-4 text-slate-400" />
                           Pricing
@@ -290,7 +297,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                         <Link 
                           href="/dashboard/billing" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
                         >
                           <CreditCard className="h-4 w-4 text-slate-400" />
                           Billing &amp; Usage
@@ -307,7 +314,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                             setIsDropdownOpen(false);
                             window.dispatchEvent(new CustomEvent("open-support-chatbot", { detail: { mode: "ai" } }));
                           }}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left cursor-pointer"
                         >
                           <HelpCircle className="h-4 w-4 text-slate-400" />
                           Help &amp; Support
@@ -317,7 +324,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                             setIsDropdownOpen(false);
                             setIsFeedbackOpen(true);
                           }}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left cursor-pointer"
                         >
                           <MessageSquare className="h-4 w-4 text-slate-400" />
                           Feedback
@@ -325,7 +332,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                         <Link
                           href="/privacy"
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
                         >
                           <Lock className="h-4 w-4 text-slate-400" />
                           Data Preferences
@@ -338,7 +345,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                       {/* Exit door sign out */}
                       <button
                         onClick={handleSignOut}
-                        className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors text-left"
+                        className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors text-left"
                       >
                         <LogOut className="h-4 w-4" />
                         Sign out

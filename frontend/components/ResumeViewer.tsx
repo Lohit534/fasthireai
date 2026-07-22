@@ -85,17 +85,21 @@ export default function ResumeViewer({
   };
 
   const handleDownloadPDF = async () => {
+    if (userPlan === "free") {
+      toast.error("AI optimized PDF downloads are a Pro feature. Upgrade to Pro, or download your manual resumes in My Resumes!");
+      setTimeout(() => {
+        window.location.href = "/dashboard/pricing";
+      }, 1800);
+      return;
+    }
+
     // Check monthly PDF download limit
     const pdfLimit = getPdfDownloadLimit(userPlan);
     if (userId && pdfLimit !== Infinity) {
       const storageKey = `fastHire_pdfDownloads_${userId}_${getMonthKey()}`;
       const usedCount = parseInt(localStorage.getItem(storageKey) || "0", 10);
       if (usedCount >= pdfLimit) {
-        if (userPlan === "free") {
-          toast.error("Free plan allows 1 PDF download per month. Upgrade to Pro for 15/month.");
-        } else {
-          toast.error(`You've reached your ${pdfLimit} PDF downloads for this month. Upgrade to Pro Max for 30/month.`);
-        }
+        toast.error(`You've reached your ${pdfLimit} PDF downloads for this month. Upgrade to Pro Max for 30/month.`);
         return;
       }
       localStorage.setItem(storageKey, (usedCount + 1).toString());
