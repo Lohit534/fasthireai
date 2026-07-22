@@ -687,9 +687,14 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
                   {block.segments.map((seg, sIdx) => {
                     const elements: React.ReactNode[] = [];
                     if (seg.isLink && seg.url) {
+                      // Show readable label: LinkedIn, GitHub, or original text
+                      const lower = seg.url.toLowerCase();
+                      const readableLabel = lower.includes('linkedin.com') ? 'LinkedIn'
+                        : lower.includes('github.com') ? 'GitHub'
+                        : seg.text;
                       elements.push(
                         <Link key={`link-${sIdx}`} src={seg.url} style={styles.contactLink}>
-                          <Text style={styles.contactLink}>{seg.text}</Text>
+                          <Text style={styles.contactLink}>{readableLabel}</Text>
                         </Link>
                       );
                     } else {
@@ -737,7 +742,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
                       <Text style={styles.projectTitle}>{block.name}</Text>
                       {block.projectUrl && (
                         <Link src={block.projectUrl} style={styles.projectLink}>
-                          <Text style={styles.projectLink}>{block.projectUrl}</Text>
+                          <Text style={styles.projectLink}>{block.name}</Text>
                         </Link>
                       )}
                     </View>
@@ -750,6 +755,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
                   ))}
                 </View>
               );
+
             case 'job':
               return (
                 <View key={i} style={{ marginBottom: 4 }}>

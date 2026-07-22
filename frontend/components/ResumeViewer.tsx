@@ -6,18 +6,40 @@ import { Loader2, Copy, Check, FileText, Sparkles } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { parseResumeIntoBlocks, ResumeBlock } from "@/lib/export/pdf-document";
 
+function getPdfDownloadLimit(plan: string): number {
+  if (plan === "promax" || plan === "owner") return 30;
+  if (plan === "premium") return 15;
+  return 1; // free
+}
+
+function getMonthKey() {
+  return new Date().toISOString().slice(0, 7);
+}
+
+function getReadableLinkLabel(url: string, fallback?: string): string {
+  if (!url) return fallback || url;
+  const lower = url.toLowerCase();
+  if (lower.includes("linkedin.com")) return "LinkedIn";
+  if (lower.includes("github.com")) return "GitHub";
+  return fallback || url;
+}
+
 interface ResumeViewerProps {
   text: string;
   originalText?: string;
   resumeId: string;
   jobDescription: string;
+  userId?: string;
+  userPlan?: string;
 }
 
 export default function ResumeViewer({
   text,
   originalText,
   resumeId,
-  jobDescription
+  jobDescription,
+  userId = "",
+  userPlan = "free"
 }: ResumeViewerProps) {
   const [copied, setCopied] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -63,6 +85,22 @@ export default function ResumeViewer({
   };
 
   const handleDownloadPDF = async () => {
+    // Check monthly PDF download limit
+    const pdfLimit = getPdfDownloadLimit(userPlan);
+    if (userId && pdfLimit !== Infinity) {
+      const storageKey = `fastHire_pdfDownloads_${userId}_${getMonthKey()}`;
+      const usedCount = parseInt(localStorage.getItem(storageKey) || "0", 10);
+      if (usedCount >= pdfLimit) {
+        if (userPlan === "free") {
+          toast.error("Free plan allows 1 PDF download per month. Upgrade to Pro for 15/month.");
+        } else {
+          toast.error(`You've reached your ${pdfLimit} PDF downloads for this month. Upgrade to Pro Max for 30/month.`);
+        }
+        return;
+      }
+      localStorage.setItem(storageKey, (usedCount + 1).toString());
+    }
+
     setPdfLoading(true);
     try {
       const response = await fetch("/api/export/pdf/generate", {
@@ -172,11 +210,12 @@ export default function ResumeViewer({
                 );
               case "contact":
                 return (
-                  <div key={idx} className="flex justify-center flex-wrap text-[9.5px] text-center text-slate-600 mb-3 leading-normal select-text font-serif">
+                  <div key={idx} className="flex justify-center flex-wrap text-[10px] text-center text-slate-600 mb-3 leading-normal select-text font-serif">
                     {block.segments.map((seg, sIdx) => {
+                      const label = seg.isLink && seg.url ? getReadableLinkLabel(seg.url, seg.text) : seg.text;
                       const el = seg.isLink && seg.url ? (
                         <a key={sIdx} href={seg.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
-                          {seg.text}
+                          {label}
                         </a>
                       ) : (
                         <span key={sIdx}>{seg.text}</span>
@@ -220,7 +259,7 @@ export default function ResumeViewer({
                         <span>{block.name}</span>
                         {block.projectUrl && (
                           <a href={block.projectUrl} target="_blank" rel="noopener noreferrer" className="text-[9.5px] text-blue-600 underline font-normal">
-                            {block.projectUrl}
+                            {getReadableLinkLabel(block.projectUrl, block.name)}
                           </a>
                         )}
                       </div>
@@ -236,6 +275,7 @@ export default function ResumeViewer({
                     ))}
                   </div>
                 );
+
               case "job":
                 return (
                   <div key={idx} className="mb-2">

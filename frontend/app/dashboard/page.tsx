@@ -69,6 +69,7 @@ export default function DashboardPage() {
   const [userPlan, setUserPlan] = useState<string>("free");
   const [trackerAdded, setTrackerAdded] = useState(false);
   const [bulletImprovementsCount, setBulletImprovementsCount] = useState(0);
+  const [currentResumeId, setCurrentResumeId] = useState<string | null>(null);
 
   // Roadmap & Cover letter generator states
   const [selectedRoadmapSkill, setSelectedRoadmapSkill] = useState<string | null>(null);
@@ -178,6 +179,7 @@ export default function DashboardPage() {
       }
 
       setRefreshKey((p) => p + 1);
+      setCurrentResumeId(data.resumeId || null);
 
       // Scroll to results Ref
       setTimeout(() => {
@@ -223,34 +225,29 @@ export default function DashboardPage() {
 
   const handleReScoreBefore = async (newText: string, currentImprovementsCount?: number) => {
     const impCount = currentImprovementsCount ?? bulletImprovementsCount;
+    // Only update afterScore (optimized) — keep beforeScore frozen at the original pre-optimization value
     try {
-      const res = await fetch("/api/score", { 
-        method: "POST", 
-        headers: { "Content-Type": "application/json" }, 
-        body: JSON.stringify({ 
-          resumeText: newText, 
-          jobDescription,
-          bulletImprovementsCount: impCount
-        }) 
-      });
-      if (res.ok) {
-        const scoreData = await res.json();
-        setBeforeScore(scoreData);
-        
-        // Also update afterScore to be dynamically higher!
-        if (afterScore && optimizeResult) {
-          const afterRes = await fetch("/api/score", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              resumeText: optimizeResult.optimizedText,
-              jobDescription,
-              scoreBefore: scoreData.overall,
-              bulletImprovementsCount: impCount
-            })
-          });
-          if (afterRes.ok) {
-            setAfterScore(await afterRes.json());
+      if (afterScore && optimizeResult) {
+        const afterRes = await fetch("/api/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            resumeText: newText,
+            jobDescription,
+            bulletImprovementsCount: impCount
+          })
+        });
+        if (afterRes.ok) {
+          const newAfterScore = await afterRes.json();
+          setAfterScore(newAfterScore);
+
+          // Persist updated scoreAfter to history DB so history shows the same improved score
+          if (currentResumeId) {
+            fetch("/api/history", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ resumeId: currentResumeId, scoreAfter: newAfterScore.overall })
+            }).catch(() => {});
           }
         }
       }
@@ -788,6 +785,8 @@ export default function DashboardPage() {
                   originalText={resumeText}
                   resumeId={optimizeResult.resumeId}
                   jobDescription={jobDescription}
+                  userId={user?.id || ""}
+                  userPlan={userPlan}
                 />
               </ScrollFadeIn>
 
@@ -810,10 +809,13 @@ export default function DashboardPage() {
                 </p>
                 <div className="bg-[#070814]/40 border border-white/5 p-4 rounded-xl">
                   <BulletImprover
-                    resumeText={resumeText}
+                    resumeText={optimizeResult.optimizedText}
                     jobDescription={jobDescription}
+                    userId={user?.id || ""}
+                    userPlan={userPlan}
                     onChange={(newText, wasImproved) => {
-                      setResumeText(newText);
+                      // Update the optimizedText in result so the viewer shows the new text
+                      setOptimizeResult((prev: any) => prev ? { ...prev, optimizedText: newText } : prev);
                       let newCount = bulletImprovementsCount;
                       if (wasImproved) {
                         newCount += 1;

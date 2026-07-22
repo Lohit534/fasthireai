@@ -134,3 +134,58 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const supabase = createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { resumeId, scoreAfter } = body;
+
+    if (!resumeId || scoreAfter === undefined) {
+      return NextResponse.json({ error: "resumeId and scoreAfter are required." }, { status: 400 });
+    }
+
+    const admin = getAdminClient() as any;
+
+    // Update in Supabase DB
+    const { error: updateErr } = await admin
+      .from("Resume")
+      .update({ scoreAfter: Math.round(scoreAfter) })
+      .eq("id", resumeId);
+
+    if (updateErr) {
+      logger.warn("[history PATCH] DB update failed:", updateErr.message);
+    }
+
+    // Also update in local JSON file fallback
+    try {
+      const DATA_DIR = path.join(process.cwd(), "data");
+      const FILE_PATH = path.join(DATA_DIR, "resumes.json");
+      if (fs.existsSync(FILE_PATH)) {
+        const localResumes = JSON.parse(fs.readFileSync(FILE_PATH, "utf8") || "[]");
+        const idx = localResumes.findIndex((r: any) => r.id === resumeId);
+        if (idx !== -1) {
+          localResumes[idx].scoreAfter = Math.round(scoreAfter);
+          fs.writeFileSync(FILE_PATH, JSON.stringify(localResumes, null, 2), "utf8");
+        }
+      }
+    } catch (e: any) {
+      logger.warn("[history PATCH] Local JSON update failed:", e.message);
+    }
+
+    logger.info(`[history PATCH] Updated scoreAfter=${scoreAfter} for resumeId=${resumeId}`);
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    logger.error("[history PATCH] Unhandled error:", error?.message);
+    return NextResponse.json(
+      { error: "Internal server error during score update." },
+      { status: 500 }
+    );
+  }
+}
