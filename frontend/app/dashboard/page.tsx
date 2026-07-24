@@ -403,7 +403,7 @@ export default function DashboardPage() {
 
       <Navbar refreshKey={refreshKey} />
 
-      <main className="relative flex-1 mx-auto max-w-7xl w-full px-8 sm:px-12 lg:px-20 py-10">
+      <main className="relative flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-10">
 
         {/* ── LOADING OVERLAY ─────────────────────────────────────── */}
         {optimizing && (

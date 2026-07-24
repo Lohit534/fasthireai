@@ -94,7 +94,7 @@ export default function LandingPage() {
 
       {/* ── HERO SECTION ──────────────────────────────────────────── */}
       <section className="relative pt-24 pb-28 md:pt-32 md:pb-36">
-        <div className="mx-auto max-w-7xl px-8 sm:px-12 lg:px-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
 
             {/* LEFT: Copy + CTAs */}
@@ -273,7 +273,7 @@ export default function LandingPage() {
 
       {/* ── SCORE LIFT SECTION ──────────────────────────────────── */}
       <ScrollFadeIn className="py-24 border-t border-white/5">
-        <div className="mx-auto max-w-5xl px-8 sm:px-12 lg:px-20 space-y-14">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-14">
           <div className="text-center space-y-4">
             <span className="text-xs font-bold uppercase tracking-widest text-violet-400">
               Real Results
@@ -311,7 +311,7 @@ export default function LandingPage() {
 
       {/* ── FEATURES GRID ────────────────────────────────────────── */}
       <ScrollFadeIn className="py-24 border-t border-white/5">
-        <div className="mx-auto max-w-5xl px-8 sm:px-12 lg:px-20 space-y-12">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center space-y-4">
             <span className="text-xs font-bold uppercase tracking-widest text-violet-400">
               Why FastHire
@@ -363,7 +363,7 @@ export default function LandingPage() {
 
       {/* ── FINAL CTA ─────────────────────────────────────────────── */}
       <ScrollFadeIn className="py-24 border-t border-white/5">
-        <div className="mx-auto max-w-3xl px-8 sm:px-12 lg:px-20 text-center space-y-7">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center space-y-7">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-500/8 border border-violet-500/20 text-violet-400 text-xs font-semibold">
             <Sparkles className="h-3.5 w-3.5" />
             Free Forever Tier

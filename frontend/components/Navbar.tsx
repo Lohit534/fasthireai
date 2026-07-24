@@ -153,7 +153,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
   return (
     <>
       <nav className="border-b border-white/6 bg-[#0a0b14]/90 text-slate-100 sticky top-0 z-50 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-8 sm:px-12 lg:px-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           
           {/* Left: Brand logo */}
