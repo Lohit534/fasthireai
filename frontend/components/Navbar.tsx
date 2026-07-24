@@ -152,22 +152,22 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
 
   return (
     <>
-      <nav className="border-b border-white/5 bg-[#060713]/80 text-slate-100 sticky top-0 z-50 backdrop-blur-md bg-opacity-80">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-14 items-center justify-between">
+      <nav className="border-b border-white/6 bg-[#0a0b14]/90 text-slate-100 sticky top-0 z-50 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-5 sm:px-7 lg:px-10">
+        <div className="flex h-16 items-center justify-between">
           
           {/* Left: Brand logo */}
-          <div className="flex items-center gap-6">
-            <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 group select-none">
-              <img src="/logo.png" alt="FastHire Logo" className="h-5 w-5 rounded-full object-cover group-hover:scale-105 transition-transform" />
-              <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
+          <div className="flex items-center gap-7">
+            <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2.5 group select-none">
+              <img src="/logo.png" alt="FastHire Logo" className="h-6 w-6 rounded-lg object-cover group-hover:scale-105 transition-transform" />
+              <span className="font-black text-lg tracking-tight bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
                 FastHire
               </span>
             </Link>
 
             {/* Desktop Navigation Tabs */}
             {user && (
-              <div className="hidden md:flex items-center gap-1.5 h-14">
+              <div className="hidden md:flex items-center gap-1 h-16">
                 {links.map((link) => {
                   const isActive = pathname === link.href;
                   return (

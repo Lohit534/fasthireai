@@ -49,22 +49,22 @@
 }
 
 :root {
-  --background: #060713;
-  --foreground: #f8fafc;
-  --card: #0e0f21;
-  --card-foreground: #f8fafc;
-  --popover: #0e0f21;
-  --popover-foreground: #f8fafc;
+  --background: #0a0b14;
+  --foreground: #f1f5f9;
+  --card: #10111f;
+  --card-foreground: #f1f5f9;
+  --popover: #10111f;
+  --popover-foreground: #f1f5f9;
   --primary: #7c3aed;
   --primary-foreground: #ffffff;
-  --secondary: #141526;
-  --secondary-foreground: #f8fafc;
-  --muted: #141526;
+  --secondary: #14162a;
+  --secondary-foreground: #f1f5f9;
+  --muted: #14162a;
   --muted-foreground: #94a3b8;
   --accent: #2e1065;
-  --accent-foreground: #f8fafc;
+  --accent-foreground: #f1f5f9;
   --destructive: #ef4444;
-  --border: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.07);
   --input: rgba(255, 255, 255, 0.05);
   --ring: #7c3aed;
   --chart-1: #818cf8;
@@ -72,34 +72,34 @@
   --chart-3: #fbbf24;
   --chart-4: #f87171;
   --chart-5: #a78bfa;
-  --radius: 0.625rem;
-  --sidebar: #0e0f21;
-  --sidebar-foreground: #f8fafc;
+  --radius: 0.75rem;
+  --sidebar: #10111f;
+  --sidebar-foreground: #f1f5f9;
   --sidebar-primary: #7c3aed;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #141526;
-  --sidebar-accent-foreground: #f8fafc;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-accent: #14162a;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: rgba(255, 255, 255, 0.07);
   --sidebar-ring: #7c3aed;
 }
 
 .dark {
-  --background: #060713;
-  --foreground: #f8fafc;
-  --card: #0e0f21;
-  --card-foreground: #f8fafc;
-  --popover: #0e0f21;
-  --popover-foreground: #f8fafc;
+  --background: #0a0b14;
+  --foreground: #f1f5f9;
+  --card: #10111f;
+  --card-foreground: #f1f5f9;
+  --popover: #10111f;
+  --popover-foreground: #f1f5f9;
   --primary: #7c3aed;
   --primary-foreground: #ffffff;
-  --secondary: #141526;
-  --secondary-foreground: #f8fafc;
-  --muted: #141526;
+  --secondary: #14162a;
+  --secondary-foreground: #f1f5f9;
+  --muted: #14162a;
   --muted-foreground: #94a3b8;
   --accent: #2e1065;
-  --accent-foreground: #f8fafc;
+  --accent-foreground: #f1f5f9;
   --destructive: #ef4444;
-  --border: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.07);
   --input: rgba(255, 255, 255, 0.05);
   --ring: #7c3aed;
   --chart-1: #818cf8;
@@ -107,14 +107,14 @@
   --chart-3: #fbbf24;
   --chart-4: #f87171;
   --chart-5: #a78bfa;
-  --radius: 0.625rem;
-  --sidebar: #0e0f21;
-  --sidebar-foreground: #f8fafc;
+  --radius: 0.75rem;
+  --sidebar: #10111f;
+  --sidebar-foreground: #f1f5f9;
   --sidebar-primary: #7c3aed;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #141526;
-  --sidebar-accent-foreground: #f8fafc;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-accent: #14162a;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: rgba(255, 255, 255, 0.07);
   --sidebar-ring: #7c3aed;
 }
 
@@ -125,7 +125,8 @@
   body {
     @apply bg-background text-foreground;
     font-size: 15px;
-    line-height: 1.6;
+    line-height: 1.65;
+    letter-spacing: -0.01em;
   }
   html {
     @apply font-sans;
@@ -134,78 +135,190 @@
 }
 
 /* ── Global Text-Size Readability Overrides ──────────────────── */
-/* These ensure no text is smaller than a comfortable reading size */
-
-/* text-[9px], text-[9.5px] → 11.5px minimum */
 [class~="text-[9px]"], [class~="text-[9.5px]"] {
   font-size: 11.5px;
 }
-
-/* text-[10px] → 12px minimum */
 [class~="text-[10px]"] {
-  font-size: 12px;
-}
-
-/* text-[10.5px] → 12.5px */
-[class~="text-[10.5px]"] {
   font-size: 12.5px;
 }
-
-/* text-[11px] → 13px */
-[class~="text-[11px]"] {
+[class~="text-[10.5px]"] {
   font-size: 13px;
 }
-
-/* text-xs → 13px (Tailwind default is 12px) */
+[class~="text-[11px]"] {
+  font-size: 13.5px;
+}
 .text-xs {
   font-size: 13px;
   line-height: 1.55;
 }
-
-/* text-sm → 15px (Tailwind default is 14px) */
 .text-sm {
   font-size: 15px;
-  line-height: 1.6;
-}
-
-/* text-base → 16px (keep same) */
-.text-base {
-  font-size: 16px;
   line-height: 1.65;
 }
-
-/* text-lg → 18px */
+.text-base {
+  font-size: 16px;
+  line-height: 1.7;
+}
 .text-lg {
   font-size: 18px;
+  line-height: 1.5;
 }
-
-/* text-xl → 20px */
 .text-xl {
   font-size: 20px;
+  line-height: 1.4;
 }
 
-/* Custom premium transitions and keyframes */
+/* ══════════════════════════════════════════════════════════
+   💎 DIAMOND GLEAM / BRIGHT ANIMATION
+   A diagonal white-light sweep — like sunlight catching a diamond.
+   Usage: add class "diamond-gleam" or "diamond-gleam-slow"
+══════════════════════════════════════════════════════════ */
+
+@keyframes diamond-sweep {
+  0% {
+    transform: translateX(-120%) skewX(-20deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(220%) skewX(-20deg);
+    opacity: 0;
+  }
+}
+
+@keyframes diamond-sweep-slow {
+  0% {
+    transform: translateX(-120%) skewX(-20deg);
+    opacity: 0;
+  }
+  5% {
+    opacity: 0.9;
+  }
+  95% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(220%) skewX(-20deg);
+    opacity: 0;
+  }
+}
+
+@keyframes diamond-glow-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 rgba(255,255,255,0),
+      0 0 12px 2px rgba(139,92,246,0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 24px 4px rgba(255,255,255,0.04),
+      0 0 40px 8px rgba(139,92,246,0.12);
+  }
+}
+
+/* Card with diamond gleam */
+.diamond-gleam {
+  position: relative;
+  overflow: hidden;
+  animation: diamond-glow-pulse 4s ease-in-out infinite;
+}
+.diamond-gleam::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: 0;
+  width: 45%;
+  height: 140%;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.02) 30%,
+    rgba(255, 255, 255, 0.10) 48%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(255, 255, 255, 0.10) 52%,
+    rgba(255, 255, 255, 0.02) 70%,
+    transparent 100%
+  );
+  animation: diamond-sweep 4.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Slower, more prominent version for hero/heading areas */
+.diamond-gleam-slow::before {
+  animation-duration: 6s;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.02) 30%,
+    rgba(255, 255, 255, 0.14) 48%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.14) 52%,
+    rgba(255, 255, 255, 0.02) 70%,
+    transparent 100%
+  );
+}
+
+/* Button shimmer gleam */
+.btn-gleam {
+  position: relative;
+  overflow: hidden;
+}
+.btn-gleam::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 40%,
+    rgba(255, 255, 255, 0.20) 50%,
+    rgba(255, 255, 255, 0.08) 60%,
+    transparent 100%
+  );
+  animation: diamond-sweep 3.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation-delay: 1s;
+  pointer-events: none;
+}
+
+/* Navbar gleam strip at the bottom border */
+@keyframes nav-gleam-line {
+  0% { transform: scaleX(0) translateX(-50%); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: scaleX(1) translateX(0%); opacity: 0; }
+}
+
+/* ── General UI Utilities ─────────────────────────────────── */
 .animate-fade-in-up {
-  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeInUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .hover-lift {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
 .hover-lift:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 24px -8px rgba(124, 58, 237, 0.25);
+  box-shadow: 0 16px 32px -8px rgba(124, 58, 237, 0.22);
 }
 
 .animate-float {
-  animation: float 4s ease-in-out infinite;
+  animation: float 5s ease-in-out infinite;
 }
 
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
@@ -214,25 +327,37 @@
 }
 
 @keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 .animate-pulse-subtle {
-  animation: pulseSubtle 1.8s infinite ease-in-out;
+  animation: pulseSubtle 2s infinite ease-in-out;
+}
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.82; transform: scale(0.97); }
 }
 
-@keyframes pulseSubtle {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.85;
-    transform: scale(0.97);
-  }
+/* ── Pro card glass effect ─────────────────────────────────── */
+.glass-card {
+  background: rgba(16, 17, 31, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* ── Gradient text utility ─────────────────────────────────── */
+.text-gradient-violet {
+  background: linear-gradient(135deg, #a78bfa 0%, #818cf8 50%, #6ee7b7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-cyan {
+  background: linear-gradient(135deg, #22d3ee 0%, #60a5fa 50%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }

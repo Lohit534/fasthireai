@@ -63,7 +63,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#060713] text-slate-100 font-sans selection:bg-violet-500/30">
+    <div className="min-h-screen flex bg-[#0a0b14] text-slate-100 font-sans selection:bg-violet-500/30">
       
       {/* LEFT PANE: Branding Showroom (Desktop Only) */}
       <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 bg-slate-950/60 border-r border-white/5 relative overflow-hidden">
@@ -115,28 +115,31 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Mock scorecard gauge */}
-        <div className="max-w-[340px] bg-slate-900/50 border border-white/5 p-4 rounded-xl space-y-3">
-          <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-            <span>ATS Score</span>
-            <span className="text-violet-400">+57 pts after FastHire</span>
+        {/* ATS Scorecard */}
+        <div className="diamond-gleam max-w-[340px] bg-[#10111f] border border-white/8 p-5 rounded-2xl space-y-4">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">ATS Score</span>
+            <span className="text-xs text-violet-400 font-bold">+57 pts after FastHire</span>
           </div>
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1 bg-red-500/10 border border-red-500/20 text-red-400 p-2 text-center rounded-lg">
-              <div className="text-lg font-black">34</div>
-              <div className="text-[9px] uppercase font-bold text-slate-500">Before</div>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 bg-red-500/10 border border-red-500/20 text-red-400 p-3 text-center rounded-xl">
+              <div className="text-2xl font-black">34</div>
+              <div className="text-[10px] uppercase font-bold text-slate-500 mt-0.5">Before</div>
             </div>
-            <span className="text-slate-600 font-black">→</span>
-            <div className="flex-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-2 text-center rounded-lg">
-              <div className="text-lg font-black">91</div>
-              <div className="text-[9px] uppercase font-bold text-slate-500">After</div>
+            <span className="text-slate-600 font-black text-lg">→</span>
+            <div className="flex-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-3 text-center rounded-xl">
+              <div className="text-2xl font-black">91</div>
+              <div className="text-[10px] uppercase font-bold text-slate-500 mt-0.5">After</div>
             </div>
+          </div>
+          <div className="h-2 w-full rounded-full overflow-hidden bg-[#1c1d30]">
+            <div className="h-full w-[91%] rounded-full" style={{ background: 'linear-gradient(90deg, #ef4444 0%, #eab308 50%, #22c55e 100%)' }} />
           </div>
         </div>
       </div>
 
       {/* RIGHT PANE: Interactive Login Block */}
-      <div className="flex flex-col justify-between w-full lg:w-1/2 p-8 md:p-12 min-h-screen">
+      <div className="flex flex-col w-full lg:w-1/2 p-8 md:p-12 min-h-screen">
         
         {/* Top bar */}
         <div className="flex justify-between items-center lg:justify-end">
@@ -259,16 +262,10 @@ export default function LoginPage() {
           </form>
         </div>
 
-        {/* Footer */}
-        <div className="text-center space-y-3 pt-6 border-t border-white/5">
-          <p className="text-[10px] text-slate-500 max-w-[280px] mx-auto leading-relaxed">
-            By signing in you agree to our <Link href="/terms" className="underline hover:text-white">Terms</Link> &amp; <Link href="/privacy" className="underline hover:text-white">Privacy Policy</Link>.
-          </p>
-          <Link href="/" className="inline-flex items-center text-xs text-slate-500 hover:text-white font-bold transition-colors">
-            <ArrowLeft className="h-3.5 w-3.5 mr-1" />
-            Back to home
-          </Link>
-        </div>
+        {/* Legal note */}
+        <p className="text-xs text-slate-600 text-center pt-4">
+          By signing in you agree to our <Link href="/terms" className="hover:text-slate-400 underline">Terms</Link> &amp; <Link href="/privacy" className="hover:text-slate-400 underline">Privacy</Link>.
+        </p>
 
       </div>
     </div>

@@ -124,7 +124,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#060713] text-slate-100 font-sans selection:bg-violet-500/30">
+    <div className="min-h-screen flex bg-[#0a0b14] text-slate-100 font-sans selection:bg-violet-500/30">
       
       {/* LEFT PANE: Branding Showroom (Desktop Only) */}
       <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 bg-slate-950/60 border-r border-white/5 relative overflow-hidden">
@@ -353,17 +353,11 @@ export default function SignupPage() {
             </>
           )}
 
-        </div>
-
-        {/* Footer */}
-        <div className="text-center space-y-3 pt-6 border-t border-white/5">
-          <p className="text-[10px] text-slate-500 max-w-[280px] mx-auto leading-relaxed">
-            By signing up you agree to our <Link href="/terms" className="underline hover:text-white">Terms</Link> &amp; <Link href="/privacy" className="underline hover:text-white">Privacy Policy</Link>.
+          {/* Legal note */}
+          <p className="text-xs text-slate-600 text-center pt-4">
+            By signing up you agree to our <Link href="/terms" className="hover:text-slate-400 underline">Terms</Link> &amp; <Link href="/privacy" className="hover:text-slate-400 underline">Privacy</Link>.
           </p>
-          <Link href="/" className="inline-flex items-center text-xs text-slate-500 hover:text-white font-bold transition-colors">
-            <ArrowLeft className="h-3.5 w-3.5 mr-1" />
-            Back to home
-          </Link>
+
         </div>
 
       </div>

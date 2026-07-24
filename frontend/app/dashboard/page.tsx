@@ -393,21 +393,21 @@ export default function DashboardPage() {
   const delta = afterScore && beforeScore ? afterScore.overall - beforeScore.overall : 0;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#040d1a] text-slate-100 font-sans">
+    <div className="flex flex-col min-h-screen bg-[#0a0b14] text-slate-100 font-sans">
       {/* Ambient background glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[400px] bg-cyan-500/4 rounded-full blur-[120px]" />
-        <div className="absolute top-1/3 right-0 w-[400px] h-[400px] bg-blue-600/4 rounded-full blur-[100px]" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[300px] bg-indigo-600/3 rounded-full blur-[100px]" />
+        <div className="absolute top-0 left-1/3 w-[700px] h-[500px] bg-violet-600/5 rounded-full blur-[150px]" />
+        <div className="absolute top-1/3 right-0 w-[500px] h-[500px] bg-blue-700/4 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[400px] bg-indigo-600/4 rounded-full blur-[120px]" />
       </div>
 
       <Navbar refreshKey={refreshKey} />
 
-      <main className="relative flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8">
+      <main className="relative flex-1 mx-auto max-w-7xl w-full px-5 sm:px-7 lg:px-10 py-10">
 
         {/* ── LOADING OVERLAY ─────────────────────────────────────── */}
         {optimizing && (
-          <div className="fixed inset-0 bg-[#060713] z-50 flex flex-col items-center justify-center p-6 select-none animate-in fade-in duration-300">
+          <div className="fixed inset-0 bg-[#0a0b14] z-50 flex flex-col items-center justify-center p-6 select-none animate-in fade-in duration-300">
             <div className="max-w-[480px] w-full text-center space-y-6">
               <div className="relative mx-auto h-16 w-16">
                 <div className="absolute inset-0 rounded-full border-4 border-violet-500/10" />
@@ -551,7 +551,7 @@ export default function DashboardPage() {
             )}
 
             {/* Overall Score Banner */}
-            <div className="bg-[#0e0f21] border border-white/5 p-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
+            <div className="diamond-gleam bg-[#10111f] border border-white/7 p-7 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
                   <TrendingUp className="h-5 w-5 text-emerald-400" />
@@ -581,8 +581,8 @@ export default function DashboardPage() {
               <ScrollFadeIn direction="left" className="lg:col-span-5 space-y-6">
                 
                 {/* Score circular gauges (like in History DetailView) */}
-                <Card className="border-white/5 bg-[#0e0f21]/50 shadow-xl rounded-2xl overflow-hidden">
-                  <CardContent className="p-6 space-y-6">
+                <Card className="diamond-gleam border-white/7 bg-[#10111f]/60 shadow-xl rounded-2xl overflow-hidden">
+                  <CardContent className="p-7 space-y-6">
                     <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2 select-none">
                       <span className="h-2 w-2 rounded-full bg-emerald-500" />
                       ATS Match Score Comparison
@@ -617,8 +617,8 @@ export default function DashboardPage() {
 
                 {/* Summary of Changes Done */}
                 {optimizeResult?.summary && (
-                  <Card className="border-white/5 bg-[#0e0f21]/50 shadow-xl rounded-2xl overflow-hidden select-none">
-                    <CardContent className="p-6 space-y-4">
+                  <Card className="diamond-gleam border-white/7 bg-[#10111f]/60 shadow-xl rounded-2xl overflow-hidden select-none">
+                    <CardContent className="p-7 space-y-4">
                       <div className="flex items-center gap-2">
                         <Sparkles className="h-4.5 w-4.5 text-violet-400" />
                         <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">AI Optimization Summary</h3>
@@ -801,8 +801,8 @@ export default function DashboardPage() {
             </div>
 
             {/* Interactive Bullet Point Reviewer / Improver (Below Columns) */}
-            <Card className="border-white/5 bg-[#0e0f21]/40 shadow-xl rounded-2xl overflow-hidden mt-6">
-              <CardContent className="p-6 space-y-4 text-slate-100">
+            <Card className="diamond-gleam border-white/7 bg-[#10111f]/60 shadow-xl rounded-2xl overflow-hidden mt-6">
+              <CardContent className="p-7 space-y-4 text-slate-100">
                 <div className="flex items-center justify-between select-none">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-5 w-5 text-violet-400" />
@@ -846,35 +846,35 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
               {/* Resume Panel */}
-              <div className="group flex flex-col bg-[#071525]/70 border border-white/6 hover:border-cyan-500/20 rounded-2xl p-5 space-y-4 transition-colors duration-300">
+              <div className="diamond-gleam group flex flex-col bg-[#10111f] border border-white/7 hover:border-violet-500/20 rounded-2xl p-6 space-y-4 transition-colors duration-300">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-8 w-8 rounded-lg bg-slate-800 border border-white/5 flex items-center justify-center">
-                      <FileText className="h-4 w-4 text-cyan-400" />
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-xl bg-violet-500/10 border border-violet-500/15 flex items-center justify-center">
+                      <FileText className="h-4.5 w-4.5 text-violet-400" />
                     </div>
                     <div>
-                      <h3 className="font-extrabold text-white text-sm">Your Resume</h3>
-                      <p className="text-[10px] text-slate-500 font-medium">Paste text or upload PDF</p>
+                      <h3 className="font-bold text-white text-sm">Your Resume</h3>
+                      <p className="text-xs text-slate-500 font-medium">Paste text or upload PDF</p>
                     </div>
                   </div>
-                  <span className="text-[9px] font-bold text-slate-600 border border-white/5 px-2 py-0.5 rounded-full">Step 1</span>
+                  <span className="text-xs font-bold text-slate-600 border border-white/6 px-2.5 py-0.5 rounded-full">Step 1</span>
                 </div>
                 <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
               </div>
 
               {/* Job Description Panel */}
-              <div className="group flex flex-col bg-[#071525]/70 border border-white/6 hover:border-cyan-500/20 rounded-2xl p-5 space-y-4 transition-colors duration-300">
+              <div className="diamond-gleam group flex flex-col bg-[#10111f] border border-white/7 hover:border-violet-500/20 rounded-2xl p-6 space-y-4 transition-colors duration-300">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-8 w-8 rounded-lg bg-slate-800 border border-white/5 flex items-center justify-center">
-                      <Target className="h-4 w-4 text-cyan-400" />
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-xl bg-violet-500/10 border border-violet-500/15 flex items-center justify-center">
+                      <Target className="h-4.5 w-4.5 text-violet-400" />
                     </div>
                     <div>
-                      <h3 className="font-extrabold text-white text-sm">Job Description</h3>
-                      <p className="text-[10px] text-slate-500 font-medium">Paste the job post description</p>
+                      <h3 className="font-bold text-white text-sm">Job Description</h3>
+                      <p className="text-xs text-slate-500 font-medium">Paste the job post description</p>
                     </div>
                   </div>
-                  <span className="text-[9px] font-bold text-slate-600 border border-white/5 px-2 py-0.5 rounded-full">Step 2</span>
+                  <span className="text-xs font-bold text-slate-600 border border-white/6 px-2.5 py-0.5 rounded-full">Step 2</span>
                 </div>
                 <JobDescriptionInput value={jobDescription} onChange={setJobDescription} disabled={optimizing} />
               </div>
@@ -882,10 +882,10 @@ export default function DashboardPage() {
             </div>
 
             {/* Custom optimization instructions card */}
-            <div className="bg-[#071525]/50 border border-white/6 rounded-2xl p-5 space-y-4">
+            <div className="diamond-gleam bg-[#10111f] border border-white/7 rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-cyan-450" />
-                <h4 className="font-bold text-xs text-white uppercase tracking-wider">Custom Guidance (Optional)</h4>
+                <Sparkles className="h-4 w-4 text-violet-400" />
+                <h4 className="font-bold text-sm text-white">Custom Guidance <span className="text-slate-500 font-medium">(Optional)</span></h4>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -938,16 +938,13 @@ export default function DashboardPage() {
               <button
                 onClick={handleOptimize}
                 disabled={optimizing}
-                className="group relative overflow-hidden bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-sm h-13 px-14 rounded-full shadow-lg shadow-cyan-500/20 transition-all duration-300 hover:shadow-cyan-500/35 hover:scale-[1.02] disabled:opacity-60 disabled:scale-100 disabled:cursor-not-allowed"
-                style={{ height: "52px", paddingLeft: "3.5rem", paddingRight: "3.5rem" }}
+                className="btn-gleam group relative bg-violet-600 hover:bg-violet-500 text-white font-black text-sm h-14 px-14 rounded-xl shadow-lg shadow-violet-600/30 transition-all duration-300 hover:shadow-violet-600/50 hover:scale-[1.02] disabled:opacity-60 disabled:scale-100 disabled:cursor-not-allowed"
               >
-                {/* Shimmer */}
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700 skew-x-12" />
-                <span className="relative flex items-center gap-2">
+                <span className="relative flex items-center gap-2.5">
                   {optimizing ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Optimizing Resume...</>
                   ) : (
-                    <><Zap className="h-4 w-4" /> Optimize My Resume <ChevronRight className="h-4 w-4" /></>
+                    <><Zap className="h-4.5 w-4.5" /> Optimize My Resume <ChevronRight className="h-4.5 w-4.5" /></>
                   )}
                 </span>
               </button>
