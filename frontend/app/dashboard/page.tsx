@@ -403,7 +403,7 @@ export default function DashboardPage() {
 
       <Navbar refreshKey={refreshKey} />
 
-      <main className="relative flex-1 mx-auto max-w-7xl w-full px-5 sm:px-7 lg:px-10 py-10">
+      <main className="relative flex-1 mx-auto max-w-7xl w-full px-8 sm:px-12 lg:px-20 py-10">
 
         {/* ── LOADING OVERLAY ─────────────────────────────────────── */}
         {optimizing && (
@@ -551,7 +551,7 @@ export default function DashboardPage() {
             )}
 
             {/* Overall Score Banner */}
-            <div className="diamond-gleam bg-[#10111f] border border-white/7 p-7 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
+            <div className="bg-[#10111f] border border-white/7 p-7 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
                   <TrendingUp className="h-5 w-5 text-emerald-400" />
@@ -581,7 +581,7 @@ export default function DashboardPage() {
               <ScrollFadeIn direction="left" className="lg:col-span-5 space-y-6">
                 
                 {/* Score circular gauges (like in History DetailView) */}
-                <Card className="diamond-gleam border-white/7 bg-[#10111f]/60 shadow-xl rounded-2xl overflow-hidden">
+                <Card className="border-white/7 bg-[#10111f]/60 shadow-xl rounded-2xl overflow-hidden">
                   <CardContent className="p-7 space-y-6">
                     <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2 select-none">
                       <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -617,7 +617,7 @@ export default function DashboardPage() {
 
                 {/* Summary of Changes Done */}
                 {optimizeResult?.summary && (
-                  <Card className="diamond-gleam border-white/7 bg-[#10111f]/60 shadow-xl rounded-2xl overflow-hidden select-none">
+                  <Card className="border-white/7 bg-[#10111f]/60 shadow-xl rounded-2xl overflow-hidden select-none">
                     <CardContent className="p-7 space-y-4">
                       <div className="flex items-center gap-2">
                         <Sparkles className="h-4.5 w-4.5 text-violet-400" />
@@ -801,7 +801,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Interactive Bullet Point Reviewer / Improver (Below Columns) */}
-            <Card className="diamond-gleam border-white/7 bg-[#10111f]/60 shadow-xl rounded-2xl overflow-hidden mt-6">
+            <Card className="border-white/7 bg-[#10111f]/60 shadow-xl rounded-2xl overflow-hidden mt-6">
               <CardContent className="p-7 space-y-4 text-slate-100">
                 <div className="flex items-center justify-between select-none">
                   <div className="flex items-center gap-2">
@@ -846,7 +846,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
               {/* Resume Panel */}
-              <div className="diamond-gleam group flex flex-col bg-[#10111f] border border-white/7 hover:border-violet-500/20 rounded-2xl p-6 space-y-4 transition-colors duration-300">
+              <div className="group flex flex-col bg-[#10111f] border border-white/7 hover:border-violet-500/20 rounded-2xl p-6 space-y-4 transition-colors duration-300">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-violet-500/10 border border-violet-500/15 flex items-center justify-center">
@@ -863,7 +863,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Job Description Panel */}
-              <div className="diamond-gleam group flex flex-col bg-[#10111f] border border-white/7 hover:border-violet-500/20 rounded-2xl p-6 space-y-4 transition-colors duration-300">
+              <div className="group flex flex-col bg-[#10111f] border border-white/7 hover:border-violet-500/20 rounded-2xl p-6 space-y-4 transition-colors duration-300">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-violet-500/10 border border-violet-500/15 flex items-center justify-center">
@@ -882,7 +882,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Custom optimization instructions card */}
-            <div className="diamond-gleam bg-[#10111f] border border-white/7 rounded-2xl p-6 space-y-4">
+            <div className="bg-[#10111f] border border-white/7 rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-violet-400" />
                 <h4 className="font-bold text-sm text-white">Custom Guidance <span className="text-slate-500 font-medium">(Optional)</span></h4>
