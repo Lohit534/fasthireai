@@ -393,17 +393,17 @@ export default function DashboardPage() {
   const delta = afterScore && beforeScore ? afterScore.overall - beforeScore.overall : 0;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0a0b14] text-slate-100 font-sans">
+    <div className="flex flex-col min-h-screen bg-[#111318] text-[#e2e2e8] font-sans">
       {/* Ambient background glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/3 w-[700px] h-[500px] bg-violet-600/5 rounded-full blur-[150px]" />
-        <div className="absolute top-1/3 right-0 w-[500px] h-[500px] bg-blue-700/4 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 left-0 w-[600px] h-[400px] bg-indigo-600/4 rounded-full blur-[120px]" />
+        <div className="absolute top-0 left-1/3 w-[700px] h-[500px] bg-[#5E5CE6]/6 rounded-full blur-[150px]" />
+        <div className="absolute top-1/3 right-0 w-[500px] h-[500px] bg-[#0A84FF]/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[400px] bg-[#BF5AF2]/5 rounded-full blur-[120px]" />
       </div>
 
       <Navbar refreshKey={refreshKey} />
 
-      <main className="relative flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-10">
+      <main className="relative flex-1 mx-auto max-w-[1280px] w-full px-4 sm:px-6 lg:px-8 py-8">
 
         {/* ── LOADING OVERLAY ─────────────────────────────────────── */}
         {optimizing && (
@@ -846,35 +846,35 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
               {/* Resume Panel */}
-              <div className="group flex flex-col bg-[#10111f] border border-white/7 hover:border-violet-500/20 rounded-2xl p-6 space-y-4 transition-colors duration-300">
+              <div className="group flex flex-col bg-[#161B22] border border-white/12 hover:border-[#5E5CE6]/40 rounded-2xl p-6 space-y-4 transition-colors duration-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-xl bg-violet-500/10 border border-violet-500/15 flex items-center justify-center">
-                      <FileText className="h-4.5 w-4.5 text-violet-400" />
+                    <div className="h-9 w-9 rounded-lg bg-[#5E5CE6]/15 border border-[#5E5CE6]/25 flex items-center justify-center">
+                      <FileText className="h-4.5 w-4.5 text-[#c2c1ff]" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-white text-sm">Your Resume</h3>
-                      <p className="text-xs text-slate-500 font-medium">Paste text or upload PDF</p>
+                      <h3 className="font-heading font-bold text-white text-base">Your Resume</h3>
+                      <p className="text-xs text-slate-400 font-normal">Paste text or upload PDF</p>
                     </div>
                   </div>
-                  <span className="text-xs font-bold text-slate-600 border border-white/6 px-2.5 py-0.5 rounded-full">Step 1</span>
+                  <span className="text-xs font-mono font-medium text-[#c2c1ff] bg-[#5E5CE6]/10 border border-[#5E5CE6]/25 px-2.5 py-0.5 rounded-full">Step 1</span>
                 </div>
                 <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
               </div>
 
               {/* Job Description Panel */}
-              <div className="group flex flex-col bg-[#10111f] border border-white/7 hover:border-violet-500/20 rounded-2xl p-6 space-y-4 transition-colors duration-300">
+              <div className="group flex flex-col bg-[#161B22] border border-white/12 hover:border-[#5E5CE6]/40 rounded-2xl p-6 space-y-4 transition-colors duration-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-xl bg-violet-500/10 border border-violet-500/15 flex items-center justify-center">
-                      <Target className="h-4.5 w-4.5 text-violet-400" />
+                    <div className="h-9 w-9 rounded-lg bg-[#5E5CE6]/15 border border-[#5E5CE6]/25 flex items-center justify-center">
+                      <Target className="h-4.5 w-4.5 text-[#c2c1ff]" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-white text-sm">Job Description</h3>
-                      <p className="text-xs text-slate-500 font-medium">Paste the job post description</p>
+                      <h3 className="font-heading font-bold text-white text-base">Job Description</h3>
+                      <p className="text-xs text-slate-400 font-normal">Paste the job post description</p>
                     </div>
                   </div>
-                  <span className="text-xs font-bold text-slate-600 border border-white/6 px-2.5 py-0.5 rounded-full">Step 2</span>
+                  <span className="text-xs font-mono font-medium text-[#c2c1ff] bg-[#5E5CE6]/10 border border-[#5E5CE6]/25 px-2.5 py-0.5 rounded-full">Step 2</span>
                 </div>
                 <JobDescriptionInput value={jobDescription} onChange={setJobDescription} disabled={optimizing} />
               </div>
@@ -882,33 +882,33 @@ export default function DashboardPage() {
             </div>
 
             {/* Custom optimization instructions card */}
-            <div className="bg-[#10111f] border border-white/7 rounded-2xl p-6 space-y-4">
+            <div className="bg-[#161B22] border border-white/12 rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-violet-400" />
-                <h4 className="font-bold text-sm text-white">Custom Guidance <span className="text-slate-500 font-medium">(Optional)</span></h4>
+                <Sparkles className="h-4 w-4 text-[#c2c1ff]" />
+                <h4 className="font-heading font-bold text-sm text-white">Custom Guidance <span className="text-slate-400 font-normal">(Optional)</span></h4>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Focus instructions</span>
+                  <span className="text-xs font-mono font-medium text-slate-400 uppercase tracking-wider">Focus instructions</span>
                   <input
                     type="text"
                     value={instructions}
                     onChange={(e) => setInstructions(e.target.value)}
                     placeholder="e.g. 'Emphasize engineering scale' or 'Make it concise'"
-                    className="w-full h-10 bg-slate-950/60 text-slate-100 border border-white/8 focus:border-cyan-500/30 rounded-xl px-3.5 text-xs font-semibold focus:outline-none"
+                    className="w-full h-10 bg-[#0A0C10] text-[#e2e2e8] border border-white/12 focus:border-[#5E5CE6] focus:ring-1 focus:ring-[#5E5CE6] rounded-lg px-3.5 text-xs font-normal focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Target Document Length</span>
-                  <div className="flex bg-slate-950/60 border border-white/8 rounded-xl p-1 gap-1 h-10 items-center">
+                  <span className="text-xs font-mono font-medium text-slate-400 uppercase tracking-wider">Target Document Length</span>
+                  <div className="flex bg-[#0A0C10] border border-white/12 rounded-lg p-1 gap-1 h-10 items-center">
                     {["Auto-detect", "1 Page", "Keep original"].map((opt) => (
                       <button
                         key={opt}
                         type="button"
                         onClick={() => setLengthOption(opt)}
-                        className={`flex-1 text-[10px] font-bold h-7 rounded-lg transition-all ${
+                        className={`flex-1 text-xs font-semibold h-7 rounded-md transition-all ${
                           lengthOption === opt 
-                            ? "bg-cyan-600 text-white shadow-md" 
+                            ? "bg-[#5E5CE6] text-white shadow-md" 
                             : "text-slate-400 hover:text-slate-200"
                         }`}
                       >
@@ -922,15 +922,15 @@ export default function DashboardPage() {
 
             {/* Clear All button */}
             <div className="flex justify-end select-none">
-              <Button
-                variant="outline"
+              <button
+                type="button"
                 onClick={handleReset}
                 disabled={optimizing}
-                className="border-white/8 text-slate-500 hover:bg-white/5 hover:text-white text-xs font-bold rounded-full px-5 h-8 self-end sm:self-auto shrink-0"
+                className="btn-secondary-glass px-4 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 text-slate-400 hover:text-white"
               >
-                <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                <RefreshCw className="h-3.5 w-3.5" />
                 Clear All
-              </Button>
+              </button>
             </div>
 
             {/* CTA Button */}
@@ -938,15 +938,13 @@ export default function DashboardPage() {
               <button
                 onClick={handleOptimize}
                 disabled={optimizing}
-                className="btn-gleam group relative bg-violet-600 hover:bg-violet-500 text-white font-black text-sm h-14 px-14 rounded-xl shadow-lg shadow-violet-600/30 transition-all duration-300 hover:shadow-violet-600/50 hover:scale-[1.02] disabled:opacity-60 disabled:scale-100 disabled:cursor-not-allowed"
+                className="btn-primary-gradient px-12 py-3.5 text-sm font-semibold flex items-center gap-2.5 rounded-lg shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <span className="relative flex items-center gap-2.5">
-                  {optimizing ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> Optimizing Resume...</>
-                  ) : (
-                    <><Zap className="h-4.5 w-4.5" /> Optimize My Resume <ChevronRight className="h-4.5 w-4.5" /></>
-                  )}
-                </span>
+                {optimizing ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Optimizing Resume...</>
+                ) : (
+                  <><Zap className="h-4.5 w-4.5" /> Optimize My Resume <ChevronRight className="h-4.5 w-4.5" /></>
+                )}
               </button>
             </div>
 

@@ -1,8 +1,16 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Zap } from "lucide-react";
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  if (pathname?.startsWith("/auth")) {
+    return null;
+  }
   return (
     <footer className="bg-[#040d1a] border-t border-white/5 py-8 mt-auto">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">

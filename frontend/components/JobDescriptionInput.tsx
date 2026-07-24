@@ -78,31 +78,31 @@ export default function JobDescriptionInput({ value, onChange, disabled }: JobDe
             onChange={(e) => setUrl(e.target.value)}
             disabled={disabled || fetching}
             onKeyDown={(e) => e.key === "Enter" && handleFetchUrl()}
-            className="h-9 text-xs border-white/8 bg-[#040d1a] text-white placeholder:text-slate-600 focus:border-cyan-500/50 rounded-xl flex-1"
+            className="h-9 text-xs border-white/12 bg-[#0A0C10] text-[#e2e2e8] placeholder:text-slate-500 focus:border-[#5E5CE6] rounded-lg flex-1 font-sans"
           />
-          <Button
+          <button
             type="button"
             onClick={handleFetchUrl}
             disabled={disabled || fetching || !url.trim()}
-            className="h-9 px-4 text-xs font-bold bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 text-cyan-400 rounded-xl shrink-0 transition-all"
+            className="btn-secondary-glass h-9 px-3.5 text-xs font-semibold rounded-lg shrink-0"
           >
             {fetching ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : fetchSuccess ? (
-              <Check className="h-3.5 w-3.5" />
+              <Check className="h-3.5 w-3.5 text-[#30D158]" />
             ) : (
               "Fetch"
             )}
-          </Button>
+          </button>
         </div>
         {fetchError && (
-          <p className="text-[10px] text-red-400 flex items-center gap-1">
+          <p className="text-[10px] font-mono text-[#FF453A] flex items-center gap-1">
             <AlertTriangle className="h-3 w-3 shrink-0" />
             {fetchError}
           </p>
         )}
         {fetchSuccess && (
-          <p className="text-[10px] text-emerald-400 flex items-center gap-1">
+          <p className="text-[10px] font-mono text-[#30D158] flex items-center gap-1">
             <Check className="h-3 w-3 shrink-0" />
             Job description fetched successfully!
           </p>
@@ -111,9 +111,9 @@ export default function JobDescriptionInput({ value, onChange, disabled }: JobDe
 
       {/* Divider */}
       <div className="relative flex items-center gap-2">
-        <div className="flex-1 border-t border-white/5" />
-        <span className="text-[9px] font-bold uppercase text-slate-600 tracking-widest">or paste below</span>
-        <div className="flex-1 border-t border-white/5" />
+        <div className="flex-1 border-t border-white/12" />
+        <span className="text-[9px] font-mono font-medium uppercase text-slate-500 tracking-widest">or paste below</span>
+        <div className="flex-1 border-t border-white/12" />
       </div>
 
       {/* Textarea */}
@@ -123,13 +123,13 @@ export default function JobDescriptionInput({ value, onChange, disabled }: JobDe
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          className={`min-h-[220px] max-h-[380px] overflow-y-auto font-sans bg-slate-950/40 text-slate-100 placeholder:text-slate-600 focus:ring-cyan-500/20 rounded-xl resize-y pr-4 ${
+          className={`min-h-[220px] max-h-[380px] overflow-y-auto font-sans bg-[#0A0C10] text-[#e2e2e8] placeholder:text-slate-500 rounded-lg resize-y pr-4 ${
             isOverLimit
-              ? "border-red-500 focus:border-red-500"
-              : "border-slate-800 focus:border-cyan-500/50"
+              ? "border-[#FF453A] focus:border-[#FF453A]"
+              : "border border-white/12 focus:border-[#5E5CE6] focus:ring-1 focus:ring-[#5E5CE6]"
           }`}
         />
-        <div className="absolute bottom-3 right-3 bg-slate-900 border border-slate-800 text-[10px] text-slate-400 px-2 py-0.5 rounded-full select-none">
+        <div className="absolute bottom-3 right-3 bg-[#161B22] border border-white/12 font-mono text-[10px] text-slate-400 px-2 py-0.5 rounded-full select-none">
           {wordCount} words
         </div>
       </div>

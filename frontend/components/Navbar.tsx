@@ -152,16 +152,16 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
 
   return (
     <>
-      <nav className="border-b border-white/6 bg-[#0a0b14]/90 text-slate-100 sticky top-0 z-50 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <nav className="border-b border-white/12 bg-[#111318]/90 text-[#e2e2e8] sticky top-0 z-50 backdrop-blur-xl">
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           
           {/* Left: Brand logo */}
           <div className="flex items-center gap-7">
             <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2.5 group select-none">
               <img src="/logo.png" alt="FastHire Logo" className="h-6 w-6 rounded-lg object-cover group-hover:scale-105 transition-transform" />
-              <span className="font-black text-lg tracking-tight bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
-                FastHire
+              <span className="font-heading font-extrabold text-lg tracking-tight bg-gradient-to-r from-[#c2c1ff] via-[#5E5CE6] to-[#0A84FF] bg-clip-text text-transparent">
+                FastHire AI
               </span>
             </Link>
 
@@ -174,15 +174,15 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                     <Link
                       key={link.label}
                       href={link.href}
-                      className={`relative flex items-center h-full px-3 text-sm font-bold transition-colors select-none ${
+                      className={`relative flex items-center h-full px-3 text-sm font-semibold transition-colors select-none ${
                         isActive 
-                          ? "text-white" 
+                          ? "text-white font-semibold" 
                           : "text-slate-400 hover:text-white"
                       }`}
                     >
                       {link.label}
                       {isActive && (
-                        <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-violet-500 rounded-full" />
+                        <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-[#5E5CE6] rounded-full" />
                       )}
                     </Link>
                   );
@@ -200,12 +200,9 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                 {/* Upgrade Button */}
                 {!credits?.isOwner && (
                   <Link href="/dashboard/pricing" className="hidden sm:block">
-                    <Button 
-                      size="sm" 
-                      className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-8 text-[11px] rounded-full px-4 shadow-lg shadow-violet-600/10"
-                    >
+                    <button className="btn-primary-gradient h-8 px-4 text-xs font-semibold rounded-lg shadow-md">
                       Upgrade
-                    </Button>
+                    </button>
                   </Link>
                 )}
 
