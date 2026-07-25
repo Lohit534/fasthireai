@@ -30,6 +30,7 @@ import {
 import { CreditInfo } from "@/types";
 import { toast } from "react-hot-toast";
 import SupportChatbot from "@/components/SupportChatbot";
+import AdminChat from "@/components/AdminChat";
 import FeedbackModal from "@/components/FeedbackModal";
 
 interface NavbarProps {
@@ -369,8 +370,10 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
         </div>
       </div>
       </nav>
-      {/* AI Assistance chatbot — only visible to Pro Max & Owner users */}
+      {/* Pro Max & Owner: Full AI + Admin chatbot */}
       {user && ((credits?.paidCredits ?? 0) > 900000 || credits?.isOwner) && <SupportChatbot />}
+      {/* Free & Pro (non-Pro Max): Admin-only mini chat */}
+      {user && !((credits?.paidCredits ?? 0) > 900000 || credits?.isOwner) && <AdminChat />}
       <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} userEmail={user?.email} />
     </>
   );

@@ -891,36 +891,47 @@ export default function DashboardPage() {
                 <Sparkles className="h-4 w-4 text-[#c2c1ff]" />
                 <h4 className="font-heading font-bold text-sm text-white">Custom Guidance <span className="text-slate-400 font-normal">(Optional)</span></h4>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <span className="text-xs font-mono font-medium text-slate-400 uppercase tracking-wider">Focus instructions</span>
-                  <input
-                    type="text"
-                    value={instructions}
-                    onChange={(e) => setInstructions(e.target.value)}
-                    placeholder="e.g. 'Emphasize engineering scale' or 'Make it concise'"
-                    className="w-full h-10 bg-[#0A0C10] text-[#e2e2e8] border border-white/12 focus:border-[#5E5CE6] focus:ring-1 focus:ring-[#5E5CE6] rounded-lg px-3.5 text-xs font-normal focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <span className="text-xs font-mono font-medium text-slate-400 uppercase tracking-wider">Target Document Length</span>
-                  <div className="flex bg-[#0A0C10] border border-white/12 rounded-lg p-1 gap-1 h-10 items-center">
-                    {["Auto-detect", "1 Page", "Keep original"].map((opt) => (
-                      <button
-                        key={opt}
-                        type="button"
-                        onClick={() => setLengthOption(opt)}
-                        className={`flex-1 text-xs font-semibold h-7 rounded-md transition-all ${
-                          lengthOption === opt 
-                            ? "bg-[#5E5CE6] text-white shadow-md" 
-                            : "text-slate-400 hover:text-slate-200"
-                        }`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              <input
+                type="text"
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                placeholder="e.g. 'Emphasize engineering scale' or 'Keep it concise' or 'Focus on leadership'"
+                className="w-full h-10 bg-[#0A0C10] text-[#e2e2e8] border border-white/12 focus:border-[#5E5CE6] focus:ring-1 focus:ring-[#5E5CE6] rounded-lg px-3.5 text-xs font-normal focus:outline-none"
+              />
+            </div>
+
+            {/* Resume Length card */}
+            <div className="bg-[#161B22] border border-white/12 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-[#c2c1ff]" />
+                <h4 className="font-heading font-bold text-sm text-white">Resume Length</h4>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { value: "Auto-detect", label: "Auto-detect", sub: "Let AI decide", icon: "✨" },
+                  { value: "1 Page",      label: "1 Page",       sub: "Fresher / under 5 yrs", icon: "📄" },
+                  { value: "2 Pages",     label: "2 Pages",      sub: "5–10+ yrs experience", icon: "📑" },
+                  { value: "Academic CV", label: "Academic CV",  sub: "PhD / research / academia", icon: "🎓" },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setLengthOption(opt.value)}
+                    className={`flex flex-col items-start gap-1.5 rounded-xl p-3.5 border text-left transition-all duration-200 ${
+                      lengthOption === opt.value
+                        ? "bg-[#5E5CE6]/15 border-[#5E5CE6]/50 shadow-md shadow-[#5E5CE6]/10"
+                        : "bg-[#0A0C10] border-white/8 hover:border-white/20 hover:bg-white/3"
+                    }`}
+                  >
+                    <span className="text-lg leading-none">{opt.icon}</span>
+                    <div>
+                      <span className={`text-xs font-bold block ${
+                        lengthOption === opt.value ? "text-[#c2c1ff]" : "text-slate-200"
+                      }`}>{opt.label}</span>
+                      <span className="text-[10px] text-slate-500 font-normal leading-tight block mt-0.5">{opt.sub}</span>
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
 
