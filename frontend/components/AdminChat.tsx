@@ -42,6 +42,18 @@ export default function AdminChat() {
   }, []);
 
 
+  // Listen to open-support-chatbot custom event from Navbar
+  useEffect(() => {
+    const handleOpenChat = () => {
+      setIsOpen(true);
+      if (userId) loadAdminTickets();
+    };
+    window.addEventListener("open-support-chatbot", handleOpenChat);
+    return () => {
+      window.removeEventListener("open-support-chatbot", handleOpenChat);
+    };
+  }, [userId]);
+
   // Load admin tickets when opened
   const loadAdminTickets = async () => {
     if (!userId) return;
@@ -50,7 +62,19 @@ export default function AdminChat() {
       const res = await fetch("/api/support/messages");
       if (res.ok) {
         const data = await res.json();
-        const userTickets = data.filter((t: any) => t.userId === userId);
+        const now = Date.now();
+        const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+        // Filter tickets: only for current user AND not replied > 24 hours ago
+        const userTickets = data.filter((t: any) => {
+          if (t.userId !== userId) return false;
+          if (t.reply && t.repliedAt) {
+            const replyTime = new Date(t.repliedAt).getTime();
+            if (now - replyTime > TWENTY_FOUR_HOURS) return false;
+          }
+          return true;
+        });
+
         setAdminTickets(userTickets.reverse());
       }
     } catch {
@@ -137,7 +161,10 @@ export default function AdminChat() {
               <div className="space-y-4">
                 {/* Refresh bar */}
                 <div className="bg-[#12132a]/40 border border-white/5 p-2 rounded-lg text-[9px] text-slate-400 flex items-center justify-between select-none">
-                  <span>Admin Support Channel</span>
+                  <span className="flex items-center gap-1 text-slate-400">
+                    <Clock className="h-2.5 w-2.5 text-amber-400" />
+                    Auto-deletes 24h after admin reply
+                  </span>
                   <button
                     onClick={loadAdminTickets}
                     className="text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-bold"

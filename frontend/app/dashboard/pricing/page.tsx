@@ -17,7 +17,8 @@ import {
   ShieldCheck,
   ChevronDown,
   ChevronUp,
-  HelpCircle
+  HelpCircle,
+  AlertTriangle
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import ScrollFadeIn from "@/components/ScrollFadeIn";
@@ -110,7 +111,11 @@ const FAQ_ITEMS: FAQItem[] = [
     answer: "Yes! You can input your resume and job description, run the optimization, and view your ATS scores and optimized suggestions before making any payments."
   },
   {
-    question: "What is the premier pro?",
+    question: "Are payments or plan switches refundable?",
+    answer: "No. All payments, plan upgrades, and plan switches are strictly non-refundable. Whenever you purchase or switch a plan, money is non-refundable under any circumstances."
+  },
+  {
+    question: "What is Premium Pro?",
     answer: "Premium Pro is our signature individual package designed for active job hunters, providing 15 monthly AI optimizations, full PDF/DOCX downloads, and custom instruction tuning."
   },
   {
@@ -119,7 +124,7 @@ const FAQ_ITEMS: FAQItem[] = [
   },
   {
     question: "What is the Optimization History?",
-    answer: "It is a history log of all your previous resume scans and optimizations, stored for up to 3 months to let you retrieve and download previous versions."
+    answer: "It is a history log of all your previous resume scans and optimizations, stored for up to 4 months to let you retrieve and download previous versions."
   },
   {
     question: "Can I edit my resume or cover letter after the AI generates it?",
@@ -130,8 +135,8 @@ const FAQ_ITEMS: FAQItem[] = [
     answer: "Monthly plans bill every 30 days. Yearly plans are billed annually and offer heavily discounted pricing equivalent to 2 months free extra."
   },
   {
-    question: "Can I cancel my subscription?",
-    answer: "Yes, anytime. Your plan stays active until the end of the billing period (monthly or annual), then you return to the free tier. No pro-rated refunds for unused time."
+    question: "Can I cancel or switch my subscription?",
+    answer: "Yes, anytime. Your plan stays active until the end of your billing cycle. Please note: all payments and plan switches are strictly non-refundable."
   },
   {
     question: "Is Razorpay secure?",
@@ -496,6 +501,14 @@ export default function PricingPage() {
               </Badge>
             </button>
           </div>
+
+          {/* Non-refundable policy notice */}
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-center max-w-xl mx-auto select-none">
+            <p className="text-[11px] text-amber-300 font-semibold flex items-center justify-center gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+              <span><strong>Policy Notice:</strong> All payments &amp; plan switches are final. Money is <strong>strictly non-refundable</strong> under any circumstances.</span>
+            </p>
+          </div>
         </ScrollFadeIn>
 
         {/* Pricing Cards Grid */}
@@ -710,6 +723,12 @@ export default function PricingPage() {
               <div className="flex items-center gap-2 text-[9px] text-slate-500 bg-[#00e699]/5 border border-[#00e699]/15 p-3 rounded-xl leading-relaxed">
                 <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0" />
                 <span>PCI-DSS compliant. Secure 256-Bit SSL encrypted transaction.</span>
+              </div>
+
+              {/* Non-refundable Warning */}
+              <div className="text-[10px] font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl text-center flex items-center justify-center gap-1.5">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                <span>Note: All plan sales &amp; switches are strictly <strong>non-refundable</strong>.</span>
               </div>
 
               {/* Submit actions */}

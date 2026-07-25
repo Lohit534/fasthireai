@@ -908,10 +908,10 @@ export default function DashboardPage() {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  { value: "Auto-detect", label: "Auto-detect", sub: "Let AI decide", icon: "✨" },
-                  { value: "1 Page",      label: "1 Page",       sub: "Fresher / under 5 yrs", icon: "📄" },
-                  { value: "2 Pages",     label: "2 Pages",      sub: "5–10+ yrs experience", icon: "📑" },
-                  { value: "Academic CV", label: "Academic CV",  sub: "PhD / research / academia", icon: "🎓" },
+                  { value: "Auto-detect", label: "Auto-detect", sub: "Let AI decide" },
+                  { value: "1 Page",      label: "1 Page",       sub: "Fresher / under 5 yrs" },
+                  { value: "2 Pages",     label: "2 Pages",      sub: "5–10+ yrs experience" },
+                  { value: "Academic CV", label: "Academic CV",  sub: "PhD / research / academia" },
                 ].map((opt) => (
                   <button
                     key={opt.value}
@@ -923,12 +923,11 @@ export default function DashboardPage() {
                         : "bg-[#0A0C10] border-white/8 hover:border-white/20 hover:bg-white/3"
                     }`}
                   >
-                    <span className="text-lg leading-none">{opt.icon}</span>
                     <div>
                       <span className={`text-xs font-bold block ${
                         lengthOption === opt.value ? "text-[#c2c1ff]" : "text-slate-200"
                       }`}>{opt.label}</span>
-                      <span className="text-[10px] text-slate-500 font-normal leading-tight block mt-0.5">{opt.sub}</span>
+                      <span className="text-[10px] text-slate-500 font-normal leading-tight block mt-1">{opt.sub}</span>
                     </div>
                   </button>
                 ))}

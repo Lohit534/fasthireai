@@ -88,10 +88,25 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
     if (error) throw error;
 
-    // Map to the expected output format
+    // Map to the expected output format and filter out messages replied over 24 hours ago
+    const now = Date.now();
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+    const expiredIdsToDelete: string[] = [];
+
     const formattedMessages = (data || []).map((row: any) => {
       try {
         const meta = JSON.parse(row.jobDescription || "{}");
+        const repliedAt = meta.repliedAt;
+
+        // If admin has replied and repliedAt is older than 24 hours, mark for deletion
+        if (meta.status === "replied" && repliedAt) {
+          const replyTime = new Date(repliedAt).getTime();
+          if (now - replyTime > TWENTY_FOUR_HOURS) {
+            expiredIdsToDelete.push(row.id);
+            return null;
+          }
+        }
+
         return {
           id: row.id,
           userId: row.userId,
@@ -108,6 +123,20 @@ export async function GET(request: NextRequest) {
         return null;
       }
     }).filter(Boolean) as any[];
+
+    // Auto-clean expired tickets (>24 hours post-admin reply) from database asynchronously
+    if (expiredIdsToDelete.length > 0) {
+      adminSupabase
+        .from("Resume")
+        .delete()
+        .in("id", expiredIdsToDelete)
+        .then(() => {
+          logger.info(`[messages-api] Auto-deleted ${expiredIdsToDelete.length} support ticket(s) older than 24 hours post-admin reply.`);
+        })
+        .catch((err: any) => {
+          logger.warn("[messages-api] Failed to clean up expired tickets:", err.message);
+        });
+    }
 
     return NextResponse.json(formattedMessages);
   } catch (error: any) {
