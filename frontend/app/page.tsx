@@ -74,7 +74,7 @@ export default function LandingPage() {
     return () => clearTimeout(t);
   }, [router]);
 
-  const handleTrySample = () => router.push("/dashboard");
+  const handleTrySample = () => window.open("https://www.instagram.com/lohverseai.learn/reel/Da0Ui6ZtREg/", "_blank");
 
   return (
     <div className="flex flex-col min-h-screen bg-[#111318] text-[#e2e2e8] antialiased font-sans">

@@ -189,3 +189,55 @@ export async function PATCH(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "id query param is required." }, { status: 400 });
+    }
+
+    const admin = getAdminClient() as any;
+
+    // Delete from Supabase DB (only if it belongs to this user)
+    const { error: deleteErr } = await admin
+      .from("Resume")
+      .delete()
+      .eq("id", id)
+      .eq("userId", user.id);
+
+    if (deleteErr) {
+      logger.warn("[history DELETE] DB delete failed:", deleteErr.message);
+    }
+
+    // Also delete from local JSON file fallback
+    try {
+      if (fs.existsSync(FILE_PATH)) {
+        const localResumes = JSON.parse(fs.readFileSync(FILE_PATH, "utf8") || "[]");
+        const filtered = localResumes.filter((r: any) => r.id !== id);
+        fs.writeFileSync(FILE_PATH, JSON.stringify(filtered, null, 2), "utf8");
+      }
+    } catch (e: any) {
+      logger.warn("[history DELETE] Local JSON delete failed:", e.message);
+    }
+
+    logger.info(`[history DELETE] Deleted resumeId=${id} for userId=${user.id}`);
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    logger.error("[history DELETE] Unhandled error:", error?.message);
+    return NextResponse.json(
+      { error: "Internal server error during delete." },
+      { status: 500 }
+    );
+  }
+}
+

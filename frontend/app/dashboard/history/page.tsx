@@ -21,7 +21,6 @@ import {
   X,
   Copy,
   Check,
-  Sparkles,
   ArrowRight,
   Tag,
   FileText,
@@ -35,6 +34,7 @@ import {
   Sparkle,
   Briefcase
 } from "lucide-react";
+
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { formatDate } from "@/lib/utils";
@@ -45,11 +45,11 @@ interface DetailViewProps {
   resume: ResumeRecord;
   userPlan: string;
   onBack: () => void;
-  onRestore: () => void;
+  onDelete: () => void;
 }
 
 /* ─── Detail view (Image 2 mockup styled) ─────────────── */
-function DetailView({ resume, userPlan, onBack, onRestore }: DetailViewProps) {
+function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
   const [copied, setCopied] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [docxLoading, setDocxLoading] = useState(false);
@@ -191,14 +191,13 @@ function DetailView({ resume, userPlan, onBack, onRestore }: DetailViewProps) {
             <span className="bg-[#00e699]/15 text-[#00e699] text-[9px] px-1.5 py-0.5 rounded font-black">+{delta}</span>
           </div>
           
-          <Button
-            onClick={onRestore}
-            size="sm"
-            className="bg-[#0f1022] border border-white/5 text-slate-300 hover:text-white hover:bg-white/5 font-bold h-9 rounded-xl text-xs"
+          <button
+            onClick={onDelete}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors"
           >
-            <Sparkles className="h-3.5 w-3.5 mr-1.5 text-violet-400" />
-            Restore
-          </Button>
+            <X className="h-3.5 w-3.5" />
+            Delete
+          </button>
         </div>
       </div>
 
@@ -476,8 +475,10 @@ function DetailView({ resume, userPlan, onBack, onRestore }: DetailViewProps) {
               </div>
               <div>
                 <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                  Skills Learning Roadmap (PRO)
-                  <span className="bg-violet-600 border border-violet-500 text-[8px] text-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider">PRO</span>
+                  Skills Learning Roadmap
+                  {userPlan === "free" && (
+                    <span className="bg-violet-600 border border-violet-500 text-[8px] text-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider">PRO</span>
+                  )}
                 </span>
                 <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Pick up to 3 skills - 1/1 roadmaps left this month</p>
               </div>
@@ -610,38 +611,38 @@ function DetailView({ resume, userPlan, onBack, onRestore }: DetailViewProps) {
   );
 }
 
-/* ─── History Row Card (Image 1 mockup styled) ──────────── */
+/* ─── History Row Card ────────────────────────────────── */
 function HistoryRow({
   resume,
   onClick,
+  onDelete,
 }: {
   resume: ResumeRecord;
   onClick: () => void;
+  onDelete: () => void;
 }) {
   const delta = resume.scoreAfter - resume.scoreBefore;
   const beforeColor = scoreColor(resume.scoreBefore).text;
   const afterColor = scoreColor(resume.scoreAfter).text;
 
   return (
-    <button
-      onClick={onClick}
-      className="group w-full text-left rounded-xl py-2.5 px-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all duration-300 relative overflow-hidden bg-[#0e0f21]/40 border border-white/5 hover:border-violet-500/30"
-    >
+    <div className="group w-full rounded-xl py-2.5 px-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all duration-300 relative overflow-hidden bg-[#0e0f21]/40 border border-white/5 hover:border-violet-500/30">
       {/* Glow on hover */}
       <div
         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
         style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.03) 0%, transparent 65%)" }}
       />
 
-      <div className="flex items-center gap-3 min-w-0">
-        {/* Score comparison pill (Left side) */}
+      {/* Clickable left area */}
+      <button onClick={onClick} className="flex items-center gap-3 min-w-0 flex-1 text-left">
+        {/* Score comparison pill */}
         <div className="shrink-0 flex items-center gap-1.5 bg-[#070814]/60 border border-white/5 px-2.5 py-1 rounded-full select-none text-[10px] font-bold">
           <span style={{ color: beforeColor }}>{resume.scoreBefore}</span>
           <ArrowRight className="h-3 w-3 text-slate-500" />
           <span style={{ color: afterColor }}>{resume.scoreAfter}</span>
         </div>
 
-        {/* Title and metadata info (Center) */}
+        {/* Title and metadata info */}
         <div className="min-w-0">
           <h3 className="text-xs font-bold text-white truncate group-hover:text-violet-300 transition-colors">
             {resume.jobTitle || "Resume Optimization"}
@@ -655,16 +656,23 @@ function HistoryRow({
             <span className="text-slate-400">Tech</span>
           </div>
         </div>
-      </div>
+      </button>
 
-      {/* Delta pill and Chevron (Right side) */}
-      <div className="flex items-center gap-2.5 self-end sm:self-auto">
+      {/* Right: delta pill + delete button */}
+      <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">
         <span className="text-[9px] font-black bg-emerald-500/10 border border-emerald-500/20 text-[#22c55e] px-1.5 py-0.5 rounded-full">
           +{delta}
         </span>
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          title="Delete this optimization"
+          className="h-6 w-6 flex items-center justify-center rounded-md bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
+        >
+          <X className="h-3 w-3" />
+        </button>
         <ChevronRight className="h-3.5 w-3.5 text-slate-600 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all shrink-0" />
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -676,6 +684,8 @@ export default function HistoryPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const [selected, setSelected] = useState<ResumeRecord | null>(null);
   const [userPlan, setUserPlan] = useState<string>("free");
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const store = useResumeStore();
 
@@ -748,13 +758,24 @@ export default function HistoryPage() {
     return () => { active = false; };
   }, [router]);
 
-  const handleRestore = (record: ResumeRecord) => {
-    store.setResumeText(record.originalText);
-    store.setJobDescription(record.jobDescription);
-    setSelected(null);
-    router.push("/dashboard");
-    toast.success("Loaded into dashboard!");
+  const handleDelete = async (record: ResumeRecord) => {
+    try {
+      const res = await fetch(`/api/history?id=${record.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete");
+      setResumes(prev => prev.filter(r => r.id !== record.id));
+      setSelected(null);
+      // Clamp page if needed
+      const newCount = resumes.length - 1;
+      const maxPage = Math.max(1, Math.ceil(newCount / PAGE_SIZE));
+      setCurrentPage(prev => Math.min(prev, maxPage));
+      toast.success("Optimization deleted.");
+    } catch {
+      toast.error("Failed to delete. Please try again.");
+    }
   };
+
+  const totalPages = Math.max(1, Math.ceil(resumes.length / PAGE_SIZE));
+  const pagedResumes = resumes.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   if (authLoading) {
     return (
@@ -774,15 +795,15 @@ export default function HistoryPage() {
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 py-10 select-text">
         <ScrollFadeIn>
           {selected ? (
-            /* Detailed 3-Column optimization report (Image 2 mockup styled) */
+            /* Detailed 3-Column optimization report */
             <DetailView
               resume={selected}
               userPlan={userPlan}
               onBack={() => setSelected(null)}
-              onRestore={() => handleRestore(selected)}
+              onDelete={() => handleDelete(selected)}
             />
           ) : (
-            /* List optimizations dashboard view (Image 1 mockup styled) */
+            /* List optimizations dashboard view */
             <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-200">
               {/* Header */}
               <div className="flex items-center justify-between gap-4">
@@ -832,18 +853,55 @@ export default function HistoryPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {resumes.map((resume, index) => (
+                  {pagedResumes.map((resume, index) => (
                     <ScrollFadeIn key={resume.id} delay={index * 60} direction="up">
                       <HistoryRow
                         resume={resume}
                         onClick={() => setSelected(resume)}
+                        onDelete={() => handleDelete(resume)}
                       />
                     </ScrollFadeIn>
                   ))}
 
-                  {/* Centered Pagination text */}
-                  <p className="text-center text-[10px] text-slate-500 pt-6 font-semibold uppercase tracking-wider select-none">
-                    Page 1 of 1 &bull; {resumes.length} total scan{resumes.length !== 1 ? "s" : ""}
+                  {/* Pagination controls */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-3 pt-6 select-none">
+                      <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg border border-white/8 bg-[#0e0f21]/60 text-slate-400 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      >
+                        <ArrowLeft className="h-3.5 w-3.5" /> Prev
+                      </button>
+
+                      <div className="flex items-center gap-1.5">
+                        {Array.from({ length: totalPages }).map((_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setCurrentPage(i + 1)}
+                            className={`h-7 w-7 rounded-lg text-xs font-bold transition-all ${
+                              currentPage === i + 1
+                                ? "bg-violet-600 text-white"
+                                : "bg-[#0e0f21]/60 border border-white/8 text-slate-400 hover:text-white"
+                            }`}
+                          >
+                            {i + 1}
+                          </button>
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg border border-white/8 bg-[#0e0f21]/60 text-slate-400 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      >
+                        Next <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
+
+                  <p className="text-center text-[10px] text-slate-500 pt-2 font-semibold uppercase tracking-wider select-none">
+                    Page {currentPage} of {totalPages} &bull; {resumes.length} total scan{resumes.length !== 1 ? "s" : ""}
                   </p>
                 </div>
               )}

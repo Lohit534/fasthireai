@@ -648,7 +648,9 @@ export default function DashboardPage() {
                         <div>
                           <div className="flex items-center gap-2">
                             <h4 className="text-xs font-bold text-white">Skills Learning Roadmap</h4>
-                            <Badge className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold border-cyan-500/20">PRO</Badge>
+                            {userPlan === "free" && (
+                              <Badge className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold border-cyan-500/20">PRO</Badge>
+                            )}
                           </div>
                           <p className="text-[10px] text-slate-500 mt-0.5">Generate a step-by-step master plan to learn target job keywords.</p>
                         </div>
@@ -723,7 +725,9 @@ export default function DashboardPage() {
                         <div>
                           <div className="flex items-center gap-2">
                             <h4 className="text-xs font-bold text-white">Tailored Cover Letter</h4>
-                            <Badge className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold border-cyan-500/20">PRO</Badge>
+                            {userPlan === "free" && (
+                              <Badge className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold border-cyan-500/20">PRO</Badge>
+                            )}
                           </div>
                           <p className="text-[10px] text-slate-500 mt-0.5">Generate a customized cover letter mapped to the target job description.</p>
                         </div>

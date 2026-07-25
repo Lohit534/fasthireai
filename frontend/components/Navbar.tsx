@@ -369,7 +369,8 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
         </div>
       </div>
       </nav>
-      {user && <SupportChatbot />}
+      {/* AI Assistance chatbot — only visible to Pro Max & Owner users */}
+      {user && ((credits?.paidCredits ?? 0) > 900000 || credits?.isOwner) && <SupportChatbot />}
       <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} userEmail={user?.email} />
     </>
   );

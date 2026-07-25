@@ -158,20 +158,6 @@ export default function SupportChatbot() {
     e.preventDefault();
     if (!inputText.trim()) return;
 
-    // Check plan constraints before sending
-    const isFree = activePlan.includes("Free Tier");
-    const isPremium = activePlan.includes("Premium Pro");
-    const isProMax = activePlan.includes("Pro Max") || activePlan.toLowerCase().includes("owner");
-    const canContactAdmin = isProMax || isPremium;
-
-    if (mode === "admin" && !canContactAdmin) {
-      toast.error("Direct messaging to the Admin is a Premium/Pro Max exclusive benefit. Redirecting to upgrades...");
-      setTimeout(() => {
-        window.location.href = "/dashboard/pricing";
-      }, 1500);
-      return;
-    }
-
     const userMsg = inputText.trim();
     setInputText("");
 
