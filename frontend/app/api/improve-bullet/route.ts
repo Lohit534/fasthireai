@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { extractTechTerms, extractKeywords } from "@/lib/ats/keywords";
 import { logger } from "@/lib/logger";
+import { stripMarkdownAsterisks } from "@/lib/export/pdf-document";
 
 const apiKey = process.env.GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(apiKey);
@@ -101,8 +102,9 @@ Output MUST be a valid JSON object only (do NOT include markdown fences, leading
       }
 
       const parsed = JSON.parse(cleanedText);
+      const rawBullet = parsed.improvedBullet || bullet;
       return NextResponse.json({
-        improvedBullet: parsed.improvedBullet || bullet,
+        improvedBullet: stripMarkdownAsterisks(rawBullet),
         actionVerbUsed: parsed.actionVerbUsed || "Optimized",
         metricsAdded: parsed.metricsAdded || "estimated metrics",
         keywordsInjected: parsed.keywordsInjected || [],

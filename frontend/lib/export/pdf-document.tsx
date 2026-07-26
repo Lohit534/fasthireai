@@ -302,6 +302,51 @@ function cleanUrl(url: string): string {
   return clean;
 }
 
+export function stripMarkdownAsterisks(str: string): string {
+  if (!str) return "";
+  return str
+    .replace(/\*{1,3}([^*]+)\*{1,3}/g, "$1")
+    .replace(/\*/g, "")
+    .replace(/\s*\|\|\s*/g, " || ")
+    .replace(/[ \t]+/g, " ")
+    .trim();
+}
+
+function swapEducationAndSkillsIfNeeded(blocks: ParsedResumeBlock[]): ParsedResumeBlock[] {
+  const sectionGroups: { name: string; blocks: ParsedResumeBlock[] }[] = [];
+  let currentGroup: { name: string; blocks: ParsedResumeBlock[] } = { name: 'HEADER', blocks: [] };
+
+  for (const block of blocks) {
+    if (block.type === 'section') {
+      if (currentGroup.blocks.length > 0) {
+        sectionGroups.push(currentGroup);
+      }
+      const upperName = block.text.toUpperCase().replace(/[^A-Z ]/g, '').trim();
+      currentGroup = { name: upperName, blocks: [block] };
+    } else {
+      currentGroup.blocks.push(block);
+    }
+  }
+  if (currentGroup.blocks.length > 0) {
+    sectionGroups.push(currentGroup);
+  }
+
+  const isEdu = (name: string) => name === 'EDUCATION';
+  const isSkill = (name: string) => name === 'SKILLS' || name === 'TECHNICAL SKILLS' || name === 'CORE SKILLS';
+
+  const eduIdx = sectionGroups.findIndex(g => isEdu(g.name));
+  const skillIdx = sectionGroups.findIndex(g => isSkill(g.name));
+
+  // If both Education and Skills sections exist, and Education appears before Skills, swap them!
+  if (eduIdx !== -1 && skillIdx !== -1 && eduIdx < skillIdx) {
+    const temp = sectionGroups[eduIdx];
+    sectionGroups[eduIdx] = sectionGroups[skillIdx];
+    sectionGroups[skillIdx] = temp;
+  }
+
+  return sectionGroups.flatMap(g => g.blocks);
+}
+
 export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
   const rawLines = text.split('\n');
   const blocks: ParsedResumeBlock[] = [];
@@ -310,11 +355,14 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
   let currentSection = "";
   
   for (let idx = 0; idx < rawLines.length; idx++) {
-    const line = rawLines[idx].trim();
-    if (!line) {
+    const rawLine = rawLines[idx].trim();
+    if (!rawLine) {
       blocks.push({ type: 'spacer' });
       continue;
     }
+
+    const line = stripMarkdownAsterisks(rawLine);
+    if (!line) continue;
 
     // 1. First Line Name detection
     if (isFirstLine) {
@@ -331,12 +379,11 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
       line.toLowerCase().includes('github.com');
       
     if (isContactLine && blocks.filter(b => b.type === 'contact').length === 0) {
-      // Split header items by | or • or — or – or " - " (but not hyphen in urls)
       const parts = line.split(/\s*(?:[|•\u2022—–]|\s+-\s+)\s*/);
       const segments: ContactSegment[] = [];
       
       parts.forEach(part => {
-        const txt = part.trim();
+        const txt = stripMarkdownAsterisks(part.trim());
         if (!txt) return;
         
         const emailMatch = txt.match(EMAIL_REGEX);
@@ -350,13 +397,11 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
           const clean = txt.startsWith('http') ? txt : 'https://' + txt;
           segments.push({ text: txt, url: cleanUrl(clean), isLink: true });
         } else if (txt.toLowerCase().includes('linkedin') || txt.toLowerCase().includes('github')) {
-          // If text mentions LinkedIn/GitHub but URL matches are implicit
           const implicitUrl = txt.toLowerCase().includes('linkedin') 
             ? 'https://linkedin.com' 
             : 'https://github.com';
           segments.push({ text: txt, url: implicitUrl, isLink: true });
         } else if (/\+?\d[\d\s\-\(\)]{7,}/.test(txt)) {
-          // Phone link
           const cleanPhone = txt.replace(/[^\d\+]/g, '');
           segments.push({ text: txt, url: `tel:${cleanPhone}`, isLink: true });
         } else {
@@ -373,7 +418,6 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
     const isSection = SECTION_NAMES.includes(upperLine);
     if (isSection) {
       currentSection = upperLine;
-      // Push original cased section header (e.g. Professional Summary)
       blocks.push({ type: 'section', text: line });
       continue;
     }
@@ -387,11 +431,11 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
     if (currentSection === 'TECHNICAL SKILLS' || currentSection === 'SKILLS' || currentSection === 'CORE SKILLS') {
       if (line.includes(':')) {
         const colonIdx = line.indexOf(':');
-        const label = line.substring(0, colonIdx).replace(/^\*\*|\*\*$/g, "").trim();
-        const value = line.substring(colonIdx + 1).replace(/^\*\*|\*\*$/g, "").replace(/^[•\-\*–\s\u2022]+/, "").trim();
+        const label = stripMarkdownAsterisks(line.substring(0, colonIdx));
+        const value = stripMarkdownAsterisks(line.substring(colonIdx + 1).replace(/^[•\-\*–\s\u2022]+/, ""));
         blocks.push({ type: 'skillLine', label, value });
       } else {
-        const cleanVal = line.replace(/^\*\*|\*\*$/g, "").replace(/^[•\-\*–\s\u2022]+/, "").trim();
+        const cleanVal = stripMarkdownAsterisks(line.replace(/^[•\-\*–\s\u2022]+/, ""));
         if (cleanVal) {
           blocks.push({ type: 'summary', text: cleanVal });
         }
@@ -401,14 +445,12 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
 
     // Experience entry
     if (currentSection === 'EXPERIENCE' || currentSection === 'WORK EXPERIENCE' || currentSection === 'INTERNSHIP') {
-      const isBullet = /^[•\-\*–]\s*/.test(line);
+      const isBullet = /^[•\-\*–]\s*/.test(rawLine);
       if (!isBullet) {
-        // Might be title/company or date
         const dateMatch = line.match(/\b\d{4}\b/);
         const hasDatePattern = dateMatch && (line.toLowerCase().includes('present') || line.toLowerCase().includes('current') || line.includes('–') || line.includes('-'));
         
         if (hasDatePattern) {
-          // If this is date range line, update the last job dates
           const lastBlock = blocks[blocks.length - 1];
           if (lastBlock && lastBlock.type === 'job') {
             lastBlock.dates = line;
@@ -416,19 +458,17 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
             blocks.push({ type: 'bullet', text: line });
           }
         } else {
-          // Format: Role | Company or Role – Company
           const parts = line.split(/\s*(?:[|—–]|\s+-\s+)\s*/);
-          const title = parts[0]?.replace(/^[\*\_]+|[\*\_]+$/g, "").trim() || "Title";
-          const company = parts[1]?.replace(/^[\*\_]+|[\*\_]+$/g, "").trim() || "";
+          const title = stripMarkdownAsterisks(parts[0] || "Title");
+          const company = stripMarkdownAsterisks(parts[1] || "");
           
-          // Peek next line to see if it is a date range
           let dates = "";
           if (idx + 1 < rawLines.length) {
-            const nextLine = rawLines[idx + 1].trim();
+            const nextLine = stripMarkdownAsterisks(rawLines[idx + 1]);
             const nextDateMatch = nextLine.match(/\b\d{4}\b/);
             if (nextDateMatch && (nextLine.toLowerCase().includes('present') || nextLine.toLowerCase().includes('current') || nextLine.includes('–') || nextLine.includes('-'))) {
               dates = nextLine;
-              idx++; // consume date line
+              idx++;
             }
           }
           
@@ -436,15 +476,13 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
             type: 'job',
             title,
             company,
-            dates: dates.replace(/^[\*\_]+|[\*\_]+$/g, "").trim(),
+            dates,
             bullets: []
           });
         }
       } else {
-        // Bullet point, append to current experience
-        const cleanBulletText = line.replace(/^[•\-\*–]\s*/, '').trim();
+        const cleanBulletText = stripMarkdownAsterisks(rawLine.replace(/^[•\-\*–]\s*/, ''));
         
-        // Find last experience block
         let lastJobIdx = -1;
         for (let i = blocks.length - 1; i >= 0; i--) {
           if (blocks[i].type === 'job') {
@@ -466,14 +504,12 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
 
     // Projects block
     if (currentSection === 'PROJECTS' || currentSection === 'PERSONAL PROJECTS') {
-      const isBullet = /^[•\-\*–]\s*/.test(line);
+      const isBullet = /^[•\-\*–]\s*/.test(rawLine);
       if (!isBullet) {
-        // Format: Project Name — Tech Stack or Project Name | Tech
         const parts = line.split(/\s*(?:[|—–]|\s+-\s+)\s*/);
-        const name = parts[0]?.replace(/^[\*\_]+|[\*\_]+$/g, "").trim() || "Project";
-        const tech = parts[1]?.replace(/^[\*\_]+|[\*\_]+$/g, "").trim() || "";
+        const name = stripMarkdownAsterisks(parts[0] || "Project");
+        const tech = stripMarkdownAsterisks(parts[1] || "");
         
-        // Find URLs in project line
         let projectUrl: string | undefined;
         const urlMatches = line.match(URL_REGEX);
         if (urlMatches && urlMatches.length > 0) {
@@ -488,7 +524,7 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
           bullets: []
         });
       } else {
-        const cleanBulletText = line.replace(/^[•\-\*–]\s*/, '').trim();
+        const cleanBulletText = stripMarkdownAsterisks(rawLine.replace(/^[•\-\*–]\s*/, ''));
         
         let lastProjIdx = -1;
         for (let i = blocks.length - 1; i >= 0; i--) {
@@ -534,7 +570,7 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
       const singleDateRegex = /\b(20\d{2})\b/;
       const gpaRegex = /(GPA|CGPA|%)\s*:?\s*([\d\.\%]+)/i;
       
-      let cleanText = line.replace(/^\*\*|\*\*$/g, "").trim();
+      let cleanText = stripMarkdownAsterisks(line);
       let dates = "";
       let gpa = "";
       
@@ -562,7 +598,7 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
         cleanText = cleanText.replace(gpaMatch[0], "").trim();
       }
       
-      cleanText = cleanText.replace(/^[\s\|\-\–\—\:]+|[\s\|\-\–\—\:]+$/g, "").trim();
+      cleanText = stripMarkdownAsterisks(cleanText.replace(/^[\s\|\-\–\—\:]+|[\s\|\-\–\—\:]+$/g, ""));
       
       if (isNewEntry) {
         blocks.push({
@@ -598,9 +634,9 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
     }
 
     // Default standalone items
-    const isBullet = /^[•\-\*–]\s*/.test(line);
+    const isBullet = /^[•\-\*–]\s*/.test(rawLine);
     if (isBullet) {
-      blocks.push({ type: 'bullet', text: line.replace(/^[•\-\*–]\s*/, '').trim() });
+      blocks.push({ type: 'bullet', text: line });
     } else {
       const urlMatches = line.match(URL_REGEX);
       if (urlMatches && urlMatches.length > 0 && line.length < 150) {
@@ -611,7 +647,8 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
     }
   }
 
-  return blocks;
+  // Swap Education and Skills sections if Education is above Skills
+  return swapEducationAndSkillsIfNeeded(blocks);
 }
 
 interface BulletRowProps {

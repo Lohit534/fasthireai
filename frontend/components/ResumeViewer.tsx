@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Copy, Check, FileText, Sparkles } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { parseResumeIntoBlocks, ResumeBlock } from "@/lib/export/pdf-document";
+import { parseResumeIntoBlocks, stripMarkdownAsterisks, ResumeBlock } from "@/lib/export/pdf-document";
 
 function getPdfDownloadLimit(plan: string): number {
   if (plan === "promax" || plan === "owner") return 30;
@@ -54,10 +54,11 @@ export default function ResumeViewer({
 
   // Word-by-word diff highlighter helper
   const renderHighlightedText = (lineText: string) => {
+    const cleanLineText = stripMarkdownAsterisks(lineText);
     if (!originalText || originalWordsSet.size === 0) {
-      return <span>{lineText}</span>;
+      return <span>{cleanLineText}</span>;
     }
-    const parts = lineText.split(/(\s+)/);
+    const parts = cleanLineText.split(/(\s+)/);
     return parts.map((part, idx) => {
       if (/^\s+$/.test(part)) {
         return <span key={idx}>{part}</span>;
@@ -78,7 +79,8 @@ export default function ResumeViewer({
   };
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(text);
+    const cleanText = text.split("\n").map(l => stripMarkdownAsterisks(l)).join("\n");
+    await navigator.clipboard.writeText(cleanText);
     setCopied(true);
     toast.success("Optimized resume text copied!");
     setTimeout(() => setCopied(false), 2000);

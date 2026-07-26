@@ -16,6 +16,7 @@ import { callAI } from "@/lib/ai/router";
 import { MIN_RESUME_CHARS, MIN_JD_CHARS, FREE_CREDITS_PER_MONTH, isOwnerEmail } from "@/types";
 import { logger } from "@/lib/logger";
 import { generateUUID } from "@/lib/utils";
+import { stripMarkdownAsterisks } from "@/lib/export/pdf-document";
 
 export async function POST(request: NextRequest) {
   try {
@@ -193,6 +194,9 @@ export async function POST(request: NextRequest) {
       lengthOption || "Auto-detect"
     );
     const aiResult = await callAI(prompt, resumeText);
+    if (aiResult?.resume) {
+      aiResult.resume = stripMarkdownAsterisks(aiResult.resume);
+    }
 
     const scoreAfter = await scoreResume(aiResult.resume, jobDescription, scoreBefore.overall);
 

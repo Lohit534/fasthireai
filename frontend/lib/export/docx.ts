@@ -2,33 +2,22 @@ import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle } from
 import { logger } from "../logger";
 
 // Parses text with **bold** and *italic* markdown tags into separate TextRun elements
+function cleanText(str: string): string {
+  if (!str) return "";
+  return str.replace(/\*{1,3}([^*]+)\*{1,3}/g, "$1").replace(/\*/g, "").replace(/\s*\|\|\s*/g, " || ").replace(/[ \t]+/g, " ").trim();
+}
+
 function parseTextRuns(text: string, baseOptions: any = {}): TextRun[] {
-  const runs: TextRun[] = [];
-  const boldTokens = text.split(/\*\*/);
-  for (let i = 0; i < boldTokens.length; i++) {
-    const isBold = i % 2 === 1;
-    const boldText = boldTokens[i];
-    if (!boldText) continue;
-
-    const italicTokens = boldText.split(/\*/);
-    for (let j = 0; j < italicTokens.length; j++) {
-      const isItalic = j % 2 === 1;
-      const finalRawText = italicTokens[j];
-      if (!finalRawText) continue;
-
-      runs.push(
-        new TextRun({
-          font: "Times New Roman",
-          size: 22, // 11pt default
-          ...baseOptions,
-          text: finalRawText,
-          bold: isBold || baseOptions.bold,
-          italic: isItalic || baseOptions.italic,
-        })
-      );
-    }
-  }
-  return runs;
+  const sanitized = cleanText(text);
+  if (!sanitized) return [];
+  return [
+    new TextRun({
+      font: "Times New Roman",
+      size: 22,
+      ...baseOptions,
+      text: sanitized,
+    })
+  ];
 }
 
 export async function generateDOCX(resumeText: string, watermarked = false): Promise<Buffer> {
