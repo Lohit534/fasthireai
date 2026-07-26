@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { generateDOCX } from "@/lib/export/docx";
+import { getCleanExportFilename } from "@/lib/export/pdf-document";
 import { logger } from "@/lib/logger";
 import { isOwnerEmail } from "@/types";
 
@@ -82,11 +83,12 @@ export async function POST(request: NextRequest) {
     const docxBuffer = await generateDOCX(textToExport, watermarked);
 
     // 5. Return DOCX download response
+    const filename = getCleanExportFilename(textToExport, ".docx");
     return new NextResponse(new Uint8Array(docxBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "Content-Disposition": 'attachment; filename="resume-optimized.docx"',
+        "Content-Disposition": `attachment; filename="${filename}"`,
       },
     });
   } catch (error: any) {

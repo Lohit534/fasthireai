@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { generatePDF } from "@/lib/export/pdf";
+import { getCleanExportFilename } from "@/lib/export/pdf-document";
 import { logger } from "@/lib/logger";
 import { isOwnerEmail } from "@/types";
 
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
     const pdfBuffer = await generatePDF(textToExport, watermarked);
 
     // 5. Return PDF download
-    const filename = type === "original" ? "resume-original.pdf" : "resume-optimized-fasthire.pdf";
+    const filename = getCleanExportFilename(textToExport, ".pdf", resume.jobTitle);
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {

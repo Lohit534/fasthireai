@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Copy, Check, FileText, Sparkles } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { parseResumeIntoBlocks, stripMarkdownAsterisks, ResumeBlock } from "@/lib/export/pdf-document";
+import { parseResumeIntoBlocks, stripMarkdownAsterisks, getCleanExportFilename, ResumeBlock } from "@/lib/export/pdf-document";
 
 function getPdfDownloadLimit(plan: string): number {
   if (plan === "promax" || plan === "owner") return 30;
@@ -121,7 +121,7 @@ export default function ResumeViewer({
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "resume-optimized-fasthire.pdf";
+      link.download = getCleanExportFilename(text, ".pdf");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -149,7 +149,7 @@ export default function ResumeViewer({
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "resume-optimized-fasthire.docx";
+      link.download = getCleanExportFilename(text, ".docx");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

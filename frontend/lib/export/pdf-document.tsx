@@ -290,7 +290,38 @@ export type ParsedResumeBlock =
 
 export type ResumeBlock = ParsedResumeBlock;
 
-function cleanUrl(url: string): string {
+export function getCleanExportFilename(text: string, ext = ".pdf", fallbackTitle?: string): string {
+  let candidateName = "";
+  if (text) {
+    const firstLine = text.trim().split("\n")[0] || "";
+    candidateName = firstLine
+      .replace(/[^a-zA-Z0-9\s_]/g, "")
+      .trim()
+      .replace(/\s+/g, "_");
+  }
+
+  if (!candidateName || candidateName.length < 2 || candidateName.toUpperCase().includes("RESUME")) {
+    if (fallbackTitle) {
+      const cleanFallback = fallbackTitle.replace(/[^a-zA-Z0-9\s_]/g, "").trim().replace(/\s+/g, "_");
+      if (cleanFallback) candidateName = cleanFallback;
+    }
+  }
+
+  if (!candidateName || candidateName.length < 2) {
+    candidateName = "Resume";
+  }
+
+  // Remove any lingering 'optimized' or 'fasthire' words from title
+  candidateName = candidateName.replace(/_?optimized/gi, "").replace(/_?fasthire/gi, "").trim();
+  if (!candidateName) candidateName = "Resume";
+
+  if (!candidateName.toUpperCase().includes("RESUME")) {
+    return `${candidateName}_Resume${ext}`;
+  }
+  return `${candidateName}${ext}`;
+}
+
+export function cleanUrl(url: string): string {
   let clean = url.trim();
   // Strip trailing bracket or punctuation if matched lazily
   if (clean.endsWith(')') || clean.endsWith(']') || clean.endsWith(',')) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { generatePDF } from "@/lib/export/pdf";
+import { getCleanExportFilename } from "@/lib/export/pdf-document";
 import { logger } from "@/lib/logger";
 import { isOwnerEmail } from "@/types";
 
@@ -55,11 +56,12 @@ export async function POST(request: NextRequest) {
     const pdfBuffer = await generatePDF(text, watermarked);
 
     // 4. Return PDF download
+    const filename = getCleanExportFilename(text, ".pdf");
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="resume.pdf"`,
+        "Content-Disposition": `attachment; filename="${filename}"`,
       },
     });
   } catch (error: any) {

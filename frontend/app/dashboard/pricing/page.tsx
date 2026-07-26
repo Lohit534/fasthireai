@@ -518,27 +518,46 @@ export default function PricingPage() {
             const price = billingCycle === "monthly" ? plan.priceMonthly : plan.priceYearly;
             const period = billingCycle === "monthly" ? plan.periodMonthly : plan.periodYearly;
 
+            const isProMax = plan.id === "promax";
+            const isPro = plan.id === "premium";
+
             return (
               <Card
                 key={plan.id}
-                className={`relative border-white/5 bg-[#0e0f21]/40 flex flex-col justify-between overflow-hidden rounded-2xl shadow-xl transition-all duration-300 ${
+                className={`relative flex flex-col justify-between overflow-hidden rounded-2xl shadow-xl transition-all duration-300 ${
                   isActive
-                    ? "border-cyan-500/40 ring-1 ring-cyan-500/20 shadow-cyan-950/10"
-                    : plan.popular
-                    ? "border-violet-500/40 ring-1 ring-violet-500/30 scale-105 shadow-violet-950/20"
-                    : "hover:border-white/10"
+                    ? "border-cyan-500/50 ring-1 ring-cyan-500/30 shadow-cyan-950/20 bg-[#0e0f21]/60"
+                    : isProMax
+                    ? "border-amber-500/50 ring-1 ring-amber-500/40 shadow-amber-950/30 bg-gradient-to-b from-[#1c1808]/70 via-[#131220]/50 to-[#0e0f21]/60 hover:border-amber-400"
+                    : isPro
+                    ? "border-violet-500/40 ring-1 ring-violet-500/30 scale-105 shadow-violet-950/20 bg-[#0e0f21]/50 hover:border-violet-400"
+                    : "border-white/5 bg-[#0e0f21]/40 hover:border-white/10"
                 }`}
               >
-                {/* Active Plan Badge */}
+                {/* Active Plan Top Border Glow */}
                 {isActive && (
-                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-500/0 via-cyan-400 to-cyan-500/0" />
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500/0 via-cyan-400 to-cyan-500/0" />
                 )}
 
-                {/* Popular Banner */}
-                {plan.popular && !isActive && (
+                {/* Pro Max Golden Top Border Glow */}
+                {isProMax && !isActive && (
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500/0 via-amber-400 to-amber-500/0 animate-pulse" />
+                )}
+
+                {/* Pro - Best Choice Badge */}
+                {isPro && !isActive && (
                   <div className="absolute top-0 right-0">
-                    <Badge className="bg-violet-600 border border-violet-500 text-white rounded-bl-xl rounded-tr-none px-3 py-1 font-bold text-[9px] uppercase tracking-wider select-none">
+                    <Badge className="bg-gradient-to-r from-violet-600 to-indigo-600 border border-violet-400 text-white rounded-bl-xl rounded-tr-none px-3 py-1 font-extrabold text-[9px] uppercase tracking-wider shadow-lg shadow-violet-600/30 select-none">
                       Best Choice
+                    </Badge>
+                  </div>
+                )}
+
+                {/* Pro Max Golden Badge */}
+                {isProMax && (
+                  <div className="absolute top-0 right-0">
+                    <Badge className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 border border-amber-300 text-slate-950 rounded-bl-xl rounded-tr-none px-3 py-1 font-black text-[9px] uppercase tracking-wider shadow-lg shadow-amber-500/30 select-none">
+                      PRO MAX
                     </Badge>
                   </div>
                 )}
@@ -559,27 +578,31 @@ export default function PricingPage() {
                   {/* Tier details */}
                   <div className="space-y-4">
                     <div className="space-y-1">
-                      <h3 className="font-extrabold text-white text-base select-none">{plan.name}</h3>
+                      <h3 className={`font-extrabold text-base select-none ${isProMax ? "text-amber-300" : "text-white"}`}>
+                        {plan.name}
+                      </h3>
                       <p className="text-[11px] text-slate-400 leading-relaxed font-medium">{plan.description}</p>
                     </div>
 
                     {/* Price Tag */}
                     <div className="flex items-baseline text-white">
-                      <span className="text-3xl font-black tracking-tight">{price}</span>
+                      <span className={`text-3xl font-black tracking-tight ${isProMax ? "text-amber-300" : "text-white"}`}>
+                        {price}
+                      </span>
                       <span className="text-[10px] text-slate-500 font-bold ml-1 uppercase tracking-wider">
                         / {period}
                       </span>
                     </div>
 
                     {/* Divider */}
-                    <div className="border-t border-white/5 pt-4" />
+                    <div className={`border-t pt-4 ${isProMax ? "border-amber-500/20" : "border-white/5"}`} />
 
                     {/* Feature items */}
                     <ul className="space-y-2.5">
                       {plan.features.map((feature, idx) => (
                         <li key={idx} className="flex items-start gap-2 text-[11px] text-slate-300 font-medium">
-                          <Check className="h-3.5 w-3.5 text-violet-500 shrink-0 mt-0.5" />
-                          <span>{feature}</span>
+                          <Check className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${isProMax ? "text-amber-400" : "text-violet-500"}`} />
+                          <span className={feature.includes("resumes from scratch") ? "font-bold text-white" : ""}>{feature}</span>
                         </li>
                       ))}
                     </ul>
@@ -599,7 +622,9 @@ export default function PricingPage() {
                       className={`w-full font-bold text-xs h-10 rounded-full transition-all ${
                         isActive
                           ? "bg-slate-900 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/5"
-                          : plan.popular
+                          : isProMax
+                          ? "bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-slate-950 font-black shadow-lg shadow-amber-500/20"
+                          : isPro
                           ? "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-600/20"
                           : "bg-white text-slate-950 hover:bg-slate-200"
                       }`}
