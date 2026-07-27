@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
@@ -10,7 +10,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, KeyRound, Mail, User, AlertCircle, CheckCircle2, Briefcase, Check, ArrowLeft } from "lucide-react";
 import { toast } from "react-hot-toast";
 
-export default function SignupPage() {
+export const dynamic = "force-dynamic";
+
+function SignupFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [name, setName] = useState("");
@@ -384,5 +386,13 @@ export default function SignupPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0a0b14] flex items-center justify-center text-slate-400 font-semibold text-xs">Loading...</div>}>
+      <SignupFormContent />
+    </Suspense>
   );
 }

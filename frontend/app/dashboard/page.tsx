@@ -33,12 +33,14 @@ import {
   X,
   ChevronDown,
   ChevronRight,
-  Shield
+  Shield,
+  FolderOpen
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
 import CircleGauge from "@/components/CircleGauge";
 import ScrollFadeIn from "@/components/ScrollFadeIn";
+import { UseSavedResumeModal } from "@/components/UseSavedResumeModal";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -80,7 +82,13 @@ export default function DashboardPage() {
   const [showRoadmapAccordion, setShowRoadmapAccordion] = useState(false);
   const [showCoverLetterAccordion, setShowCoverLetterAccordion] = useState(false);
   const [isAILoading, setIsAILoading] = useState(false);
+  const [isSavedResumesOpen, setIsSavedResumesOpen] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Refreshing the browser page clears temporary workspace inputs
+    resetStore();
+  }, [resetStore]);
 
   useEffect(() => {
     async function checkAuth() {
@@ -915,16 +923,16 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Clear All button */}
+            {/* Use Saved Resume button */}
             <div className="flex justify-end select-none">
               <button
                 type="button"
-                onClick={handleReset}
+                onClick={() => setIsSavedResumesOpen(true)}
                 disabled={optimizing}
-                className="btn-secondary-glass px-4 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 text-slate-400 hover:text-white"
+                className="bg-[#161B22] border border-white/12 hover:border-violet-500/40 hover:bg-white/5 px-4 py-2 text-xs font-bold rounded-xl flex items-center gap-2 text-violet-300 hover:text-white transition-all shadow-md"
               >
-                <RefreshCw className="h-3.5 w-3.5" />
-                Clear All
+                <FolderOpen className="h-4 w-4 text-violet-400" />
+                Use Saved Resume
               </button>
             </div>
 
@@ -958,6 +966,13 @@ export default function DashboardPage() {
 
       {/* Loading Overlay */}
       {isAILoading && <LoadingOverlay />}
+
+      {/* Saved Resumes Modal */}
+      <UseSavedResumeModal
+        isOpen={isSavedResumesOpen}
+        onClose={() => setIsSavedResumesOpen(false)}
+        onSelectResume={(text) => setResumeText(text)}
+      />
     </div>
   );
 }
