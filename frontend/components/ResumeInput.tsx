@@ -50,20 +50,26 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
         const res = await fetch("/api/parse-pdf", {
           method: "POST",
           body: formData,
+        }).catch((netErr) => {
+          throw new Error("Network issue during PDF upload. You can paste your resume text manually below.");
         });
 
         if (!res.ok) {
-          const errData = await res.json();
-          throw new Error(errData.error || "Failed to process document parsing.");
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || "Could not read text from document. Try pasting text below or using a DOCX file.");
         }
 
         const data = await res.json();
-        onChange(data.text);
-        toast.success(`Parsed successfully: ${file.name}`);
+        if (data.text) {
+          onChange(data.text);
+          toast.success(`Parsed successfully: ${file.name}`);
+        } else {
+          throw new Error("No readable text found in file. Please paste your text below.");
+        }
       } catch (err: any) {
-        setError(err.message || "Failed to extract text from resume.");
-        toast.error(err.message || "Failed to extract text.");
-        setFileName(null);
+        const errMsg = err.message || "Failed to extract text from resume.";
+        setError(errMsg);
+        toast.error(errMsg);
       } finally {
         setLoading(false);
       }

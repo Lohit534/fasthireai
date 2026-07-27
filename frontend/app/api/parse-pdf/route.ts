@@ -47,36 +47,51 @@ export async function POST(request: NextRequest) {
 
     if (fileType === "pdf") {
       // pdf-parse@1.1.1 — pure JavaScript, no native binaries, works on Vercel
-      // We require() lazily so the module is not evaluated at build time
       let pdfParse: (buf: Buffer, options?: any) => Promise<{ text: string; numpages: number }>;
       try {
         pdfParse = require("pdf-parse");
       } catch (requireErr: any) {
         logger.error("[parse-pdf] Failed to require pdf-parse:", requireErr.message);
-        return NextResponse.json(
-          { error: "PDF parser module failed to load. Please try a DOCX file." },
-          { status: 500 }
-        );
+        pdfParse = null as any;
       }
 
-      try {
-        const result = await pdfParse(buffer, {
-          // Only extract text — skip canvas/image rendering entirely
-          version: "v1.10.100",
-        });
-        extractedText = result.text;
-        logger.info(
-          `[parse-pdf] PDF parsed OK — pages=${result.numpages}, chars=${extractedText.length}`
-        );
-      } catch (pdfErr: any) {
-        logger.error("[parse-pdf] pdf-parse threw:", pdfErr.message, pdfErr.stack?.split("\n")[1]);
-        return NextResponse.json(
-          {
-            error:
-              "Could not read your PDF. The file may be scanned/image-only or password-protected. Please try a text-based PDF or convert to DOCX.",
-          },
-          { status: 422 }
-        );
+      if (pdfParse) {
+        try {
+          // Do NOT pass version parameter — passing version tries to load external test files which don't exist on Vercel
+          const result = await pdfParse(buffer);
+          extractedText = result?.text || "";
+          logger.info(
+            `[parse-pdf] PDF parsed OK — pages=${result?.numpages || 1}, chars=${extractedText.length}`
+          );
+        } catch (pdfErr: any) {
+          logger.warn("[parse-pdf] pdf-parse failed, attempting raw text extraction fallback:", pdfErr?.message);
+        }
+      }
+
+      // Fallback: If pdf-parse failed or returned empty text, extract text streams directly
+      if (!extractedText || !extractedText.trim()) {
+        try {
+          const content = buffer.toString("binary");
+          const matches: string[] = [];
+          const tjRegex = /\(([^()]{2,})\)\s*Tj/g;
+          let match;
+          while ((match = tjRegex.exec(content)) !== null) {
+            const cleaned = match[1]
+              .replace(/\\\(|\x5C\)/g, "")
+              .replace(/\\[nrtbf]/g, " ")
+              .trim();
+            if (cleaned && cleaned.length > 1) {
+              matches.push(cleaned);
+            }
+          }
+
+          if (matches.length > 3) {
+            extractedText = matches.join(" ");
+            logger.info(`[parse-pdf] Fallback raw PDF text extraction succeeded — chars=${extractedText.length}`);
+          }
+        } catch (fallbackErr: any) {
+          logger.error("[parse-pdf] Fallback raw PDF extraction failed:", fallbackErr?.message);
+        }
       }
     } else {
       try {
