@@ -43,33 +43,13 @@ export function UseSavedResumeModal({
   const fetchSavedResumes = async () => {
     setLoading(true);
     try {
-      // Fetch both builder resumes and history resumes
-      const [resumesRes, historyRes] = await Promise.all([
-        fetch("/api/resumes"),
-        fetch("/api/history"),
-      ]);
-
-      let combined: SavedResume[] = [];
-
+      const resumesRes = await fetch("/api/resumes");
       if (resumesRes.ok) {
         const builderData = await resumesRes.json();
         if (Array.isArray(builderData)) {
-          combined = [...combined, ...builderData];
+          setResumes(builderData);
         }
       }
-
-      if (historyRes.ok) {
-        const historyData = await historyRes.json();
-        if (Array.isArray(historyData)) {
-          for (const item of historyData) {
-            if (!combined.some((r) => r.id === item.id)) {
-              combined.push(item);
-            }
-          }
-        }
-      }
-
-      setResumes(combined);
     } catch (e) {
       console.error("Failed to load saved resumes:", e);
       toast.error("Failed to load saved resumes.");
