@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { toast } from "react-hot-toast";
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -87,11 +88,32 @@ export default function SignupPage() {
         throw authError;
       }
 
-      if (data?.session) {
-        toast.success("Successfully registered and logged in!");
-        router.push("/dashboard");
-        router.refresh();
-        return;
+      if (data?.session || data?.user) {
+        // Trigger referral reward claim if user signed up with a referral link
+        const refCode = searchParams.get("ref");
+        if (refCode && data.user) {
+          try {
+            await fetch("/api/referral", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                referralCode: refCode,
+                newUserId: data.user.id,
+                newUserEmail: data.user.email,
+              }),
+            });
+            toast.success("🎁 Welcome bonus credit claimed!");
+          } catch (refErr) {
+            console.error("Referral claim error:", refErr);
+          }
+        }
+
+        if (data?.session) {
+          toast.success("Successfully registered and logged in!");
+          router.push("/dashboard");
+          router.refresh();
+          return;
+        }
       }
 
       setSuccess(true);

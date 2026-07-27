@@ -33,6 +33,9 @@ import SupportChatbot from "@/components/SupportChatbot";
 import AdminChat from "@/components/AdminChat";
 import FeedbackModal from "@/components/FeedbackModal";
 
+import { Gift } from "lucide-react";
+import { ReferralModal } from "@/components/ReferralModal";
+
 interface NavbarProps {
   refreshKey?: number;
 }
@@ -44,6 +47,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
   const [credits, setCredits] = useState<CreditInfo | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isReferralOpen, setIsReferralOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Sync auth state
@@ -197,6 +201,15 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
             {user ? (
               <>
 
+
+                {/* Refer & Earn Button */}
+                <button
+                  onClick={() => setIsReferralOpen(true)}
+                  className="hidden sm:flex items-center gap-1.5 h-8 px-3 text-xs font-bold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-400 transition-all"
+                >
+                  <Gift className="h-3.5 w-3.5" />
+                  <span>Refer & Earn</span>
+                </button>
 
                 {/* Upgrade Button */}
                 {!credits?.isOwner && (
@@ -375,6 +388,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
       {/* Free & Pro (non-Pro Max): Admin-only mini chat */}
       {user && !((credits?.paidCredits ?? 0) > 900000 || credits?.isOwner) && <AdminChat />}
       <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} userEmail={user?.email} />
+      <ReferralModal isOpen={isReferralOpen} onClose={() => setIsReferralOpen(false)} />
     </>
   );
 }
