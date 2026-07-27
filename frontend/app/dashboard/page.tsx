@@ -291,15 +291,15 @@ export default function DashboardPage() {
     const isOwner = userPlan === "owner" || (user?.email && isOwnerEmail(user.email));
     if (!isOwner) {
       const monthKey = new Date().toISOString().slice(0, 7); // "YYYY-MM"
-      const limit = userPlan === "free" ? 0 : userPlan === "premium" ? 3 : 10;
-      const storageKey = `fastHire_roadmaps_count_${user.id}_${monthKey}`;
+      const limit = userPlan === "free" ? 0 : userPlan === "premium" ? 3 : 9;
+      const storageKey = `fastHire_roadmaps_count_${user?.id || 'anon'}_${monthKey}`;
       const currentCount = parseInt(localStorage.getItem(storageKey) || "0", 10);
       
       if (currentCount >= limit) {
         if (userPlan === "free") {
           toast.error("Skills learning roadmaps are a Pro/Pro Max feature. Please upgrade to continue.");
         } else {
-          toast.error(`You have reached your monthly limit of ${limit} roadmaps for the ${userPlan === "premium" ? "Premium Pro" : "Pro Max"} plan.`);
+          toast.error(`You have reached your limit of ${limit} roadmaps for the ${userPlan === "premium" ? "Premium Pro" : "Pro Max"} plan.`);
         }
         setTimeout(() => {
           router.push("/dashboard/pricing");
@@ -337,16 +337,12 @@ export default function DashboardPage() {
     const isOwner = userPlan === "owner" || (user?.email && isOwnerEmail(user.email));
     if (!isOwner) {
       const monthKey = new Date().toISOString().slice(0, 7); // "YYYY-MM"
-      const limit = userPlan === "free" ? 0 : userPlan === "premium" ? 5 : 15;
-      const storageKey = `fastHire_coverLetters_count_${user.id}_${monthKey}`;
+      const limit = userPlan === "free" ? 1 : userPlan === "premium" ? 5 : 15;
+      const storageKey = `fastHire_coverLetters_count_${user?.id || 'anon'}_${monthKey}`;
       const currentCount = parseInt(localStorage.getItem(storageKey) || "0", 10);
       
       if (currentCount >= limit) {
-        if (userPlan === "free") {
-          toast.error("Cover letter generation is a Pro/Pro Max feature. Please upgrade to continue.");
-        } else {
-          toast.error(`You have reached your monthly limit of ${limit} cover letters for the ${userPlan === "premium" ? "Premium Pro" : "Pro Max"} plan.`);
-        }
+        toast.error(`You have reached your limit of ${limit} cover letters for the ${userPlan === "free" ? "Free" : userPlan === "premium" ? "Premium Pro" : "Pro Max"} plan.`);
         setTimeout(() => {
           router.push("/dashboard/pricing");
         }, 2000);
@@ -575,179 +571,8 @@ export default function DashboardPage() {
               </Button>
             </div>
 
-            {/* Full-width AI Optimization Summary & Tools Box (Expanded like History) */}
-            {optimizeResult?.summary && (
-              <Card className="border-white/7 bg-[#10111f]/60 shadow-xl rounded-2xl overflow-hidden mb-6 w-full select-none">
-                <CardContent className="p-7 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4.5 w-4.5 text-violet-400" />
-                    <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">AI Optimization Summary</h3>
-                  </div>
-                  <div className="bg-[#070814]/40 border border-white/5 p-5 rounded-xl">
-                    <p className="text-xs text-slate-300 leading-relaxed font-semibold">
-                      {optimizeResult.summary}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Full-width Tools Accordions: Skills Learning Roadmap & Cover Letter */}
-            <div className="space-y-4 select-none mb-6 w-full">
-              {/* Accordion 1: Skills Learning Roadmap (PRO) */}
-              <div className="border border-white/5 bg-[#071525]/40 rounded-2xl overflow-hidden transition-all duration-300">
-                <button
-                  onClick={() => setShowRoadmapAccordion(!showRoadmapAccordion)}
-                  className="w-full flex items-center justify-between p-4.5 text-left hover:bg-white/2 transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-xl bg-cyan-600/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-                      <GraduationCap className="h-4.5 w-4.5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-xs font-bold text-white">Skills Learning Roadmap</h4>
-                        {userPlan === "free" && (
-                          <Badge className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold border-cyan-500/20">PRO</Badge>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Generate a step-by-step master plan to learn target job keywords.</p>
-                    </div>
-                  </div>
-                  <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${showRoadmapAccordion ? "rotate-180" : ""}`} />
-                </button>
-
-                {showRoadmapAccordion && (
-                  <div className="p-5 border-t border-white/5 bg-[#050e18]/40 space-y-4">
-                    {userPlan === "free" ? (
-                      <div className="text-center py-6 max-w-md mx-auto space-y-3">
-                        <Lock className="h-8 w-8 text-cyan-400 mx-auto" />
-                        <h5 className="text-xs font-bold text-white">Pro Access Required</h5>
-                        <p className="text-[10px] text-slate-500 leading-relaxed">Upgrade to our premium plan to unlock step-by-step custom learning roadmaps for every missing keyword.</p>
-                        <Link href="/dashboard/pricing" className="inline-block pt-1">
-                          <Button className="h-8 text-[10px] font-bold bg-cyan-600 hover:bg-cyan-500">Upgrade to Pro</Button>
-                        </Link>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Select a keyword to build roadmap:</span>
-                          <div className="flex flex-wrap gap-2">
-                            {afterScore?.missingKeywords && afterScore.missingKeywords.length > 0 ? (
-                              afterScore.missingKeywords.slice(0, 5).map((skill: string) => (
-                                <button
-                                  key={skill}
-                                  onClick={() => handleGenerateRoadmap(skill)}
-                                  className={`text-[10px] font-semibold py-1.5 px-3 rounded-xl border transition-all ${
-                                    selectedRoadmapSkill === skill
-                                      ? "bg-cyan-500/15 border-cyan-500/40 text-cyan-400"
-                                      : "bg-[#0b1c30] border-white/5 text-slate-400 hover:text-white"
-                                  }`}
-                                >
-                                  {skill}
-                                </button>
-                              ))
-                            ) : (
-                              <span className="text-[10px] text-slate-500 italic">No missing keywords found to build a roadmap.</span>
-                            )}
-                          </div>
-                        </div>
-
-                        {roadmapLoading && (
-                          <div className="flex items-center gap-2 text-[10px] text-slate-400 py-4 justify-center bg-[#050e18] border border-white/5 rounded-xl">
-                            <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
-                            <span>Building custom skills roadmap...</span>
-                          </div>
-                        )}
-
-                        {roadmapContent && (
-                          <div className="bg-[#050e18] border border-white/5 p-4 rounded-xl text-xs text-slate-300 leading-relaxed space-y-2 select-text font-sans">
-                            <pre className="whitespace-pre-wrap font-sans select-text">{roadmapContent}</pre>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Accordion 2: Cover Letter Generator (PRO) */}
-              <div className="border border-white/5 bg-[#071525]/40 rounded-2xl overflow-hidden transition-all duration-300">
-                <button
-                  onClick={() => setShowCoverLetterAccordion(!showCoverLetterAccordion)}
-                  className="w-full flex items-center justify-between p-4.5 text-left hover:bg-white/2 transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-xl bg-cyan-600/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-                      <FileText className="h-4.5 w-4.5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-xs font-bold text-white">Tailored Cover Letter</h4>
-                        {userPlan === "free" && (
-                          <Badge className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold border-cyan-500/20">PRO</Badge>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Generate a customized cover letter mapped to the target job description.</p>
-                    </div>
-                  </div>
-                  <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${showCoverLetterAccordion ? "rotate-180" : ""}`} />
-                </button>
-
-                {showCoverLetterAccordion && (
-                  <div className="p-5 border-t border-white/5 bg-[#050e18]/40 space-y-4">
-                    {userPlan === "free" ? (
-                      <div className="text-center py-6 max-w-md mx-auto space-y-3">
-                        <Lock className="h-8 w-8 text-cyan-400 mx-auto" />
-                        <h5 className="text-xs font-bold text-white">Pro Access Required</h5>
-                        <p className="text-[10px] text-slate-500 leading-relaxed">Upgrade to our premium plan to unlock automated custom cover letters matched perfectly to your target role.</p>
-                        <Link href="/dashboard/pricing" className="inline-block pt-1">
-                          <Button className="h-8 text-[10px] font-bold bg-cyan-600 hover:bg-cyan-500">Upgrade to Pro</Button>
-                        </Link>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {!coverLetterGenerated && !generatingLetter && (
-                          <Button
-                            onClick={handleGenerateCoverLetter}
-                            className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs h-9 rounded-lg"
-                          >
-                            Generate Cover Letter
-                          </Button>
-                        )}
-
-                        {generatingLetter && (
-                          <div className="flex items-center gap-2 text-[10px] text-slate-400 py-4 justify-center bg-[#050e18] border border-white/5 rounded-xl">
-                            <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
-                            <span>Drafting tailored cover letter...</span>
-                          </div>
-                        )}
-
-                        {coverLetterGenerated && (
-                          <div className="space-y-3 select-text">
-                            <div className="bg-[#050e18] border border-white/5 p-4 rounded-xl text-xs text-slate-300 leading-relaxed space-y-2 select-text font-serif">
-                              <pre className="whitespace-pre-wrap font-serif select-text">{coverLetterGenerated}</pre>
-                            </div>
-                            <Button
-                              onClick={() => {
-                                navigator.clipboard.writeText(coverLetterGenerated);
-                                toast.success("Cover letter copied to clipboard!");
-                              }}
-                              className="bg-[#0b1c30] border border-white/5 text-slate-300 hover:text-white hover:bg-white/5 text-[10px] h-8 rounded-lg"
-                            >
-                              Copy Cover Letter
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Top Row: Edit & review workspace split */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Top Row: Edit & review workspace split (Score gauges & PDF Preview) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-6">
               
               {/* Left Column: ATS Score circle gauges and keywords */}
               <ScrollFadeIn direction="left" className="lg:col-span-5 space-y-6">
@@ -801,6 +626,163 @@ export default function DashboardPage() {
                 />
               </ScrollFadeIn>
 
+            </div>
+
+            {/* BELOW PDF PREVIEW: Full-width AI Optimization Summary & Tools Box */}
+            {optimizeResult?.summary && (
+              <Card className="border-white/7 bg-[#10111f]/60 shadow-xl rounded-2xl overflow-hidden mb-6 w-full select-none">
+                <CardContent className="p-7 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4.5 w-4.5 text-violet-400" />
+                    <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">AI Optimization Summary</h3>
+                  </div>
+                  <div className="bg-[#070814]/40 border border-white/5 p-5 rounded-xl">
+                    <p className="text-xs text-slate-300 leading-relaxed font-semibold">
+                      {optimizeResult.summary}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Full-width Tools Accordions: Skills Learning Roadmap & Cover Letter */}
+            <div className="space-y-4 select-none mb-6 w-full">
+              {/* Accordion 1: Skills Learning Roadmap (PRO: 3, PRO MAX: 9) */}
+              <div className="border border-white/5 bg-[#071525]/40 rounded-2xl overflow-hidden transition-all duration-300">
+                <button
+                  onClick={() => setShowRoadmapAccordion(!showRoadmapAccordion)}
+                  className="w-full flex items-center justify-between p-4.5 text-left hover:bg-white/2 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-xl bg-cyan-600/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                      <GraduationCap className="h-4.5 w-4.5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xs font-bold text-white">Skills Learning Roadmap</h4>
+                        {userPlan === "free" && (
+                          <Badge className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold border-cyan-500/20">PRO</Badge>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Generate a step-by-step master plan to learn target job keywords (Pro: 3, Pro Max: 9).</p>
+                    </div>
+                  </div>
+                  <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${showRoadmapAccordion ? "rotate-180" : ""}`} />
+                </button>
+
+                {showRoadmapAccordion && (
+                  <div className="p-5 border-t border-white/5 bg-[#050e18]/40 space-y-4">
+                    {userPlan === "free" ? (
+                      <div className="text-center py-6 max-w-md mx-auto space-y-3">
+                        <Lock className="h-8 w-8 text-cyan-400 mx-auto" />
+                        <h5 className="text-xs font-bold text-white">Pro Access Required</h5>
+                        <p className="text-[10px] text-slate-500 leading-relaxed">Upgrade to our premium plan to unlock step-by-step custom learning roadmaps for target keywords.</p>
+                        <Link href="/dashboard/pricing" className="inline-block pt-1">
+                          <Button className="h-8 text-[10px] font-bold bg-cyan-600 hover:bg-cyan-500">Upgrade to Pro</Button>
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Select a keyword to build roadmap:</span>
+                          <div className="flex flex-wrap gap-2">
+                            {afterScore?.missingKeywords && afterScore.missingKeywords.length > 0 ? (
+                              afterScore.missingKeywords.slice(0, userPlan === "premium" ? 3 : 9).map((skill: string) => (
+                                <button
+                                  key={skill}
+                                  onClick={() => handleGenerateRoadmap(skill)}
+                                  className={`text-[10px] font-semibold py-1.5 px-3 rounded-xl border transition-all ${
+                                    selectedRoadmapSkill === skill
+                                      ? "bg-cyan-500/15 border-cyan-500/40 text-cyan-400"
+                                      : "bg-[#0b1c30] border-white/5 text-slate-400 hover:text-white"
+                                  }`}
+                                >
+                                  {skill}
+                                </button>
+                              ))
+                            ) : (
+                              <span className="text-[10px] text-slate-500 italic">No missing keywords found to build a roadmap.</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {roadmapLoading && (
+                          <div className="flex items-center gap-2 text-[10px] text-slate-400 py-4 justify-center bg-[#050e18] border border-white/5 rounded-xl">
+                            <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+                            <span>Building custom skills roadmap...</span>
+                          </div>
+                        )}
+
+                        {roadmapContent && (
+                          <div className="bg-[#050e18] border border-white/5 p-4 rounded-xl text-xs text-slate-300 leading-relaxed space-y-2 select-text font-sans">
+                            <pre className="whitespace-pre-wrap font-sans select-text">{roadmapContent}</pre>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Accordion 2: Cover Letter Generator (Free: 1, Pro: 5, Pro Max: 15) */}
+              <div className="border border-white/5 bg-[#071525]/40 rounded-2xl overflow-hidden transition-all duration-300">
+                <button
+                  onClick={() => setShowCoverLetterAccordion(!showCoverLetterAccordion)}
+                  className="w-full flex items-center justify-between p-4.5 text-left hover:bg-white/2 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-xl bg-cyan-600/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                      <FileText className="h-4.5 w-4.5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xs font-bold text-white">Tailored Cover Letter Generator</h4>
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Generate a customized cover letter mapped to target job description (Free: 1, Pro: 5, Pro Max: 15).</p>
+                    </div>
+                  </div>
+                  <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${showCoverLetterAccordion ? "rotate-180" : ""}`} />
+                </button>
+
+                {showCoverLetterAccordion && (
+                  <div className="p-5 border-t border-white/5 bg-[#050e18]/40 space-y-4">
+                    <div className="space-y-4">
+                      {!coverLetterGenerated && !generatingLetter && (
+                        <Button
+                          onClick={handleGenerateCoverLetter}
+                          className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs h-9 rounded-lg"
+                        >
+                          Generate Cover Letter
+                        </Button>
+                      )}
+
+                      {generatingLetter && (
+                        <div className="flex items-center gap-2 text-[10px] text-slate-400 py-4 justify-center bg-[#050e18] border border-white/5 rounded-xl">
+                          <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+                          <span>Drafting tailored cover letter...</span>
+                        </div>
+                      )}
+
+                      {coverLetterGenerated && (
+                        <div className="space-y-3 select-text">
+                          <div className="bg-[#050e18] border border-white/5 p-4 rounded-xl text-xs text-slate-300 leading-relaxed space-y-2 select-text font-serif">
+                            <pre className="whitespace-pre-wrap font-serif select-text">{coverLetterGenerated}</pre>
+                          </div>
+                          <Button
+                            onClick={() => {
+                              navigator.clipboard.writeText(coverLetterGenerated);
+                              toast.success("Cover letter copied to clipboard!");
+                            }}
+                            className="bg-[#0b1c30] border border-white/5 text-slate-300 hover:text-white hover:bg-white/5 text-[10px] h-8 rounded-lg"
+                          >
+                            Copy Cover Letter
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Interactive Bullet Point Reviewer / Improver (Below Columns) */}

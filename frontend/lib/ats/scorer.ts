@@ -112,27 +112,32 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
     (keywordMatch * 0.50) + (techOverlap * 100 * 0.50)
   ));
 
-  // 3. Impact Bullets
+  // 3. Impact Bullets & Metrics Pass Scoring
   const lines = resumeText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const bulletLines = lines.filter(line =>
-    /^[•\-*\u2022▸►→]/.test(line) || (line.length > 25 && line.length < 250)
+    /^[•\-*\u2022▸►→]/.test(line) || (line.length > 20 && line.length < 300)
   );
 
-  let impactBullets = 35;
+  let impactBullets = 50;
   if (bulletLines.length > 0) {
     let scoreSum = 0;
     for (const bullet of bulletLines) {
       const verbs = extractActionVerbs(bullet);
-      const hasVerb = verbs.length > 0;
-      const hasQuantifier = /\b\d[\d,]*\s*(%|k|m|x|lakh|crore|million|thousand|percent|hrs?|days?|weeks?|months?|years?|users?|customers?|clients?)\b/i.test(bullet);
-      const hasDollar = /\$[\d,]+|\b(?:revenue|profit|sales|cost|budget|saving)\b/i.test(bullet);
+      const cleanLine = bullet.trim().replace(/^[•\-*\u2022▸►→\s]+/, "");
+      const startsWithActionVerb = /^(built|engineered|developed|implemented|designed|created|led|managed|architected|optimized|spearheaded|accelerated|devised|automated|facilitated|orchestrated|injected|refactored|deployed|scaled|transformed)\b/i.test(cleanLine);
+      const hasVerb = verbs.length > 0 || startsWithActionVerb;
 
-      let bScore = 0;
+      const hasQuantifier = /\b\d+[\d,\.]*\s*(%|k|m|x|\+|lakh|crore|million|thousand|percent|hrs?|days?|weeks?|months?|years?|users?|customers?|clients?|requests?|ms|sec|seconds?|minutes?|bps|mb|gb|tb|tbps)\b/i.test(bullet) || /\b\d+%/i.test(bullet) || /\b\d+\+/i.test(bullet) || /\[\d+\]/.test(bullet);
+      const hasDollar = /\$[\d,]+|\b(?:revenue|profit|sales|cost|budget|saving|efficiency|throughput|performance|latency)\b/i.test(bullet);
+
+      let bScore = 50;
       if (hasVerb) {
-        bScore = 75;
+        bScore = 80;
         if (hasQuantifier || hasDollar) {
-          bScore += 25;
+          bScore = 100;
         }
+      } else if (hasQuantifier || hasDollar) {
+        bScore = 75;
       }
       scoreSum += bScore;
     }

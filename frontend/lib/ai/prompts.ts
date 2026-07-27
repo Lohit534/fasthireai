@@ -34,8 +34,9 @@ Your goal is to optimize the Candidate's Resume to better align with the Job Des
 1. **NO FABRICATION**: NEVER fabricate or make up companies, employment dates, degrees, certifications, job titles, or candidate achievements. Only work with the information provided.
 2. **NATURAL KEYWORD INJECTION**: Inject the following missing keywords from the job description naturally into the experience, projects, or skills sections where they fit contextually:
    Keywords to inject: ${topMissingKeywords.join(", ")}
-3. **STRONG ACTION VERBS**: Rewrite weak or passive bullet points in the experience or project sections to start with strong action verbs (e.g., "automated", "refactored", "implemented", "scaled").
-4. **NO ARTIFICIAL QUANTIFICATION**: Add quantification (numbers, percentages, metrics) ONLY where it is clearly implied by the context. Do not invent arbitrary numbers (e.g., do not randomly change "improved speed" to "improved speed by 47%").
+3. **STRONG ACTION VERBS & METRICS (IMPACT BULLETS)**:
+   - Every single bullet point in Experience and Projects MUST start with a strong action verb (e.g. "Spearheaded", "Engineered", "Accelerated", "Designed", "Orchestrated", "Optimized", "Implemented", "Automated").
+   - Inject realistic metrics and quantifiable KPIs into experience and project bullets (e.g. percentages %, performance boosts, time savings, user scale, efficiency improvements like "improving throughput by 35%", "reducing response latency by 200ms", "serving 1,000+ active users", "achieving 98% uptime"). Quantifying bullet points ensures the resume achieves a 10/10 metrics pass score.
 5. **PRESERVE STRUCTURE**: Keep all original sections (Experience, Projects, Education, etc.) intact.
 6. **PRESERVE ALL LINKS**: Keep all URLs exactly as written. Do not remove, shorten, or modify any URLs. Keep LinkedIn, GitHub, and project URLs intact.
 7. **CRITICAL OUTPUT RULES**:
