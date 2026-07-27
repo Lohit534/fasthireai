@@ -291,7 +291,7 @@ export default function DashboardPage() {
     const isOwner = userPlan === "owner" || (user?.email && isOwnerEmail(user.email));
     if (!isOwner) {
       const monthKey = new Date().toISOString().slice(0, 7); // "YYYY-MM"
-      const limit = userPlan === "free" ? 0 : userPlan === "premium" ? 3 : 9;
+      const limit = userPlan === "free" ? 0 : userPlan === "premium" ? 5 : 15;
       const storageKey = `fastHire_roadmaps_count_${user?.id || 'anon'}_${monthKey}`;
       const currentCount = parseInt(localStorage.getItem(storageKey) || "0", 10);
       
@@ -664,7 +664,7 @@ export default function DashboardPage() {
                           <Badge className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold border-cyan-500/20">PRO</Badge>
                         )}
                       </div>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Generate a step-by-step master plan to learn target job keywords (Pro: 3, Pro Max: 9).</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Generate a step-by-step master plan to learn target job keywords (Pro: 5/month, Pro Max: 15/month).</p>
                     </div>
                   </div>
                   <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${showRoadmapAccordion ? "rotate-180" : ""}`} />
@@ -687,7 +687,7 @@ export default function DashboardPage() {
                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Select a keyword to build roadmap:</span>
                           <div className="flex flex-wrap gap-2">
                             {afterScore?.missingKeywords && afterScore.missingKeywords.length > 0 ? (
-                              afterScore.missingKeywords.slice(0, userPlan === "premium" ? 3 : 9).map((skill: string) => (
+                              afterScore.missingKeywords.slice(0, userPlan === "premium" ? 5 : 15).map((skill: string) => (
                                 <button
                                   key={skill}
                                   onClick={() => handleGenerateRoadmap(skill)}

@@ -65,11 +65,11 @@ const PLANS: Plan[] = [
       "15 AI resume optimizations per month",
       "Unlimited PDF + DOCX downloads",
       "5 cover letters / month",
-      "Skills learning roadmap (15/month)",
+      "Skills learning roadmap (5/month)",
       "Build up to 20 resumes from scratch",
       "AI resume builder (improve bullets, write summary)",
       "Import resume via AI",
-      "Optimization history logs(2 months retension)",
+      "Optimization history logs (2 months retention)",
       "Job application tracker",
       "Priority support"
     ],
@@ -88,11 +88,11 @@ const PLANS: Plan[] = [
       "Unlimited AI resume optimizations",
       "Unlimited PDF + DOCX downloads",
       "15 cover letters / month",
-      "Skills learning roadmap (30/month)",
+      "Skills learning roadmap (15/month)",
       "Build up to 40 resumes from scratch",
       "AI resume builder (improve bullets, write summary)",
       "Import resume via AI",
-      "Optimization history logs(4 months retension)",
+      "Optimization history logs (4 months retention)",
       "Job application tracker",
       "Priority support"
     ],
@@ -602,7 +602,7 @@ export default function PricingPage() {
                       {plan.features.map((feature, idx) => (
                         <li key={idx} className="flex items-start gap-2 text-[11px] text-slate-300 font-medium">
                           <Check className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${isProMax ? "text-amber-400" : "text-violet-500"}`} />
-                          <span className={feature.includes("resumes from scratch") ? "font-bold text-white" : ""}>{feature}</span>
+                          <span>{feature}</span>
                         </li>
                       ))}
                     </ul>
