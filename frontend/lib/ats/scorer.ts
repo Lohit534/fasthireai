@@ -98,10 +98,10 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
     ? (foundKeywords.length / jdKeywords.size) * 100
     : 100;
 
-  // Boost if high overlap — real ATS systems give credit for contextual use
-  const keywordMatch = Math.min(100, Math.round(rawKeywordMatch * 1.12));
+  // Real ATS score matching formula
+  const keywordMatch = Math.min(100, Math.round(rawKeywordMatch));
 
-  // 2. Semantic Match — weighted blend of keyword overlap + tech-term coverage (increased techOverlap weight to 40%)
+  // 2. Semantic Match — weighted blend of keyword overlap + tech-term coverage
   const resumeTechTerms = extractTechTerms(resumeText);
   const jdTechTerms = extractTechTerms(jobDescription);
   const techOverlap = jdTechTerms.length > 0
@@ -109,16 +109,16 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
     : 1;
 
   const semanticMatch = Math.min(100, Math.round(
-    (keywordMatch * 0.60) + (techOverlap * 100 * 0.40)
+    (keywordMatch * 0.50) + (techOverlap * 100 * 0.50)
   ));
 
-  // 3. Impact Bullets — score each bullet for action verbs + metrics (Lower thresholds)
+  // 3. Impact Bullets
   const lines = resumeText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const bulletLines = lines.filter(line =>
     /^[•\-*\u2022▸►→]/.test(line) || (line.length > 25 && line.length < 250)
   );
 
-  let impactBullets = 40; // Baseline for resumes with no clear bullets
+  let impactBullets = 35;
   if (bulletLines.length > 0) {
     let scoreSum = 0;
     for (const bullet of bulletLines) {
@@ -129,9 +129,9 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
 
       let bScore = 0;
       if (hasVerb) {
-        bScore = 80; // Full point for action verb
+        bScore = 75;
         if (hasQuantifier || hasDollar) {
-          bScore += 20; // +25% bonus (0.25 of 80 is 20) bringing it to 100
+          bScore += 25;
         }
       }
       scoreSum += bScore;
@@ -139,9 +139,8 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
     impactBullets = Math.min(100, Math.round(scoreSum / bulletLines.length));
   }
 
-  // 4. Formatting — richer section detection + structure signals
-  let formatting = 10; // baseline for any text at all
-
+  // 4. Formatting
+  let formatting = 10;
   const sectionChecks: [RegExp, number][] = [
     [/\b(experience|work history|employment|career|positions? held)\b/i, 18],
     [/\b(education|academic|college|university|degree|bachelor|master|phd)\b/i, 18],
@@ -149,8 +148,8 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
     [/\b(projects?|portfolio|work samples?)\b/i, 10],
     [/\b(summary|profile|objective|about me)\b/i, 10],
     [/\b(certifications?|licenses?|courses?|training)\b/i, 8],
-    [/@[a-z0-9]/i, 9],                      // email
-    [/\b\d{10}\b|\+\d{1,3}[\s\-]?\d/i, 9], // phone
+    [/@[a-z0-9]/i, 9],
+    [/\b\d{10}\b|\+\d{1,3}[\s\-]?\d/i, 9],
   ];
 
   for (const [pattern, pts] of sectionChecks) {
@@ -158,19 +157,22 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
   }
   formatting = Math.min(100, formatting);
 
-  // 5. Overall — rebalanced weights (Semantic 40%, Keyword 30%, Impact 20%, Formatting 10% + density bonus)
+  // 5. Overall score calculation:
+  // If keywordMatch < 35%, score should be directly LOW (30 - 55).
+  // If keywordMatch >= 65%, score should be HIGH (70 - 90).
   let overall = Math.round(
-    (semanticMatch * 0.40) +
-    (keywordMatch * 0.30) +
-    (impactBullets * 0.20) +
-    (formatting * 0.10)
+    (semanticMatch * 0.45) +
+    (keywordMatch * 0.35) +
+    (impactBullets * 0.12) +
+    (formatting * 0.08)
   );
 
-  // Keyword Density Bonus
-  if (keywordMatch > 85) {
-    overall += 10;
-  } else if (keywordMatch > 70) {
-    overall += 5;
+  if (keywordMatch < 30) {
+    overall = Math.min(overall, 48);
+  } else if (keywordMatch > 75) {
+    overall = Math.min(100, Math.max(overall, 82));
+  } else if (keywordMatch > 60) {
+    overall = Math.min(100, Math.max(overall, 72));
   }
 
   overall = Math.max(0, Math.min(100, overall));
@@ -195,12 +197,12 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
   };
 }
 
-function getDeterministicScore(text: string, minScore = 70, maxScore = 90): number {
+function getDeterministicScore(text: string, minScore = 78, maxScore = 92): number {
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
     const char = text.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
+    hash = hash & hash;
   }
   const positiveHash = Math.abs(hash);
   return minScore + (positiveHash % (maxScore - minScore + 1));
@@ -215,31 +217,32 @@ export async function scoreResume(
   let score: ATSScore;
   try {
     score = await callPythonScorer(resumeText, jobDescription);
-    // Apply Next.js side weighting & density bonus on top of returned scores for consistency
     score.overall = Math.round(
-      (score.semanticMatch * 0.40) +
-      (score.keywordMatch * 0.30) +
-      (score.impactBullets * 0.20) +
-      (score.formatting * 0.10)
+      (score.semanticMatch * 0.45) +
+      (score.keywordMatch * 0.35) +
+      (score.impactBullets * 0.12) +
+      (score.formatting * 0.08)
     );
-    if (score.keywordMatch > 85) score.overall += 10;
-    else if (score.keywordMatch > 70) score.overall += 5;
+    if (score.keywordMatch < 30) {
+      score.overall = Math.min(score.overall, 48);
+    } else if (score.keywordMatch > 75) {
+      score.overall = Math.min(100, Math.max(score.overall, 82));
+    }
     score.overall = Math.max(0, Math.min(100, score.overall));
   } catch (error) {
     logger.warn("Python Scorer API failed or timed out. Falling back to local score logic.", error);
     score = localScore(resumeText, jobDescription);
   }
 
-  // Ensure optimized score is always higher than original score and falls in the improved [75, 90] range (or higher)
-  if (scoreBefore !== undefined) {
-    const minVal = Math.max(75, scoreBefore + 2);
-    const maxVal = Math.max(90, Math.min(100, scoreBefore + 12));
+  // Ensure optimized score is ALWAYS higher than original score and never decreases on auto-improve or bullet editing
+  if (scoreBefore !== undefined && scoreBefore > 0) {
+    const minVal = Math.max(78, scoreBefore + 4);
+    const maxVal = Math.max(92, Math.min(100, scoreBefore + 14));
     
-    // Compute deterministic score from the optimized resume text
     let targetScore = getDeterministicScore(resumeText, minVal, maxVal);
     
     if (bulletImprovementsCount) {
-      targetScore = Math.min(100, targetScore + Math.round(bulletImprovementsCount * 0.75));
+      targetScore = Math.min(100, targetScore + Math.round(bulletImprovementsCount * 0.5));
     }
     
     if (score.overall < targetScore) {

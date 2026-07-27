@@ -8,22 +8,23 @@ Font.registerHyphenationCallback(word => [word]);
 const styles = StyleSheet.create({
   page: {
     fontFamily: 'Times-Roman',
-    fontSize: 10.5,
-    paddingTop: 48,
-    paddingBottom: 48,
-    paddingHorizontal: 54,
+    fontSize: 10,
+    paddingTop: 36,
+    paddingBottom: 36,
+    paddingHorizontal: 40,
     color: '#000000',
-    lineHeight: 1.35,
+    lineHeight: 1.3,
     backgroundColor: '#FFFFFF',
   },
 
   // ── NAME ──
   name: {
     fontFamily: 'Times-Bold',
-    fontSize: 20,
+    fontSize: 18,
     textAlign: 'center',
     marginBottom: 3,
     letterSpacing: 0.5,
+    color: '#000000',
   },
 
   // ── CONTACT LINE ──
@@ -32,22 +33,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexWrap: 'wrap',
     marginBottom: 8,
-    fontSize: 10,
+    fontSize: 9.5,
   },
   contactText: {
     fontFamily: 'Times-Roman',
-    fontSize: 10,
+    fontSize: 9.5,
     color: '#000000',
   },
   contactSeparator: {
     fontFamily: 'Times-Roman',
-    fontSize: 10,
+    fontSize: 9.5,
     marginHorizontal: 5,
     color: '#000000',
   },
   contactLink: {
     fontFamily: 'Times-Roman',
-    fontSize: 10,
+    fontSize: 9.5,
     color: '#0000EE',
     textDecoration: 'underline',
   },
@@ -55,38 +56,38 @@ const styles = StyleSheet.create({
   // ── SECTION HEADER ──
   sectionHeader: {
     fontFamily: 'Times-Bold',
-    fontSize: 11.5,
-    marginTop: 12,
-    marginBottom: 4,
+    fontSize: 11,
+    marginTop: 10,
+    marginBottom: 3,
     paddingBottom: 1,
     borderBottomWidth: 0.75,
     borderBottomColor: '#000000',
     borderBottomStyle: 'solid',
-    textTransform: 'none',
+    textTransform: 'uppercase',
   },
 
   // ── PROFESSIONAL SUMMARY ──
   summaryText: {
     fontFamily: 'Times-Roman',
-    fontSize: 10.5,
-    lineHeight: 1.4,
-    marginBottom: 4,
+    fontSize: 10,
+    lineHeight: 1.35,
+    marginBottom: 3,
     textAlign: 'justify',
   },
 
   // ── SKILLS ──
   skillRow: {
     flexDirection: 'row',
-    marginBottom: 3,
+    marginBottom: 2.5,
   },
   skillLabel: {
     fontFamily: 'Times-Bold',
-    fontSize: 10.5,
+    fontSize: 10,
     width: 140,
   },
   skillValue: {
     fontFamily: 'Times-Roman',
-    fontSize: 10.5,
+    fontSize: 10,
     flex: 1,
   },
 
@@ -95,7 +96,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginTop: 5,
+    marginTop: 4,
     marginBottom: 2,
   },
   projectTitleLeft: {
@@ -105,7 +106,7 @@ const styles = StyleSheet.create({
   },
   projectTitle: {
     fontFamily: 'Times-Bold',
-    fontSize: 10.5,
+    fontSize: 10,
   },
   projectLink: {
     fontFamily: 'Times-Roman',
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
   },
   projectTech: {
     fontFamily: 'Times-Italic',
-    fontSize: 10,
+    fontSize: 9.5,
     color: '#333333',
     marginLeft: 8,
     textAlign: 'right',
@@ -127,24 +128,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 5,
+    marginTop: 4,
     marginBottom: 1,
   },
   jobTitle: {
     fontFamily: 'Times-Bold',
-    fontSize: 10.5,
+    fontSize: 10,
     flex: 1,
   },
   jobDates: {
     fontFamily: 'Times-Roman',
-    fontSize: 10,
+    fontSize: 9.5,
     color: '#000000',
     textAlign: 'right',
   },
   jobCompany: {
     fontFamily: 'Times-Italic',
-    fontSize: 10.5,
-    marginBottom: 3,
+    fontSize: 9.5,
+    marginBottom: 2,
   },
 
   // ── EDUCATION ──
@@ -157,29 +158,29 @@ const styles = StyleSheet.create({
   },
   educationDegree: {
     fontFamily: 'Times-Bold',
-    fontSize: 10.5,
+    fontSize: 10,
     flex: 1,
   },
   educationDates: {
     fontFamily: 'Times-Roman',
-    fontSize: 10,
+    fontSize: 9.5,
     textAlign: 'right',
     minWidth: 80,
   },
   educationInstitution: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 3,
+    marginBottom: 2,
   },
   educationSchool: {
     fontFamily: 'Times-Roman',
-    fontSize: 10.5,
+    fontSize: 10,
     color: '#000000',
     flex: 1,
   },
   educationGPA: {
     fontFamily: 'Times-Roman',
-    fontSize: 10,
+    fontSize: 9.5,
     textAlign: 'right',
     minWidth: 80,
   },
@@ -188,24 +189,24 @@ const styles = StyleSheet.create({
   bulletRow: {
     flexDirection: 'row',
     marginBottom: 2,
-    paddingLeft: 12,
+    paddingLeft: 10,
   },
   bulletDot: {
     width: 10,
-    fontSize: 10.5,
+    fontSize: 10,
     fontFamily: 'Times-Roman',
   },
   bulletText: {
     flex: 1,
     fontFamily: 'Times-Roman',
-    fontSize: 10.5,
-    lineHeight: 1.35,
+    fontSize: 9.5,
+    lineHeight: 1.3,
   },
 
   // ── CERTIFICATIONS / LANGUAGES ──
   certItem: {
     fontFamily: 'Times-Roman',
-    fontSize: 10.5,
+    fontSize: 10,
     marginBottom: 2,
   },
 
@@ -214,22 +215,23 @@ const styles = StyleSheet.create({
     color: '#0000EE',
     textDecoration: 'underline',
     fontFamily: 'Times-Roman',
-    fontSize: 10.5,
+    fontSize: 9.5,
     marginBottom: 2,
   },
   spacer: {
-    height: 4,
+    height: 3,
   },
 });
 
 const SECTION_NAMES = [
   'PROFESSIONAL SUMMARY', 'SUMMARY', 'OBJECTIVE',
-  'TECHNICAL SKILLS', 'SKILLS', 'CORE SKILLS',
-  'EXPERIENCE', 'WORK EXPERIENCE', 'INTERNSHIP',
-  'PROJECTS', 'PERSONAL PROJECTS', 'EDUCATION',
-  'CERTIFICATIONS', 'ACHIEVEMENTS', 'AWARDS',
+  'TECHNICAL SKILLS', 'SKILLS', 'CORE SKILLS', 'SOFT SKILLS',
+  'EXPERIENCE', 'WORK EXPERIENCE', 'PROFESSIONAL EXPERIENCE', 'EMPLOYMENT HISTORY', 'INTERNSHIP',
+  'PROJECTS', 'PERSONAL PROJECTS', 'KEY PROJECTS',
+  'EDUCATION', 'ACADEMIC BACKGROUND',
+  'CERTIFICATIONS', 'CERTIFICATIONS & ACHIEVEMENTS', 'ACHIEVEMENTS', 'AWARDS', 'HONORS',
   'LANGUAGES', 'INTERESTS', 'VOLUNTEER',
-  'PUBLICATIONS', 'ACTIVITIES'
+  'PUBLICATIONS', 'PUBLICATIONS & ACHIEVEMENTS', 'ACTIVITIES', 'EXTRA-CURRICULAR ACTIVITIES'
 ];
 
 const URL_REGEX_G = /https?:\/\/[^\s]+|www\.[^\s]+/g;
@@ -421,7 +423,7 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
         const urlMatch = txt.match(URL_REGEX);
         
         if (emailMatch) {
-          segments.push({ text: txt, url: `mailto:${emailMatch[0]}`, isLink: true });
+          segments.push({ text: txt, isLink: false });
         } else if (urlMatch) {
           segments.push({ text: txt, url: cleanUrl(urlMatch[0]), isLink: true });
         } else if (txt.toLowerCase().includes('linkedin.com') || txt.toLowerCase().includes('github.com')) {
@@ -433,8 +435,7 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
             : 'https://github.com';
           segments.push({ text: txt, url: implicitUrl, isLink: true });
         } else if (/\+?\d[\d\s\-\(\)]{7,}/.test(txt)) {
-          const cleanPhone = txt.replace(/[^\d\+]/g, '');
-          segments.push({ text: txt, url: `tel:${cleanPhone}`, isLink: true });
+          segments.push({ text: txt, isLink: false });
         } else {
           segments.push({ text: txt, isLink: false });
         }
@@ -475,41 +476,62 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
     }
 
     // Experience entry
-    if (currentSection === 'EXPERIENCE' || currentSection === 'WORK EXPERIENCE' || currentSection === 'INTERNSHIP') {
+    if (currentSection === 'EXPERIENCE' || currentSection === 'WORK EXPERIENCE' || currentSection === 'PROFESSIONAL EXPERIENCE' || currentSection === 'EMPLOYMENT HISTORY' || currentSection === 'INTERNSHIP') {
       const isBullet = /^[•\-\*–]\s*/.test(rawLine);
       if (!isBullet) {
         const dateMatch = line.match(/\b\d{4}\b/);
         const hasDatePattern = dateMatch && (line.toLowerCase().includes('present') || line.toLowerCase().includes('current') || line.includes('–') || line.includes('-'));
         
+        let lastJobIdx = -1;
+        for (let i = blocks.length - 1; i >= 0; i--) {
+          if (blocks[i].type === 'job') {
+            lastJobIdx = i;
+            break;
+          }
+        }
+
         if (hasDatePattern) {
-          const lastBlock = blocks[blocks.length - 1];
-          if (lastBlock && lastBlock.type === 'job') {
-            lastBlock.dates = line;
+          if (lastJobIdx !== -1 && !(blocks[lastJobIdx] as JobBlock).dates) {
+            (blocks[lastJobIdx] as JobBlock).dates = line;
           } else {
             blocks.push({ type: 'bullet', text: line });
           }
         } else {
-          const parts = line.split(/\s*(?:[|—–]|\s+-\s+)\s*/);
-          const title = stripMarkdownAsterisks(parts[0] || "Title");
-          const company = stripMarkdownAsterisks(parts[1] || "");
-          
-          let dates = "";
-          if (idx + 1 < rawLines.length) {
-            const nextLine = stripMarkdownAsterisks(rawLines[idx + 1]);
-            const nextDateMatch = nextLine.match(/\b\d{4}\b/);
-            if (nextDateMatch && (nextLine.toLowerCase().includes('present') || nextLine.toLowerCase().includes('current') || nextLine.includes('–') || nextLine.includes('-'))) {
-              dates = nextLine;
-              idx++;
+          // Check if line looks like a genuine Job Title / Role Header
+          const lowerLine = line.toLowerCase();
+          const TITLE_KEYWORDS = ['developer', 'engineer', 'manager', 'lead', 'architect', 'consultant', 'analyst', 'designer', 'intern', 'specialist', 'associate', 'head', 'director', 'officer'];
+          const looksLikeJobHeader = line.includes('|') || line.includes('—') || line.includes('–') || TITLE_KEYWORDS.some(kw => lowerLine.includes(kw)) || lastJobIdx === -1;
+
+          if (looksLikeJobHeader) {
+            const parts = line.split(/\s*(?:[|—–]|\s+-\s+)\s*/);
+            const title = stripMarkdownAsterisks(parts[0] || line);
+            const company = stripMarkdownAsterisks(parts[1] || "");
+            
+            let dates = "";
+            if (idx + 1 < rawLines.length) {
+              const nextLine = stripMarkdownAsterisks(rawLines[idx + 1]);
+              const nextDateMatch = nextLine.match(/\b\d{4}\b/);
+              if (nextDateMatch && (nextLine.toLowerCase().includes('present') || nextLine.toLowerCase().includes('current') || nextLine.includes('–') || nextLine.includes('-'))) {
+                dates = nextLine;
+                idx++;
+              }
+            }
+            
+            blocks.push({
+              type: 'job',
+              title,
+              company,
+              dates,
+              bullets: []
+            });
+          } else {
+            // It's body description text! Append to current job bullets as normal text
+            if (lastJobIdx !== -1) {
+              (blocks[lastJobIdx] as JobBlock).bullets.push(line);
+            } else {
+              blocks.push({ type: 'summary', text: line });
             }
           }
-          
-          blocks.push({
-            type: 'job',
-            title,
-            company,
-            dates,
-            bullets: []
-          });
         }
       } else {
         const cleanBulletText = stripMarkdownAsterisks(rawLine.replace(/^[•\-\*–]\s*/, ''));
@@ -522,10 +544,7 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
           }
         }
         if (lastJobIdx !== -1) {
-          const job = blocks[lastJobIdx];
-          if (job.type === 'job') {
-            job.bullets.push(cleanBulletText);
-          }
+          (blocks[lastJobIdx] as JobBlock).bullets.push(cleanBulletText);
         } else {
           blocks.push({ type: 'bullet', text: cleanBulletText });
         }
@@ -829,9 +848,9 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
                 <View key={i} style={{ marginBottom: 4 }}>
                   <View style={styles.jobTitleRow}>
                     <Text style={styles.jobTitle}>{block.title}</Text>
-                    <Text style={styles.jobDates}>{block.dates}</Text>
+                    {block.dates ? <Text style={styles.jobDates}>{block.dates}</Text> : null}
                   </View>
-                  <Text style={styles.jobCompany}>{block.company}</Text>
+                  {block.company ? <Text style={styles.jobCompany}>{block.company}</Text> : null}
                   {block.bullets.map((bullet, bIdx) => (
                     <BulletRow key={bIdx} text={bullet} />
                   ))}
