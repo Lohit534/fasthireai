@@ -21,8 +21,39 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FastHire AI — Beat the ATS. Land the Interview.",
-  description: "AI-powered resume optimization that beats ATS filters in under 30 seconds. Free to start.",
+  title: "FastHire-AI — Free AI Resume Builder & ATS Score Checker",
+  description: "Free AI-powered resume builder and ATS checker. Score your resume against any job description, get it rewritten with missing keywords, and download a clean PDF. No credit card required.",
+  keywords: [
+    "free ATS checker",
+    "free resume builder",
+    "AI resume optimizer",
+    "ATS score checker",
+    "resume ATS score",
+    "free resume scanner",
+    "ATS resume builder",
+    "resume keyword checker",
+    "free resume checker india",
+    "ATS friendly resume"
+  ],
+  openGraph: {
+    title: "FastHire-AI — Free AI Resume Builder & ATS Checker",
+    description: "Score 90+ on ATS in 30 seconds. Free forever.",
+    url: "https://fasthireai.vercel.app",
+    siteName: "FastHire-AI",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FastHire-AI — Free ATS Resume Optimizer",
+    description: "Score 90+ on ATS in 30 seconds. Free forever.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
 };
 
 export default function RootLayout({
