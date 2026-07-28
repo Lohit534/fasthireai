@@ -159,7 +159,7 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled || loading}
-          className="min-h-[220px] max-h-[380px] overflow-y-auto font-mono text-xs border border-white/12 bg-[#0A0C10] text-[#e2e2e8] placeholder-slate-500 focus:border-[#5E5CE6] focus:ring-1 focus:ring-[#5E5CE6] rounded-lg resize-y pr-4"
+          className="min-h-[280px] max-h-[450px] overflow-y-auto font-mono text-sm leading-relaxed border border-white/12 bg-[#0A0C10] text-[#e2e2e8] placeholder-slate-500 focus:border-[#5E5CE6] focus:ring-1 focus:ring-[#5E5CE6] rounded-lg resize-y p-3.5 pr-4"
         />
         <div className="absolute bottom-3 right-3 bg-[#161B22] border border-white/12 font-mono text-[10px] text-slate-400 px-2 py-0.5 rounded-full select-none">
           {wordCount} words

@@ -86,9 +86,21 @@ export default function DashboardPage() {
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Refreshing the browser page clears temporary workspace inputs
-    resetStore();
-  }, [resetStore]);
+    // Check if sample data was requested from landing page before login/signup
+    const isPendingSample = localStorage.getItem("fastHire_pendingSample");
+    const sampleResume = localStorage.getItem("fastHire_sampleResume");
+    const sampleJD = localStorage.getItem("fastHire_sampleJD");
+
+    if (isPendingSample === "true" && sampleResume && sampleJD) {
+      setResumeText(sampleResume);
+      setJobDescription(sampleJD);
+      localStorage.removeItem("fastHire_pendingSample");
+      toast.success("🎉 Sample resume & job description loaded! Ready to optimize.");
+    } else {
+      // Refreshing the browser page clears temporary workspace inputs
+      resetStore();
+    }
+  }, [resetStore, setResumeText, setJobDescription]);
 
   useEffect(() => {
     async function checkAuth() {
@@ -836,51 +848,57 @@ export default function DashboardPage() {
           <div className="space-y-5 max-w-5xl mx-auto select-none">
 
             {/* Split-panel: Resume | Job Description */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
 
-              {/* Resume Panel */}
-              <div className="group flex flex-col bg-[#161B22] border border-white/12 hover:border-[#5E5CE6]/40 rounded-2xl p-6 space-y-4 transition-colors duration-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-[#5E5CE6]/15 border border-[#5E5CE6]/25 flex items-center justify-center">
-                      <FileText className="h-4.5 w-4.5 text-[#c2c1ff]" />
+              {/* Resume Column (Panel + Use Saved Resume Button below) */}
+              <div className="flex flex-col space-y-3">
+                <div className="group flex-1 flex flex-col bg-[#161B22] border border-white/12 hover:border-[#5E5CE6]/40 rounded-2xl p-6 space-y-4 transition-colors duration-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-lg bg-[#5E5CE6]/15 border border-[#5E5CE6]/25 flex items-center justify-center">
+                        <FileText className="h-4.5 w-4.5 text-[#c2c1ff]" />
+                      </div>
+                      <div>
+                        <h3 className="font-heading font-bold text-white text-base">Your Resume</h3>
+                        <p className="text-xs text-slate-400 font-normal">Paste text or upload PDF</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-heading font-bold text-white text-base">Your Resume</h3>
-                      <p className="text-xs text-slate-400 font-normal">Paste text or upload PDF</p>
-                    </div>
+                    <span className="text-xs font-mono font-medium text-[#c2c1ff] bg-[#5E5CE6]/10 border border-[#5E5CE6]/25 px-2.5 py-0.5 rounded-full">Step 1</span>
                   </div>
-                  <span className="text-xs font-mono font-medium text-[#c2c1ff] bg-[#5E5CE6]/10 border border-[#5E5CE6]/25 px-2.5 py-0.5 rounded-full">Step 1</span>
+                  <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
                 </div>
-                <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
 
-                {/* Use Saved Resume button (Below PDF Upload) */}
+                {/* Use Saved Resume button (Positioned OUTSIDE & BELOW PDF Panel Box) */}
                 <button
                   type="button"
                   onClick={() => setIsSavedResumesOpen(true)}
                   disabled={optimizing}
-                  className="w-full bg-[#0a0c14] border border-violet-500/30 hover:border-violet-500/60 hover:bg-violet-500/10 py-2.5 px-4 text-xs font-bold rounded-xl flex items-center justify-center gap-2 text-violet-300 hover:text-white transition-all shadow-md mt-2"
+                  className="w-full bg-[#161B22] border border-violet-500/30 hover:border-violet-500/60 hover:bg-violet-500/10 py-2.5 px-4 text-xs font-bold rounded-xl flex items-center justify-center gap-2 text-violet-300 hover:text-white transition-all shadow-md"
                 >
                   <FolderOpen className="h-4 w-4 text-violet-400" />
                   Use Saved Resume
                 </button>
               </div>
 
-              {/* Job Description Panel */}
-              <div className="group flex flex-col bg-[#161B22] border border-white/12 hover:border-[#5E5CE6]/40 rounded-2xl p-6 space-y-4 transition-colors duration-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-[#5E5CE6]/15 border border-[#5E5CE6]/25 flex items-center justify-center">
-                      <Target className="h-4.5 w-4.5 text-[#c2c1ff]" />
+              {/* Job Description Column */}
+              <div className="flex flex-col space-y-3">
+                <div className="group flex-1 flex flex-col bg-[#161B22] border border-white/12 hover:border-[#5E5CE6]/40 rounded-2xl p-6 space-y-4 transition-colors duration-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-lg bg-[#5E5CE6]/15 border border-[#5E5CE6]/25 flex items-center justify-center">
+                        <Target className="h-4.5 w-4.5 text-[#c2c1ff]" />
+                      </div>
+                      <div>
+                        <h3 className="font-heading font-bold text-white text-base">Job Description</h3>
+                        <p className="text-xs text-slate-400 font-normal">Paste the job post description</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-heading font-bold text-white text-base">Job Description</h3>
-                      <p className="text-xs text-slate-400 font-normal">Paste the job post description</p>
-                    </div>
+                    <span className="text-xs font-mono font-medium text-[#c2c1ff] bg-[#5E5CE6]/10 border border-[#5E5CE6]/25 px-2.5 py-0.5 rounded-full">Step 2</span>
                   </div>
-                  <span className="text-xs font-mono font-medium text-[#c2c1ff] bg-[#5E5CE6]/10 border border-[#5E5CE6]/25 px-2.5 py-0.5 rounded-full">Step 2</span>
+                  <JobDescriptionInput value={jobDescription} onChange={setJobDescription} disabled={optimizing} />
                 </div>
-                <JobDescriptionInput value={jobDescription} onChange={setJobDescription} disabled={optimizing} />
+                {/* Spacer matching button height to keep both column layouts perfectly aligned */}
+                <div className="h-[42px] hidden md:block" />
               </div>
 
             </div>
