@@ -201,7 +201,18 @@ export default function PricingPage() {
             if (apiCredits.isOwner) setIsOwner(true);
             if (apiCredits.paidCredits >= 365 || apiCredits.isFirst50) setIsFirst50(true);
             if (apiCredits.expiresAt) setExpiresAt(apiCredits.expiresAt);
-            const plan = apiCredits.planId || cachedPlan || "free";
+            
+            let plan = "free";
+            if (apiCredits.isOwner) {
+              plan = apiCredits.planId || "premium";
+            } else if (apiCredits.paidCredits >= 900000) {
+              plan = "promax";
+            } else if (apiCredits.paidCredits > 0 || apiCredits.isFirst50) {
+              plan = "premium";
+            } else {
+              plan = apiCredits.planId || cachedPlan || "free";
+            }
+            
             localStorage.setItem(`fastHire_plan_${data.user.id}`, plan);
             setCurrentPlan(plan);
           } else {
@@ -621,17 +632,19 @@ export default function PricingPage() {
                       onClick={() => handlePlanAction(plan)}
                       className={`w-full font-bold text-xs h-10 rounded-full transition-all ${
                         isActive
-                          ? "bg-slate-900 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/5"
+                          ? "bg-black border border-cyan-500/40 text-cyan-400 hover:bg-slate-900 shadow-md"
                           : isProMax
                           ? "bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-slate-950 font-black shadow-lg shadow-amber-500/20"
                           : isPro
                           ? "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-600/20"
-                          : "bg-white text-slate-950 hover:bg-slate-200"
+                          : "bg-black border border-white/20 text-white hover:bg-slate-900 shadow-md"
                       }`}
                     >
                       {isActive
-                        ? (isOwner ? "✓ Active (Owner Unlimited)" : "✓ Your Current Plan")
-                        : (isOwner ? `Simulate ${plan.name}` : (currentPlan !== "free" && plan.id !== "free" ? "Schedule Plan" : plan.cta))}
+                        ? (isOwner ? "✓ Active (Owner Unlimited)" : "✓ Current Plan")
+                        : plan.id === "free"
+                        ? "Free Plan"
+                        : (isOwner ? `Simulate ${plan.name}` : plan.cta)}
                     </Button>
                   </div>
 
