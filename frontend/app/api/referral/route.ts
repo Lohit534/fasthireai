@@ -52,33 +52,56 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const referralCode = generateReferralCode(user.id);
+    const admin = getAdminClient() as any;
+
+    // Resolve user ID in User table
+    let activeUserId = user.id;
+    if (user.email) {
+      try {
+        const { data: existingUser } = await admin
+          .from("User")
+          .select("id")
+          .eq("email", user.email.toLowerCase().trim())
+          .maybeSingle();
+        if (existingUser) {
+          activeUserId = existingUser.id;
+        }
+      } catch (e) {}
+    }
+
+    const referralCode = generateReferralCode(activeUserId);
     const origin = request.nextUrl.origin || "https://fasthireai.vercel.app";
     const referralLink = `${origin}/auth/signup?ref=${referralCode}`;
 
-    const admin = getAdminClient() as any;
     let totalReferrals = 0;
     let bonusCredits = 0;
 
-    // Fetch from Supabase DB or local JSON
     try {
-      const { data: referrals } = await admin
+      const { data: dbRefs } = await admin
         .from("Referral")
         .select("*")
-        .eq("referrerId", user.id);
+        .or(`referrerId.eq.${activeUserId},referrerId.eq.${user.id}${user.email ? `,referrerEmail.eq.${user.email.toLowerCase().trim()}` : ""}`);
 
-      if (referrals && referrals.length > 0) {
-        totalReferrals = referrals.length;
-        bonusCredits = totalReferrals; // 1 credit per referral
-      } else {
-        const localRefs = getLocalReferrals().filter(r => r.referrerId === user.id);
-        totalReferrals = localRefs.length;
-        bonusCredits = totalReferrals;
-      }
+      const dbCount = dbRefs?.length || 0;
+      const localRefs = getLocalReferrals().filter(
+        (r: any) =>
+          r.referrerId === activeUserId ||
+          r.referrerId === user.id ||
+          (user.email && r.referrerEmail === user.email.toLowerCase().trim())
+      );
+      const localCount = localRefs.length;
+
+      totalReferrals = Math.max(dbCount, localCount);
+      bonusCredits = totalReferrals; // 1 credit per referral
     } catch (e: any) {
-      const localRefs = getLocalReferrals().filter(r => r.referrerId === user.id);
+      const localRefs = getLocalReferrals().filter(
+        (r: any) =>
+          r.referrerId === activeUserId ||
+          r.referrerId === user.id ||
+          (user.email && r.referrerEmail === user.email.toLowerCase().trim())
+      );
       totalReferrals = localRefs.length;
-      bonusCredits = totalReferrals;
+      bonusCredits = localRefs.length;
     }
 
     return NextResponse.json({

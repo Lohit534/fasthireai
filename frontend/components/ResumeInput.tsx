@@ -97,32 +97,32 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
   const wordCount = countWords(value);
 
   return (
-    <div className="space-y-4">
+    <div className="flex-1 flex flex-col justify-between space-y-4 h-full">
       {/* Drag & Drop Zone */}
       {!fileName && !loading && (
         <div
           {...getRootProps()}
-          className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 backdrop-blur-md bg-slate-950/20 ${
+          className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200 backdrop-blur-md bg-slate-950/20 ${
             isDragActive
               ? "border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/5"
               : "border-slate-800 hover:border-slate-700 hover:bg-slate-900/40"
           }`}
         >
           <input {...getInputProps()} />
-          <UploadCloud className="h-10 w-10 text-indigo-400 mx-auto mb-3" />
-          <p className="text-sm font-semibold text-slate-200">
+          <UploadCloud className="h-8 w-8 text-indigo-400 mx-auto mb-2" />
+          <p className="text-xs font-semibold text-slate-200">
             {isDragActive ? "Drop the resume here..." : "Drag & drop your resume file"}
           </p>
-          <p className="text-xs text-slate-400 mt-1">Supports PDF or DOCX (Max 5MB)</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">Supports PDF or DOCX (Max 5MB)</p>
         </div>
       )}
 
       {/* Upload Loading Spinner */}
       {loading && (
-        <div className="border-2 border-dashed border-slate-800 rounded-xl p-8 text-center bg-slate-950/20 animate-pulse">
-          <Loader2 className="h-8 w-8 text-indigo-400 animate-spin mx-auto mb-3" />
-          <p className="text-sm font-semibold text-slate-200">Extracting resume text...</p>
-          <p className="text-xs text-slate-400 mt-1">This will take a few seconds</p>
+        <div className="border-2 border-dashed border-slate-800 rounded-xl p-6 text-center bg-slate-950/20 animate-pulse">
+          <Loader2 className="h-7 w-7 text-indigo-400 animate-spin mx-auto mb-2" />
+          <p className="text-xs font-semibold text-slate-200">Extracting resume text...</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">This will take a few seconds</p>
         </div>
       )}
 
@@ -153,13 +153,13 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
       )}
 
       {/* Fallback Text Editor */}
-      <div className="relative">
+      <div className="relative flex-1 flex flex-col min-h-[280px]">
         <Textarea
           placeholder="Or paste your resume text here..."
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled || loading}
-          className="min-h-[280px] max-h-[450px] overflow-y-auto font-mono text-sm leading-relaxed border border-white/12 bg-[#0A0C10] text-[#e2e2e8] placeholder-slate-500 focus:border-[#5E5CE6] focus:ring-1 focus:ring-[#5E5CE6] rounded-lg resize-y p-3.5 pr-4"
+          className="flex-1 min-h-[280px] h-full overflow-y-auto font-mono text-sm leading-relaxed border border-white/12 bg-[#0A0C10] text-[#e2e2e8] placeholder-slate-500 focus:border-[#5E5CE6] focus:ring-1 focus:ring-[#5E5CE6] rounded-lg resize-y p-3.5 pr-4"
         />
         <div className="absolute bottom-3 right-3 bg-[#161B22] border border-white/12 font-mono text-[10px] text-slate-400 px-2 py-0.5 rounded-full select-none">
           {wordCount} words
