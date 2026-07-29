@@ -47,7 +47,7 @@ export function ReferralModal({ isOpen, onClose }: ReferralModalProps) {
         setReferralData(data);
       }
     } catch (e) {
-      console.error("Failed to load referral details:", e);
+      // silent — failed to load referral details
     } finally {
       setLoading(false);
     }

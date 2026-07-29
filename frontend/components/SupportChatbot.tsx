@@ -103,7 +103,7 @@ export default function SupportChatbot() {
         }
       }
     } catch (err) {
-      console.error("Failed to load user credentials for support bot:", err);
+      // silent — failed to load user credentials
     }
   };
 
@@ -142,7 +142,7 @@ export default function SupportChatbot() {
         setAdminTickets(userTickets.reverse()); // Show newest at the bottom
       }
     } catch (err) {
-      console.error("Error loading support tickets:", err);
+      // silent — failed to load support tickets
     } finally {
       setLoadingTickets(false);
     }

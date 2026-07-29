@@ -736,7 +736,7 @@ export default function HistoryPage() {
             }
           }
         } catch (creditsErr) {
-          console.error("Failed to load credits:", creditsErr);
+          // silent — failed to load credits
         }
 
         if (!active) return;

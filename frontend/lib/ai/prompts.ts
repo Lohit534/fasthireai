@@ -1,3 +1,5 @@
+import type { ResumeJSON } from "@/types/resume";
+
 export function buildOptimizationPrompt(
   resumeText: string,
   jobDescription: string,
@@ -6,84 +8,199 @@ export function buildOptimizationPrompt(
   instructions = "",
   lengthOption = "Auto-detect"
 ): string {
-  // Truncate input to respect tokens/size requirements
   const truncatedJd = jobDescription.slice(0, 2500);
   const truncatedResume = resumeText.slice(0, 3500);
-  
-  // Select top 15 missing keywords
   const topMissingKeywords = missingKeywords.slice(0, 15);
 
-  let lengthDirective = "";
-  if (lengthOption === "1 Page") {
-    lengthDirective = "\n- **STRICT PAGE LIMIT**: Optimize the content to fit exactly on a single page. Remove wordy sentences and prioritize the top 3-4 bullets per job.";
-  } else if (lengthOption === "2 Pages") {
-    lengthDirective = "\n- **STRICT PAGE LIMIT**: Structure the content to span exactly 2 pages. Add formatting spacing or detail work items where appropriate.";
-  } else if (lengthOption === "Academic CV") {
-    lengthDirective = "\n- **ACADEMIC CV FORMAT**: Structure the document as a comprehensive academic CV. Retain detailed descriptions, research details, and publication lists.";
-  }
-  
-  let instructionsBlock = "";
-  if (instructions && instructions.trim()) {
-    instructionsBlock = `\n\n### USER CUSTOM INSTRUCTIONS:\nApply these specific changes or focus directives strictly: "${instructions.trim()}"`;
-  }
-  
-  return `You are a professional resume optimizer and ATS expert.
-Your goal is to optimize the Candidate's Resume to better align with the Job Description.
+  const pageCount = lengthOption === "1 Page" ? 1 : lengthOption === "2 Pages" ? 2 : 1;
 
-### STRICT RULES & CONSTRAINTS:
-1. **NO FABRICATION**: NEVER fabricate or make up companies, employment dates, degrees, certifications, job titles, or candidate achievements. Only work with the information provided.
-2. **NATURAL KEYWORD INJECTION**: Inject the following missing keywords from the job description naturally into the experience, projects, or skills sections where they fit contextually:
-   Keywords to inject: ${topMissingKeywords.join(", ")}
-3. **STRONG ACTION VERBS & METRICS (IMPACT BULLETS)**:
-   - Every single bullet point in Experience and Projects MUST start with a strong action verb (e.g. "Spearheaded", "Engineered", "Accelerated", "Designed", "Orchestrated", "Optimized", "Implemented", "Automated").
-   - Inject realistic metrics and quantifiable KPIs into experience and project bullets (e.g. percentages %, performance boosts, time savings, user scale, efficiency improvements like "improving throughput by 35%", "reducing response latency by 200ms", "serving 1,000+ active users", "achieving 98% uptime"). Quantifying bullet points ensures the resume achieves a 10/10 metrics pass score.
-5. **PRESERVE STRUCTURE**: Keep all original sections (Experience, Projects, Education, etc.) intact.
-6. **PRESERVE ALL LINKS**: Keep all URLs exactly as written. Do not remove, shorten, or modify any URLs. Keep LinkedIn, GitHub, and project URLs intact.
-7. **CRITICAL OUTPUT RULES**:
-   - Return PLAIN TEXT ONLY — no LaTeX, no markdown, no HTML
-   - Do NOT use \textbf{}, \section{}, \begin{}, \end{}, \\, \item, \resumeItem, or ANY LaTeX commands
-   - Do NOT use **, ##, __, or any markdown syntax
-   - Section headers: write in ALL CAPS plain text only
-     Example: EXPERIENCE  not  \section{Experience}
-   - Bullet points: start with • character only
-     Example: • Built a REST API  not  \item Built a REST API
-   - Name: first line, plain text only
-   - Dates and locations: plain text separated by | character
-     Example: Software Engineer | Google | Jan 2023 – Dec 2024
-   - The output must be readable as plain text with zero special formatting characters
-7. **FORMATTING STYLE & TEMPLATE**: Format the output resume text EXACTLY according to these template layout rules:
-   - **Centered Header**:
-     - Line 1: Candidate Name (large, capitalized, e.g. "JOHN DOE" or "PEYYALA LOHIT")
-     - Line 2: Contact info separated by vertical pipe: "email | phone | location/country" (e.g. "lohithpeyyala@gmail.com | 7095649929 | india")
-     - Line 3: Social/profile URLs separated by vertical pipe: "LinkedIn | GitHub"
-   - **Section Headings**: Keep section names in ALL CAPS (e.g., "PROFESSIONAL SUMMARY", "EXPERIENCE", "EDUCATION", "PROJECTS", "TECHNICAL SKILLS", "CERTIFICATIONS").
-   - **Technical Skills**: Group category labels, e.g., "Programming Languages: Python, SQL".
-   - **Column Alignment**:
-     - For education entries, place the degree/field on the left (e.g. "B.Tech in Computer Science and Engineering") on its own line. On the next line, place the school/college name on the left (e.g. "Bonam Venchalayya Institute of Tech") and the date on the right (e.g. "2022 – 2026"), separating them with exactly 6 spaces. Below that, place the CGPA/GPA on the left on its own line (e.g. "CGPA: 7.62").
-     - For project entries, place the project name on the left (e.g. "MiniMedi - AI Symptom Checker") and the tech stack list on the right (prefix with a pipe, e.g. "| ReactJS, PostgreSQL"), separating them with exactly 6 spaces.
-     - For experience entries, place the title on the left (e.g. "Inside Sales Representative") and the date on the right (e.g. "2022 – 2026"), separating them with exactly 6 spaces. Below that, place the company name on the left (e.g. "Glowlogics Solutions") on its own line.
-   - **Bullets**: Use the bullet character "•" (and only "•") for all list items. Do not use dashes or asterisks. ${lengthDirective}
-7. **OUTPUT FORMAT**: You must respond ONLY with a raw JSON object matching the schema below. Do not wrap the JSON output in markdown code block fences (e.g., do not use \`\`\`json or \`\`\`). Your output must be directly parseable by JSON.parse().
+  const pageRules =
+    pageCount === 1
+      ? `ONE-PAGE RULES (strict):
+- Maximum 5–6 sections total
+- Maximum 2 projects; maximum 5 bullets per project
+- Maximum 5 bullets per experience entry
+- Maximum 4 certifications
+- Maximum 4 achievements
+- Omit publications, extracurriculars, leadership unless critical`
+      : `TWO-PAGE RULES:
+- Up to 4 projects; up to 5 bullets per project
+- Up to 5 bullets per experience entry
+- Up to 8 certifications
+- Include publications, leadership, extracurriculars if present`;
 
-### JSON SCHEMA:
+  const instructionsBlock =
+    instructions && instructions.trim()
+      ? `\n\nUSER CUSTOM INSTRUCTIONS (apply strictly): "${instructions.trim()}"`
+      : "";
+
+  return `You are an expert ATS Resume Writer and Senior Technical Recruiter.
+
+Your task is to generate an ATS-optimized professional resume suitable for Fortune 500 companies including Amazon, Microsoft, Google, Meta, Cognizant, Infosys, Accenture, Deloitte, Oracle, IBM, and TCS.
+
+==================================================
+ABSOLUTE RULES
+==================================================
+- NEVER fabricate companies, dates, degrees, certifications, job titles, or achievements.
+- Use ONLY information supplied in the candidate resume below.
+- If a section has no data, omit it entirely.
+- Do NOT use first-person pronouns anywhere.
+- Do NOT use generic phrases: "Hardworking", "Quick learner", "Looking for opportunities", "Passionate student".
+- Every experience/project bullet MUST start with a strong action verb.
+- Prefer measurable outcomes in bullets (%, numbers, scale).
+- Naturally integrate the following missing keywords where contextually appropriate:
+  ${topMissingKeywords.join(", ")}
+- Never keyword-stuff or repeat keywords unnaturally.
+
+==================================================
+PAGE MANAGEMENT
+==================================================
+pageCount = ${pageCount}
+
+${pageRules}
+
+==================================================
+RESUME SECTION ORDER (always follow this exact order)
+==================================================
+1. header
+2. summary
+3. skills
+4. experience
+5. projects
+6. education
+7. certifications
+8. achievements
+9. languages
+
+==================================================
+HEADER
+==================================================
+Include only: name, phone, email, location, linkedin, github, portfolio.
+No photos, icons, dates of birth, gender, nationality, or marital status.
+
+==================================================
+PROFESSIONAL SUMMARY
+==================================================
+- 40–70 words.
+- Describe the candidate professionally. Mention strongest technologies and domain.
+- Use ATS keywords from the job description naturally.
+- No first person. No pronouns.
+
+==================================================
+TECHNICAL SKILLS
+==================================================
+Group into categories. Use ONLY skills found in the candidate data.
+Preferred categories: Programming Languages, Frameworks, Frontend, Backend, Databases, Cloud, DevOps, AI / ML, Tools, Core Computer Science.
+
+==================================================
+EXPERIENCE
+==================================================
+Each entry must include: role, company, duration, location (if available), bullets (4–5).
+Every bullet: 12–22 words, starts with action verb, includes measurable impact.
+Never repeat action verbs consecutively.
+
+==================================================
+PROJECTS
+==================================================
+Each entry must include: title, stack (array of technologies), link (if mentioned), bullets (4–5).
+Action-oriented bullets with measurable outcomes.
+
+==================================================
+EDUCATION
+==================================================
+Reverse chronological. Include: degree, institution, university (if applicable), cgpa, year.
+
+==================================================
+CERTIFICATIONS
+==================================================
+Only certifications present in the candidate data. Never invent.
+
+==================================================
+ACHIEVEMENTS
+==================================================
+Max 4. Concise. E.g. "Solved 300+ DSA problems on LeetCode", "Hackathon Winner".
+
+==================================================
+LANGUAGES
+==================================================
+Human languages only (e.g. English, Telugu, Hindi).
+
+==================================================
+OUTPUT FORMAT — CRITICAL
+==================================================
+Return ONLY a valid JSON object. No markdown. No comments. No explanations. No code fences.
+The output must be directly parseable by JSON.parse().
+
+Required JSON schema:
 {
-  "resume": "The entire optimized resume text as a single string, including sections, formatting, and newlines.",
-  "keywordsAdded": ["Array", "of", "keywords", "from", "the", "missing", "list", "that", "you", "successfully", "integrated"],
-  "changesCount": 5, // Total count of bullet points or sections modified
-  "summary": "A concise explanation of the changes made and how they improve the resume's alignment.",
-  "detectedJobTitle": "The job title or role name extracted from the target job description (e.g., Inside Sales Representative)",
-  "detectedCompany": "The company name extracted from the target job description (e.g., Glowlogics Solutions)"
+  "header": {
+    "name": "Full Name",
+    "phone": "phone number or omit",
+    "email": "email or omit",
+    "location": "City, Country or omit",
+    "linkedin": "linkedin URL or omit",
+    "github": "github URL or omit",
+    "portfolio": "portfolio URL or omit"
+  },
+  "summary": "40-70 word professional summary string",
+  "skills": [
+    { "category": "Programming Languages", "items": ["Python", "TypeScript"] },
+    { "category": "Frameworks", "items": ["React", "Node.js"] }
+  ],
+  "experience": [
+    {
+      "role": "Software Engineer",
+      "company": "Company Name",
+      "duration": "Jan 2023 – Dec 2024",
+      "location": "City, Country",
+      "bullets": [
+        "Developed REST APIs reducing response time by 35%.",
+        "Automated CI/CD pipelines cutting deployment time from 45 minutes to 8 minutes."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "title": "Project Title",
+      "stack": ["React", "Node.js", "PostgreSQL"],
+      "link": "https://github.com/user/project",
+      "bullets": [
+        "Built a full-stack application serving 1,000+ active users.",
+        "Reduced API latency by 40% through Redis caching."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "B.Tech in Computer Science and Engineering",
+      "institution": "Institute Name",
+      "university": "Affiliated University Name",
+      "cgpa": "7.62 / 10.0",
+      "year": "2022 – 2026"
+    }
+  ],
+  "certifications": ["Certification Name – Issuing Body"],
+  "achievements": ["Solved 300+ DSA problems on LeetCode"],
+  "languages": ["English", "Telugu"],
+  "keywordsAdded": ["keyword1", "keyword2"],
+  "changesCount": 12,
+  "summaryChanges": "Brief description of key changes made to improve ATS alignment.",
+  "detectedJobTitle": "Software Engineer",
+  "detectedCompany": "Google"
 }
 
-### INPUT DATA:
-#### TARGET JOB DESCRIPTION (Truncated):
+==================================================
+INPUT DATA
+==================================================
+
+TARGET JOB DESCRIPTION:
 ${truncatedJd}${instructionsBlock}
 
-#### CANDIDATE CURRENT RESUME (Truncated):
+CANDIDATE CURRENT RESUME:
 ${truncatedResume}
 
-#### CURRENT EXTRACTED SKILLS:
+CURRENT EXTRACTED SKILLS:
 ${extractedSkills.join(", ")}
 
-Respond with the exact JSON object now.`;
+Return the valid JSON object now.`;
 }

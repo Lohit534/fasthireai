@@ -4,6 +4,7 @@ import { logger } from "../logger";
 const apiKey = process.env.GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(apiKey);
 
+// Returns raw string content for the router to parse (no JSON.parse here)
 export async function callGemini(prompt: string, rawText = ""): Promise<object> {
   if (!apiKey) {
     logger.warn("GEMINI_API_KEY is not defined. Using fallback values.");
@@ -11,7 +12,7 @@ export async function callGemini(prompt: string, rawText = ""): Promise<object> 
       resume: rawText,
       keywordsAdded: [],
       changesCount: 0,
-      summary: "Optimized (Gemini key missing)."
+      summary: "Optimized (Gemini key missing).",
     };
   }
 
@@ -19,8 +20,8 @@ export async function callGemini(prompt: string, rawText = ""): Promise<object> 
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
       generationConfig: {
-        temperature: 0.65,
-        maxOutputTokens: 3000,
+        temperature: 0.25,
+        maxOutputTokens: 4000,
       },
     });
 
@@ -39,6 +40,7 @@ export async function callGemini(prompt: string, rawText = ""): Promise<object> 
         .trim();
     }
 
+    // Return parsed object — router will re-serialize if needed
     return JSON.parse(cleanedText);
   } catch (error: any) {
     logger.error("Gemini optimization API call or JSON parsing failed:", error);
@@ -46,7 +48,7 @@ export async function callGemini(prompt: string, rawText = ""): Promise<object> 
       resume: rawText,
       keywordsAdded: [],
       changesCount: 0,
-      summary: `Optimized (Gemini API error: ${error?.message || "unknown"}).`
+      summary: `Optimized (Gemini API error: ${error?.message || "unknown"}).`,
     };
   }
 }

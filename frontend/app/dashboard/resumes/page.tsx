@@ -600,7 +600,7 @@ export default function ResumesPage() {
         }
       }
     } catch (e) {
-      console.warn("Error checking resumes limit client-side:", e);
+      // silent — failed to check resumes limit
     }
 
     setActionLoading("create");
@@ -749,7 +749,7 @@ export default function ResumesPage() {
         })
       });
     } catch (err) {
-      console.error("Failed to sync resume updates with db:", err);
+      // silent — failed to sync resume updates
     }
   };
 
@@ -795,7 +795,7 @@ export default function ResumesPage() {
         }
       }
     } catch (e) {
-      console.warn("Failed checking user plan:", e);
+      // silent — failed to check user plan
     }
 
     setActionLoading("improve-summary");

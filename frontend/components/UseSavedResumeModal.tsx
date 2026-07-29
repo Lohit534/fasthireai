@@ -51,7 +51,7 @@ export function UseSavedResumeModal({
         }
       }
     } catch (e) {
-      console.error("Failed to load saved resumes:", e);
+      // silent — failed to load saved resumes
       toast.error("Failed to load saved resumes.");
     } finally {
       setLoading(false);

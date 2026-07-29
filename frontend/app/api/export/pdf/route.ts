@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { generatePDF } from "@/lib/export/pdf";
+import { generatePDFFromJSON } from "@/lib/export/render-resume";
 import { getCleanExportFilename } from "@/lib/export/pdf-document";
 import { logger } from "@/lib/logger";
 import { isOwnerEmail } from "@/types";
+import type { ResumeJSON } from "@/types/resume";
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,7 +56,7 @@ export async function POST(request: NextRequest) {
     // 3. Fetch Resume and Verify Ownership
     const { data: resume, error: fetchErr } = await admin
       .from("Resume")
-      .select("id, userId, originalText, optimizedText")
+      .select("id, userId, originalText, optimizedText, optimizedJson, jobTitle")
       .eq("id", resumeId)
       .maybeSingle();
 
@@ -72,14 +74,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const textToExport = type === "original" ? (resume.originalText || "") : (resume.optimizedText || "");
+    // 4. Generate PDF — prefer structured JSON renderer for optimized resumes
+    let pdfBuffer: Buffer;
 
-    // 4. Generate PDF Document
-    logger.info(`Generating PDF export for user ${user.email}, Resume ID ${resumeId} (type=${type}, watermarked=${watermarked})`);
-    const pdfBuffer = await generatePDF(textToExport, watermarked);
+    if (type === "optimized" && resume.optimizedJson && !watermarked) {
+      try {
+        const resumeJSON: ResumeJSON = JSON.parse(resume.optimizedJson);
+        if (resumeJSON?.header?.name) {
+          logger.info(`Generating Overleaf-quality PDF from structured JSON for resume ${resumeId}`);
+          pdfBuffer = await generatePDFFromJSON(resumeJSON);
+        } else {
+          throw new Error("Invalid resumeJSON structure");
+        }
+      } catch (jsonErr: any) {
+        logger.warn(`Structured JSON PDF failed, falling back to plain text: ${jsonErr.message}`);
+        const textToExport = resume.optimizedText || "";
+        pdfBuffer = await generatePDF(textToExport, watermarked);
+      }
+    } else {
+      // Original resume or watermarked → use plain text renderer
+      const textToExport = type === "original"
+        ? (resume.originalText || "")
+        : (resume.optimizedText || "");
+      logger.info(`Generating plain-text PDF for resume ${resumeId} (type=${type}, watermarked=${watermarked})`);
+      pdfBuffer = await generatePDF(textToExport, watermarked);
+    }
 
     // 5. Return PDF download
-    const filename = getCleanExportFilename(textToExport, ".pdf", resume.jobTitle);
+    const textForFilename = type === "original" ? (resume.originalText || "") : (resume.optimizedText || "");
+    const filename = getCleanExportFilename(textForFilename, ".pdf", resume.jobTitle);
+
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {

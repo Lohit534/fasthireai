@@ -123,7 +123,7 @@ export default function JobTrackerPage() {
           try {
             setJobs(JSON.parse(storedJobs));
           } catch (e) {
-            console.error("Failed to parse local jobs database.", e);
+            // silent — failed to parse local jobs database
           }
         }
       } catch (err) {

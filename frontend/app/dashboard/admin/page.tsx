@@ -17,7 +17,6 @@ import {
   Sparkles, 
   Clock, 
   CheckCircle,
-  Inbox,
   AlertCircle,
   Briefcase,
   Users,
@@ -28,7 +27,12 @@ import {
   ArrowRight,
   TrendingUp,
   TrendingDown,
-  Wallet
+  Wallet,
+  Inbox,
+  Trash2,
+  Bug,
+  Lightbulb,
+  MessageCircle
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
@@ -60,8 +64,8 @@ export default function UnifiedAdminDashboard() {
   const router = useRouter();
   const [authLoading, setAuthLoading] = useState(true);
   
-  // Tab control: "users" or "tickets"
-  const [activeTab, setActiveTab] = useState<"users" | "tickets">("users");
+  // Tab control: "users", "tickets", or "feedback"
+  const [activeTab, setActiveTab] = useState<"users" | "tickets" | "feedback">("users");
 
   // Users Tab States
   const [users, setUsers] = useState<UserRecord[]>([]);
@@ -78,6 +82,11 @@ export default function UnifiedAdminDashboard() {
   const [ticketFilter, setTicketFilter] = useState<"all" | "pending" | "replied">("all");
   const [replyText, setReplyText] = useState("");
   const [submittingReply, setSubmittingReply] = useState(false);
+
+  // Feedback Tab States
+  const [feedbackMessages, setFeedbackMessages] = useState<any[]>([]);
+  const [feedbackLoading, setFeedbackLoading] = useState(true);
+  const [deletingFeedbackId, setDeletingFeedbackId] = useState<string | null>(null);
 
   useEffect(() => {
     async function checkAdmin() {
@@ -107,6 +116,7 @@ export default function UnifiedAdminDashboard() {
         setAuthLoading(false);
         loadUsersData();
         loadTicketsData();
+        loadFeedbackData();
       } catch (err) {
         toast.error("Authentication check failed.");
         router.push("/dashboard");
@@ -150,6 +160,42 @@ export default function UnifiedAdminDashboard() {
       toast.error("Error loading tickets.");
     } finally {
       setTicketsLoading(false);
+    }
+  };
+
+  const loadFeedbackData = async () => {
+    setFeedbackLoading(true);
+    try {
+      const res = await fetch("/api/feedback");
+      if (res.ok) {
+        const data = await res.json();
+        setFeedbackMessages(Array.isArray(data) ? data : []);
+      }
+    } catch (e) {
+      toast.error("Error loading feedback messages.");
+    } finally {
+      setFeedbackLoading(false);
+    }
+  };
+
+  const handleDeleteFeedback = async (id: string) => {
+    setDeletingFeedbackId(id);
+    try {
+      const res = await fetch("/api/feedback", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        setFeedbackMessages((prev) => prev.filter((f) => f.id !== id));
+        toast.success("Feedback deleted.");
+      } else {
+        toast.error("Failed to delete feedback.");
+      }
+    } catch {
+      toast.error("Connection error.");
+    } finally {
+      setDeletingFeedbackId(null);
     }
   };
 
@@ -311,7 +357,7 @@ export default function UnifiedAdminDashboard() {
         </div>
 
         {/* Tab selection bar */}
-        <div className="flex bg-[#0d0e22] border border-white/5 p-1 rounded-xl max-w-md select-none">
+        <div className="flex bg-[#0d0e22] border border-white/5 p-1 rounded-xl max-w-lg select-none">
           <button
             onClick={() => setActiveTab("users")}
             className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
@@ -335,6 +381,20 @@ export default function UnifiedAdminDashboard() {
             Support Tickets
             {tickets.filter(t => t.status === "pending").length > 0 && (
               <span className="h-2 w-2 rounded-full bg-red-500 animate-ping" />
+            )}
+          </button>
+          <button
+            onClick={() => { setActiveTab("feedback"); loadFeedbackData(); }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
+              activeTab === "feedback"
+                ? "bg-violet-600 text-white shadow-md shadow-violet-600/10"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <Inbox className="h-4 w-4" />
+            Feedback
+            {feedbackMessages.length > 0 && (
+              <span className="h-5 min-w-5 px-1.5 flex items-center justify-center rounded-full bg-emerald-500 text-[9px] font-black text-black">{feedbackMessages.length}</span>
             )}
           </button>
         </div>
@@ -848,6 +908,105 @@ export default function UnifiedAdminDashboard() {
                   )}
                 </div>
 
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 3: FEEDBACK MESSAGES */}
+        {activeTab === "feedback" && (
+          <div className="space-y-4 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-black text-white">Feedback Inbox</h2>
+                <p className="text-[10px] text-slate-400 mt-0.5">Messages auto-delete after 24 hours. {feedbackMessages.length} message{feedbackMessages.length !== 1 ? "s" : ""} remaining.</p>
+              </div>
+              <button
+                onClick={loadFeedbackData}
+                className="text-[10px] font-bold text-violet-400 hover:text-violet-300 border border-violet-500/20 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Refresh
+              </button>
+            </div>
+
+            {feedbackLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="h-6 w-6 animate-spin text-violet-400" />
+              </div>
+            ) : feedbackMessages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-white/8 rounded-2xl">
+                <Inbox className="h-10 w-10 text-slate-600 mb-3" />
+                <p className="text-sm font-bold text-slate-400">No feedback messages yet</p>
+                <p className="text-xs text-slate-600 mt-1">When users submit feedback, it will appear here.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {feedbackMessages.map((fb) => {
+                  const typeColors: Record<string, string> = {
+                    bug: "bg-red-500/10 border-red-500/20 text-red-400",
+                    feature: "bg-amber-500/10 border-amber-500/20 text-amber-400",
+                    improvement: "bg-yellow-500/10 border-yellow-500/20 text-yellow-400",
+                    general: "bg-blue-500/10 border-blue-500/20 text-blue-400",
+                  };
+                  const typeLabel: Record<string, string> = {
+                    bug: "🐛 Bug",
+                    feature: "✨ Feature",
+                    improvement: "💡 Improvement",
+                    general: "💬 General",
+                  };
+                  const colorClass = typeColors[fb.type] || typeColors.general;
+                  const label = typeLabel[fb.type] || typeLabel.general;
+                  const sentAt = new Date(fb.createdAt);
+                  const expiresAt = new Date(sentAt.getTime() + 24 * 60 * 60 * 1000);
+                  const hoursLeft = Math.max(0, Math.round((expiresAt.getTime() - Date.now()) / 3600000));
+
+                  return (
+                    <div
+                      key={fb.id}
+                      className="bg-[#0d0e22] border border-white/8 rounded-2xl p-4 space-y-3 hover:border-white/15 transition-all"
+                    >
+                      {/* Header row */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-bold text-white">{fb.name || "Anonymous"}</p>
+                          <p className="text-[10px] text-slate-500 font-mono">{fb.email || "—"}</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${colorClass}`}>
+                            {label}
+                          </span>
+                          <button
+                            onClick={() => handleDeleteFeedback(fb.id)}
+                            disabled={deletingFeedbackId === fb.id}
+                            className="h-6 w-6 flex items-center justify-center rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                            title="Delete feedback"
+                          >
+                            {deletingFeedbackId === fb.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3.5 w-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Message */}
+                      <p className="text-xs text-slate-300 leading-relaxed line-clamp-4">
+                        {fb.message}
+                      </p>
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between pt-1 border-t border-white/5">
+                        <span className="text-[9px] text-slate-600 font-mono">
+                          {sentAt.toLocaleDateString()} {sentAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                        <span className="text-[9px] text-amber-500/70 font-semibold">
+                          Expires in {hoursLeft}h
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

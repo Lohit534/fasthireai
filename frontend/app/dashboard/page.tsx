@@ -138,10 +138,10 @@ export default function DashboardPage() {
             localStorage.setItem(`fastHire_plan_${data.user.id}`, plan);
           }
         } catch (creditsErr) {
-          console.error("Failed to load credits info:", creditsErr);
+          // silent — failed to load credits info
         }
       } catch (err) {
-        console.error("Auth check failed:", err);
+        // silent — auth check failed, redirecting
         router.push("/auth/login");
       }
     }

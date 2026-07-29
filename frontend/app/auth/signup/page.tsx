@@ -106,7 +106,7 @@ function SignupFormContent() {
             });
             toast.success("🎁 Welcome bonus credit claimed!");
           } catch (refErr) {
-            console.error("Referral claim error:", refErr);
+            // silent — referral claim error
           }
         }
 
