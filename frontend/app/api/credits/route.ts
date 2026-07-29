@@ -93,7 +93,15 @@ export async function GET(request: NextRequest) {
         .select("id")
         .order("createdAt", { ascending: true })
         .limit(50);
-      isFirst50 = first50Users?.some((u: any) => u.id === activeUserId) || false;
+
+      const { count: totalUsersCount } = await admin
+        .from("User")
+        .select("id", { count: "exact", head: true });
+
+      // First 50 criteria: total platform user count is <= 50 OR user ID is in top 50 users list
+      isFirst50 =
+        (totalUsersCount !== null && totalUsersCount <= 50) ||
+        (first50Users?.some((u: any) => u.id === activeUserId || u.id === user.id) || false);
     } catch (e: any) {
       logger.warn("[credits] Failed checking first 50 users list:", e.message);
     }
@@ -110,13 +118,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (!creditRow) {
-      // Create initial credit row
+      // Create initial credit row (First 50 members automatically get 365 Pro credits for 1 year free)
       const { data: newCredit, error: createErr } = await admin
         .from("Credit")
         .insert({
           userId: activeUserId,
           freeUsed: 0,
           paidCredits: isFirst50 ? 365 : 0,
+          billingCycle: isFirst50 ? "yearly" : "monthly",
           resetAt: now.toISOString(),
         })
         .select()
@@ -127,19 +136,20 @@ export async function GET(request: NextRequest) {
         // Return safe default on DB error
         return NextResponse.json({
           freeUsed: 0,
-          paidCredits: 0,
+          paidCredits: isFirst50 ? 365 : 0,
           freeRemaining: FREE_CREDITS_PER_MONTH,
           resetAt: now.toISOString(),
           isOwner: false,
-          isFirst50: false,
+          isFirst50: isFirst50,
+          planId: isFirst50 ? "premium" : "free",
         });
       }
       creditRow = newCredit;
     } else if (isFirst50 && creditRow.paidCredits < 365) {
-      // Auto-upgrade free tier credits to Premium plan credits for first 50 users
+      // Auto-upgrade free tier credits to Premium Pro plan (365 credits) for first 50 members
       const { data: updatedCredit } = await admin
         .from("Credit")
-        .update({ paidCredits: 365 })
+        .update({ paidCredits: 365, billingCycle: "yearly" })
         .eq("userId", activeUserId)
         .select()
         .single();

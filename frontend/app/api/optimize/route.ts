@@ -116,7 +116,14 @@ export async function POST(request: NextRequest) {
           .select("id")
           .order("createdAt", { ascending: true })
           .limit(50);
-        isFirst50 = first50Users?.some((u: any) => u.id === activeUserId) || false;
+
+        const { count: totalUsersCount } = await admin
+          .from("User")
+          .select("id", { count: "exact", head: true });
+
+        isFirst50 =
+          (totalUsersCount !== null && totalUsersCount <= 50) ||
+          (first50Users?.some((u: any) => u.id === activeUserId || u.id === user.id) || false);
       } catch (e: any) {
         logger.warn("[optimize] Failed checking first 50 users list:", e.message);
       }
@@ -127,18 +134,19 @@ export async function POST(request: NextRequest) {
           .insert({
             userId: activeUserId,
             freeUsed: 0,
-            // First 50 users get 365 credits = 1 full year of Premium Pro for free
+            // First 50 members get 365 credits = 1 full year of Premium Pro for free
             paidCredits: isFirst50 ? 365 : 0,
+            billingCycle: isFirst50 ? "yearly" : "monthly",
             resetAt: now.toISOString(),
           })
           .select()
           .single();
         creditRow = newCredit;
       } else if (isFirst50 && creditRow.paidCredits < 365) {
-        // Auto-upgrade first 50 users to full year of Premium Pro (365 credits)
+        // Auto-upgrade first 50 members to full year of Premium Pro (365 credits)
         const { data: updatedCredit } = await admin
           .from("Credit")
-          .update({ paidCredits: 365 })
+          .update({ paidCredits: 365, billingCycle: "yearly" })
           .eq("userId", activeUserId)
           .select()
           .single();

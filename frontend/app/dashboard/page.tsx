@@ -868,16 +868,18 @@ export default function DashboardPage() {
                   <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
                 </div>
 
-                {/* Use Saved Resume button (Positioned OUTSIDE & BELOW PDF Panel Box) */}
-                <button
-                  type="button"
-                  onClick={() => setIsSavedResumesOpen(true)}
-                  disabled={optimizing}
-                  className="w-full bg-[#161B22] border border-violet-500/30 hover:border-violet-500/60 hover:bg-violet-500/10 py-2.5 px-4 text-xs font-bold rounded-xl flex items-center justify-center gap-2 text-violet-300 hover:text-white transition-all shadow-md"
-                >
-                  <FolderOpen className="h-4 w-4 text-violet-400" />
-                  Use Saved Resume
-                </button>
+                {/* Use Saved Resume button (Compact text-fitting width) */}
+                <div className="flex justify-start">
+                  <button
+                    type="button"
+                    onClick={() => setIsSavedResumesOpen(true)}
+                    disabled={optimizing}
+                    className="bg-[#161B22] border border-violet-500/30 hover:border-violet-500/60 hover:bg-violet-500/10 py-2 px-4 text-xs font-bold rounded-xl inline-flex items-center gap-2 text-violet-300 hover:text-white transition-all shadow-md"
+                  >
+                    <FolderOpen className="h-4 w-4 text-violet-400" />
+                    Use Saved Resume
+                  </button>
+                </div>
               </div>
 
               {/* Job Description Column */}
