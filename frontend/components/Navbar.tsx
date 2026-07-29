@@ -32,6 +32,7 @@ import { toast } from "react-hot-toast";
 import SupportChatbot from "@/components/SupportChatbot";
 import AdminChat from "@/components/AdminChat";
 import FeedbackToast from "@/components/FeedbackToast";
+import FeedbackBanner from "@/components/FeedbackBanner";
 
 import { Gift } from "lucide-react";
 import { ReferralModal } from "@/components/ReferralModal";
@@ -383,6 +384,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
         </div>
       </div>
       </nav>
+      {user && <FeedbackBanner onOpenFeedback={() => setIsFeedbackOpen(true)} />}
       {/* Pro Max & Owner: Full AI + Admin chatbot */}
       {user && ((credits?.paidCredits ?? 0) > 900000 || credits?.isOwner) && <SupportChatbot />}
       {/* Free & Pro (non-Pro Max): Admin-only mini chat */}
