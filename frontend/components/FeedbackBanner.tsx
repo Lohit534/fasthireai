@@ -16,6 +16,15 @@ export default function FeedbackBanner({ onOpenFeedback }: FeedbackBannerProps) 
     if (!isDismissed) {
       setDismissed(false);
     }
+
+    const handleSubmitted = () => {
+      setDismissed(true);
+    };
+
+    window.addEventListener("fastHire_feedbackSubmitted", handleSubmitted);
+    return () => {
+      window.removeEventListener("fastHire_feedbackSubmitted", handleSubmitted);
+    };
   }, []);
 
   const handleDismiss = () => {
