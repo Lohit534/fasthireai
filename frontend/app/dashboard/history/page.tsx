@@ -87,7 +87,12 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
       const response = await fetch(`/api/export/${format}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeId: resume.id })
+        body: JSON.stringify({
+          resumeId: resume.id,
+          // Pass text as fallback so the API can generate PDF even if DB fetch fails
+          text: resume.optimizedText || "",
+          type: "optimized"
+        })
       });
 
       if (!response.ok) {
@@ -246,9 +251,34 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                 </div>
               </div>
             )}
-            <pre className="text-xs leading-relaxed whitespace-pre-wrap select-text font-serif">
-              {resume.optimizedText || "No optimized text found."}
-            </pre>
+            {/* Structured resume renderer with section header highlighting */}
+            <div className="text-xs leading-relaxed select-text font-serif text-slate-900">
+              {(resume.optimizedText || "No optimized text found.").split("\n").map((line, i) => {
+                const trimmed = line.trim();
+                // ALL-CAPS section headers (e.g. LANGUAGES, SKILLS, EDUCATION)
+                const isSectionHeader = /^[A-Z][A-Z\s&/]{3,}$/.test(trimmed) && trimmed.length <= 40;
+                // Name header (first line, usually longest all-caps or title-case)
+                const isFirstLine = i === 0 && trimmed.length > 0;
+                if (isFirstLine && trimmed.length > 0) {
+                  return (
+                    <p key={i} className="text-sm font-black text-slate-900 tracking-tight mb-0.5">{trimmed}</p>
+                  );
+                }
+                if (isSectionHeader) {
+                  return (
+                    <div key={i} className="mt-3 mb-0.5">
+                      <p className="text-[11px] font-black text-slate-900 uppercase tracking-widest border-b border-slate-300 pb-0.5">{trimmed}</p>
+                    </div>
+                  );
+                }
+                if (trimmed === "") {
+                  return <div key={i} className="h-1" />;
+                }
+                return (
+                  <p key={i} className="leading-[1.45] text-slate-800">{line}</p>
+                );
+              })}
+            </div>
           </div>
 
           {/* Download & Share Actions */}

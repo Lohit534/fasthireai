@@ -70,8 +70,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Resume not found" }, { status: 404 });
       }
 
-      if (resume.userId !== activeUserId) {
-        logger.warn(`User ${user.email} (activeUserId: ${activeUserId}) attempted to export unauthorized resume ${resumeId} owned by ${resume.userId}`);
+      // Accept both email-resolved activeUserId AND raw auth user.id
+      const isOwnerOfResume = resume.userId === activeUserId || resume.userId === user.id;
+      if (!isOwnerOfResume) {
+        logger.warn(`User ${user.email} (activeUserId: ${activeUserId}, authId: ${user.id}) attempted to export unauthorized resume ${resumeId} owned by ${resume.userId}`);
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
 

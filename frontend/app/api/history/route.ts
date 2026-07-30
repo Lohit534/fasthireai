@@ -49,15 +49,23 @@ export async function GET(request: NextRequest) {
     let dbData: any[] = [];
     try {
       const admin = getAdminClient() as any;
+      // Query by both activeUserId (email-resolved) and raw auth user.id
+      const ids = Array.from(new Set([activeUserId, user.id]));
+
       const { data, error } = await admin
         .from("Resume")
         .select("*")
-        .eq("userId", activeUserId)
+        .in("userId", ids)
         .neq("jobTitle", "SUPPORT_TICKET")
+        .neq("jobTitle", "USER_FEEDBACK")
         .order("createdAt", { ascending: false });
+
       if (!error && data) {
-        // Filter to only include optimized resumes (non-empty job description)
-        dbData = data.filter((r: any) => r.jobDescription && r.jobDescription.trim() !== "");
+        // Only keep records that have a non-empty jobDescription
+        // (optimization records always have one; empty = manually created stub)
+        dbData = data.filter((r: any) =>
+          r.jobDescription && r.jobDescription.trim().length > 0
+        );
       } else if (error) {
         logger.warn("[history] DB fetch returned error:", error.message);
       }
