@@ -694,7 +694,7 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
       continue;
     }
 
-    if (currentSection === 'CERTIFICATIONS' || currentSection === 'ACHIEVEMENTS' || currentSection === 'AWARDS') {
+    if (currentSection === 'CERTIFICATIONS' || currentSection === 'ACHIEVEMENTS' || currentSection === 'AWARDS' || currentSection === 'LANGUAGES' || currentSection === 'LANGUAGES SPOKEN' || currentSection === 'LANGUAGES KNOWN') {
       blocks.push({ type: 'cert', text: line });
       continue;
     }
@@ -790,14 +790,21 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
                   {block.segments.map((seg, sIdx) => {
                     const elements: React.ReactNode[] = [];
                     if (seg.isLink && seg.url) {
-                      // Show readable label: LinkedIn, GitHub, or original text
-                      const lower = seg.url.toLowerCase();
-                      const readableLabel = lower.includes('linkedin.com') ? 'LinkedIn'
-                        : lower.includes('github.com') ? 'GitHub'
-                        : seg.text;
+                      const lowerUrl = seg.url.toLowerCase();
+                      const lowerTxt = seg.text.toLowerCase();
+                      let label = seg.text;
+                      if (lowerUrl.includes('linkedin') || lowerTxt.includes('linkedin')) {
+                        label = 'LinkedIn';
+                      } else if (lowerUrl.includes('github') || lowerTxt.includes('github')) {
+                        label = 'GitHub';
+                      } else if (lowerUrl.includes('portfolio') || lowerTxt.includes('portfolio')) {
+                        label = 'Portfolio';
+                      } else {
+                        label = seg.text.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
+                      }
                       elements.push(
                         <Link key={`link-${sIdx}`} src={seg.url} style={styles.contactLink}>
-                          <Text style={styles.contactLink}>{readableLabel}</Text>
+                          <Text style={styles.contactLink}>{label}</Text>
                         </Link>
                       );
                     } else {
@@ -810,7 +817,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
                     if (sIdx < block.segments.length - 1) {
                       elements.push(
                         <Text key={`sep-${sIdx}`} style={styles.contactSeparator}>
-                          —
+                          |
                         </Text>
                       );
                     }
