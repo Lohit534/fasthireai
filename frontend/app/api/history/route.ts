@@ -25,121 +25,130 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Resolve user record ID in public.User to prevent email unique ID mismatch
+    const admin = getAdminClient() as any;
+
+    // Resolve User table ID by email (handles cases where auth.id != User.id)
     let activeUserId = user.id;
     try {
       if (user.email) {
-        const admin = getAdminClient() as any;
         const { data: existingUser } = await admin
           .from("User")
           .select("id")
           .eq("email", user.email.toLowerCase().trim())
           .maybeSingle();
-
-        if (existingUser) {
+        if (existingUser?.id) {
           activeUserId = existingUser.id;
-          logger.info(`[history] Found existing User record for email ${user.email} with ID ${existingUser.id}. Reusing this ID.`);
         }
       }
-    } catch (e: any) {
-      logger.warn("[history] Failed to resolve user ID by email:", e.message);
-    }
+    } catch (_e) {}
 
-    // 1. Fetch from database with fallback
+    // Build deduplicated list of IDs to search by
+    const userIds = Array.from(new Set([activeUserId, user.id].filter(Boolean)));
+
+    // 1. Fetch from Supabase DB
     let dbData: any[] = [];
     try {
-      const admin = getAdminClient() as any;
-      // Query by both activeUserId (email-resolved) and raw auth user.id
-      const ids = Array.from(new Set([activeUserId, user.id]));
-
-      const { data, error } = await admin
+      // Use .in() when we have multiple IDs, .eq() when only one
+      let query = admin
         .from("Resume")
-        .select("*")
-        .in("userId", ids)
+        .select("id, userId, jobTitle, company, scoreBefore, scoreAfter, keywordsBefore, keywordsAfter, impactBefore, impactAfter, optimizedText, originalText, jobDescription, keywordsAdded, createdAt, optimizedJson")
         .neq("jobTitle", "SUPPORT_TICKET")
         .neq("jobTitle", "USER_FEEDBACK")
         .order("createdAt", { ascending: false });
 
-      if (!error && data) {
-        // Only keep records that have a non-empty jobDescription
-        // (optimization records always have one; empty = manually created stub)
+      if (userIds.length === 1) {
+        query = query.eq("userId", userIds[0]);
+      } else {
+        query = query.in("userId", userIds);
+      }
+
+      const { data, error } = await query;
+
+      if (!error && Array.isArray(data)) {
         dbData = data.filter((r: any) =>
           r.jobDescription && r.jobDescription.trim().length > 0
         );
       } else if (error) {
-        logger.warn("[history] DB fetch returned error:", error.message);
+        logger.warn("[history] DB .in() query error, trying fallback .eq():", error.message);
+        // Fallback: try each ID separately
+        for (const uid of userIds) {
+          try {
+            const { data: fallbackData, error: fallbackErr } = await admin
+              .from("Resume")
+              .select("id, userId, jobTitle, company, scoreBefore, scoreAfter, keywordsBefore, keywordsAfter, impactBefore, impactAfter, optimizedText, originalText, jobDescription, keywordsAdded, createdAt, optimizedJson")
+              .eq("userId", uid)
+              .neq("jobTitle", "SUPPORT_TICKET")
+              .neq("jobTitle", "USER_FEEDBACK")
+              .order("createdAt", { ascending: false });
+
+            if (!fallbackErr && Array.isArray(fallbackData)) {
+              const filtered = fallbackData.filter((r: any) =>
+                r.jobDescription && r.jobDescription.trim().length > 0
+              );
+              // Deduplicate
+              for (const r of filtered) {
+                if (!dbData.some((d) => d.id === r.id)) dbData.push(r);
+              }
+            }
+          } catch (_e) {}
+        }
       }
     } catch (dbErr: any) {
-      logger.warn("[history] DB fetch crashed, using fallbacks:", dbErr.message);
+      logger.warn("[history] DB fetch crashed:", dbErr.message);
     }
 
-    // 2. Fetch from local JSON file
+    // 2. Fetch from local JSON fallback (only available in local dev, not Vercel)
     let localData: any[] = [];
     try {
       if (fs.existsSync(FILE_PATH)) {
         const fileContent = fs.readFileSync(FILE_PATH, "utf8");
         const allResumes = JSON.parse(fileContent || "[]");
-        // Deduplicate and filter to only include optimized resumes (non-empty job description)
-        localData = allResumes.filter((r: any) => 
-          (r.userId === activeUserId || r.userId === user.id) &&
-          r.jobDescription && 
+        localData = allResumes.filter((r: any) =>
+          userIds.includes(r.userId) &&
+          r.jobDescription &&
           r.jobDescription.trim() !== ""
         );
       }
-    } catch (jsonErr: any) {
-      logger.warn("[history] Local JSON read failed:", jsonErr.message);
-    }
+    } catch (_e) {}
 
-    // 3. Merge and deduplicate by id
+    // 3. Merge and deduplicate by id (DB takes priority)
     const combined = [...dbData];
     for (const r of localData) {
-      if (!combined.some((dbR) => dbR.id === r.id)) {
-        combined.push(r);
-      }
+      if (!combined.some((d) => d.id === r.id)) combined.push(r);
     }
 
-    // Sort by createdAt descending
+    // 4. Sort by createdAt descending
     combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    // Resolve plan tier to determine retention cutoff
-    let retentionMonths = 1; // Default free: 1 month
+    // 5. Apply retention cutoff based on plan
+    let retentionMonths = 1;
     const isOwner = isOwnerEmail(user.email);
     if (!isOwner) {
       try {
-        const admin = getAdminClient() as any;
         const { data: creditRow } = await admin
           .from("Credit")
           .select("paidCredits")
           .eq("userId", activeUserId)
           .maybeSingle();
-        const paidCredits = creditRow?.paidCredits ?? 0;
-        if (paidCredits >= 900000) {
-          retentionMonths = 4;
-        } else if (paidCredits > 0) {
-          retentionMonths = 2;
-        }
-      } catch (e) {
-        logger.warn("[history] Failed to fetch credits for retention:", e);
-      }
+        const paid = creditRow?.paidCredits ?? 0;
+        if (paid >= 900000) retentionMonths = 4;
+        else if (paid > 0) retentionMonths = 2;
+      } catch (_e) {}
     }
 
     let filtered = combined;
     if (!isOwner) {
-      const cutoffDate = new Date();
-      cutoffDate.setMonth(cutoffDate.getMonth() - retentionMonths);
-      filtered = combined.filter((r) => {
-        const itemDate = new Date(r.createdAt);
-        return itemDate >= cutoffDate;
-      });
+      const cutoff = new Date();
+      cutoff.setMonth(cutoff.getMonth() - retentionMonths);
+      filtered = combined.filter((r) => new Date(r.createdAt) >= cutoff);
     }
 
+    // Always return 200 — even if empty
     return NextResponse.json(filtered);
   } catch (error: any) {
     logger.error("[history] GET Unhandled error:", error?.message);
-    return NextResponse.json(
-      { error: "Internal server error during history fetch." },
-      { status: 500 }
-    );
+    // Return empty array instead of 500 so frontend shows empty state not error
+    return NextResponse.json([]);
   }
 }
 

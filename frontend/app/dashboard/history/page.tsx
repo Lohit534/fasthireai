@@ -737,17 +737,17 @@ export default function HistoryPage() {
 
         // Fetch history via API endpoint to bypass client RLS issues
         let dbData: any[] = [];
-        let dbError: any = null;
         try {
           const historyRes = await fetch("/api/history");
-          if (historyRes.ok) {
-            dbData = await historyRes.json();
-          } else {
-            const errBody = await historyRes.json().catch(() => ({}));
-            dbError = new Error(errBody.error || "Failed to fetch history from API");
+          const responseData = await historyRes.json().catch(() => []);
+          // API always returns 200 with array (or error object)
+          if (Array.isArray(responseData)) {
+            dbData = responseData;
+          } else if (historyRes.ok && !responseData.error) {
+            dbData = [];
           }
-        } catch (fetchErr: any) {
-          dbError = fetchErr;
+        } catch (_fetchErr) {
+          // Network error — silent, show empty state
         }
 
         // Fetch plan/credits details
@@ -771,12 +771,7 @@ export default function HistoryPage() {
 
         if (!active) return;
 
-        if (dbError) {
-          logger.error("Failed to query scans from Supabase", dbError);
-          toast.error("Could not load history.");
-        } else if (dbData) {
-          setResumes(dbData as any[]);
-        }
+        setResumes(dbData as any[]);
         setLoading(false);
       } catch (err) {
         logger.error("Unexpected error loading history:", err);
