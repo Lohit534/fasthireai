@@ -113,20 +113,34 @@ export async function GET(request: NextRequest) {
     // 4. Sort by createdAt descending
     combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    // 5. Apply retention cutoff based on user plan
-    let retentionMonths = 1; // free: 1 month
+    // 5. Strictly calculate retention period based on user plan:
+    // - Free tier: 1 month retention
+    // - Pro / Premium tier: 2 months retention
+    // - Pro Max tier / Owner: 4 months retention
+    let retentionMonths = 1; // Default Free: 1 month
     const isOwner = isOwnerEmail(user.email);
-    if (!isOwner) {
+
+    if (isOwner) {
+      retentionMonths = 4; // Owner gets full Pro Max 4 months retention
+    } else {
       try {
         const { data: creditRow } = await admin
           .from("Credit")
-          .select("paidCredits")
+          .select("paidCredits, billingCycle")
           .eq("userId", activeUserId)
           .maybeSingle();
+
         const paid = creditRow?.paidCredits ?? 0;
-        if (paid >= 900000) retentionMonths = 4;      // Pro Max
-        else if (paid > 0) retentionMonths = 2;       // Premium
-      } catch (_e) {}
+        if (paid >= 900000) {
+          retentionMonths = 4; // Pro Max tier -> 4 months retention
+        } else if (paid > 0) {
+          retentionMonths = 2; // Pro / Premium tier -> 2 months retention
+        } else {
+          retentionMonths = 1; // Free tier -> 1 month retention
+        }
+      } catch (_e) {
+        retentionMonths = 1;
+      }
     }
 
     let filtered = combined;
