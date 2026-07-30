@@ -484,7 +484,8 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
           const value = cleanVal.substring(colonIdx + 1).trim();
           blocks.push({ type: 'skillLine', label, value });
         } else {
-          blocks.push({ type: 'cert', text: cleanVal });
+          // Format comma/pipe separated languages cleanly (e.g. English, Telugu)
+          blocks.push({ type: 'skillLine', label: 'Languages', value: cleanVal });
         }
       }
       continue;
