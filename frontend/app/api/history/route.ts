@@ -3,6 +3,11 @@
  *
  * Fetches the resume optimization history for the authenticated user.
  * Uses the Supabase admin client to bypass client RLS issues.
+ *
+ * IMPORTANT: Do NOT use .neq("jobTitle", ...) in Supabase queries.
+ * In PostgreSQL, `col != value` also excludes rows where col IS NULL,
+ * which means all real optimization records (with non-system jobTitles)
+ * can be silently dropped. All jobTitle filtering is done in JS instead.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -16,6 +21,9 @@ import path from "path";
 const DATA_DIR = path.join(process.cwd(), "data");
 const FILE_PATH = path.join(DATA_DIR, "resumes.json");
 
+// Titles used for system/internal records — never show in user history
+const SYSTEM_TITLES = ["SUPPORT_TICKET", "USER_FEEDBACK"];
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = createClient();
@@ -27,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     const admin = getAdminClient() as any;
 
-    // Resolve User table ID by email (handles cases where auth.id != User.id)
+    // Resolve User table ID by email (handles auth.id != User.id mismatch)
     let activeUserId = user.id;
     try {
       if (user.email) {
@@ -42,62 +50,46 @@ export async function GET(request: NextRequest) {
       }
     } catch (_e) {}
 
-    // Build deduplicated list of IDs to search by
+    // All IDs this user's records could be stored under
     const userIds = Array.from(new Set([activeUserId, user.id].filter(Boolean)));
 
     // 1. Fetch from Supabase DB
+    //    - Use select("*") to get all columns
+    //    - NO .neq() on jobTitle in SQL — PostgreSQL neq also excludes NULLs
+    //    - Filter system records in JS after fetching
     let dbData: any[] = [];
     try {
-      // Use .in() when we have multiple IDs, .eq() when only one
-      let query = admin
-        .from("Resume")
-        .select("id, userId, jobTitle, company, scoreBefore, scoreAfter, keywordsBefore, keywordsAfter, impactBefore, impactAfter, optimizedText, originalText, jobDescription, keywordsAdded, createdAt, optimizedJson")
-        .neq("jobTitle", "SUPPORT_TICKET")
-        .neq("jobTitle", "USER_FEEDBACK")
-        .order("createdAt", { ascending: false });
+      for (const uid of userIds) {
+        try {
+          const { data, error } = await admin
+            .from("Resume")
+            .select("*")
+            .eq("userId", uid)
+            .order("createdAt", { ascending: false });
 
-      if (userIds.length === 1) {
-        query = query.eq("userId", userIds[0]);
-      } else {
-        query = query.in("userId", userIds);
-      }
-
-      const { data, error } = await query;
-
-      if (!error && Array.isArray(data)) {
-        dbData = data.filter((r: any) =>
-          r.jobDescription && r.jobDescription.trim().length > 0
-        );
-      } else if (error) {
-        logger.warn("[history] DB .in() query error, trying fallback .eq():", error.message);
-        // Fallback: try each ID separately
-        for (const uid of userIds) {
-          try {
-            const { data: fallbackData, error: fallbackErr } = await admin
-              .from("Resume")
-              .select("id, userId, jobTitle, company, scoreBefore, scoreAfter, keywordsBefore, keywordsAfter, impactBefore, impactAfter, optimizedText, originalText, jobDescription, keywordsAdded, createdAt, optimizedJson")
-              .eq("userId", uid)
-              .neq("jobTitle", "SUPPORT_TICKET")
-              .neq("jobTitle", "USER_FEEDBACK")
-              .order("createdAt", { ascending: false });
-
-            if (!fallbackErr && Array.isArray(fallbackData)) {
-              const filtered = fallbackData.filter((r: any) =>
-                r.jobDescription && r.jobDescription.trim().length > 0
-              );
-              // Deduplicate
-              for (const r of filtered) {
-                if (!dbData.some((d) => d.id === r.id)) dbData.push(r);
+          if (!error && Array.isArray(data)) {
+            for (const r of data) {
+              if (!dbData.some((d) => d.id === r.id)) {
+                dbData.push(r);
               }
             }
-          } catch (_e) {}
-        }
+          } else if (error) {
+            logger.warn(`[history] DB fetch error for uid=${uid}:`, error.message);
+          }
+        } catch (_e) {}
       }
+
+      // JS-side filter: exclude system records and records without a job description
+      dbData = dbData.filter((r: any) => {
+        if (r.jobTitle && SYSTEM_TITLES.includes(r.jobTitle)) return false;
+        if (!r.jobDescription || r.jobDescription.trim().length === 0) return false;
+        return true;
+      });
     } catch (dbErr: any) {
       logger.warn("[history] DB fetch crashed:", dbErr.message);
     }
 
-    // 2. Fetch from local JSON fallback (only available in local dev, not Vercel)
+    // 2. Fetch from local JSON fallback (local dev only — not available on Vercel)
     let localData: any[] = [];
     try {
       if (fs.existsSync(FILE_PATH)) {
@@ -106,12 +98,13 @@ export async function GET(request: NextRequest) {
         localData = allResumes.filter((r: any) =>
           userIds.includes(r.userId) &&
           r.jobDescription &&
-          r.jobDescription.trim() !== ""
+          r.jobDescription.trim() !== "" &&
+          !SYSTEM_TITLES.includes(r.jobTitle)
         );
       }
     } catch (_e) {}
 
-    // 3. Merge and deduplicate by id (DB takes priority)
+    // 3. Merge and deduplicate by id (DB takes priority over local)
     const combined = [...dbData];
     for (const r of localData) {
       if (!combined.some((d) => d.id === r.id)) combined.push(r);
@@ -120,8 +113,8 @@ export async function GET(request: NextRequest) {
     // 4. Sort by createdAt descending
     combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    // 5. Apply retention cutoff based on plan
-    let retentionMonths = 1;
+    // 5. Apply retention cutoff based on user plan
+    let retentionMonths = 1; // free: 1 month
     const isOwner = isOwnerEmail(user.email);
     if (!isOwner) {
       try {
@@ -131,8 +124,8 @@ export async function GET(request: NextRequest) {
           .eq("userId", activeUserId)
           .maybeSingle();
         const paid = creditRow?.paidCredits ?? 0;
-        if (paid >= 900000) retentionMonths = 4;
-        else if (paid > 0) retentionMonths = 2;
+        if (paid >= 900000) retentionMonths = 4;      // Pro Max
+        else if (paid > 0) retentionMonths = 2;       // Premium
       } catch (_e) {}
     }
 
@@ -143,11 +136,14 @@ export async function GET(request: NextRequest) {
       filtered = combined.filter((r) => new Date(r.createdAt) >= cutoff);
     }
 
-    // Always return 200 — even if empty
+    logger.info(`[history] Returning ${filtered.length} records for user ${user.email} (from ${combined.length} total)`);
+
+    // Always return 200 with array — frontend shows empty state if []
     return NextResponse.json(filtered);
+
   } catch (error: any) {
     logger.error("[history] GET Unhandled error:", error?.message);
-    // Return empty array instead of 500 so frontend shows empty state not error
+    // Never return 500 — return empty array so frontend shows empty state, not error
     return NextResponse.json([]);
   }
 }
@@ -225,15 +221,28 @@ export async function DELETE(request: NextRequest) {
 
     const admin = getAdminClient() as any;
 
-    // Delete from Supabase DB (only if it belongs to this user)
-    const { error: deleteErr } = await admin
-      .from("Resume")
-      .delete()
-      .eq("id", id)
-      .eq("userId", user.id);
+    // Resolve activeUserId
+    let activeUserId = user.id;
+    try {
+      if (user.email) {
+        const { data: existingUser } = await admin
+          .from("User")
+          .select("id")
+          .eq("email", user.email.toLowerCase().trim())
+          .maybeSingle();
+        if (existingUser?.id) activeUserId = existingUser.id;
+      }
+    } catch (_e) {}
 
-    if (deleteErr) {
-      logger.warn("[history DELETE] DB delete failed:", deleteErr.message);
+    // Delete from Supabase DB (check both possible userId values)
+    for (const uid of Array.from(new Set([activeUserId, user.id]))) {
+      try {
+        await admin
+          .from("Resume")
+          .delete()
+          .eq("id", id)
+          .eq("userId", uid);
+      } catch (_e) {}
     }
 
     // Also delete from local JSON file fallback
@@ -257,4 +266,3 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
-

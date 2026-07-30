@@ -73,10 +73,11 @@ export async function POST(request: NextRequest) {
 
     // 1. Save to dedicated "Feedback" table in Supabase
     try {
-      await adminSupabase.from("Feedback").insert(feedbackRecord);
-      logger.info(`[feedback] Saved to Supabase 'Feedback' table for ${senderEmail}`);
+      const { error: fbErr } = await adminSupabase.from("Feedback").insert(feedbackRecord);
+      if (fbErr) logger.warn("[feedback] Dedicated Feedback table insert error:", fbErr.message);
+      else logger.info(`[feedback] Saved to Supabase 'Feedback' table for ${senderEmail}`);
     } catch (e: any) {
-      logger.warn("[feedback] Dedicated Feedback table insert failed:", e?.message);
+      logger.warn("[feedback] Dedicated Feedback table insert exception:", e?.message);
     }
 
     // 2. Save to "Resume" table as fallback (jobTitle: "USER_FEEDBACK")
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
       status: "pending",
     };
     try {
-      await adminSupabase.from("Resume").insert({
+      const { error: resErr } = await adminSupabase.from("Resume").insert({
         id: recordId,
         userId: user?.id || null,
         jobTitle: "USER_FEEDBACK",
@@ -104,7 +105,10 @@ export async function POST(request: NextRequest) {
         keywordsAdded: [],
         createdAt: nowISO,
       });
-    } catch (e: any) {}
+      if (resErr) logger.warn("[feedback] Resume table feedback insert error:", resErr.message);
+    } catch (e: any) {
+      logger.warn("[feedback] Resume table feedback insert exception:", e?.message);
+    }
 
     // 3. Save to local JSON fallback
     const existing = readFeedback();
