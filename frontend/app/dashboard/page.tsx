@@ -95,7 +95,6 @@ export default function DashboardPage() {
       setResumeText(sampleResume);
       setJobDescription(sampleJD);
       localStorage.removeItem("fastHire_pendingSample");
-      toast.success("🎉 Sample resume & job description loaded! Ready to optimize.");
     } else {
       // Refreshing the browser page clears temporary workspace inputs
       resetStore();
@@ -248,7 +247,7 @@ export default function DashboardPage() {
     setTrackerAdded(false);
     setIsAILoading(false);
     setBulletImprovementsCount(0);
-    toast.success("Workspace cleared.");
+    // silent clear — user can see the cleared workspace
   };
 
   const handleReScoreBefore = async (newText: string, currentImprovementsCount?: number) => {
@@ -304,7 +303,6 @@ export default function DashboardPage() {
 
     localStorage.setItem(`fastHire_jobs_${user.id}`, JSON.stringify([newJob, ...currentJobs]));
     setTrackerAdded(true);
-    toast.success("Added to Job Tracker! 💼");
   };
 
   const handleGenerateRoadmap = async (skill: string) => {
@@ -373,17 +371,26 @@ export default function DashboardPage() {
 
     setGeneratingLetter(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1800));
-      setCoverLetterGenerated(
-        `Dear Hiring Manager,\n\n` +
-        `I am writing to express my strong interest in the ${optimizeResult?.jobTitle || "target"} position at ${optimizeResult?.company || "your company"}.\n\n` +
-        `With an ATS score matching rating of ${afterScore?.overall || 80}/100, my background aligns closely with the core values of your engineering goals. My experience in integrating key keywords like ${(optimizeResult?.keywordsAdded || []).slice(0, 3).join(", ") || "software technologies"} makes me a great fit.\n\n` +
-        `I look forward to discussing how my experience can contribute to your team.\n\n` +
-        `Sincerely,\n` +
-        `Applicant`
-      );
-    } catch (e) {
-      toast.error("Failed to generate cover letter.");
+      const res = await fetch("/api/cover-letter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeText: optimizeResult?.optimizedText || resumeText,
+          jobDescription,
+          jobTitle: optimizeResult?.jobTitle,
+          company: optimizeResult?.company,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to generate cover letter.");
+      }
+
+      const data = await res.json();
+      setCoverLetterGenerated(data.coverLetter);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate cover letter.");
     } finally {
       setGeneratingLetter(false);
     }

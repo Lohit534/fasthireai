@@ -79,10 +79,13 @@ export async function GET(request: NextRequest) {
         } catch (_e) {}
       }
 
-      // JS-side filter: exclude system records and records without a job description
+      // JS-side filter: exclude system records only
+      // NOTE: Do NOT filter by jobDescription — it can be null/empty if DB column was truncated.
+      // The presence of optimizedText is the reliable signal for a real optimization record.
       dbData = dbData.filter((r: any) => {
         if (r.jobTitle && SYSTEM_TITLES.includes(r.jobTitle)) return false;
-        if (!r.jobDescription || r.jobDescription.trim().length === 0) return false;
+        // Must have an optimizedText (AI output) to be a real optimization
+        if (!r.optimizedText || r.optimizedText.trim().length === 0) return false;
         return true;
       });
     } catch (dbErr: any) {
@@ -97,8 +100,8 @@ export async function GET(request: NextRequest) {
         const allResumes = JSON.parse(fileContent || "[]");
         localData = allResumes.filter((r: any) =>
           userIds.includes(r.userId) &&
-          r.jobDescription &&
-          r.jobDescription.trim() !== "" &&
+          r.optimizedText &&
+          r.optimizedText.trim() !== "" &&
           !SYSTEM_TITLES.includes(r.jobTitle)
         );
       }

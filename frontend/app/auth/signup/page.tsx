@@ -111,7 +111,6 @@ function SignupFormContent() {
         }
 
         if (data?.session) {
-          toast.success("Successfully registered and logged in!");
           router.push("/dashboard");
           router.refresh();
           return;
@@ -119,7 +118,6 @@ function SignupFormContent() {
       }
 
       setSuccess(true);
-      toast.success("Registration successful!");
     } catch (err: any) {
       setError(err.message || "Failed to create account.");
       toast.error(err.message || "Registration failed.");

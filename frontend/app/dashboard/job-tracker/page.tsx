@@ -158,9 +158,6 @@ export default function JobTrackerPage() {
 
     const updatedJobs = jobs.map((job) => {
       if (job.id === id) {
-        if (job.status !== status) {
-          toast.success(`Job moved to ${COLUMNS.find(c => c.id === status)?.label}`);
-        }
         return { ...job, status };
       }
       return job;

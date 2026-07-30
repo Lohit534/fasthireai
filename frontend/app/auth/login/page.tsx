@@ -32,7 +32,6 @@ export default function LoginPage() {
         throw authError;
       }
 
-      toast.success("Successfully logged in!");
       router.push("/dashboard");
       router.refresh();
     } catch (err: any) {

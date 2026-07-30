@@ -690,7 +690,6 @@ export default function ResumesPage() {
       const blob = await response.blob();
       const exportFilename = getCleanExportFilename(text, ".pdf", record.jobTitle || undefined);
       saveAs(blob, exportFilename);
-      toast.success("PDF exported successfully!");
     } catch (err: any) {
       toast.error(err.message || "Failed to download PDF.");
     } finally {
@@ -716,7 +715,6 @@ export default function ResumesPage() {
       const blob = await response.blob();
       const exportFilename = getCleanExportFilename(text, ".docx", record.jobTitle || undefined);
       saveAs(blob, exportFilename);
-      toast.success("DOCX exported successfully!");
     } catch (err: any) {
       toast.error(err.message || "Failed to download DOCX.");
     } finally {
@@ -890,7 +888,6 @@ export default function ResumesPage() {
     const updated = { ...editorData, experience: [...editorData.experience, newExp] };
     setEditorData(updated);
     saveEditorData(updated);
-    toast.success("Experience section added!");
   };
 
   const removeExperienceItem = (id: string) => {
@@ -925,7 +922,6 @@ export default function ResumesPage() {
     const updated = { ...editorData, education: [...editorData.education, newEdu] };
     setEditorData(updated);
     saveEditorData(updated);
-    toast.success("Education section added!");
   };
 
   const removeEducationItem = (id: string) => {
@@ -959,7 +955,6 @@ export default function ResumesPage() {
     const updated = { ...editorData, projects: [...editorData.projects, newProj] };
     setEditorData(updated);
     saveEditorData(updated);
-    toast.success("Project section added!");
   };
 
   const removeProjectItem = (id: string) => {
@@ -1037,7 +1032,6 @@ export default function ResumesPage() {
     const updated = { ...editorData, skills: [...editorData.skills, newGroup] };
     setEditorData(updated);
     saveEditorData(updated);
-    toast.success("Skill group added!");
   };
 
   const removeSkillGroup = (id: string) => {

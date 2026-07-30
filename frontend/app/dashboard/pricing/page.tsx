@@ -240,8 +240,7 @@ export default function PricingPage() {
     }
     if (isOwner) {
       if (plan.id === currentPlan) {
-        toast.success(`You are already simulated on the ${plan.name}.`);
-        return;
+        return; // already on this plan
       }
       try {
         if (userId) {
@@ -276,8 +275,7 @@ export default function PricingPage() {
     }
 
     if (plan.id === currentPlan) {
-      toast.success(`You are already subscribed to the ${plan.name}.`);
-      return;
+      return; // already on this plan
     }
 
     if (plan.id === "free") {
@@ -413,7 +411,6 @@ export default function PricingPage() {
       }
     } else {
       // Sandbox fallback simulated Razorpay checkout window
-      toast.success("Razorpay library loaded. Initializing payment dashboard...");
       setTimeout(async () => {
         try {
           const res = await fetch("/api/credits", {

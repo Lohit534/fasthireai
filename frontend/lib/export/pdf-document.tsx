@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
 const SECTION_NAMES = [
   'PROFESSIONAL SUMMARY', 'SUMMARY', 'OBJECTIVE', 'PROFILE',
   'TECHNICAL SKILLS', 'SKILLS', 'CORE SKILLS', 'SOFT SKILLS', 'SKILLS & COMPETENCIES', 'KEY SKILLS',
-  'EXPERIENCE', 'WORK EXPERIENCE', 'PROFESSIONAL EXPERIENCE', 'EMPLOYMENT HISTORY', 'INTERNSHIP', 'WORK HISTORY',
+  'EXPERIENCE', 'WORK EXPERIENCE', 'PROFESSIONAL EXPERIENCE', 'EMPLOYMENT HISTORY', 'INTERNSHIP', 'WORK HISTORY', 'INTERNSHIPS',
   'PROJECTS', 'PERSONAL PROJECTS', 'KEY PROJECTS', 'ACADEMIC PROJECTS',
   'EDUCATION', 'ACADEMIC BACKGROUND', 'QUALIFICATIONS', 'ACADEMICS',
   'CERTIFICATIONS', 'CERTIFICATIONS & ACHIEVEMENTS', 'ACHIEVEMENTS', 'AWARDS', 'HONORS', 'CERTIFICATES',
@@ -492,7 +492,7 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
     }
 
     // Experience entry
-    if (currentSection === 'EXPERIENCE' || currentSection === 'WORK EXPERIENCE' || currentSection === 'PROFESSIONAL EXPERIENCE' || currentSection === 'EMPLOYMENT HISTORY' || currentSection === 'INTERNSHIP') {
+    if (currentSection === 'EXPERIENCE' || currentSection === 'WORK EXPERIENCE' || currentSection === 'PROFESSIONAL EXPERIENCE' || currentSection === 'EMPLOYMENT HISTORY' || currentSection === 'INTERNSHIP' || currentSection === 'INTERNSHIPS' || currentSection === 'WORK HISTORY') {
       const isBullet = /^[•\-\*–]\s*/.test(rawLine);
       if (!isBullet) {
         const dateMatch = line.match(/\b\d{4}\b/);
@@ -629,43 +629,56 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
         }
       }
 
-      const isNewEntry = (DEGREE_KEYWORDS.some(kw => lowerLine.includes(kw)) || 
-                          lowerLine.startsWith('b.') || lowerLine.startsWith('m.') ||
-                          !lastEdu) && (!lastEdu || lastEdu.school !== "");
-      
-      const dateRangeRegex = /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|20\d{2})\b[\s\-\–]+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|20\d{2}|Present)\b/i;
-      const singleDateRegex = /\b(20\d{2})\b/;
       const gpaRegex = /(GPA|CGPA|%)\s*:?\s*([\d\.\%]+)/i;
+      const gpaMatch = line.match(gpaRegex);
+
+      // Check if this line has a pipe separator (degree | year format from serializer)
+      // e.g. "B.Tech in Computer Science | 2022 – 2026"
+      const pipeIdx = line.indexOf(' | ');
+      const hasPipeWithDate = pipeIdx !== -1 && /\b20\d{2}\b/.test(line.substring(pipeIdx));
+
+      const dateRangeRegex = /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|20\d{2})\b[\s\-\u2013]+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|20\d{2}|Present)\b/i;
+      const singleDateRegex = /\b(20\d{2})\b/;
       
       let cleanText = stripMarkdownAsterisks(line);
       let dates = "";
       let gpa = "";
-      
-      const dateMatch = line.match(dateRangeRegex);
-      if (dateMatch) {
-        dates = dateMatch[0];
-        cleanText = cleanText.replace(dateMatch[0], "").trim();
-      } else {
-        const singleMatch = line.match(singleDateRegex);
-        if (singleMatch && (line.includes('-') || line.includes('–') || line.toLowerCase().includes('present'))) {
-          const approxDateMatch = line.match(/(\b(20\d{2})\b.*?(\b(20\d{2})\b|Present))/i);
-          if (approxDateMatch) {
-            dates = approxDateMatch[0];
-            cleanText = cleanText.replace(approxDateMatch[0], "").trim();
-          }
-        } else if (singleMatch) {
-          dates = singleMatch[0];
-          cleanText = cleanText.replace(singleMatch[0], "").trim();
-        }
-      }
-      
-      const gpaMatch = line.match(gpaRegex);
+
       if (gpaMatch) {
         gpa = gpaMatch[0];
         cleanText = cleanText.replace(gpaMatch[0], "").trim();
       }
+
+      if (hasPipeWithDate) {
+        // Format: "B.Tech in CS | 2022 – 2026" — split at pipe
+        dates = stripMarkdownAsterisks(line.substring(pipeIdx + 3).trim());
+        cleanText = stripMarkdownAsterisks(line.substring(0, pipeIdx).trim());
+      } else {
+        const dateMatch = line.match(dateRangeRegex);
+        if (dateMatch) {
+          dates = dateMatch[0];
+          cleanText = cleanText.replace(dateMatch[0], "").trim();
+        } else {
+          const singleMatch = line.match(singleDateRegex);
+          if (singleMatch && (line.includes('-') || line.includes('\u2013') || line.toLowerCase().includes('present'))) {
+            const approxDateMatch = line.match(/(\b(20\d{2})\b.*?(\b(20\d{2})\b|Present))/i);
+            if (approxDateMatch) {
+              dates = approxDateMatch[0];
+              cleanText = cleanText.replace(approxDateMatch[0], "").trim();
+            }
+          } else if (singleMatch) {
+            dates = singleMatch[0];
+            cleanText = cleanText.replace(singleMatch[0], "").trim();
+          }
+        }
+      }
       
-      cleanText = stripMarkdownAsterisks(cleanText.replace(/^[\s\|\-\–\—\:]+|[\s\|\-\–\—\:]+$/g, ""));
+      cleanText = stripMarkdownAsterisks(cleanText.replace(/^[\s\|\-\u2013\u2014\:]+|[\s\|\-\u2013\u2014\:]+$/g, ""));
+
+      // Determine if this is a new entry or continuation
+      const isNewEntry = (DEGREE_KEYWORDS.some(kw => lowerLine.includes(kw)) || 
+                          lowerLine.startsWith('b.') || lowerLine.startsWith('m.') ||
+                          !lastEdu || hasPipeWithDate) && (!lastEdu || lastEdu.school !== "");
       
       if (isNewEntry) {
         blocks.push({
@@ -679,9 +692,13 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
         if (lastEdu) {
           if (!lastEdu.school) {
             lastEdu.school = cleanText;
+          } else if (!lastEdu.gpa && gpa) {
+            lastEdu.gpa = gpa;
+          } else if (!lastEdu.dates && dates) {
+            lastEdu.dates = dates;
           }
-          if (dates) lastEdu.dates = dates;
-          if (gpa) lastEdu.gpa = gpa;
+          if (dates && !lastEdu.dates) lastEdu.dates = dates;
+          if (gpa && !lastEdu.gpa) lastEdu.gpa = gpa;
         } else {
           blocks.push({
             type: 'education',

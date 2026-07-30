@@ -351,10 +351,10 @@ export const ResumePDFFromJSON: React.FC<ResumePDFFromJSONProps> = ({ data }) =>
           </>
         )}
 
-        {/* ── TECHNICAL SKILLS ── */}
+        {/* ── SKILLS (Technical + Soft) ── */}
         {data.skills && data.skills.length > 0 && (
           <>
-            <SectionHeader title="Technical Skills" />
+            <SectionHeader title="Skills" />
             {data.skills.map((skill, i) => (
               <View key={i} style={S.skillRow}>
                 <Text style={S.skillLabel}>{skill.category}:</Text>
@@ -469,7 +469,7 @@ export const ResumePDFFromJSON: React.FC<ResumePDFFromJSONProps> = ({ data }) =>
         {data.languages && data.languages.length > 0 && (
           <>
             <SectionHeader title="Languages" />
-            <Text style={S.langText}>{data.languages.join("  |  ")}</Text>
+            <Text style={S.langText}>{data.languages.join("   |   ")}</Text>
           </>
         )}
 

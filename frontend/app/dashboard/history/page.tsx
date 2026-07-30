@@ -140,17 +140,26 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
   const handleGenerateCoverLetter = async () => {
     setGeneratingLetter(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1800));
-      setCoverLetterGenerated(
-        `Dear Hiring Manager,\n\n` +
-        `I am writing to express my strong interest in the ${resume.jobTitle || "target"} position at ${resume.company || "your company"}.\n\n` +
-        `With an ATS score matching rating of ${resume.scoreAfter}/100, my background aligns closely with the core values of your engineering goals. My experience in integrating key keywords like ${keywords.slice(0, 3).join(", ") || "software technologies"} makes me a great fit.\n\n` +
-        `I look forward to discussing how my experience can contribute to your team.\n\n` +
-        `Sincerely,\n` +
-        `Applicant`
-      );
-    } catch (e) {
-      toast.error("Failed to generate cover letter.");
+      const res = await fetch("/api/cover-letter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeText: resume.optimizedText || resume.originalText,
+          jobDescription: resume.jobDescription,
+          jobTitle: resume.jobTitle,
+          company: resume.company,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to generate cover letter.");
+      }
+
+      const data = await res.json();
+      setCoverLetterGenerated(data.coverLetter);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate cover letter.");
     } finally {
       setGeneratingLetter(false);
     }

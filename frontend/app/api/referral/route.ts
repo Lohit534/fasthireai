@@ -77,16 +77,34 @@ export async function GET(request: NextRequest) {
     let bonusCredits = 0;
 
     try {
-      const { data: dbRefs } = await admin
-        .from("Referral")
-        .select("*")
-        .or(`referrerId.eq.${activeUserId},referrerId.eq.${user.id}${user.email ? `,referrerEmail.eq.${user.email.toLowerCase().trim()}` : ""}`);
+      // Query by referrerId (both auth ID and User table ID) OR by referrerEmail
+      const [byId1, byId2, byCode] = await Promise.all([
+        admin.from("Referral").select("*").eq("referrerId", activeUserId),
+        activeUserId !== user.id
+          ? admin.from("Referral").select("*").eq("referrerId", user.id)
+          : Promise.resolve({ data: [] }),
+        user.email
+          ? admin.from("Referral").select("*").eq("referralCode", referralCode)
+          : Promise.resolve({ data: [] }),
+      ]);
 
-      const dbCount = dbRefs?.length || 0;
+      // Merge all results, deduplicate by id
+      const merged = new Map<string, any>();
+      for (const { data } of [byId1, byId2, byCode]) {
+        if (Array.isArray(data)) {
+          for (const r of data) {
+            merged.set(r.id, r);
+          }
+        }
+      }
+      const dbRefs = [...merged.values()];
+
+      const dbCount = dbRefs.length;
       const localRefs = getLocalReferrals().filter(
         (r: any) =>
           r.referrerId === activeUserId ||
           r.referrerId === user.id ||
+          r.referralCode === referralCode ||
           (user.email && r.referrerEmail === user.email.toLowerCase().trim())
       );
       const localCount = localRefs.length;
@@ -98,6 +116,7 @@ export async function GET(request: NextRequest) {
         (r: any) =>
           r.referrerId === activeUserId ||
           r.referrerId === user.id ||
+          r.referralCode === referralCode ||
           (user.email && r.referrerEmail === user.email.toLowerCase().trim())
       );
       totalReferrals = localRefs.length;

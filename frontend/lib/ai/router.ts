@@ -39,7 +39,7 @@ export function serializeResumeJSONToText(json: ResumeJSON): string {
     lines.push("");
   }
 
-  // Skills
+  // Skills — include all categories
   if (json.skills?.length) {
     lines.push("TECHNICAL SKILLS");
     for (const s of json.skills) {
@@ -70,13 +70,18 @@ export function serializeResumeJSONToText(json: ResumeJSON): string {
     }
   }
 
-  // Education
+  // Education — each entry on separate lines, dates clearly separated
   if (json.education?.length) {
     lines.push("EDUCATION");
     for (const edu of json.education) {
-      lines.push(`${edu.degree}`);
-      const instLine = [edu.institution, edu.university].filter(Boolean).join(", ");
-      lines.push(`${instLine}      ${edu.year}`);
+      // Degree on its own line (with year at end)
+      lines.push(`${edu.degree}${edu.year ? " | " + edu.year : ""}`);
+      // Institution and university on next line
+      const instParts: string[] = [];
+      if (edu.institution) instParts.push(edu.institution);
+      if (edu.university && edu.university !== edu.institution) instParts.push(edu.university);
+      if (instParts.length) lines.push(instParts.join(", "));
+      // CGPA/percentage on its own line
       if (edu.cgpa) lines.push(`CGPA: ${edu.cgpa}`);
       lines.push("");
     }
@@ -96,7 +101,7 @@ export function serializeResumeJSONToText(json: ResumeJSON): string {
     lines.push("");
   }
 
-  // Languages
+  // Languages — each on its own line so the PDF parser picks up each one
   if (json.languages?.length) {
     lines.push("LANGUAGES");
     lines.push(json.languages.join(", "));
@@ -235,6 +240,52 @@ export async function callAI(prompt: string, rawText = ""): Promise<AIResult> {
       resume: sanitizeResumeText(rawText),
     };
   }
+}
+
+export async function callAIText(prompt: string): Promise<string> {
+  const apiKeyGroq = process.env.GROQ_API_KEY || "";
+  if (apiKeyGroq) {
+    try {
+      logger.info("AI Router: Generating text response via Groq...");
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKeyGroq}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.3,
+        }),
+      });
+
+      if (response.ok) {
+        const json = await response.json();
+        const content = json.choices?.[0]?.message?.content;
+        if (content) return content.trim();
+      }
+    } catch (e) {
+      logger.warn("AI Router: Groq text call failed, trying Gemini fallback...", e);
+    }
+  }
+
+  // Fallback to Gemini
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      logger.info("AI Router: Generating text response via Gemini...");
+      const { GoogleGenerativeAI } = await import("@google/generative-ai");
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      if (text) return text.trim();
+    } catch (e) {
+      logger.error("AI Router: Gemini text generation failed.", e);
+    }
+  }
+
+  throw new Error("AI service unavailable for text generation.");
 }
 
 // Raw Groq call returning string content (no JSON.parse here)
