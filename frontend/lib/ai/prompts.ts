@@ -106,9 +106,17 @@ Each entry must include: title, stack (array of technologies), link (if mentione
 Action-oriented bullets with measurable outcomes.
 
 ==================================================
-EDUCATION
+EDUCATION — CRITICAL
 ==================================================
-Reverse chronological. Include: degree, institution, university (if applicable), cgpa, year.
+- Preserve ALL education items present in the candidate resume (e.g. B.Tech, Intermediate / Class 12, SSC / Class 10, Diplomas).
+- NEVER drop Intermediate, SSC, Class 10, Class 12, or Secondary School items if present in candidate input.
+- For each item: degree, institution, university (if applicable), cgpa/percentage/marks (if present), year/dates.
+
+==================================================
+SOFT SKILLS & TECHNICAL SKILLS
+==================================================
+- Group technical skills AND soft skills into categories.
+- Include a "Soft Skills" or "Core Competencies" category in skills if soft skills (e.g. Communication, Problem Solving, Leadership, Teamwork) are present in the candidate data.
 
 ==================================================
 CERTIFICATIONS
@@ -123,7 +131,7 @@ Max 4. Concise. E.g. "Solved 300+ DSA problems on LeetCode", "Hackathon Winner".
 ==================================================
 LANGUAGES
 ==================================================
-Human languages only (e.g. English, Telugu, Hindi).
+Include ALL human languages mentioned in the candidate resume (e.g. English, Telugu, Hindi). Never drop languages section if candidate specified languages.
 
 ==================================================
 OUTPUT FORMAT — CRITICAL

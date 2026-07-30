@@ -224,13 +224,13 @@ const styles = StyleSheet.create({
 });
 
 const SECTION_NAMES = [
-  'PROFESSIONAL SUMMARY', 'SUMMARY', 'OBJECTIVE',
-  'TECHNICAL SKILLS', 'SKILLS', 'CORE SKILLS', 'SOFT SKILLS',
-  'EXPERIENCE', 'WORK EXPERIENCE', 'PROFESSIONAL EXPERIENCE', 'EMPLOYMENT HISTORY', 'INTERNSHIP',
-  'PROJECTS', 'PERSONAL PROJECTS', 'KEY PROJECTS',
-  'EDUCATION', 'ACADEMIC BACKGROUND',
-  'CERTIFICATIONS', 'CERTIFICATIONS & ACHIEVEMENTS', 'ACHIEVEMENTS', 'AWARDS', 'HONORS',
-  'LANGUAGES', 'INTERESTS', 'VOLUNTEER',
+  'PROFESSIONAL SUMMARY', 'SUMMARY', 'OBJECTIVE', 'PROFILE',
+  'TECHNICAL SKILLS', 'SKILLS', 'CORE SKILLS', 'SOFT SKILLS', 'SKILLS & COMPETENCIES', 'KEY SKILLS',
+  'EXPERIENCE', 'WORK EXPERIENCE', 'PROFESSIONAL EXPERIENCE', 'EMPLOYMENT HISTORY', 'INTERNSHIP', 'WORK HISTORY',
+  'PROJECTS', 'PERSONAL PROJECTS', 'KEY PROJECTS', 'ACADEMIC PROJECTS',
+  'EDUCATION', 'ACADEMIC BACKGROUND', 'QUALIFICATIONS', 'ACADEMICS',
+  'CERTIFICATIONS', 'CERTIFICATIONS & ACHIEVEMENTS', 'ACHIEVEMENTS', 'AWARDS', 'HONORS', 'CERTIFICATES',
+  'LANGUAGES', 'LANGUAGES SPOKEN', 'LANGUAGES KNOWN', 'INTERESTS', 'VOLUNTEER',
   'PUBLICATIONS', 'PUBLICATIONS & ACHIEVEMENTS', 'ACTIVITIES', 'EXTRA-CURRICULAR ACTIVITIES'
 ];
 
@@ -460,7 +460,7 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
       continue;
     }
 
-    if (currentSection === 'TECHNICAL SKILLS' || currentSection === 'SKILLS' || currentSection === 'CORE SKILLS') {
+    if (currentSection === 'TECHNICAL SKILLS' || currentSection === 'SKILLS' || currentSection === 'CORE SKILLS' || currentSection === 'SOFT SKILLS' || currentSection === 'SKILLS & COMPETENCIES' || currentSection === 'KEY SKILLS') {
       if (line.includes(':')) {
         const colonIdx = line.indexOf(':');
         const label = stripMarkdownAsterisks(line.substring(0, colonIdx));
@@ -469,7 +469,22 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
       } else {
         const cleanVal = stripMarkdownAsterisks(line.replace(/^[•\-\*–\s\u2022]+/, ""));
         if (cleanVal) {
-          blocks.push({ type: 'summary', text: cleanVal });
+          blocks.push({ type: 'skillLine', label: currentSection === 'SOFT SKILLS' ? 'Soft Skills' : 'Skills', value: cleanVal });
+        }
+      }
+      continue;
+    }
+
+    if (currentSection === 'LANGUAGES' || currentSection === 'LANGUAGES SPOKEN' || currentSection === 'LANGUAGES KNOWN') {
+      const cleanVal = stripMarkdownAsterisks(line.replace(/^[•\-\*–\s\u2022]+/, ""));
+      if (cleanVal) {
+        if (cleanVal.includes(':')) {
+          const colonIdx = cleanVal.indexOf(':');
+          const label = cleanVal.substring(0, colonIdx).trim();
+          const value = cleanVal.substring(colonIdx + 1).trim();
+          blocks.push({ type: 'skillLine', label, value });
+        } else {
+          blocks.push({ type: 'cert', text: cleanVal });
         }
       }
       continue;
@@ -596,12 +611,13 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
     }
 
     // Education block
-    if (currentSection === 'EDUCATION') {
+    if (currentSection === 'EDUCATION' || currentSection === 'ACADEMIC BACKGROUND' || currentSection === 'QUALIFICATIONS' || currentSection === 'ACADEMICS') {
       const lowerLine = line.toLowerCase();
       const DEGREE_KEYWORDS = [
         'b.tech', 'btech', 'intermediate', 'ssc', 'b.s.', 'bs', 'bachelor', 'master', 
-        'm.tech', 'mtech', 'ph.d', 'phd', 'class xii', 'class x', 'diploma', 'matriculation', 
-        'secondary', 'hsc', 'cbse', 'board', 'high school'
+        'm.tech', 'mtech', 'ph.d', 'phd', 'class xii', 'class x', 'class 12', 'class 10',
+        'diploma', 'matriculation', 'secondary', 'hsc', 'cbse', 'board', 'high school',
+        '10th', '12th', 'senior secondary', 'higher secondary', 'degree', 'university', 'college', 'school'
       ];
       
       let lastEdu: EducationBlock | undefined;
