@@ -11,11 +11,8 @@ export default function FeedbackBanner({ onOpenFeedback }: FeedbackBannerProps) 
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
-    // Check if dismissed in current browser session
-    const isDismissed = sessionStorage.getItem("fastHire_feedbackBannerDismissed");
-    if (!isDismissed) {
-      setDismissed(false);
-    }
+    // Show banner by default whenever user is logged in
+    setDismissed(false);
 
     const handleSubmitted = () => {
       setDismissed(true);
@@ -28,7 +25,6 @@ export default function FeedbackBanner({ onOpenFeedback }: FeedbackBannerProps) 
   }, []);
 
   const handleDismiss = () => {
-    sessionStorage.setItem("fastHire_feedbackBannerDismissed", "true");
     setDismissed(true);
   };
 
