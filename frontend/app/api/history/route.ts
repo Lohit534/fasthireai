@@ -3,11 +3,6 @@
  *
  * Fetches the resume optimization history for the authenticated user.
  * Uses the Supabase admin client to bypass client RLS issues.
- *
- * IMPORTANT: Do NOT use .neq("jobTitle", ...) in Supabase queries.
- * In PostgreSQL, `col != value` also excludes rows where col IS NULL,
- * which means all real optimization records (with non-system jobTitles)
- * can be silently dropped. All jobTitle filtering is done in JS instead.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -50,49 +45,52 @@ export async function GET(request: NextRequest) {
       }
     } catch (_e) {}
 
-    // All IDs this user's records could be stored under
-    const userIds = Array.from(new Set([activeUserId, user.id].filter(Boolean)));
+    // All IDs/identifiers this user's records could be stored under
+    const userIds = Array.from(
+      new Set(
+        [
+          activeUserId,
+          user.id,
+          user.email,
+          user.email ? user.email.toLowerCase().trim() : null,
+        ].filter(Boolean)
+      )
+    );
 
-    // 1. Fetch from Supabase DB
-    //    - Use select("*") to get all columns
-    //    - NO .neq() on jobTitle in SQL — PostgreSQL neq also excludes NULLs
-    //    - Filter system records in JS after fetching
+    // 1. Fetch from Supabase DB across all potential user IDs
     let dbData: any[] = [];
-    try {
-      for (const uid of userIds) {
-        try {
-          const { data, error } = await admin
-            .from("Resume")
-            .select("*")
-            .eq("userId", uid)
-            .order("createdAt", { ascending: false });
+    for (const uid of userIds) {
+      try {
+        const { data, error } = await admin
+          .from("Resume")
+          .select("*")
+          .eq("userId", uid)
+          .order("createdAt", { ascending: false });
 
-          if (!error && Array.isArray(data)) {
-            for (const r of data) {
-              if (!dbData.some((d) => d.id === r.id)) {
-                dbData.push(r);
-              }
+        if (!error && Array.isArray(data)) {
+          for (const r of data) {
+            if (!dbData.some((d) => d.id === r.id)) {
+              dbData.push(r);
             }
-          } else if (error) {
-            logger.warn(`[history] DB fetch error for uid=${uid}:`, error.message);
           }
-        } catch (_e) {}
-      }
-
-      // JS-side filter: exclude system records only
-      // NOTE: Do NOT filter by jobDescription — it can be null/empty if DB column was truncated.
-      // The presence of optimizedText is the reliable signal for a real optimization record.
-      dbData = dbData.filter((r: any) => {
-        if (r.jobTitle && SYSTEM_TITLES.includes(r.jobTitle)) return false;
-        // Must have an optimizedText (AI output) to be a real optimization
-        if (!r.optimizedText || r.optimizedText.trim().length === 0) return false;
-        return true;
-      });
-    } catch (dbErr: any) {
-      logger.warn("[history] DB fetch crashed:", dbErr.message);
+        } else if (error) {
+          logger.warn(`[history] DB fetch error for uid=${uid}:`, error.message);
+        }
+      } catch (_e) {}
     }
 
-    // 2. Fetch from local JSON fallback (local dev only — not available on Vercel)
+    // JS-side filter: exclude system records only
+    dbData = dbData.filter((r: any) => {
+      if (r.jobTitle && SYSTEM_TITLES.includes(r.jobTitle)) return false;
+      // Accept records that have optimizedText, originalText, or jobDescription
+      const hasContent =
+        (r.optimizedText && r.optimizedText.trim().length > 0) ||
+        (r.originalText && r.originalText.trim().length > 0) ||
+        (r.jobDescription && r.jobDescription.trim().length > 0);
+      return hasContent;
+    });
+
+    // 2. Fetch from local JSON fallback (local dev only)
     let localData: any[] = [];
     try {
       if (fs.existsSync(FILE_PATH)) {
@@ -100,9 +98,9 @@ export async function GET(request: NextRequest) {
         const allResumes = JSON.parse(fileContent || "[]");
         localData = allResumes.filter((r: any) =>
           userIds.includes(r.userId) &&
-          r.optimizedText &&
-          r.optimizedText.trim() !== "" &&
-          !SYSTEM_TITLES.includes(r.jobTitle)
+          !SYSTEM_TITLES.includes(r.jobTitle) &&
+          ((r.optimizedText && r.optimizedText.trim() !== "") ||
+            (r.originalText && r.originalText.trim() !== ""))
         );
       }
     } catch (_e) {}
@@ -114,17 +112,19 @@ export async function GET(request: NextRequest) {
     }
 
     // 4. Sort by createdAt descending
-    combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    combined.sort(
+      (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
 
     // 5. Strictly calculate retention period based on user plan:
-    // - Free tier: 1 month retention
-    // - Pro / Premium tier: 2 months retention
-    // - Pro Max tier / Owner: 4 months retention
-    let retentionMonths = 1; // Default Free: 1 month
+    // - Free tier: 1 month retention (30 days)
+    // - Pro / Premium tier: 2 months retention (60 days)
+    // - Pro Max tier / Owner: 4 months retention (120 days)
+    let retentionMonths = 1;
     const isOwner = isOwnerEmail(user.email);
 
     if (isOwner) {
-      retentionMonths = 4; // Owner gets full Pro Max 4 months retention
+      retentionMonths = 4;
     } else {
       try {
         const { data: creditRow } = await admin
@@ -135,11 +135,11 @@ export async function GET(request: NextRequest) {
 
         const paid = creditRow?.paidCredits ?? 0;
         if (paid >= 900000) {
-          retentionMonths = 4; // Pro Max tier -> 4 months retention
+          retentionMonths = 4;
         } else if (paid > 0) {
-          retentionMonths = 2; // Pro / Premium tier -> 2 months retention
+          retentionMonths = 2;
         } else {
-          retentionMonths = 1; // Free tier -> 1 month retention
+          retentionMonths = 1;
         }
       } catch (_e) {
         retentionMonths = 1;
@@ -149,18 +149,21 @@ export async function GET(request: NextRequest) {
     let filtered = combined;
     if (!isOwner) {
       const cutoff = new Date();
-      cutoff.setMonth(cutoff.getMonth() - retentionMonths);
-      filtered = combined.filter((r) => new Date(r.createdAt) >= cutoff);
+      cutoff.setDate(cutoff.getDate() - retentionMonths * 30);
+      filtered = combined.filter((r) => {
+        if (!r.createdAt) return true;
+        const d = new Date(r.createdAt);
+        return isNaN(d.getTime()) || d >= cutoff;
+      });
     }
 
-    logger.info(`[history] Returning ${filtered.length} records for user ${user.email} (from ${combined.length} total)`);
+    logger.info(
+      `[history] Returning ${filtered.length} records for user ${user.email} (from ${combined.length} total)`
+    );
 
-    // Always return 200 with array — frontend shows empty state if []
     return NextResponse.json(filtered);
-
   } catch (error: any) {
     logger.error("[history] GET Unhandled error:", error?.message);
-    // Never return 500 — return empty array so frontend shows empty state, not error
     return NextResponse.json([]);
   }
 }
@@ -178,12 +181,14 @@ export async function PATCH(request: NextRequest) {
     const { resumeId, scoreAfter } = body;
 
     if (!resumeId || scoreAfter === undefined) {
-      return NextResponse.json({ error: "resumeId and scoreAfter are required." }, { status: 400 });
+      return NextResponse.json(
+        { error: "resumeId and scoreAfter are required." },
+        { status: 400 }
+      );
     }
 
     const admin = getAdminClient() as any;
 
-    // Update in Supabase DB
     const { error: updateErr } = await admin
       .from("Resume")
       .update({ scoreAfter: Math.round(scoreAfter) })
@@ -193,10 +198,7 @@ export async function PATCH(request: NextRequest) {
       logger.warn("[history PATCH] DB update failed:", updateErr.message);
     }
 
-    // Also update in local JSON file fallback
     try {
-      const DATA_DIR = path.join(process.cwd(), "data");
-      const FILE_PATH = path.join(DATA_DIR, "resumes.json");
       if (fs.existsSync(FILE_PATH)) {
         const localResumes = JSON.parse(fs.readFileSync(FILE_PATH, "utf8") || "[]");
         const idx = localResumes.findIndex((r: any) => r.id === resumeId);
@@ -209,7 +211,6 @@ export async function PATCH(request: NextRequest) {
       logger.warn("[history PATCH] Local JSON update failed:", e.message);
     }
 
-    logger.info(`[history PATCH] Updated scoreAfter=${scoreAfter} for resumeId=${resumeId}`);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     logger.error("[history PATCH] Unhandled error:", error?.message);
@@ -238,7 +239,6 @@ export async function DELETE(request: NextRequest) {
 
     const admin = getAdminClient() as any;
 
-    // Resolve activeUserId
     let activeUserId = user.id;
     try {
       if (user.email) {
@@ -251,18 +251,16 @@ export async function DELETE(request: NextRequest) {
       }
     } catch (_e) {}
 
-    // Delete from Supabase DB (check both possible userId values)
-    for (const uid of Array.from(new Set([activeUserId, user.id]))) {
+    const uids = Array.from(
+      new Set([activeUserId, user.id, user.email, user.email?.toLowerCase().trim()].filter(Boolean))
+    );
+
+    for (const uid of uids) {
       try {
-        await admin
-          .from("Resume")
-          .delete()
-          .eq("id", id)
-          .eq("userId", uid);
+        await admin.from("Resume").delete().eq("id", id).eq("userId", uid);
       } catch (_e) {}
     }
 
-    // Also delete from local JSON file fallback
     try {
       if (fs.existsSync(FILE_PATH)) {
         const localResumes = JSON.parse(fs.readFileSync(FILE_PATH, "utf8") || "[]");
@@ -273,7 +271,6 @@ export async function DELETE(request: NextRequest) {
       logger.warn("[history DELETE] Local JSON delete failed:", e.message);
     }
 
-    logger.info(`[history DELETE] Deleted resumeId=${id} for userId=${user.id}`);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     logger.error("[history DELETE] Unhandled error:", error?.message);

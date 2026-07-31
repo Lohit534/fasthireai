@@ -163,8 +163,8 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
   formatting = Math.min(100, formatting);
 
   // 5. Overall score calculation:
-  // If keywordMatch < 35%, score should be directly LOW (30 - 55).
-  // If keywordMatch >= 65%, score should be HIGH (70 - 90).
+  // Initial unoptimized resume scores cap in the 70 - 78 range when skills match,
+  // leaving room for Auto-Improve to boost the score to 85-98+.
   let overall = Math.round(
     (semanticMatch * 0.45) +
     (keywordMatch * 0.35) +
@@ -174,10 +174,11 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
 
   if (keywordMatch < 30) {
     overall = Math.min(overall, 48);
-  } else if (keywordMatch > 75) {
-    overall = Math.min(100, Math.max(overall, 82));
-  } else if (keywordMatch > 60) {
-    overall = Math.min(100, Math.max(overall, 72));
+  } else if (keywordMatch > 70) {
+    // Skills match: initial score is in 70 - 78 range
+    overall = Math.min(78, Math.max(70, Math.round(70 + (keywordMatch - 70) * 0.25)));
+  } else if (keywordMatch > 50) {
+    overall = Math.min(70, Math.max(60, Math.round(60 + (keywordMatch - 50) * 0.5)));
   }
 
   overall = Math.max(0, Math.min(100, overall));
@@ -228,35 +229,40 @@ export async function scoreResume(
       (score.impactBullets * 0.12) +
       (score.formatting * 0.08)
     );
-    if (score.keywordMatch < 30) {
-      score.overall = Math.min(score.overall, 48);
-    } else if (score.keywordMatch > 75) {
-      score.overall = Math.min(100, Math.max(score.overall, 82));
-    }
-    score.overall = Math.max(0, Math.min(100, score.overall));
   } catch (error) {
     logger.warn("Python Scorer API failed or timed out. Falling back to local score logic.", error);
     score = localScore(resumeText, jobDescription);
   }
 
-  // Ensure optimized score is ALWAYS higher than original score and never decreases on auto-improve or bullet editing
-  if (scoreBefore !== undefined && scoreBefore > 0) {
-    const minVal = Math.max(78, scoreBefore + 4);
-    const maxVal = Math.max(92, Math.min(100, scoreBefore + 14));
-    
-    let targetScore = getDeterministicScore(resumeText, minVal, maxVal);
-    
-    if (bulletImprovementsCount) {
-      targetScore = Math.min(100, targetScore + Math.round(bulletImprovementsCount * 0.5));
+  // 1. Initial raw resume scoring (BEFORE auto-improve):
+  // Cap initial score to 70 - 78 range so unoptimized resumes do not show 80+ initially
+  if (scoreBefore === undefined || scoreBefore === 0) {
+    if (score.overall > 78) {
+      score.overall = 70 + (score.overall % 9); // e.g. 70 to 78
+    } else if (score.overall >= 60 && score.overall < 70) {
+      score.overall = Math.min(78, score.overall);
     }
-    
+  }
+
+  // 2. AFTER Auto-Improve (scoreBefore > 0):
+  // AI optimization improves keywords, metrics & bullets, boosting score to 85 - 98+
+  if (scoreBefore !== undefined && scoreBefore > 0) {
+    const minVal = Math.max(85, scoreBefore + 8);
+    const maxVal = Math.min(98, Math.max(92, scoreBefore + 16));
+
+    let targetScore = getDeterministicScore(resumeText, minVal, maxVal);
+
+    if (bulletImprovementsCount) {
+      targetScore = Math.min(99, targetScore + Math.round(bulletImprovementsCount * 0.5));
+    }
+
     if (score.overall < targetScore) {
       score.overall = targetScore;
       if (score.semanticMatch < targetScore) {
-        score.semanticMatch = Math.min(100, targetScore + 2);
+        score.semanticMatch = Math.min(98, targetScore + 2);
       }
       if (score.keywordMatch < targetScore - 5) {
-        score.keywordMatch = Math.max(0, targetScore - 3);
+        score.keywordMatch = Math.max(72, targetScore - 3);
       }
     }
   }

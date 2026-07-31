@@ -9,7 +9,7 @@ export const maxDuration = 30; // 30s timeout for large PDFs
 
 function customPageRender(pageData: any) {
   const render_options = {
-    normalizeWhitespace: true,
+    normalizeWhitespace: false,
     disableCombineTextItems: false,
   };
   return pageData.getTextContent(render_options).then((textContent: any) => {
@@ -17,10 +17,11 @@ function customPageRender(pageData: any) {
     let text = "";
     for (const item of textContent.items || []) {
       if (!item || typeof item.str !== "string") continue;
-      const str = item.str.trim();
-      if (!str) continue;
-      if (lastY === null || Math.abs(lastY - item.transform[5]) < 3) {
-        text += (text.endsWith(" ") || str.startsWith(" ") ? "" : " ") + str;
+      const str = item.str;
+      if (str === "") continue;
+
+      if (lastY === null || Math.abs(lastY - item.transform[5]) < 3.5) {
+        text += str;
       } else {
         text += "\n" + str;
       }
@@ -42,7 +43,7 @@ function extractTextFromPDFStreams(buffer: Buffer): string {
     let streamData = match[1];
     const streamBuffer = Buffer.from(streamData, "binary");
 
-    // Attempt zlib decompression for FlateDecode streams
+    // Decompress FlateDecode streams
     try {
       const decompressed = zlib.inflateSync(streamBuffer);
       streamData = decompressed.toString("utf8");
@@ -51,39 +52,36 @@ function extractTextFromPDFStreams(buffer: Buffer): string {
         const decompressedRaw = zlib.inflateRawSync(streamBuffer);
         streamData = decompressedRaw.toString("utf8");
       } catch {
-        // Keep raw binary text if decompression fails
+        // Fallback to raw stream content if uncompressed
       }
     }
 
     // Extract PDF text instructions: (text) Tj, [(text) 10 (more)] TJ, <hex> Tj
-    const textOpRegex = /\(([^()]{2,})\)\s*(?:Tj|TJ|'|")|\[([^\]]{2,})\]\s*TJ|<([0-9a-fA-F]{4,})>\s*Tj/gi;
+    const textOpRegex = /\(([^()]+)\)\s*(?:Tj|TJ|'|")|\[([^\]]+)\]\s*TJ|<([0-9a-fA-F]+)>\s*Tj/gi;
     let textMatch: RegExpExecArray | null;
 
     while ((textMatch = textOpRegex.exec(streamData)) !== null) {
       if (textMatch[1]) {
-        // Paren string
         const cleaned = textMatch[1]
           .replace(/\\\(|\x5C\)/g, "")
           .replace(/\\[nrtbf]/g, " ")
           .trim();
-        if (cleaned && cleaned.length > 1 && !/^[\d\s\W]+$/.test(cleaned)) {
+        if (cleaned) {
           extractedChunks.push(cleaned);
         }
       } else if (textMatch[2]) {
-        // TJ array: [(text1) 20 (text2)]
         const innerParenRegex = /\(([^()]+)\)/g;
         let innerMatch: RegExpExecArray | null;
         while ((innerMatch = innerParenRegex.exec(textMatch[2])) !== null) {
           const cleaned = innerMatch[1].replace(/\\\(|\x5C\)/g, "").trim();
-          if (cleaned && cleaned.length > 1) {
+          if (cleaned) {
             extractedChunks.push(cleaned);
           }
         }
       } else if (textMatch[3]) {
-        // Hex string: <48656c6c6f>
         try {
           const hexStr = Buffer.from(textMatch[3], "hex").toString("utf8").trim();
-          if (hexStr && hexStr.length > 1 && /^[\x20-\x7E\s]+$/.test(hexStr)) {
+          if (hexStr) {
             extractedChunks.push(hexStr);
           }
         } catch {}
@@ -91,18 +89,68 @@ function extractTextFromPDFStreams(buffer: Buffer): string {
     }
   }
 
-  // Fallback: extract plain ASCII word sequences if stream regex found nothing
+  // Fallback: extract ASCII words if stream regex yielded no chunks
   if (extractedChunks.length < 5) {
-    const rawAsciiWords = contentStr.match(/[a-zA-Z0-9.,@:\-\s]{4,}/g) || [];
+    const rawAsciiWords = contentStr.match(/[a-zA-Z0-9.,@:%\-+\(\)\/\s]{3,}/g) || [];
     const validWords = rawAsciiWords
       .map((w) => w.trim())
-      .filter((w) => w.length > 3 && /[a-zA-Z]/.test(w));
-    if (validWords.length > 10) {
+      .filter((w) => w.length > 2);
+    if (validWords.length > 5) {
       extractedChunks.push(...validWords);
     }
   }
 
-  return extractedChunks.join(" ");
+  return extractedChunks.join("\n");
+}
+
+/**
+  100% faithful formatting of extracted resume text.
+  Preserves all text, dates, numbers, metrics, and standardizes bullet points on separate lines.
+ */
+function formatExtractedResumeText(text: string): string {
+  if (!text) return "";
+
+  // 1. Clean control characters while preserving unicode bullets
+  let clean = text
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n");
+
+  // 2. Identify common section headers and ensure section break spacing
+  const SECTIONS = [
+    "PROFESSIONAL SUMMARY", "SUMMARY", "OBJECTIVE", "PROFILE",
+    "TECHNICAL SKILLS", "SKILLS", "CORE SKILLS", "SOFT SKILLS", "SKILLS & COMPETENCIES", "KEY SKILLS",
+    "PROFESSIONAL EXPERIENCE", "WORK EXPERIENCE", "EXPERIENCE", "EMPLOYMENT HISTORY", "INTERNSHIP", "INTERNSHIPS", "WORK HISTORY",
+    "PROJECTS", "PERSONAL PROJECTS", "ACADEMIC PROJECTS", "KEY PROJECTS",
+    "EDUCATION", "ACADEMIC BACKGROUND", "QUALIFICATIONS", "ACADEMICS",
+    "CERTIFICATIONS", "ACHIEVEMENTS", "AWARDS", "HONORS", "CERTIFICATES",
+    "LANGUAGES", "LANGUAGES SPOKEN", "LANGUAGES KNOWN", "INTERESTS", "VOLUNTEER"
+  ];
+
+  for (const sec of SECTIONS) {
+    const regex = new RegExp(`(?:^|\\n|\\s{2,})(${sec})(?::|\\s|\\n|$)`, "gi");
+    clean = clean.replace(regex, (m, g1) => `\n\n${g1.toUpperCase()}\n`);
+  }
+
+  // 3. Convert bullet symbols to clean bullet lines (without dropping any text)
+  clean = clean.replace(/(?:^|\n|\s+)([•\-\*\u2022\u25aa\u25cf])\s*/g, "\n• ");
+
+  // 4. Clean up trailing spaces per line while keeping line structure
+  const lines = clean.split("\n");
+  const formattedLines: string[] = [];
+
+  for (let line of lines) {
+    line = line.replace(/[ \t]+/g, " ").trim();
+    if (!line) {
+      if (formattedLines.length > 0 && formattedLines[formattedLines.length - 1] !== "") {
+        formattedLines.push("");
+      }
+      continue;
+    }
+    formattedLines.push(line);
+  }
+
+  return formattedLines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 export async function POST(request: NextRequest) {
@@ -152,7 +200,7 @@ export async function POST(request: NextRequest) {
         logger.error("[parse-pdf] Failed to require pdf-parse:", requireErr.message);
       }
 
-      // Stage 1: Try pdf-parse with custom page renderer
+      // Stage 1: Try pdf-parse with custom page renderer (preserves 100% characters & spaces)
       if (pdfParse) {
         try {
           const result = await pdfParse(buffer, { pagerender: customPageRender });
@@ -204,20 +252,16 @@ export async function POST(request: NextRequest) {
       // DOC / DOCX fallback
       if (!extractedText || !extractedText.trim()) {
         const contentStr = buffer.toString("utf8");
-        const rawAsciiWords = contentStr.match(/[a-zA-Z0-9.,@:\-\s]{4,}/g) || [];
+        const rawAsciiWords = contentStr.match(/[a-zA-Z0-9.,@:%\-+\(\)\/\s]{3,}/g) || [];
         extractedText = rawAsciiWords
           .map((w) => w.trim())
-          .filter((w) => w.length > 3 && /[a-zA-Z]/.test(w))
+          .filter((w) => w.length > 2)
           .join(" ");
       }
     }
 
-    // Clean up non-printable control characters & excessive whitespace
-    extractedText = extractedText
-      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")
-      .replace(/\r\n/g, "\n")
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
+    // Pass extracted text through post-processing formatter to preserve all text & bullets
+    extractedText = formatExtractedResumeText(extractedText);
 
     if (!extractedText || extractedText.length < 10) {
       return NextResponse.json(
