@@ -72,35 +72,37 @@ export async function GET(request: NextRequest) {
       )
     );
 
-    // 1. Fetch from Supabase DB across all potential user IDs using .or() query
+    // 1. Fetch from Supabase DB across all potential user IDs using .in() query & fallback loop
     let dbData: any[] = [];
     try {
-      const orCondition = userIds.map((uid) => `userId.eq.${uid}`).join(",");
       const { data, error } = await admin
         .from("Resume")
         .select("*")
-        .or(orCondition);
+        .in("userId", userIds);
 
       if (!error && Array.isArray(data)) {
         dbData = data;
-      } else if (error) {
-        logger.warn(`[history] DB .or query warning, retrying loop:`, error.message);
-        // Fallback: Loop individual ID queries if .or syntax fails
-        for (const uid of userIds) {
-          try {
-            const { data: singleData } = await admin
-              .from("Resume")
-              .select("*")
-              .eq("userId", uid);
-            if (Array.isArray(singleData)) {
-              for (const r of singleData) {
-                if (!dbData.some((d) => d.id === r.id)) dbData.push(r);
-              }
-            }
-          } catch (_e) {}
-        }
+      } else {
+        if (error) logger.warn(`[history] DB .in query warning:`, error.message);
       }
     } catch (_e) {}
+
+    // Always run fallback loop to ensure no matching user record is missed
+    for (const uid of userIds) {
+      try {
+        const { data: singleData } = await admin
+          .from("Resume")
+          .select("*")
+          .eq("userId", uid);
+        if (Array.isArray(singleData)) {
+          for (const r of singleData) {
+            if (!dbData.some((d) => d.id === r.id)) {
+              dbData.push(r);
+            }
+          }
+        }
+      } catch (_e) {}
+    }
 
     // JS-side filter: exclude system records only
     dbData = dbData.filter((r: any) => {
@@ -127,7 +129,7 @@ export async function GET(request: NextRequest) {
       if (!combined.some((d) => d.id === r.id)) combined.push(r);
     }
 
-    // 4. Sort by createdAt descending
+    // 4. Sort by createdAt descending (newest optimizations after July 27 appear at top)
     combined.sort(
       (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     );
