@@ -95,11 +95,19 @@ export async function GET(request: NextRequest) {
       } catch (_e) {}
     }
 
-    allResumes.sort(
+    // Filter to ONLY include normal/manual builder resumes (empty jobDescription)
+    const builderResumes = allResumes.filter(
+      (r: any) =>
+        (!r.jobDescription || r.jobDescription.trim() === "") &&
+        r.jobTitle !== "SUPPORT_TICKET" &&
+        r.jobTitle !== "USER_FEEDBACK"
+    );
+
+    builderResumes.sort(
       (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     );
 
-    return NextResponse.json(allResumes);
+    return NextResponse.json(builderResumes);
   } catch (error: any) {
     logger.error("[api/resumes] GET unhandled error:", error.message);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

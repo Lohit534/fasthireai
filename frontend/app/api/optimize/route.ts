@@ -1,21 +1,21 @@
-/**
- * POST /api/optimize
- *
- * Core resume optimization pipeline.
- * Uses Supabase JS client (HTTPS/REST) for all DB operations — NO direct Postgres.
- * Works on Vercel without any Supabase IPv4 add-on.
- */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import fs from "fs";
-import path from "path";
-import { scoreResume } from "@/lib/ats/scorer";
+import { logger } from "@/lib/logger";
 import { buildOptimizationPrompt } from "@/lib/ai/prompts";
 import { callAI } from "@/lib/ai/router";
-import { MIN_RESUME_CHARS, MIN_JD_CHARS, FREE_CREDITS_PER_MONTH, isOwnerEmail } from "@/types";
-import { logger } from "@/lib/logger";
+import { scoreResume } from "@/lib/ats/scorer";
 import { generateUUID } from "@/lib/utils";
+import { isOwnerEmail } from "@/types";
+import fs from "fs";
+import path from "path";
+
+export const runtime = "nodejs";
+export const maxDuration = 60; // 60s timeout for AI optimization
+
+const MIN_RESUME_CHARS = 100;
+const MIN_JD_CHARS = 50;
+const FREE_CREDITS_PER_MONTH = 1;
 
 export async function POST(request: NextRequest) {
   try {
@@ -77,7 +77,6 @@ export async function POST(request: NextRequest) {
           activeUserId = existingUser.id;
           logger.info(`[optimize] Found existing User record for email ${user.email} with ID ${existingUser.id}. Reusing this ID.`);
           
-          // Auto-heal: sync real signup time from Auth to public.User table to fix early adopter ranks (e.g. user 3)
           if (user.created_at) {
             const dbTime = existingUser.createdAt ? new Date(existingUser.createdAt).toISOString() : null;
             const authTime = new Date(user.created_at).toISOString();
@@ -90,7 +89,6 @@ export async function POST(request: NextRequest) {
             }
           }
         } else {
-          // If the user doesn't exist, we insert a new record using their actual signup time
           const signupTime = user.created_at ? new Date(user.created_at).toISOString() : now.toISOString();
           logger.info(`[optimize] Creating new User record for email ${user.email} with ID ${user.id} and signup time ${signupTime}`);
           const { error: insertUserErr } = await admin
@@ -101,8 +99,8 @@ export async function POST(request: NextRequest) {
               name: user.user_metadata?.full_name || null,
               createdAt: signupTime,
             });
-          if (insertUserErr) {
-            logger.error("[optimize] Failed to insert new User record:", insertUserErr.message);
+          if (!insertUserErr) {
+            activeUserId = user.id;
           }
         }
     } catch (e: any) {
@@ -114,57 +112,39 @@ export async function POST(request: NextRequest) {
     let creditId: string | null = null;
 
     if (!isOwner) {
-      // 4. Fetch or create Credit row
-      let { data: creditRow } = await admin
+      const { data: earlyUsers } = await admin
+        .from("User")
+        .select("id")
+        .order("createdAt", { ascending: true })
+        .limit(50);
+      
+      const earlyUserIds = (earlyUsers || []).map((u: any) => u.id);
+      const isFirst50 = earlyUserIds.includes(activeUserId) || earlyUserIds.includes(user.id);
+
+      const { data: existingCredit, error: creditFetchErr } = await admin
         .from("Credit")
         .select("*")
         .eq("userId", activeUserId)
         .maybeSingle();
 
-      // Check if user is in the first 50 users (sorted by createdAt)
-      let isFirst50 = false;
-      try {
-        const { data: first50Users } = await admin
-          .from("User")
-          .select("id")
-          .order("createdAt", { ascending: true })
-          .limit(50);
+      let creditRow = existingCredit;
 
-        const { count: totalUsersCount } = await admin
-          .from("User")
-          .select("id", { count: "exact", head: true });
-
-        isFirst50 =
-          (totalUsersCount !== null && totalUsersCount <= 50) ||
-          (first50Users?.some((u: any) => u.id === activeUserId || u.id === user.id) || false);
-      } catch (e: any) {
-        logger.warn("[optimize] Failed checking first 50 users list:", e.message);
-      }
-
-      if (!creditRow) {
+      if (!creditRow && !creditFetchErr) {
+        const initialPaidCredits = isFirst50 ? 365 : 0;
+        logger.info(`[optimize] Initializing Credit record for user ${user.email} (isFirst50=${isFirst50}, initialPaid=${initialPaidCredits})`);
+        
         const { data: newCredit } = await admin
           .from("Credit")
           .insert({
             userId: activeUserId,
             freeUsed: 0,
-            // First 50 members get 365 credits = 1 full year of Premium Pro for free
-            paidCredits: isFirst50 ? 365 : 0,
-            billingCycle: isFirst50 ? "yearly" : "monthly",
+            paidCredits: initialPaidCredits,
             resetAt: now.toISOString(),
           })
           .select()
           .single();
-        creditRow = newCredit;
-      } else if (isFirst50 && creditRow.paidCredits < 365) {
-        // Auto-upgrade first 50 members to full year of Premium Pro (365 credits)
-        const { data: updatedCredit } = await admin
-          .from("Credit")
-          .update({ paidCredits: 365, billingCycle: "yearly" })
-          .eq("userId", activeUserId)
-          .select()
-          .single();
-        if (updatedCredit) {
-          creditRow = updatedCredit;
+        if (newCredit) {
+          creditRow = newCredit;
         }
       }
 
@@ -176,7 +156,6 @@ export async function POST(request: NextRequest) {
           now.getFullYear() !== resetAt.getFullYear();
 
         freeUsed = isNewMonth ? 0 : creditRow.freeUsed;
-        // First 50 users: restore 365 credits on new month if they dropped below
         paidCredits = isNewMonth ? (isFirst50 ? 365 : creditRow.paidCredits) : creditRow.paidCredits;
 
         if (isNewMonth) {
@@ -190,7 +169,6 @@ export async function POST(request: NextRequest) {
             .eq("userId", activeUserId);
         }
 
-        // 5. Enforce credit limits (non-owner only)
         const freeRemaining = Math.max(0, (isFirst50 ? 15 : FREE_CREDITS_PER_MONTH) - freeUsed);
         if (freeRemaining <= 0 && paidCredits <= 0) {
           return NextResponse.json(
@@ -203,7 +181,7 @@ export async function POST(request: NextRequest) {
 
     logger.info(`[optimize] User: ${user.email} | activeUserId=${activeUserId} | freeUsed=${freeUsed} | paid=${paidCredits} | owner=${isOwner}`);
 
-    // 6. Core AI optimization pipeline
+    // Core AI optimization pipeline
     const scoreBefore = await scoreResume(resumeText, jobDescription);
 
     const prompt = buildOptimizationPrompt(
@@ -214,19 +192,27 @@ export async function POST(request: NextRequest) {
       instructions || "",
       lengthOption || "Auto-detect"
     );
-    const aiResult = await callAI(prompt, resumeText);
 
+    const aiResult = await callAI(prompt, resumeText);
     const scoreAfter = await scoreResume(aiResult.resume, jobDescription, scoreBefore.overall);
 
-    // 7. Deduct credit (non-owner only)
+    // Deduct credits
     if (!isOwner) {
-      const freeRemaining = Math.max(0, FREE_CREDITS_PER_MONTH - freeUsed);
-      if (freeRemaining > 0) {
+      const { data: earlyUsers } = await admin
+        .from("User")
+        .select("id")
+        .order("createdAt", { ascending: true })
+        .limit(50);
+      const earlyUserIds = (earlyUsers || []).map((u: any) => u.id);
+      const isFirst50 = earlyUserIds.includes(activeUserId) || earlyUserIds.includes(user.id);
+      const freeLimit = isFirst50 ? 15 : FREE_CREDITS_PER_MONTH;
+
+      if (freeUsed < freeLimit) {
         await admin
           .from("Credit")
           .update({ freeUsed: freeUsed + 1 })
           .eq("userId", activeUserId);
-      } else {
+      } else if (paidCredits > 0) {
         await admin
           .from("Credit")
           .update({ paidCredits: paidCredits - 1 })
@@ -234,7 +220,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 8. Save resume record to Supabase with fallback to local JSON file
+    // Save resume record to Supabase DB using valid schema columns ONLY
     const generatedId = generateUUID();
     let resumeRecord: any = null;
 
@@ -258,7 +244,6 @@ export async function POST(request: NextRequest) {
           impactBefore: scoreBefore.impactBullets,
           impactAfter: scoreAfter.impactBullets,
           optimizedText: aiResult.resume,
-          optimizedJson: aiResult.resumeJSON ? JSON.stringify(aiResult.resumeJSON) : null,
           keywordsAdded: aiResult.keywordsAdded,
           createdAt: now.toISOString(),
         })
@@ -283,7 +268,6 @@ export async function POST(request: NextRequest) {
             impactBefore: scoreBefore.impactBullets,
             impactAfter: scoreAfter.impactBullets,
             optimizedText: aiResult.resume,
-            optimizedJson: aiResult.resumeJSON ? JSON.stringify(aiResult.resumeJSON) : null,
             keywordsAdded: aiResult.keywordsAdded,
             createdAt: now.toISOString(),
           })
@@ -325,35 +309,31 @@ export async function POST(request: NextRequest) {
         impactBefore: scoreBefore.impactBullets,
         impactAfter: scoreAfter.impactBullets,
         optimizedText: aiResult.resume,
-        optimizedJson: aiResult.resumeJSON ? JSON.stringify(aiResult.resumeJSON) : null,
         keywordsAdded: aiResult.keywordsAdded,
         createdAt: now.toISOString(),
       };
       localResumes.unshift(newRecord);
       fs.writeFileSync(FILE_PATH, JSON.stringify(localResumes, null, 2), "utf8");
-      if (!resumeRecord) {
-        resumeRecord = newRecord;
-      }
-    } catch (e: any) {
-      logger.warn("[optimize] Failed to write local resumes JSON backup:", e.message);
+    } catch (localErr: any) {
+      logger.warn("[optimize] Local JSON file fallback failed:", localErr.message);
     }
 
     return NextResponse.json({
-      resumeId: resumeRecord?.id ?? "offline-" + Date.now(),
-      scoreBefore: scoreBefore.overall,
-      scoreAfter: scoreAfter.overall,
+      resumeId: resumeRecord?.id || generatedId,
       optimizedText: aiResult.resume,
-      resumeJSON: aiResult.resumeJSON ?? null,
+      resumeJSON: aiResult.resumeJSON,
       keywordsAdded: aiResult.keywordsAdded,
       changesCount: aiResult.changesCount,
       summary: aiResult.summary,
       jobTitle: finalJobTitle,
       company: finalCompany,
+      scoreBefore: scoreBefore.overall,
+      scoreAfter: scoreAfter.overall,
     });
   } catch (error: any) {
-    logger.error("[optimize] Unhandled error:", error?.message, "\nStack:", error?.stack?.split("\n").slice(0, 4).join("\n"));
+    logger.error("[optimize] Unhandled error:", error?.message, "\nStack:", error?.stack);
     return NextResponse.json(
-      { error: "Internal server error during resume optimization." },
+      { error: error?.message || "An error occurred during resume optimization." },
       { status: 500 }
     );
   }

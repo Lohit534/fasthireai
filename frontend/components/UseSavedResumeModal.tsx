@@ -60,19 +60,7 @@ export function UseSavedResumeModal({
   };
 
   const handleSelect = (resume: SavedResume) => {
-    let textToInsert = resume.originalText || resume.optimizedText || "";
-
-    if (!textToInsert.trim() && (resume as any).optimizedJson) {
-      try {
-        const parsed = typeof (resume as any).optimizedJson === "string"
-          ? JSON.parse((resume as any).optimizedJson)
-          : (resume as any).optimizedJson;
-        if (parsed) {
-          textToInsert = serializeResumeJSONToText(parsed);
-        }
-      } catch (_e) {}
-    }
-
+    const textToInsert = resume.originalText || resume.optimizedText || "";
     if (!textToInsert.trim()) {
       toast.error("Selected resume has no text content.");
       return;
