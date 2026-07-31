@@ -4,6 +4,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/logger";
 import { generateUUID } from "@/lib/utils";
 import { isOwnerEmail } from "@/types";
+import { serializeResumeJSONToText } from "@/lib/ai/router";
 
 // Helper to resolve active user record ID in public.User by authenticated email, creating it if missing
 async function getActiveUserId(user: any): Promise<string> {
@@ -53,21 +54,52 @@ export async function GET(request: NextRequest) {
     const activeUserId = await getActiveUserId(user);
     const admin = getAdminClient() as any;
 
-    const { data, error } = await admin
-      .from("Resume")
-      .select("*")
-      .eq("userId", activeUserId)
-      .neq("jobTitle", "SUPPORT_TICKET")
-      .order("createdAt", { ascending: false });
+    const userIds = Array.from(
+      new Set(
+        [
+          activeUserId,
+          user.id,
+          user.email,
+          user.email ? user.email.toLowerCase().trim() : null,
+        ].filter(Boolean)
+      )
+    );
 
-    if (error) {
-      logger.error("[api/resumes] GET fetch failed:", error.message);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    let allResumes: any[] = [];
+    for (const uid of userIds) {
+      try {
+        const { data, error } = await admin
+          .from("Resume")
+          .select("*")
+          .eq("userId", uid)
+          .order("createdAt", { ascending: false });
+
+        if (!error && Array.isArray(data)) {
+          for (const r of data) {
+            if (!allResumes.some((item) => item.id === r.id)) {
+              if (r.jobTitle !== "SUPPORT_TICKET" && r.jobTitle !== "USER_FEEDBACK") {
+                // Ensure text content is available
+                if (!r.originalText && !r.optimizedText && r.optimizedJson) {
+                  try {
+                    const parsedJson = JSON.parse(r.optimizedJson);
+                    r.optimizedText = serializeResumeJSONToText(parsedJson);
+                  } catch (_e) {}
+                }
+                allResumes.push(r);
+              }
+            }
+          }
+        } else if (error) {
+          logger.warn(`[api/resumes] GET fetch failed for uid=${uid}:`, error.message);
+        }
+      } catch (_e) {}
     }
 
-    // Filter to only include builder/manual resumes (empty jobDescription)
-    const builderResumes = (data || []).filter((r: any) => !r.jobDescription || r.jobDescription.trim() === "");
-    return NextResponse.json(builderResumes);
+    allResumes.sort(
+      (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
+
+    return NextResponse.json(allResumes);
   } catch (error: any) {
     logger.error("[api/resumes] GET unhandled error:", error.message);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -172,7 +204,6 @@ export async function PUT(request: NextRequest) {
     const activeUserId = await getActiveUserId(user);
     const admin = getAdminClient() as any;
 
-    // Check ownership
     const { data: existingResume, error: checkError } = await admin
       .from("Resume")
       .select("userId")
@@ -193,7 +224,6 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Perform update
     const updateData: any = {};
     if (body.optimizedText !== undefined) updateData.optimizedText = body.optimizedText;
     if (body.originalText !== undefined) updateData.originalText = body.originalText;
@@ -246,7 +276,6 @@ export async function DELETE(request: NextRequest) {
     const activeUserId = await getActiveUserId(user);
     const admin = getAdminClient() as any;
 
-    // Check ownership
     const { data: existingResume, error: checkError } = await admin
       .from("Resume")
       .select("userId")
@@ -267,7 +296,6 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Perform delete
     const { error } = await admin
       .from("Resume")
       .delete()

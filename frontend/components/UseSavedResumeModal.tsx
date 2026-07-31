@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2, Check, ArrowRight, FolderOpen, Sparkles } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { serializeResumeJSONToText } from "@/lib/ai/router";
 
 interface SavedResume {
   id: string;
@@ -59,7 +60,19 @@ export function UseSavedResumeModal({
   };
 
   const handleSelect = (resume: SavedResume) => {
-    const textToInsert = resume.originalText || resume.optimizedText || "";
+    let textToInsert = resume.originalText || resume.optimizedText || "";
+
+    if (!textToInsert.trim() && (resume as any).optimizedJson) {
+      try {
+        const parsed = typeof (resume as any).optimizedJson === "string"
+          ? JSON.parse((resume as any).optimizedJson)
+          : (resume as any).optimizedJson;
+        if (parsed) {
+          textToInsert = serializeResumeJSONToText(parsed);
+        }
+      } catch (_e) {}
+    }
+
     if (!textToInsert.trim()) {
       toast.error("Selected resume has no text content.");
       return;

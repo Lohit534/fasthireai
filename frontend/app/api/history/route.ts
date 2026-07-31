@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     const admin = getAdminClient() as any;
 
-    // Resolve User table ID by email (handles auth.id != User.id mismatch)
+    // Resolve User table ID by email
     let activeUserId = user.id;
     try {
       if (user.email) {
@@ -64,8 +64,7 @@ export async function GET(request: NextRequest) {
         const { data, error } = await admin
           .from("Resume")
           .select("*")
-          .eq("userId", uid)
-          .order("createdAt", { ascending: false });
+          .eq("userId", uid);
 
         if (!error && Array.isArray(data)) {
           for (const r of data) {
@@ -82,7 +81,6 @@ export async function GET(request: NextRequest) {
     // JS-side filter: exclude system records only
     dbData = dbData.filter((r: any) => {
       if (r.jobTitle && SYSTEM_TITLES.includes(r.jobTitle)) return false;
-      // Accept records that have optimizedText, originalText, or jobDescription
       const hasContent =
         (r.optimizedText && r.optimizedText.trim().length > 0) ||
         (r.originalText && r.originalText.trim().length > 0) ||
@@ -90,7 +88,7 @@ export async function GET(request: NextRequest) {
       return hasContent;
     });
 
-    // 2. Fetch from local JSON fallback (local dev only)
+    // 2. Fetch from local JSON fallback (local dev fallback)
     let localData: any[] = [];
     try {
       if (fs.existsSync(FILE_PATH)) {
@@ -116,52 +114,11 @@ export async function GET(request: NextRequest) {
       (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     );
 
-    // 5. Strictly calculate retention period based on user plan:
-    // - Free tier: 1 month retention (30 days)
-    // - Pro / Premium tier: 2 months retention (60 days)
-    // - Pro Max tier / Owner: 4 months retention (120 days)
-    let retentionMonths = 1;
-    const isOwner = isOwnerEmail(user.email);
-
-    if (isOwner) {
-      retentionMonths = 4;
-    } else {
-      try {
-        const { data: creditRow } = await admin
-          .from("Credit")
-          .select("paidCredits, billingCycle")
-          .eq("userId", activeUserId)
-          .maybeSingle();
-
-        const paid = creditRow?.paidCredits ?? 0;
-        if (paid >= 900000) {
-          retentionMonths = 4;
-        } else if (paid > 0) {
-          retentionMonths = 2;
-        } else {
-          retentionMonths = 1;
-        }
-      } catch (_e) {
-        retentionMonths = 1;
-      }
-    }
-
-    let filtered = combined;
-    if (!isOwner) {
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - retentionMonths * 30);
-      filtered = combined.filter((r) => {
-        if (!r.createdAt) return true;
-        const d = new Date(r.createdAt);
-        return isNaN(d.getTime()) || d >= cutoff;
-      });
-    }
-
     logger.info(
-      `[history] Returning ${filtered.length} records for user ${user.email} (from ${combined.length} total)`
+      `[history] Returning ${combined.length} history records for user ${user.email}`
     );
 
-    return NextResponse.json(filtered);
+    return NextResponse.json(combined);
   } catch (error: any) {
     logger.error("[history] GET Unhandled error:", error?.message);
     return NextResponse.json([]);
