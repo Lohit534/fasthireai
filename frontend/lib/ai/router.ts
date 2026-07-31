@@ -101,10 +101,12 @@ export function serializeResumeJSONToText(json: ResumeJSON): string {
     lines.push("");
   }
 
-  // Languages — each on its own line so the PDF parser picks up each one
+  // Languages — each formatted as a bullet point item
   if (json.languages?.length) {
     lines.push("LANGUAGES");
-    lines.push(json.languages.join(", "));
+    json.languages.forEach((lang: string) => {
+      lines.push(`• ${lang}`);
+    });
     lines.push("");
   }
 

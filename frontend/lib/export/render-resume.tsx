@@ -469,7 +469,12 @@ export const ResumePDFFromJSON: React.FC<ResumePDFFromJSONProps> = ({ data }) =>
         {data.languages && data.languages.length > 0 && (
           <>
             <SectionHeader title="Languages" />
-            <Text style={S.langText}>{data.languages.join("   |   ")}</Text>
+            {data.languages.map((lang, idx) => (
+              <View key={idx} style={S.bulletRow}>
+                <Text style={S.bulletDot}>•</Text>
+                <Text style={S.bulletText}>{lang}</Text>
+              </View>
+            ))}
           </>
         )}
 
