@@ -2,7 +2,7 @@
  * GET /api/history
  *
  * Fetches the resume optimization history for the authenticated user.
- * Uses the Supabase admin client to bypass client RLS issues.
+ * Supports both Server Cookie Auth and Authorization Bearer Token header.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -22,7 +22,22 @@ const SYSTEM_TITLES = ["SUPPORT_TICKET", "USER_FEEDBACK"];
 export async function GET(request: NextRequest) {
   try {
     const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    let { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    // Fallback: If server cookie auth returned no user, check Authorization Bearer token header
+    if (!user) {
+      const authHeader = request.headers.get("Authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.replace("Bearer ", "").trim();
+        try {
+          const { data: tokenData } = await supabase.auth.getUser(token);
+          if (tokenData?.user) {
+            user = tokenData.user;
+            authError = null;
+          }
+        } catch (_e) {}
+      }
+    }
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -57,35 +72,40 @@ export async function GET(request: NextRequest) {
       )
     );
 
-    // 1. Fetch from Supabase DB across all potential user IDs
+    // 1. Fetch from Supabase DB across all potential user IDs using .or() query
     let dbData: any[] = [];
-    for (const uid of userIds) {
-      try {
-        const { data, error } = await admin
-          .from("Resume")
-          .select("*")
-          .eq("userId", uid);
+    try {
+      const orCondition = userIds.map((uid) => `userId.eq.${uid}`).join(",");
+      const { data, error } = await admin
+        .from("Resume")
+        .select("*")
+        .or(orCondition);
 
-        if (!error && Array.isArray(data)) {
-          for (const r of data) {
-            if (!dbData.some((d) => d.id === r.id)) {
-              dbData.push(r);
+      if (!error && Array.isArray(data)) {
+        dbData = data;
+      } else if (error) {
+        logger.warn(`[history] DB .or query warning, retrying loop:`, error.message);
+        // Fallback: Loop individual ID queries if .or syntax fails
+        for (const uid of userIds) {
+          try {
+            const { data: singleData } = await admin
+              .from("Resume")
+              .select("*")
+              .eq("userId", uid);
+            if (Array.isArray(singleData)) {
+              for (const r of singleData) {
+                if (!dbData.some((d) => d.id === r.id)) dbData.push(r);
+              }
             }
-          }
-        } else if (error) {
-          logger.warn(`[history] DB fetch error for uid=${uid}:`, error.message);
+          } catch (_e) {}
         }
-      } catch (_e) {}
-    }
+      }
+    } catch (_e) {}
 
     // JS-side filter: exclude system records only
     dbData = dbData.filter((r: any) => {
       if (r.jobTitle && SYSTEM_TITLES.includes(r.jobTitle)) return false;
-      const hasContent =
-        (r.optimizedText && r.optimizedText.trim().length > 0) ||
-        (r.originalText && r.originalText.trim().length > 0) ||
-        (r.jobDescription && r.jobDescription.trim().length > 0);
-      return hasContent;
+      return true; // Return all user optimization records
     });
 
     // 2. Fetch from local JSON fallback (local dev fallback)
@@ -96,9 +116,7 @@ export async function GET(request: NextRequest) {
         const allResumes = JSON.parse(fileContent || "[]");
         localData = allResumes.filter((r: any) =>
           userIds.includes(r.userId) &&
-          !SYSTEM_TITLES.includes(r.jobTitle) &&
-          ((r.optimizedText && r.optimizedText.trim() !== "") ||
-            (r.originalText && r.originalText.trim() !== ""))
+          !SYSTEM_TITLES.includes(r.jobTitle)
         );
       }
     } catch (_e) {}
@@ -128,7 +146,21 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    let { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (!user) {
+      const authHeader = request.headers.get("Authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.replace("Bearer ", "").trim();
+        try {
+          const { data: tokenData } = await supabase.auth.getUser(token);
+          if (tokenData?.user) {
+            user = tokenData.user;
+            authError = null;
+          }
+        } catch (_e) {}
+      }
+    }
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -181,7 +213,21 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    let { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (!user) {
+      const authHeader = request.headers.get("Authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.replace("Bearer ", "").trim();
+        try {
+          const { data: tokenData } = await supabase.auth.getUser(token);
+          if (tokenData?.user) {
+            user = tokenData.user;
+            authError = null;
+          }
+        } catch (_e) {}
+      }
+    }
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

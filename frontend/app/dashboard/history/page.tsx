@@ -744,19 +744,27 @@ export default function HistoryPage() {
 
         if (active) setAuthLoading(false);
 
-        // Fetch history via API endpoint to bypass client RLS issues
+        // Fetch history via API endpoint with Authorization Bearer token fallback
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData?.session?.access_token;
+        const headers: Record<string, string> = {};
+        if (accessToken) {
+          headers["Authorization"] = `Bearer ${accessToken}`;
+        }
+
         let dbData: any[] = [];
         try {
-          const historyRes = await fetch("/api/history");
+          const historyRes = await fetch("/api/history", { headers });
           const responseData = await historyRes.json().catch(() => []);
-          // API always returns 200 with array (or error object)
           if (Array.isArray(responseData)) {
             dbData = responseData;
-          } else if (historyRes.ok && !responseData.error) {
-            dbData = [];
+          } else if (historyRes.status === 401) {
+            toast.error("Session expired. Please sign in again.");
+            router.push("/auth/login");
+            return;
           }
         } catch (_fetchErr) {
-          // Network error — silent, show empty state
+          // Network error — silent
         }
 
         // Fetch plan/credits details
