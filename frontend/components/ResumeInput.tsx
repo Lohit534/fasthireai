@@ -32,8 +32,8 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
           setError("File too large. Maximum size is 5MB.");
           toast.error("File is too large (Max 5MB).");
         } else {
-          setError("Invalid file type. Only PDF and DOCX formats are supported.");
-          toast.error("Only PDF and DOCX files allowed.");
+          setError("Invalid file type. Only PDF, DOCX, and DOC formats are supported.");
+          toast.error("Only PDF, DOCX, and DOC files allowed.");
         }
         return;
       }
@@ -51,7 +51,7 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
           method: "POST",
           body: formData,
         }).catch((netErr) => {
-          throw new Error("Network issue during PDF upload. You can paste your resume text manually below.");
+          throw new Error("Network issue during document upload. You can paste your resume text manually below.");
         });
 
         if (!res.ok) {
@@ -84,6 +84,7 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
     accept: {
       "application/pdf": [".pdf"],
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+      "application/msword": [".doc"],
     },
     multiple: false,
   });
@@ -113,7 +114,7 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
           <p className="text-xs font-semibold text-slate-200">
             {isDragActive ? "Drop the resume here..." : "Drag & drop your resume file"}
           </p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Supports PDF or DOCX (Max 5MB)</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">Supports PDF, DOCX, or DOC (Max 5MB)</p>
         </div>
       )}
 
