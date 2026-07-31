@@ -1,10 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
 import mammoth from "mammoth";
+import zlib from "zlib";
 import { countWords } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 export const maxDuration = 30; // 30s timeout for large PDFs
+
+// Custom Y-coordinate page renderer for pdf-parse to preserve top-to-bottom reading order
+function customPageRender(pageData: any) {
+  return pageData.getTextContent({ normalizeWhitespace: true }).then((textContent: any) => {
+    const items = textContent.items || [];
+    // Sort items vertically top-to-bottom (Y descending), then horizontally left-to-right (X ascending)
+    items.sort((a: any, b: any) => {
+      const yA = a.transform ? a.transform[5] : 0;
+      const yB = b.transform ? b.transform[5] : 0;
+      const yDiff = yB - yA;
+      if (Math.abs(yDiff) > 4) return yDiff;
+      const xA = a.transform ? a.transform[4] : 0;
+      const xB = b.transform ? b.transform[4] : 0;
+      return xA - xB;
+    });
+
+    let lastY = -1;
+    let pageText = "";
+    for (const item of items) {
+      if (!item.str || !item.str.trim()) continue;
+      const currentY = item.transform ? Math.round(item.transform[5]) : 0;
+      if (lastY !== -1 && Math.abs(currentY - lastY) > 4) {
+        pageText += "\n";
+      } else if (pageText.length > 0 && !pageText.endsWith("\n") && !pageText.endsWith(" ")) {
+        pageText += " ";
+      }
+      pageText += item.str;
+      lastY = currentY;
+    }
+    return pageText;
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,10 +62,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+    const MAX_SIZE = 10 * 1024 * 1024; // 10 MB limit
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
-        { error: "File exceeds maximum size limit of 5MB." },
+        { error: "File exceeds maximum size limit of 10MB." },
         { status: 400 }
       );
     }
@@ -44,28 +77,58 @@ export async function POST(request: NextRequest) {
     logger.info(`[parse-pdf] Extracting exact text from: ${file.name} (${file.size} bytes)`);
 
     if (fileType === "pdf") {
+      // Stage 1: Try custom page renderer with Y-coordinate sorting
       try {
         const pdfParse = require("pdf-parse");
-        const result = await pdfParse(buffer);
+        const result = await pdfParse(buffer, { pagerender: customPageRender });
         extractedText = result?.text || "";
-        logger.info(`[parse-pdf] Standard pdf-parse extracted ${extractedText.length} chars`);
+        logger.info(`[parse-pdf] Stage 1 (Y-render) extracted ${extractedText.length} chars`);
       } catch (pdfErr: any) {
-        logger.warn("[parse-pdf] Standard pdf-parse failed, trying fallback stream extraction:", pdfErr?.message);
+        logger.warn("[parse-pdf] Stage 1 failed:", pdfErr?.message);
       }
 
-      // Fallback stream extraction if pdf-parse failed or returned empty text
-      if (!extractedText || !extractedText.trim()) {
+      // Stage 2: Try standard pdf-parse default extraction
+      if (!extractedText || extractedText.trim().length < 50) {
+        try {
+          const pdfParse = require("pdf-parse");
+          const result = await pdfParse(buffer);
+          if (result?.text && result.text.trim().length > extractedText.trim().length) {
+            extractedText = result.text;
+            logger.info(`[parse-pdf] Stage 2 (Standard) extracted ${extractedText.length} chars`);
+          }
+        } catch (_e) {}
+      }
+
+      // Stage 3: FlateDecode stream decompressor for Canva/Figma PDFs
+      if (!extractedText || extractedText.trim().length < 50) {
         try {
           const contentStr = buffer.toString("binary");
-          const tjRegex = /\(([^()]{2,})\)\s*(?:Tj|TJ)/g;
-          const matches: string[] = [];
-          let m: RegExpExecArray | null;
-          while ((m = tjRegex.exec(contentStr)) !== null) {
-            const cleaned = m[1].replace(/\\\(|\x5C\)/g, "").trim();
-            if (cleaned) matches.push(cleaned);
+          const streamRegex = /stream[\r\n]+([\s\S]*?)[\r\n]+endstream/g;
+          let match: RegExpExecArray | null;
+          const streamParts: string[] = [];
+
+          while ((match = streamRegex.exec(contentStr)) !== null) {
+            try {
+              const decompressed = zlib.inflateSync(Buffer.from(match[1], "binary")).toString("latin1");
+              const tjMatches = decompressed.match(/\(([^()]{2,})\)\s*(?:Tj|TJ)/g);
+              if (tjMatches) {
+                tjMatches.forEach((tm) => {
+                  const cleaned = tm
+                    .replace(/\\\(|\x5C\)/g, "")
+                    .replace(/^\(/, "")
+                    .replace(/\)\s*(?:Tj|TJ)$/, "")
+                    .trim();
+                  if (cleaned.length > 1) streamParts.push(cleaned);
+                });
+              }
+            } catch (_e) {}
           }
-          if (matches.length > 0) {
-            extractedText = matches.join("\n");
+          if (streamParts.length > 0) {
+            const streamText = streamParts.join("\n");
+            if (streamText.length > extractedText.length) {
+              extractedText = streamText;
+              logger.info(`[parse-pdf] Stage 3 (Decompressor) extracted ${extractedText.length} chars`);
+            }
           }
         } catch (_e) {}
       }
@@ -79,7 +142,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Clean up carriage returns & null characters while preserving exact as-is text
+    // Clean up control characters while preserving exact text
     extractedText = extractedText
       .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")
       .replace(/\r\n/g, "\n")

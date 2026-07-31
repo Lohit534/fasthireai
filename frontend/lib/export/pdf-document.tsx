@@ -906,6 +906,12 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
                   {block.text}
                 </Text>
               );
+            case 'normal':
+              return (
+                <Text key={i} style={styles.summaryText}>
+                  {block.text}
+                </Text>
+              );
             case 'link':
               return (
                 <Link key={i} src={block.url} style={styles.link}>
