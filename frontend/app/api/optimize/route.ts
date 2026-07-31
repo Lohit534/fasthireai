@@ -19,9 +19,23 @@ import { generateUUID } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Verify auth session
+    // 1. Verify auth session (cookies or Bearer token header)
     const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    let { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (!user) {
+      const authHeader = request.headers.get("Authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.replace("Bearer ", "").trim();
+        try {
+          const { data: tokenData } = await supabase.auth.getUser(token);
+          if (tokenData?.user) {
+            user = tokenData.user;
+            authError = null;
+          }
+        } catch (_e) {}
+      }
+    }
 
     if (authError || !user) {
       logger.warn("[optimize] Unauthorized request");

@@ -164,9 +164,16 @@ export default function DashboardPage() {
     setShowCoverLetterAccordion(false);
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      const apiHeaders: Record<string, string> = { "Content-Type": "application/json" };
+      if (accessToken) {
+        apiHeaders["Authorization"] = `Bearer ${accessToken}`;
+      }
+
       const response = await fetch("/api/optimize", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: apiHeaders,
         body: JSON.stringify({ resumeText: targetResumeText, jobDescription, instructions, lengthOption }),
       });
 
@@ -181,7 +188,7 @@ export default function DashboardPage() {
 
       const beforeRes = await fetch("/api/score", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: apiHeaders,
         body: JSON.stringify({ resumeText: targetResumeText, jobDescription }),
       });
 
@@ -194,7 +201,7 @@ export default function DashboardPage() {
 
       const afterRes = await fetch("/api/score", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: apiHeaders,
         body: JSON.stringify({ resumeText: data.optimizedText, jobDescription, scoreBefore: beforeScoreVal }),
       });
 
