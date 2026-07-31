@@ -228,7 +228,7 @@ export async function POST(request: NextRequest) {
     const finalCompany = aiResult.detectedCompany || company || "General Application";
 
     try {
-      const { data, error: resumeInsertErr } = await admin
+      let { data, error: resumeInsertErr } = await admin
         .from("Resume")
         .insert({
           id: generatedId,
@@ -251,14 +251,42 @@ export async function POST(request: NextRequest) {
         .select()
         .single();
 
+      if (resumeInsertErr && activeUserId !== user.id) {
+        logger.warn(`[optimize] Primary insert with activeUserId=${activeUserId} failed: ${resumeInsertErr.message}. Retrying with auth user.id=${user.id}`);
+        const retry = await admin
+          .from("Resume")
+          .insert({
+            id: generatedId,
+            userId: user.id,
+            originalText: resumeText,
+            jobDescription: jobDescription,
+            jobTitle: finalJobTitle,
+            company: finalCompany,
+            scoreBefore: scoreBefore.overall,
+            scoreAfter: scoreAfter.overall,
+            keywordsBefore: scoreBefore.foundKeywords.length,
+            keywordsAfter: scoreAfter.foundKeywords.length,
+            impactBefore: scoreBefore.impactBullets,
+            impactAfter: scoreAfter.impactBullets,
+            optimizedText: aiResult.resume,
+            optimizedJson: aiResult.resumeJSON ? JSON.stringify(aiResult.resumeJSON) : null,
+            keywordsAdded: aiResult.keywordsAdded,
+            createdAt: now.toISOString(),
+          })
+          .select()
+          .single();
+        data = retry.data;
+        resumeInsertErr = retry.error;
+      }
+
       if (resumeInsertErr) {
-        logger.error("[optimize] Resume insert failed:", resumeInsertErr.message);
+        logger.error("[optimize] Resume DB insert failed on both IDs:", resumeInsertErr.message);
       } else {
         resumeRecord = data;
-        logger.info(`[optimize] Resume saved: id=${resumeRecord?.id}`);
+        logger.info(`[optimize] Resume saved successfully to DB: id=${resumeRecord?.id}`);
       }
     } catch (dbErr: any) {
-      logger.warn("[optimize] DB insert crashed, utilizing offline fallback:", dbErr.message);
+      logger.error("[optimize] DB insert exception:", dbErr.message);
     }
 
     // Write to local JSON file as backup/fallback
