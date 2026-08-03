@@ -25,7 +25,9 @@ import {
   TrendingUp,
   Settings,
   Users,
-  ShieldCheck
+  ShieldCheck,
+  Film,
+  Play,
 } from "lucide-react";
 import { CreditInfo } from "@/types";
 import { toast } from "react-hot-toast";
@@ -36,6 +38,7 @@ import FeedbackBanner from "@/components/FeedbackBanner";
 
 import { Gift } from "lucide-react";
 import { ReferralModal } from "@/components/ReferralModal";
+import { DemoVideoModal } from "@/components/DemoVideoModal";
 
 interface NavbarProps {
   refreshKey?: number;
@@ -49,7 +52,14 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isReferralOpen, setIsReferralOpen] = useState(false);
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOpenDemo = () => setIsDemoModalOpen(true);
+    window.addEventListener("open-demo-video", handleOpenDemo);
+    return () => window.removeEventListener("open-demo-video", handleOpenDemo);
+  }, []);
 
   // Sync auth state
   useEffect(() => {
@@ -324,6 +334,16 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                         <button
                           onClick={() => {
                             setIsDropdownOpen(false);
+                            setIsDemoModalOpen(true);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-violet-300 hover:text-white hover:bg-violet-500/10 transition-colors text-left cursor-pointer"
+                        >
+                          <Film className="h-4 w-4 text-violet-400" />
+                          Watch Product Demo 🎬
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsDropdownOpen(false);
                             window.dispatchEvent(new CustomEvent("open-support-chatbot", { detail: { mode: "ai" } }));
                           }}
                           className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left cursor-pointer"
@@ -369,6 +389,13 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
               </>
             ) : (
               <div className="flex items-center gap-3 select-none">
+                <button
+                  onClick={() => setIsDemoModalOpen(true)}
+                  className="text-xs font-bold text-slate-300 hover:text-white transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-600/15 border border-violet-500/30 hover:bg-violet-600/25"
+                >
+                  <Film className="h-3.5 w-3.5 text-violet-400" />
+                  <span>See Demo 🎬</span>
+                </button>
                 <Link href="/dashboard/pricing" className="text-xs font-bold text-slate-400 hover:text-white transition-colors">
                   Pricing
                 </Link>
@@ -391,6 +418,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
       {user && !((credits?.paidCredits ?? 0) > 900000 || credits?.isOwner) && <AdminChat />}
       <FeedbackToast isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} userEmail={user?.email} />
       <ReferralModal isOpen={isReferralOpen} onClose={() => setIsReferralOpen(false)} />
+      <DemoVideoModal isOpen={isDemoModalOpen} onClose={() => setIsDemoModalOpen(false)} />
     </>
   );
 }

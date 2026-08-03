@@ -13,10 +13,13 @@ import {
   CheckCircle2,
   Sparkles,
   Download,
+  Play,
+  Film,
 } from "lucide-react";
 import ScrollFadeIn from "@/components/ScrollFadeIn";
 import CircleGauge from "@/components/CircleGauge";
 import { supabase } from "@/lib/supabase/client";
+import { DemoVideoModal } from "@/components/DemoVideoModal";
 
 /* ── Animated number counter ─────────────────────────────── */
 function AnimatedCounter({
@@ -58,6 +61,7 @@ function AnimatedCounter({
 
 export default function LandingPage() {
   const router = useRouter();
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const { setResumeText, setJobDescription } = useResumeStore();
   const [barReady, setBarReady] = useState(false);
 
@@ -182,8 +186,15 @@ Requirements:
                   </button>
                 </Link>
                 <button
+                  onClick={() => setIsDemoModalOpen(true)}
+                  className="btn-secondary-glass px-7 py-3.5 text-sm font-semibold rounded-lg flex items-center gap-2 border border-violet-500/30 text-white bg-violet-600/10 hover:bg-violet-600/20 transition-all shadow-md"
+                >
+                  <Play className="h-4 w-4 text-violet-400 fill-violet-400" />
+                  <span>Watch Demo 🎬</span>
+                </button>
+                <button
                   onClick={handleTrySample}
-                  className="btn-secondary-glass px-7 py-3.5 text-sm font-semibold rounded-lg flex items-center gap-1.5"
+                  className="btn-secondary-glass px-5 py-3.5 text-sm font-semibold rounded-lg flex items-center gap-1.5 text-slate-300"
                 >
                   Try Sample Resume →
                 </button>
@@ -401,15 +412,17 @@ Requirements:
               </button>
             </Link>
             <button
-              onClick={handleTrySample}
-              className="btn-secondary-glass px-8 py-3.5 text-sm font-semibold rounded-lg"
+              onClick={() => setIsDemoModalOpen(true)}
+              className="btn-secondary-glass px-8 py-3.5 text-sm font-semibold rounded-lg flex items-center gap-2 hover:bg-white/10 transition-all"
             >
-              See a Demo
+              <Play className="h-4 w-4 text-violet-400 fill-violet-400" />
+              <span>See a Demo</span>
             </button>
           </div>
         </div>
       </ScrollFadeIn>
 
+      <DemoVideoModal isOpen={isDemoModalOpen} onClose={() => setIsDemoModalOpen(false)} />
     </div>
   );
 }

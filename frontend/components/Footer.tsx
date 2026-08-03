@@ -44,6 +44,14 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("open-demo-video"))}
+                  className="text-[11px] text-violet-400 hover:text-violet-300 font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  Watch Demo Video 🎬
+                </button>
+              </li>
             </ul>
           </div>
 
