@@ -17,6 +17,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("sample") !== "true") {
+      localStorage.removeItem("fastHire_pendingSample");
+      localStorage.removeItem("fastHire_sampleResume");
+      localStorage.removeItem("fastHire_sampleJD");
+    }
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);

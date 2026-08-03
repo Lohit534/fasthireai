@@ -86,7 +86,7 @@ export default function DashboardPage() {
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Check if sample data was requested from landing page before login/signup
+    // Check if sample data was explicitly requested from landing page via "Try Sample Resume" button
     const isPendingSample = localStorage.getItem("fastHire_pendingSample");
     const sampleResume = localStorage.getItem("fastHire_sampleResume");
     const sampleJD = localStorage.getItem("fastHire_sampleJD");
@@ -94,11 +94,15 @@ export default function DashboardPage() {
     if (isPendingSample === "true" && sampleResume && sampleJD) {
       setResumeText(sampleResume);
       setJobDescription(sampleJD);
-      localStorage.removeItem("fastHire_pendingSample");
     } else {
-      // Refreshing the browser page clears temporary workspace inputs
+      // Normal login or refresh: start clean without sample data
       resetStore();
     }
+
+    // Always clean up sample keys immediately after checking so future logins start fresh
+    localStorage.removeItem("fastHire_pendingSample");
+    localStorage.removeItem("fastHire_sampleResume");
+    localStorage.removeItem("fastHire_sampleJD");
   }, [resetStore, setResumeText, setJobDescription]);
 
   useEffect(() => {

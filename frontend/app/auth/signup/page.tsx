@@ -22,6 +22,14 @@ function SignupFormContent() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  React.useEffect(() => {
+    if (searchParams.get("sample") !== "true") {
+      localStorage.removeItem("fastHire_pendingSample");
+      localStorage.removeItem("fastHire_sampleResume");
+      localStorage.removeItem("fastHire_sampleJD");
+    }
+  }, [searchParams]);
+
   // Check password against HaveIBeenPwned using k-anonymity (password never sent — only first 5 chars of SHA-1 hash)
   const checkLeakedPassword = async (pwd: string): Promise<boolean> => {
     try {

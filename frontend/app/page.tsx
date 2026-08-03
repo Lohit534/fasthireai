@@ -66,6 +66,11 @@ export default function LandingPage() {
   const [barReady, setBarReady] = useState(false);
 
   useEffect(() => {
+    // Clear any leftover pending sample keys when arriving on landing page
+    localStorage.removeItem("fastHire_pendingSample");
+    localStorage.removeItem("fastHire_sampleResume");
+    localStorage.removeItem("fastHire_sampleJD");
+
     async function checkLoggedIn() {
       try {
         const { data } = await supabase.auth.getUser();
