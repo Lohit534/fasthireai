@@ -186,15 +186,8 @@ Requirements:
                   </button>
                 </Link>
                 <button
-                  onClick={() => setIsDemoModalOpen(true)}
-                  className="btn-secondary-glass px-7 py-3.5 text-sm font-semibold rounded-lg flex items-center gap-2 border border-violet-500/30 text-white bg-violet-600/10 hover:bg-violet-600/20 transition-all shadow-md"
-                >
-                  <Play className="h-4 w-4 text-violet-400 fill-violet-400" />
-                  <span>Watch Demo 🎬</span>
-                </button>
-                <button
                   onClick={handleTrySample}
-                  className="btn-secondary-glass px-5 py-3.5 text-sm font-semibold rounded-lg flex items-center gap-1.5 text-slate-300"
+                  className="btn-secondary-glass px-7 py-3.5 text-sm font-semibold rounded-lg flex items-center gap-1.5"
                 >
                   Try Sample Resume →
                 </button>
