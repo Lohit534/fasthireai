@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import ResumeInput from "@/components/ResumeInput";
 import JobDescriptionInput from "@/components/JobDescriptionInput";
 import KeywordBadges from "@/components/KeywordBadges";
+import { generateSkillRoadmap } from "@/lib/roadmap-generator";
 import ResumeViewer from "@/components/ResumeViewer";
 import BulletImprover from "@/components/BulletImprover";
 import LoadingOverlay from "@/components/LoadingOverlay";
@@ -318,21 +319,27 @@ export default function DashboardPage() {
 
   const handleGenerateRoadmap = async (skill: string) => {
     const isOwner = userPlan === "owner" || (user?.email && isOwnerEmail(user.email));
+    
+    // Strict Plan Restriction: Only Pro, Pro Max, and Owner users can access Skill Roadmaps
+    if (userPlan === "free" && !isOwner) {
+      toast.error("Skills learning roadmaps are a Pro & Pro Max feature. Please upgrade your plan to unlock instant career roadmaps!");
+      setTimeout(() => {
+        router.push("/dashboard/pricing");
+      }, 1800);
+      return;
+    }
+
     if (!isOwner) {
       const monthKey = new Date().toISOString().slice(0, 7); // "YYYY-MM"
-      const limit = userPlan === "free" ? 0 : userPlan === "premium" ? 5 : 15;
+      const limit = userPlan === "premium" ? 5 : 15;
       const storageKey = `fastHire_roadmaps_count_${user?.id || 'anon'}_${monthKey}`;
       const currentCount = parseInt(localStorage.getItem(storageKey) || "0", 10);
       
       if (currentCount >= limit) {
-        if (userPlan === "free") {
-          toast.error("Skills learning roadmaps are a Pro/Pro Max feature. Please upgrade to continue.");
-        } else {
-          toast.error(`You have reached your limit of ${limit} roadmaps for the ${userPlan === "premium" ? "Premium Pro" : "Pro Max"} plan.`);
-        }
+        toast.error(`You have reached your monthly limit of ${limit} roadmaps for the ${userPlan === "premium" ? "Premium Pro" : "Pro Max"} plan.`);
         setTimeout(() => {
           router.push("/dashboard/pricing");
-        }, 2000);
+        }, 1800);
         return;
       }
       localStorage.setItem(storageKey, (currentCount + 1).toString());
@@ -342,19 +349,9 @@ export default function DashboardPage() {
     setRoadmapLoading(true);
     setRoadmapContent(null);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setRoadmapContent(
-        `### Learning Roadmap: ${skill}\n\n` +
-        `**1. Fundamental Concepts**\n` +
-        `Understand the core algorithms, design principles, and background mathematics of ${skill}. Recommended resources: documentation, standard text tutorials.\n\n` +
-        `**2. Practical Project Ideas**\n` +
-        `- *Beginner:* Build a simple script or utility demonstrating basic implementation.\n` +
-        `- *Intermediate:* Integrate ${skill} into a CRUD or dashboard application with basic styling.\n` +
-        `- *Advanced:* Deploy a performant cloud module using ${skill} with asynchronous tasks and automated testing.\n\n` +
-        `**3. Target Certifications & Courses**\n` +
-        `- Coursera / Udacity specializations focusing on ${skill}\n` +
-        `- Official certification tracks (e.g. AWS, Microsoft, or Google Developer Credentials)`
-      );
+      await new Promise(resolve => setTimeout(resolve, 800));
+      const content = generateSkillRoadmap(skill);
+      setRoadmapContent(content);
     } catch (e) {
       toast.error("Failed to generate learning roadmap.");
     } finally {

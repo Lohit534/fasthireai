@@ -7,8 +7,9 @@ import { useResumeStore } from "@/store/useResumeStore";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ResumeRecord, CreditInfo } from "@/types";
+import { ResumeRecord, CreditInfo, isOwnerEmail } from "@/types";
 import { logger } from "@/lib/logger";
+import { generateSkillRoadmap } from "@/lib/roadmap-generator";
 import { saveAs } from "file-saver";
 import {
   Loader2,
@@ -50,6 +51,7 @@ interface DetailViewProps {
 
 /* ─── Detail view (Image 2 mockup styled) ─────────────── */
 function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [docxLoading, setDocxLoading] = useState(false);
@@ -112,24 +114,22 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
   };
 
   const handleGenerateRoadmap = async (skill: string) => {
+    // Strict Plan Restriction: Only Pro, Pro Max, and Owner users can access Skill Roadmaps
+    if (userPlan === "free") {
+      toast.error("Skills learning roadmaps are a Pro & Pro Max feature. Please upgrade your plan to unlock instant career roadmaps!");
+      setTimeout(() => {
+        router.push("/dashboard/pricing");
+      }, 1800);
+      return;
+    }
+
     setSelectedRoadmapSkill(skill);
     setRoadmapLoading(true);
     setRoadmapContent(null);
     try {
-      // Simulate/call Gemini to build a roadmap for the selected skill
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setRoadmapContent(
-        `### Learning Roadmap: ${skill}\n\n` +
-        `**1. Fundamental Concepts**\n` +
-        `Understand the core algorithms, design principles, and background mathematics of ${skill}. Recommended resources: documentation, standard text tutorials.\n\n` +
-        `**2. Practical Project Ideas**\n` +
-        `- *Beginner:* Build a simple script or utility demonstrating basic implementation.\n` +
-        `- *Intermediate:* Integrate ${skill} into a CRUD or dashboard application with basic styling.\n` +
-        `- *Advanced:* Deploy a performant cloud module using ${skill} with asynchronous tasks and automated testing.\n\n` +
-        `**3. Target Certifications & Courses**\n` +
-        `- Coursera / Udacity specializations focusing on ${skill}\n` +
-        `- Official certification tracks (e.g. AWS, Microsoft, or Google Developer Credentials)`
-      );
+      await new Promise(resolve => setTimeout(resolve, 800));
+      const content = generateSkillRoadmap(skill);
+      setRoadmapContent(content);
     } catch (e) {
       toast.error("Failed to generate learning roadmap.");
     } finally {
