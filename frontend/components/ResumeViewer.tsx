@@ -252,9 +252,9 @@ export default function ResumeViewer({
                 );
               case "skillLine":
                 return (
-                  <div key={idx} className="text-[10px] mb-1 leading-normal select-text font-serif">
-                    <span className="font-bold text-black">{block.label}: </span>
-                    <span className="text-slate-800">{renderHighlightedText(block.value)}</span>
+                  <div key={idx} className="flex text-[10.5px] mb-1.5 leading-normal select-text font-serif">
+                    <span className="font-bold text-black w-[190px] shrink-0">{block.label}:</span>
+                    <span className="text-slate-800 flex-1">{renderHighlightedText(block.value)}</span>
                   </div>
                 );
               case "project":
@@ -320,12 +320,15 @@ export default function ResumeViewer({
                     <span className="flex-1 text-slate-800 font-serif">{renderHighlightedText(block.text)}</span>
                   </div>
                 );
-              case "cert":
+              case "cert": {
+                const cleanCert = (block.text || "").replace(/^[•\-\*–\s\u2022]+/, "");
                 return (
-                  <div key={idx} className="text-[10px] text-slate-800 mb-0.5 leading-normal select-text font-serif">
-                    {renderHighlightedText(block.text)}
+                  <div key={idx} className="flex items-start text-[10px] mb-0.5 pl-3 leading-normal font-serif">
+                    <span className="w-3 shrink-0 select-none text-black font-serif">•</span>
+                    <span className="flex-1 text-slate-800 font-serif">{renderHighlightedText(cleanCert)}</span>
                   </div>
                 );
+              }
               case "link":
                 return (
                   <a key={idx} href={block.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-600 underline mb-0.5 block leading-normal select-text font-serif">

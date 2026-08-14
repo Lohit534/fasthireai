@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   skillLabel: {
     fontFamily: 'Times-Bold',
     fontSize: 9.5,
-    width: 140,
+    width: 170,
   },
   skillValue: {
     fontFamily: 'Times-Roman',
@@ -933,11 +933,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
             case 'bullet':
               return <BulletRow key={i} text={block.text} />;
             case 'cert':
-              return (
-                <Text key={i} style={styles.certItem}>
-                  {block.text}
-                </Text>
-              );
+              return <BulletRow key={i} text={(block.text || "").replace(/^[•\-\*–\s\u2022]+/, "")} />;
             case 'normal':
               return (
                 <Text key={i} style={styles.summaryText}>

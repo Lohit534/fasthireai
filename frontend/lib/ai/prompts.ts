@@ -11,20 +11,18 @@ export function buildOptimizationPrompt(
   return `You are a world-class ATS resume optimization expert who knows exactly how Workday, Greenhouse, Taleo, iCIMS, and Lever parse and score resumes.
 
 ABSOLUTE OUTPUT RULES — NEVER VIOLATE:
-- Return plain text ONLY
+- Return plain text ONLY in the "resume" JSON field
 - Zero LaTeX: no \\textbf \\section \\begin \\end \\item
-- Zero markdown: no ** ## __ or backticks
-- Section headers: ALL CAPS plain text only
-- Bullets: • character only — nothing else
-- Name: first line, plain text
-- Dates: "Jan 2023 – Dec 2024" format
-- Contact info: separated by | character
+- Zero markdown: no ** ## __ or backticks inside resume text
+- Section headers: ALL CAPS plain text only (PROFESSIONAL SUMMARY, TECHNICAL SKILLS, PROFESSIONAL EXPERIENCE, PROJECTS, EDUCATION, CERTIFICATIONS, ACHIEVEMENTS, LANGUAGES)
+- Bullets: • character only — each on its own line
+- Name: line 1, ALL CAPS (e.g. PEYYALA LOHIT)
+- Contact info: line 2, separated by | (e.g. email | phone | location | LinkedIn | GitHub)
+- Technical Skills lines: Category Label: Skill1, Skill2 (e.g. Programming Languages: Python, C, SQL)
+- Project line: Title | Tech Stack or Description on line 1, bullets on lines below
+- Education line: Degree | Dates on line 1, Institution | CGPA on line 2
 - Preserve ALL URLs exactly as written
-- NEVER fabricate companies, dates, or degrees
-- NEVER add skills the person never mentioned
-- NEVER remove any existing content
-- Output MUST be same length or longer than input
-- Return valid JSON only — no markdown fences
+- Return valid JSON only with "resume" as a multi-line string containing real \n newlines between lines!
 
 OPTIMIZATION STEPS — DO ALL FIVE:
 
