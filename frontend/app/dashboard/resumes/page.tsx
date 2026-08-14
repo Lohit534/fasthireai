@@ -799,11 +799,14 @@ export default function ResumesPage() {
     setActionLoading("improve-summary");
 
     try {
+      const targetRole = editorData.experience[0]?.title || editorData.name || "Professional";
       const response = await fetch("/api/improve-bullet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          bullet: editorData.summary,
+          bullet: editorData.summary || `Detail-oriented ${targetRole} seeking to leverage strong technical capabilities.`,
+          isSummary: true,
+          jobTitle: targetRole,
           jobDescription: "General Professional Alignment" 
         })
       });
@@ -1487,7 +1490,7 @@ export default function ResumesPage() {
                     )}
                   </div>
 
-                  {/* Accordion 3: Skills Details */}
+                  {/* Accordion 3: Technical Skills Details */}
                   <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
                     <button
                       onClick={() => toggleCollapsible("skills")}
@@ -1495,7 +1498,7 @@ export default function ResumesPage() {
                     >
                       <span className="flex items-center gap-2">
                         <Wrench className="h-4 w-4 text-violet-500" />
-                        Skills
+                        Technical Skills
                       </span>
                       {collapsibles.skills ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </button>
@@ -1545,7 +1548,107 @@ export default function ResumesPage() {
                     )}
                   </div>
 
-                  {/* Accordion 4: Projects Info */}
+                  {/* Accordion 4: Experience / Internship Cards */}
+                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => toggleCollapsible("experience")}
+                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Briefcase className="h-4 w-4 text-violet-500" />
+                        Experience / Internship
+                      </span>
+                      {collapsibles.experience ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
+
+                    {collapsibles.experience && (
+                      <div className="p-4 space-y-4 select-none">
+                        {editorData.experience.map((exp) => (
+                          <div key={exp.id} className="border border-white/5 bg-[#070814]/30 rounded-lg p-3 space-y-3 relative">
+                            <button
+                              onClick={() => removeExperienceItem(exp.id)}
+                              className="absolute top-2 right-2 text-slate-500 hover:text-red-400"
+                              title="Delete Item"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div className="space-y-1">
+                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Company</label>
+                                <Input
+                                  value={exp.company}
+                                  onChange={(e) => handleExpChange(exp.id, "company", e.target.value)}
+                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Title</label>
+                                <Input
+                                  value={exp.title}
+                                  onChange={(e) => handleExpChange(exp.id, "title", e.target.value)}
+                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-1 text-xs">
+                              <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Dates Active</label>
+                              <Input
+                                value={exp.date}
+                                onChange={(e) => handleExpChange(exp.id, "date", e.target.value)}
+                                className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                              />
+                            </div>
+
+                            {/* Bullet points mapping */}
+                            <div className="space-y-2">
+                              <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Description Bullets</label>
+                              {exp.bullets.map((bullet, idx) => (
+                                <div key={idx} className="flex gap-2 items-start">
+                                  <span className="text-slate-500 text-xs select-none mt-2">•</span>
+                                  <textarea
+                                    value={bullet}
+                                    onChange={(e) => handleExpBulletChange(exp.id, idx, e.target.value)}
+                                    className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs resize-none overflow-hidden"
+                                    placeholder="Add detail bullet..."
+                                    rows={1}
+                                    onInput={(e) => {
+                                      const target = e.target as HTMLTextAreaElement;
+                                      target.style.height = "auto";
+                                      target.style.height = `${target.scrollHeight}px`;
+                                    }}
+                                  />
+                                  <button
+                                    onClick={() => removeExpBullet(exp.id, idx)}
+                                    className="text-slate-600 hover:text-red-400 p-1 mt-1"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              ))}
+                              <Button
+                                type="button"
+                                onClick={() => addExpBullet(exp.id)}
+                                className="bg-transparent border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3"
+                              >
+                                + Add Bullet
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+
+                        <Button
+                          onClick={addExperienceItem}
+                          className="w-full bg-[#12132d]/40 border border-white/5 text-slate-300 hover:text-white h-8 text-[11px] font-bold rounded-lg"
+                        >
+                          + Add Experience
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Accordion 5: Projects Info */}
                   <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
                     <button
                       onClick={() => toggleCollapsible("projects")}
@@ -1658,106 +1761,6 @@ export default function ResumesPage() {
                     )}
                   </div>
 
-                  {/* Accordion 5: Experience Cards */}
-                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
-                    <button
-                      onClick={() => toggleCollapsible("experience")}
-                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Briefcase className="h-4 w-4 text-violet-500" />
-                        Experience
-                      </span>
-                      {collapsibles.experience ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </button>
-
-                    {collapsibles.experience && (
-                      <div className="p-4 space-y-4 select-none">
-                        {editorData.experience.map((exp) => (
-                          <div key={exp.id} className="border border-white/5 bg-[#070814]/30 rounded-lg p-3 space-y-3 relative">
-                            <button
-                              onClick={() => removeExperienceItem(exp.id)}
-                              className="absolute top-2 right-2 text-slate-500 hover:text-red-400"
-                              title="Delete Item"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-
-                            <div className="grid grid-cols-2 gap-3 text-xs">
-                              <div className="space-y-1">
-                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Company</label>
-                                <Input
-                                  value={exp.company}
-                                  onChange={(e) => handleExpChange(exp.id, "company", e.target.value)}
-                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Title</label>
-                                <Input
-                                  value={exp.title}
-                                  onChange={(e) => handleExpChange(exp.id, "title", e.target.value)}
-                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="space-y-1 text-xs">
-                              <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Dates Active</label>
-                              <Input
-                                value={exp.date}
-                                onChange={(e) => handleExpChange(exp.id, "date", e.target.value)}
-                                className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
-                              />
-                            </div>
-
-                            {/* Bullet points mapping */}
-                            <div className="space-y-2">
-                              <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Description Bullets</label>
-                              {exp.bullets.map((bullet, idx) => (
-                                <div key={idx} className="flex gap-2 items-start">
-                                  <span className="text-slate-500 text-xs select-none mt-2">•</span>
-                                  <textarea
-                                    value={bullet}
-                                    onChange={(e) => handleExpBulletChange(exp.id, idx, e.target.value)}
-                                    className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs resize-none overflow-hidden"
-                                    placeholder="Add detail bullet..."
-                                    rows={1}
-                                    onInput={(e) => {
-                                      const target = e.target as HTMLTextAreaElement;
-                                      target.style.height = "auto";
-                                      target.style.height = `${target.scrollHeight}px`;
-                                    }}
-                                  />
-                                  <button
-                                    onClick={() => removeExpBullet(exp.id, idx)}
-                                    className="text-slate-600 hover:text-red-400 p-1 mt-1"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </button>
-                                </div>
-                              ))}
-                              <Button
-                                type="button"
-                                onClick={() => addExpBullet(exp.id)}
-                                className="bg-transparent border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3"
-                              >
-                                + Add Bullet
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-
-                        <Button
-                          onClick={addExperienceItem}
-                          className="w-full bg-[#12132d]/40 border border-white/5 text-slate-300 hover:text-white h-8 text-[11px] font-bold rounded-lg"
-                        >
-                          + Add Experience
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
                   {/* Accordion 6: Education Details */}
                   <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
                     <button
@@ -1845,7 +1848,7 @@ export default function ResumesPage() {
                     )}
                   </div>
 
-                  {/* Accordion 7: Certifications */}
+                  {/* Accordion 7: Certifications / Achievements */}
                   <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
                     <button
                       onClick={() => toggleCollapsible("certifications")}
@@ -1853,7 +1856,7 @@ export default function ResumesPage() {
                     >
                       <span className="flex items-center gap-2">
                         <Award className="h-4 w-4 text-violet-500" />
-                        Certifications
+                        Certifications / Achievements
                       </span>
                       {collapsibles.certifications ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </button>
@@ -2049,17 +2052,45 @@ export default function ResumesPage() {
                       </div>
                     )}
 
-                    {/* Skills Section */}
+                    {/* Technical Skills Section */}
                     {editorData.skills.length > 0 && (
                       <div className="space-y-1">
                         <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5">
-                          Skills
+                          Technical Skills
                         </h2>
                         <div className="space-y-0.5">
                           {editorData.skills.map(group => (
                             <p key={group.id} className="leading-relaxed">
                               <span className="font-bold">{group.category}:</span> {group.list.join(", ")}
                             </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Experience Section */}
+                    {editorData.experience.length > 0 && (
+                      <div className="space-y-3">
+                        <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5">
+                          Experience / Internship
+                        </h2>
+                        <div className="space-y-2.5">
+                          {editorData.experience.map(exp => (
+                            <div key={exp.id} className="space-y-1">
+                              <div className="flex justify-between items-baseline font-bold">
+                                <span>{renderRichText(exp.company)} {exp.title ? `— ${exp.title}` : ""}</span>
+                                <span className="font-normal italic text-[10px]">{exp.date}</span>
+                              </div>
+                              {exp.bullets.length > 0 && (
+                                <ul className="list-disc pl-4 space-y-0.5">
+                                  {exp.bullets.filter(Boolean).map((bullet, idx) => (
+                                    <li key={idx} className="text-justify leading-relaxed">
+                                      {renderRichText(bullet)}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -2086,34 +2117,6 @@ export default function ResumesPage() {
                               {proj.bullets && proj.bullets.length > 0 && (
                                 <ul className="list-disc pl-4 space-y-0.5">
                                   {proj.bullets.filter(Boolean).map((bullet, idx) => (
-                                    <li key={idx} className="text-justify leading-relaxed">
-                                      {renderRichText(bullet)}
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Experience Section */}
-                    {editorData.experience.length > 0 && (
-                      <div className="space-y-3">
-                        <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5">
-                          Experience
-                        </h2>
-                        <div className="space-y-2.5">
-                          {editorData.experience.map(exp => (
-                            <div key={exp.id} className="space-y-1">
-                              <div className="flex justify-between items-baseline font-bold">
-                                <span>{renderRichText(exp.company)} {exp.title ? `— ${exp.title}` : ""}</span>
-                                <span className="font-normal italic text-[10px]">{exp.date}</span>
-                              </div>
-                              {exp.bullets.length > 0 && (
-                                <ul className="list-disc pl-4 space-y-0.5">
-                                  {exp.bullets.filter(Boolean).map((bullet, idx) => (
                                     <li key={idx} className="text-justify leading-relaxed">
                                       {renderRichText(bullet)}
                                     </li>

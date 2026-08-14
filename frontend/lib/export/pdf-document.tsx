@@ -344,16 +344,27 @@ export function stripMarkdownAsterisks(str: string): string {
 }
 
 function swapEducationAndSkillsIfNeeded(blocks: ParsedResumeBlock[]): ParsedResumeBlock[] {
-  const sectionGroups: { name: string; blocks: ParsedResumeBlock[] }[] = [];
-  let currentGroup: { name: string; blocks: ParsedResumeBlock[] } = { name: 'HEADER', blocks: [] };
+  const sectionGroups: { category: string; blocks: ParsedResumeBlock[] }[] = [];
+  let currentGroup: { category: string; blocks: ParsedResumeBlock[] } = { category: 'HEADER', blocks: [] };
+
+  const getCategory = (rawName: string): string => {
+    const name = rawName.toUpperCase().replace(/[^A-Z ]/g, '').trim();
+    if (['PROFESSIONAL SUMMARY', 'SUMMARY', 'OBJECTIVE', 'PROFILE'].includes(name)) return 'SUMMARY';
+    if (['EXPERIENCE', 'WORK EXPERIENCE', 'PROFESSIONAL EXPERIENCE', 'EMPLOYMENT HISTORY', 'INTERNSHIP', 'INTERNSHIPS', 'WORK HISTORY'].includes(name)) return 'EXPERIENCE';
+    if (['PROJECTS', 'PERSONAL PROJECTS', 'KEY PROJECTS', 'ACADEMIC PROJECTS'].includes(name)) return 'PROJECTS';
+    if (['TECHNICAL SKILLS', 'SKILLS', 'CORE SKILLS', 'SOFT SKILLS', 'SKILLS & COMPETENCIES', 'KEY SKILLS'].includes(name)) return 'SKILLS';
+    if (['EDUCATION', 'ACADEMIC BACKGROUND', 'QUALIFICATIONS', 'ACADEMICS'].includes(name)) return 'EDUCATION';
+    if (['CERTIFICATIONS', 'CERTIFICATIONS & ACHIEVEMENTS', 'ACHIEVEMENTS', 'AWARDS', 'HONORS', 'CERTIFICATES'].includes(name)) return 'CERTIFICATIONS';
+    if (['LANGUAGES', 'LANGUAGES SPOKEN', 'LANGUAGES KNOWN'].includes(name)) return 'LANGUAGES';
+    return name;
+  };
 
   for (const block of blocks) {
     if (block.type === 'section') {
       if (currentGroup.blocks.length > 0) {
         sectionGroups.push(currentGroup);
       }
-      const upperName = block.text.toUpperCase().replace(/[^A-Z ]/g, '').trim();
-      currentGroup = { name: upperName, blocks: [block] };
+      currentGroup = { category: getCategory(block.text), blocks: [block] };
     } else {
       currentGroup.blocks.push(block);
     }
@@ -362,17 +373,17 @@ function swapEducationAndSkillsIfNeeded(blocks: ParsedResumeBlock[]): ParsedResu
     sectionGroups.push(currentGroup);
   }
 
-  const isEdu = (name: string) => name === 'EDUCATION';
-  const isSkill = (name: string) => name === 'SKILLS' || name === 'TECHNICAL SKILLS' || name === 'CORE SKILLS';
+  // Strict section priority order:
+  // HEADER -> SUMMARY -> SKILLS -> EXPERIENCE -> PROJECTS -> EDUCATION -> CERTIFICATIONS -> LANGUAGES
+  const priorityOrder = ['HEADER', 'SUMMARY', 'SKILLS', 'EXPERIENCE', 'PROJECTS', 'EDUCATION', 'CERTIFICATIONS', 'LANGUAGES'];
 
-  const eduIdx = sectionGroups.findIndex(g => isEdu(g.name));
-  const skillIdx = sectionGroups.findIndex(g => isSkill(g.name));
-
-  if (eduIdx !== -1 && skillIdx !== -1 && eduIdx < skillIdx) {
-    const temp = sectionGroups[eduIdx];
-    sectionGroups[eduIdx] = sectionGroups[skillIdx];
-    sectionGroups[skillIdx] = temp;
-  }
+  sectionGroups.sort((a, b) => {
+    const idxA = priorityOrder.indexOf(a.category);
+    const idxB = priorityOrder.indexOf(b.category);
+    const posA = idxA !== -1 ? idxA : 99;
+    const posB = idxB !== -1 ? idxB : 99;
+    return posA - posB;
+  });
 
   return sectionGroups.flatMap(g => g.blocks);
 }

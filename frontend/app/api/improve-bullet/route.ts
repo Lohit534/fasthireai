@@ -21,28 +21,36 @@ export async function POST(request: NextRequest) {
 
     // 2. Parse Request Body
     const body = await request.json();
-    const { bullet, jobDescription } = body;
+    const { bullet, jobDescription, isSummary, type, jobTitle } = body;
 
     if (!bullet || typeof bullet !== "string" || !bullet.trim()) {
-      return NextResponse.json({ error: "Bullet text is required." }, { status: 400 });
+      return NextResponse.json({ error: "Input text is required." }, { status: 400 });
     }
 
     const jd = jobDescription || "";
+    const isSummaryRequest = Boolean(isSummary || type === "summary");
 
-    logger.info(`Improving bullet for user ${user.email}...`);
+    logger.info(`Improving ${isSummaryRequest ? "summary" : "bullet"} for user ${user.email}...`);
 
-    // 3. Fallback Mock Flow if Gemini key is missing
+    // 3. Fallback Flow if Gemini key is missing
     if (!apiKey) {
-      logger.warn("GEMINI_API_KEY missing. Using fallback rule-based bullet improver.");
+      logger.warn("GEMINI_API_KEY missing. Using fallback rule-based improver.");
       
+      if (isSummaryRequest) {
+        const cleaned = bullet.trim();
+        const improvedSummary = `Results-driven ${jobTitle || "Professional"} with proven expertise in developing scalable solutions and data-driven systems. Skilled in optimizing performance, technical problem-solving, and delivering high-impact projects. Dedicated to leveraging strong technical abilities to drive organizational growth. (${cleaned})`;
+        return NextResponse.json({
+          improvedBullet: improvedSummary,
+          actionVerbUsed: "Summary Optimization",
+          keywordsInjected: [],
+          explanation: "Enhanced professional summary structure and tone."
+        });
+      }
+
       const techTerms = extractTechTerms(jd).slice(0, 3);
       const injected = techTerms.length > 0 ? techTerms : ["targeted technologies"];
-      
-      // Propose realistic action verbs
       const fallbackActionVerbs = ["Spearheaded", "Optimized", "Engineered", "Devised", "Automated", "Accelerated"];
       const actionVerb = fallbackActionVerbs[Math.floor(Math.random() * fallbackActionVerbs.length)];
-      
-      // Propose realistic metrics
       const fallbackMetrics = ["yielding a [28]% efficiency increase", "reducing latency by [42]%", "saving over $[15]K in cloud overhead"];
       const metric = fallbackMetrics[Math.floor(Math.random() * fallbackMetrics.length)];
       
@@ -67,6 +75,48 @@ export async function POST(request: NextRequest) {
           maxOutputTokens: 1000,
         },
       });
+
+      if (isSummaryRequest) {
+        const prompt = `
+You are an expert technical resume writer. Your task is to rewrite and optimize a candidate's Professional Summary to make it highly engaging, impact-focused, concise (3-4 sentences), and ATS-aligned.
+
+Candidate Title / Domain: "${jobTitle || 'Professional'}"
+Current Summary Input: "${bullet}"
+Target Job Description: "${jd.slice(0, 3000)}"
+
+Instructions:
+1. Write a professional, high-impact 3-4 sentence summary paragraph.
+2. Highlight core technical competencies, key domain experience, and major strengths.
+3. Do NOT use first-person pronouns ("I", "my", "me").
+4. Keep all factual candidate details accurate and truthful.
+5. Do NOT format as a bullet point. Output a clean paragraph.
+
+Output MUST be a valid JSON object only (do NOT include markdown fences, leading/trailing text):
+{
+  "improvedBullet": "The complete rewritten 3-4 sentence professional summary paragraph.",
+  "actionVerbUsed": "Summary Optimization",
+  "keywordsInjected": ["key", "skills", "included"],
+  "explanation": "Enhanced professional summary impact, keywords, and flow."
+}
+`;
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text().trim();
+        let cleanedText = responseText;
+        if (cleanedText.startsWith("```")) {
+          cleanedText = cleanedText
+            .replace(/^```(?:json)?\r?\n?/i, "")
+            .replace(/\r?\n?```$/i, "")
+            .trim();
+        }
+        const parsed = JSON.parse(cleanedText);
+        const rawSummary = parsed.improvedBullet || bullet;
+        return NextResponse.json({
+          improvedBullet: stripMarkdownAsterisks(rawSummary),
+          actionVerbUsed: "Summary Optimization",
+          keywordsInjected: parsed.keywordsInjected || [],
+          explanation: parsed.explanation || "Optimized professional summary."
+        });
+      }
 
       const prompt = `
 You are an expert technical resume writer. Your task is to rewrite a single resume bullet point to make it highly optimized for applicant tracking systems (ATS), starting with a strong action verb, integrating relevant keywords from the job description, and including metrics or quantification.
@@ -111,7 +161,15 @@ Output MUST be a valid JSON object only (do NOT include markdown fences, leading
         explanation: parsed.explanation || "Improved bullet verb and formatting structure."
       });
     } catch (aiErr: any) {
-      logger.error("Gemini bullet optimizer failed, falling back", aiErr);
+      logger.error("Gemini optimizer failed, falling back", aiErr);
+      if (isSummaryRequest) {
+        return NextResponse.json({
+          improvedBullet: `Detail-oriented ${jobTitle || "Professional"} with proven expertise in technical problem-solving, project execution, and cross-functional team collaboration. Skilled in leveraging industry-standard tools to optimize workflow efficiency and achieve strategic project milestones. (${bullet.trim()})`,
+          actionVerbUsed: "Summary Optimization",
+          keywordsInjected: [],
+          explanation: "Enhanced professional summary structure and tone."
+        });
+      }
       return NextResponse.json({
         improvedBullet: `Optimized the implementation of target components (${bullet.trim().replace(/^[-*•\s]+/, "")}) generating a [15]% increase in operational performance.`,
         actionVerbUsed: "Optimized",
@@ -121,9 +179,9 @@ Output MUST be a valid JSON object only (do NOT include markdown fences, leading
       });
     }
   } catch (error: any) {
-    logger.error("Failed to process bullet improvement request:", error);
+    logger.error("Failed to process improvement request:", error);
     return NextResponse.json(
-      { error: "Internal server error during bullet optimization." },
+      { error: "Internal server error during optimization." },
       { status: 500 }
     );
   }
