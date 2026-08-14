@@ -389,7 +389,28 @@ function swapEducationAndSkillsIfNeeded(blocks: ParsedResumeBlock[]): ParsedResu
 }
 
 export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
-  const rawLines = text.split('\n');
+  const SECTION_NAMES_LIST = [
+    'PROFESSIONAL SUMMARY', 'SUMMARY', 'OBJECTIVE',
+    'TECHNICAL SKILLS', 'SKILLS', 'CORE SKILLS', 'KEY SKILLS',
+    'PROFESSIONAL EXPERIENCE', 'EXPERIENCE', 'WORK EXPERIENCE', 'EMPLOYMENT HISTORY', 'INTERNSHIP', 'INTERNSHIPS',
+    'PROJECTS', 'PERSONAL PROJECTS',
+    'EDUCATION', 'ACADEMIC BACKGROUND',
+    'CERTIFICATIONS', 'ACHIEVEMENTS', 'AWARDS',
+    'LANGUAGES'
+  ];
+
+  let cleanInput = (text || "");
+
+  // Insert newlines before section headers if attached to text
+  for (const sec of SECTION_NAMES_LIST) {
+    const reg = new RegExp(`([^\\n])\\s*(${sec})`, 'gi');
+    cleanInput = cleanInput.replace(reg, '$1\n\n$2\n');
+  }
+
+  // Separate candidate name from contact info if on same line (e.g. PEYYALA LOHITIndia)
+  cleanInput = cleanInput.replace(/^([A-Z\s]{3,30})(India|\+?\d|[\w.-]+@)/m, '$1\n$2');
+
+  const rawLines = cleanInput.split('\n');
   const blocks: ParsedResumeBlock[] = [];
   
   let isFirstLine = true;

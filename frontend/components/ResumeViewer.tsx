@@ -68,7 +68,7 @@ export default function ResumeViewer({
         return (
           <span
             key={idx}
-            className="bg-[#D1FAE5] text-emerald-900 px-0.5 rounded font-semibold dark:bg-emerald-950/40 dark:text-emerald-300"
+            className="bg-[#D1FAE5] text-emerald-900 px-0.5 rounded font-normal dark:bg-emerald-950/40 dark:text-emerald-300"
           >
             {part}
           </span>
@@ -252,9 +252,9 @@ export default function ResumeViewer({
                 );
               case "skillLine":
                 return (
-                  <div key={idx} className="flex text-[10px] mb-1 leading-normal select-text font-serif">
-                    <span className="font-bold text-black w-[140px] shrink-0">{block.label}:</span>
-                    <span className="text-slate-800 flex-1">{renderHighlightedText(block.value)}</span>
+                  <div key={idx} className="text-[10px] mb-1 leading-normal select-text font-serif">
+                    <span className="font-bold text-black">{block.label}: </span>
+                    <span className="text-slate-800">{renderHighlightedText(block.value)}</span>
                   </div>
                 );
               case "project":
