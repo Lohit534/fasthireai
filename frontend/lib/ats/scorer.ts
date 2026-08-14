@@ -11,6 +11,15 @@ const COMMON_TITLES = [
   "Android Developer", "iOS Developer"
 ];
 
+function normalizeWord(word: string): string {
+  return word
+    .replace(/ies$/, 'y')
+    .replace(/es$/, '')
+    .replace(/s$/, '')
+    .toLowerCase()
+    .trim();
+}
+
 async function callPythonScorer(resumeText: string, jobDescription: string): Promise<ATSScore> {
   const baseUrl = process.env.HF_AI_API_URL;
   if (!baseUrl) {
@@ -56,9 +65,8 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
   logger.info("Executing local ATS fallback scorer...");
 
   const resumeLower = resumeText.toLowerCase();
-  const jdLower = jobDescription.toLowerCase();
 
-  // 1. Keyword Overlap — with case-insensitive and partial phrase matching for bigrams
+  // 1. Keyword Overlap — with exact, stem, and partial matching
   const resumeKeywords = extractKeywords(resumeText);
   const jdKeywords = extractKeywords(jobDescription);
 
@@ -66,30 +74,19 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
   const missingKeywords: string[] = [];
 
   if (jdKeywords.size > 0) {
-    for (const kw of jdKeywords) {
-      const kwLower = kw.toLowerCase();
-      // Exact match OR partial phrase match in raw resume text
-      const exactMatch = [...resumeKeywords].some(r => r.toLowerCase() === kwLower);
-      const phraseMatch = resumeLower.includes(kwLower);
-      // Also try root-word match (e.g. "analysis" matches "analytics", "analysed")
-      const rootMatch = resumeLower.includes(kwLower.slice(0, Math.max(5, kwLower.length - 2)));
+    for (const jdKw of jdKeywords) {
+      const resumeHasExact = resumeKeywords.has(jdKw);
+      const resumeHasStem = [...resumeKeywords].some(
+        rk => normalizeWord(rk) === normalizeWord(jdKw)
+      );
+      const resumeHasPartial = [...resumeKeywords].some(
+        rk => rk.includes(jdKw) || jdKw.includes(rk)
+      ) && jdKw.length > 4;
 
-      // Bigram & partial phrase matching logic (e.g. "project management" matches "managed projects")
-      let matchesBigramOrPhrase = false;
-      if (kwLower.includes(" ")) {
-        const parts = kwLower.split(/\s+/).filter(p => p.length > 2);
-        if (parts.length > 1) {
-          matchesBigramOrPhrase = parts.every(part => {
-            const stem = part.slice(0, Math.max(4, part.length - 2));
-            return resumeLower.includes(stem);
-          });
-        }
-      }
-
-      if (exactMatch || phraseMatch || rootMatch || matchesBigramOrPhrase) {
-        foundKeywords.push(kw);
+      if (resumeHasExact || resumeHasStem || resumeHasPartial || resumeLower.includes(jdKw.toLowerCase())) {
+        foundKeywords.push(jdKw);
       } else {
-        missingKeywords.push(kw);
+        missingKeywords.push(jdKw);
       }
     }
   }
@@ -98,11 +95,9 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
     ? (foundKeywords.length / jdKeywords.size) * 100
     : 100;
 
-  // Real ATS score matching formula
   const keywordMatch = Math.min(100, Math.round(rawKeywordMatch));
 
   // 2. Semantic Match — weighted blend of keyword overlap + tech-term coverage
-  const resumeTechTerms = extractTechTerms(resumeText);
   const jdTechTerms = extractTechTerms(jobDescription);
   const techOverlap = jdTechTerms.length > 0
     ? jdTechTerms.filter(t => resumeLower.includes(t.toLowerCase())).length / jdTechTerms.length
@@ -125,21 +120,19 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
       const verbs = extractActionVerbs(bullet);
       const cleanLine = bullet.trim().replace(/^[•\-*\u2022▸►→\s]+/, "");
       const startsWithActionVerb = /^(built|engineered|developed|implemented|designed|created|led|managed|architected|optimized|spearheaded|accelerated|devised|automated|facilitated|orchestrated|injected|refactored|deployed|scaled|transformed)\b/i.test(cleanLine);
-      const hasVerb = verbs.length > 0 || startsWithActionVerb;
+      const hasActionVerb = verbs.length > 0 || startsWithActionVerb;
 
-      const hasQuantifier = /\b\d+[\d,\.]*\s*(%|k|m|x|\+|lakh|crore|million|thousand|percent|hrs?|days?|weeks?|months?|years?|users?|customers?|clients?|requests?|ms|sec|seconds?|minutes?|bps|mb|gb|tb|tbps)\b/i.test(bullet) || /\b\d+%/i.test(bullet) || /\b\d+\+/i.test(bullet) || /\[\d+\]/.test(bullet);
-      const hasDollar = /\$[\d,]+|\b(?:revenue|profit|sales|cost|budget|saving|efficiency|throughput|performance|latency)\b/i.test(bullet);
+      const hasQuantification = /\b\d+[\d,\.]*\s*(%|k|m|x|\+|lakh|crore|million|thousand|percent|hrs?|days?|weeks?|months?|years?|users?|customers?|clients?|requests?|ms|sec|seconds?|minutes?|bps|mb|gb|tb|tbps)\b/i.test(bullet) || /\b\d+%/i.test(bullet) || /\b\d+\+/i.test(bullet) || /\[\d+\]/.test(bullet) || /\$[\d,]+|\b(?:revenue|profit|sales|cost|budget|saving|efficiency|throughput|performance|latency)\b/i.test(bullet);
 
-      let bScore = 50;
-      if (hasVerb) {
-        bScore = 80;
-        if (hasQuantifier || hasDollar) {
-          bScore = 100;
-        }
-      } else if (hasQuantifier || hasDollar) {
-        bScore = 75;
+      if (hasActionVerb && hasQuantification) {
+        scoreSum += 100;
+      } else if (hasActionVerb) {
+        scoreSum += 75;
+      } else if (hasQuantification) {
+        scoreSum += 50;
+      } else if (bullet.split(" ").length > 8) {
+        scoreSum += 25;
       }
-      scoreSum += bScore;
     }
     impactBullets = Math.min(100, Math.round(scoreSum / bulletLines.length));
   }
@@ -163,22 +156,23 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
   formatting = Math.min(100, formatting);
 
   // 5. Overall score calculation:
-  // Initial unoptimized resume scores cap in the 70 - 78 range when skills match,
-  // leaving room for Auto-Improve to boost the score to 85-98+.
   let overall = Math.round(
-    (semanticMatch * 0.45) +
-    (keywordMatch * 0.35) +
-    (impactBullets * 0.12) +
-    (formatting * 0.08)
+    semanticMatch   * 0.40 +
+    keywordMatch    * 0.30 +
+    impactBullets   * 0.20 +
+    formatting      * 0.10
   );
 
-  if (keywordMatch < 30) {
-    overall = Math.min(overall, 48);
-  } else if (keywordMatch > 70) {
-    // Skills match: initial score is in 70 - 78 range
-    overall = Math.min(78, Math.max(70, Math.round(70 + (keywordMatch - 70) * 0.25)));
-  } else if (keywordMatch > 50) {
-    overall = Math.min(70, Math.max(60, Math.round(60 + (keywordMatch - 50) * 0.5)));
+  // Minimum floor rules
+  const missingCount = missingKeywords.filter(k => k.length > 3).length;
+  if (missingCount === 0) {
+    overall = Math.max(overall, 84);
+  }
+  if (missingCount <= 5) {
+    overall = Math.max(overall, 76);
+  }
+  if (missingCount <= 10) {
+    overall = Math.max(overall, 68);
   }
 
   overall = Math.max(0, Math.min(100, overall));
@@ -224,28 +218,28 @@ export async function scoreResume(
   try {
     score = await callPythonScorer(resumeText, jobDescription);
     score.overall = Math.round(
-      (score.semanticMatch * 0.45) +
-      (score.keywordMatch * 0.35) +
-      (score.impactBullets * 0.12) +
-      (score.formatting * 0.08)
+      score.semanticMatch * 0.40 +
+      score.keywordMatch * 0.30 +
+      score.impactBullets * 0.20 +
+      score.formatting * 0.10
     );
   } catch (error) {
     logger.warn("Python Scorer API failed or timed out. Falling back to local score logic.", error);
     score = localScore(resumeText, jobDescription);
   }
 
-  // 1. Initial raw resume scoring (BEFORE auto-improve):
-  // Cap initial score to 70 - 78 range so unoptimized resumes do not show 80+ initially
-  if (scoreBefore === undefined || scoreBefore === 0) {
-    if (score.overall > 78) {
-      score.overall = 70 + (score.overall % 9); // e.g. 70 to 78
-    } else if (score.overall >= 60 && score.overall < 70) {
-      score.overall = Math.min(78, score.overall);
-    }
+  // Minimum floor rules for optimization
+  const missingCount = score.missingKeywords.filter(k => k.length > 3).length;
+  if (missingCount === 0) {
+    score.overall = Math.max(score.overall, 84);
+  }
+  if (missingCount <= 5) {
+    score.overall = Math.max(score.overall, 76);
+  }
+  if (missingCount <= 10) {
+    score.overall = Math.max(score.overall, 68);
   }
 
-  // 2. AFTER Auto-Improve (scoreBefore > 0):
-  // AI optimization improves keywords, metrics & bullets, boosting score to 85 - 98+
   if (scoreBefore !== undefined && scoreBefore > 0) {
     const minVal = Math.max(85, scoreBefore + 8);
     const maxVal = Math.min(98, Math.max(92, scoreBefore + 16));

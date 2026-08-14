@@ -115,18 +115,39 @@ export function serializeResumeJSONToText(json: ResumeJSON): string {
 
 export function sanitizeResumeText(text: string): string {
   return text
-    .replace(/\\\w+\{([^}]*)\}/g, "$1")
-    .replace(/\\\w+/g, "")
-    .replace(/\{|\}/g, "")
-    .replace(/\*\*([^*]+)\*\*/g, "$1")
-    .replace(/\*([^*]+)\*/g, "$1")
-    .replace(/#{1,6}\s/g, "")
-    .replace(/_{2}([^_]+)_{2}/g, "$1")
-    .replace(/\\begin\{[^}]*\}/g, "")
-    .replace(/\\end\{[^}]*\}/g, "")
-    .replace(/^[\s]*[-–—]\s/gm, "• ")
-    .replace(/^[\s]*\\item\s/gm, "• ")
-    .replace(/\n{3,}/g, "\n\n")
+    // Remove ALL LaTeX commands with arguments
+    .replace(/\\[a-zA-Z]+\{([^}]*)\}/g, '$1')
+    // Remove LaTeX commands without arguments
+    .replace(/\\[a-zA-Z]+/g, '')
+    // Remove remaining LaTeX braces
+    .replace(/\{|\}/g, '')
+    // Remove markdown bold/italic
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    // Remove markdown headers
+    .replace(/#{1,6}\s/g, '')
+    // Remove markdown underline
+    .replace(/_{2}([^_]+)_{2}/g, '$1')
+    // Remove LaTeX environments
+    .replace(/\\begin\{[^}]*\}/g, '')
+    .replace(/\\end\{[^}]*\}/g, '')
+    // Remove LaTeX special characters
+    .replace(/\\textbf|\\textit|\\emph/g, '')
+    .replace(/\\resumeItem|\\item/g, '• ')
+    // Normalize all bullet types to •
+    .replace(/^[\s]*[-–—]\s/gm, '• ')
+    .replace(/^[\s]*\*\s/gm, '• ')
+    // Force section headers to new lines
+    .replace(
+      /(PROFESSIONAL SUMMARY|SUMMARY|EDUCATION|EXPERIENCE|PROJECTS|SKILLS|TECHNICAL SKILLS|CERTIFICATIONS|ACHIEVEMENTS|LANGUAGES|INTERNSHIP|VOLUNTEER|AWARDS)/gi,
+      '\n\n$1\n'
+    )
+    // Split merged text — lowercase then CAPS
+    .replace(/([a-z\.\,\)])([A-Z]{3,})/g, '$1\n\n$2')
+    // Remove triple+ newlines
+    .replace(/\n{3,}/g, '\n\n')
+    // Remove multiple spaces
+    .replace(/[ \t]{2,}/g, ' ')
     .trim();
 }
 

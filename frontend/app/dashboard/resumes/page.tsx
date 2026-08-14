@@ -1862,38 +1862,76 @@ export default function ResumesPage() {
                     </button>
 
                     {collapsibles.certifications && (
-                      <div className="p-4 space-y-3 select-none">
-                        <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Certifications Bullets</label>
-                        {editorData.certifications.map((cert, idx) => (
-                          <div key={idx} className="flex gap-2 items-start">
-                            <span className="text-slate-500 text-xs select-none mt-2">•</span>
-                            <textarea
-                              value={cert}
-                              onChange={(e) => handleCertificationItemChange(idx, e.target.value)}
-                              className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs resize-none overflow-hidden"
-                              placeholder="e.g. AWS Certified Solutions Architect"
-                              rows={1}
-                              onInput={(e) => {
-                                const target = e.target as HTMLTextAreaElement;
-                                target.style.height = "auto";
-                                target.style.height = `${target.scrollHeight}px`;
-                              }}
-                            />
-                            <button
-                              onClick={() => removeCertificationItem(idx)}
-                              className="text-slate-600 hover:text-red-400 p-1 mt-1"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
-                        <Button
-                          type="button"
-                          onClick={addCertificationItem}
-                          className="bg-[#12132d]/40 border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3 animate-none"
-                        >
-                          + Add Certification
-                        </Button>
+                      <div className="p-4 space-y-4 select-none">
+                        {/* Certifications Block */}
+                        <div className="space-y-3">
+                          <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Certifications Bullets</label>
+                          {editorData.certifications.map((cert, idx) => (
+                            <div key={idx} className="flex gap-2 items-start">
+                              <span className="text-slate-500 text-xs select-none mt-2">•</span>
+                              <textarea
+                                value={cert}
+                                onChange={(e) => handleCertificationItemChange(idx, e.target.value)}
+                                className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs resize-none overflow-hidden"
+                                placeholder="e.g. AWS Certified Solutions Architect"
+                                rows={1}
+                                onInput={(e) => {
+                                  const target = e.target as HTMLTextAreaElement;
+                                  target.style.height = "auto";
+                                  target.style.height = `${target.scrollHeight}px`;
+                                }}
+                              />
+                              <button
+                                onClick={() => removeCertificationItem(idx)}
+                                className="text-slate-600 hover:text-red-400 p-1 mt-1"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            onClick={addCertificationItem}
+                            className="bg-[#12132d]/40 border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3 animate-none"
+                          >
+                            + Add Certification
+                          </Button>
+                        </div>
+
+                        {/* Achievements Block */}
+                        <div className="space-y-3 pt-3 border-t border-white/5">
+                          <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Achievements Bullets</label>
+                          {editorData.achievements.map((ach, idx) => (
+                            <div key={idx} className="flex gap-2 items-start">
+                              <span className="text-slate-500 text-xs select-none mt-2">•</span>
+                              <textarea
+                                value={ach}
+                                onChange={(e) => handleAchievementItemChange(idx, e.target.value)}
+                                className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs resize-none overflow-hidden"
+                                placeholder="e.g. Solved 300+ DSA problems on LeetCode"
+                                rows={1}
+                                onInput={(e) => {
+                                  const target = e.target as HTMLTextAreaElement;
+                                  target.style.height = "auto";
+                                  target.style.height = `${target.scrollHeight}px`;
+                                }}
+                              />
+                              <button
+                                onClick={() => removeAchievementItem(idx)}
+                                className="text-slate-600 hover:text-red-400 p-1 mt-1"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            onClick={addAchievementItem}
+                            className="bg-[#12132d]/40 border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3"
+                          >
+                            + Add Achievement
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1943,56 +1981,6 @@ export default function ResumesPage() {
                           className="bg-[#12132d]/40 border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3"
                         >
                           + Add Language
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Accordion 9: Achievements */}
-                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
-                    <button
-                      onClick={() => toggleCollapsible("achievements")}
-                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Trophy className="h-4 w-4 text-violet-500" />
-                        Achievements
-                      </span>
-                      {collapsibles.achievements ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </button>
-
-                    {collapsibles.achievements && (
-                      <div className="p-4 space-y-3 select-none">
-                        <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Achievements Bullets</label>
-                        {editorData.achievements.map((ach, idx) => (
-                          <div key={idx} className="flex gap-2 items-start">
-                            <span className="text-slate-500 text-xs select-none mt-2">•</span>
-                            <textarea
-                              value={ach}
-                              onChange={(e) => handleAchievementItemChange(idx, e.target.value)}
-                              className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs resize-none overflow-hidden"
-                              placeholder="e.g. Won 1st place in Smart India Hackathon"
-                              rows={1}
-                              onInput={(e) => {
-                                const target = e.target as HTMLTextAreaElement;
-                                target.style.height = "auto";
-                                target.style.height = `${target.scrollHeight}px`;
-                              }}
-                            />
-                            <button
-                              onClick={() => removeAchievementItem(idx)}
-                              className="text-slate-600 hover:text-red-400 p-1 mt-1"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
-                        <Button
-                          type="button"
-                          onClick={addAchievementItem}
-                          className="bg-[#12132d]/40 border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3"
-                        >
-                          + Add Achievement
                         </Button>
                       </div>
                     )}
