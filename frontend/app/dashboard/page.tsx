@@ -12,6 +12,8 @@ import { generateSkillRoadmap } from "@/lib/roadmap-generator";
 import ResumeViewer from "@/components/ResumeViewer";
 import BulletImprover from "@/components/BulletImprover";
 import LoadingOverlay from "@/components/LoadingOverlay";
+import MissingDetailsModal from "@/components/MissingDetailsModal";
+import { detectMissingFields, enrichResumeWithAnswers } from "@/lib/resume-inspector";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
@@ -85,6 +87,11 @@ export default function DashboardPage() {
   const [isAILoading, setIsAILoading] = useState(false);
   const [isSavedResumesOpen, setIsSavedResumesOpen] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Missing details modal state
+  const [missingFields, setMissingFields] = useState<ReturnType<typeof detectMissingFields>>([]);
+  const [showMissingModal, setShowMissingModal] = useState(false);
+  const [pendingResumeText, setPendingResumeText] = useState("");
 
   useEffect(() => {
     // Check if sample data was explicitly requested from landing page via "Try Sample Resume" button
@@ -246,7 +253,29 @@ export default function DashboardPage() {
       toast.error("Paste the job description to match against.");
       return;
     }
+
+    // Detect missing fields before running optimization
+    const missing = detectMissingFields(resumeText);
+    if (missing.length > 0) {
+      setPendingResumeText(resumeText);
+      setMissingFields(missing);
+      setShowMissingModal(true);
+      return;
+    }
+
     runAIAutoImprove(resumeText);
+  };
+
+  const handleMissingDetailsContinue = (answers: Record<string, string>) => {
+    setShowMissingModal(false);
+    const enriched = enrichResumeWithAnswers(pendingResumeText, answers);
+    runAIAutoImprove(enriched);
+  };
+
+  const handleMissingDetailsCancel = () => {
+    setShowMissingModal(false);
+    setPendingResumeText("");
+    setMissingFields([]);
   };
 
   const handleReset = () => {
@@ -426,6 +455,15 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#111318] text-[#e2e2e8] font-sans">
+      {/* Missing Details Modal — shown before optimization if resume has gaps */}
+      {showMissingModal && missingFields.length > 0 && (
+        <MissingDetailsModal
+          fields={missingFields}
+          onContinue={handleMissingDetailsContinue}
+          onCancel={handleMissingDetailsCancel}
+        />
+      )}
+
       {/* Ambient background glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-1/3 w-[700px] h-[500px] bg-[#5E5CE6]/6 rounded-full blur-[150px]" />
