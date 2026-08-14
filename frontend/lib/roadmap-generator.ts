@@ -133,13 +133,15 @@ export function generateSkillRoadmap(skill: string): string {
     );
   }
 
-  // 3. Cloud Architecture / Cloud Engineering (AWS / Azure / GCP / DevOps)
+  // 3. Cloud Architecture / Cloud Engineering (AWS / Azure / GCP / DevOps / SysOps / SynOps)
   if (
     lower.includes("cloud") ||
     lower.includes("aws") ||
     lower.includes("azure") ||
     lower.includes("gcp") ||
     lower.includes("devops") ||
+    lower.includes("sysops") ||
+    lower.includes("synops") ||
     lower.includes("docker") ||
     lower.includes("kubernetes") ||
     lower.includes("terraform")
