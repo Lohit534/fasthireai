@@ -390,21 +390,42 @@ function swapEducationAndSkillsIfNeeded(blocks: ParsedResumeBlock[]): ParsedResu
 
 export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
   const SECTION_NAMES_LIST = [
-    'PROFESSIONAL SUMMARY', 'SUMMARY', 'OBJECTIVE',
-    'TECHNICAL SKILLS', 'SKILLS', 'CORE SKILLS', 'KEY SKILLS',
-    'PROFESSIONAL EXPERIENCE', 'EXPERIENCE', 'WORK EXPERIENCE', 'EMPLOYMENT HISTORY', 'INTERNSHIP', 'INTERNSHIPS',
-    'PROJECTS', 'PERSONAL PROJECTS',
-    'EDUCATION', 'ACADEMIC BACKGROUND',
-    'CERTIFICATIONS', 'ACHIEVEMENTS', 'AWARDS',
-    'LANGUAGES'
+    'PROFESSIONAL SUMMARY', 'TECHNICAL SKILLS', 'PROFESSIONAL EXPERIENCE', 'WORK EXPERIENCE', 'EMPLOYMENT HISTORY',
+    'PERSONAL PROJECTS', 'ACADEMIC BACKGROUND', 'CORE SKILLS', 'KEY SKILLS', 'SUMMARY', 'OBJECTIVE', 'SKILLS',
+    'EXPERIENCE', 'INTERNSHIP', 'INTERNSHIPS', 'PROJECTS', 'EDUCATION', 'CERTIFICATIONS', 'ACHIEVEMENTS', 'AWARDS', 'LANGUAGES'
   ];
 
   let cleanInput = (text || "");
 
-  // Insert newlines before section headers if attached to text
+  // Rejoin compound tech terms
+  const COMPOUND_TERMS: [RegExp, string][] = [
+    [/My\s*\n+\s*SQL/gi, 'MySQL'],
+    [/Type\s*\n+\s*Script/gi, 'TypeScript'],
+    [/Java\s*\n+\s*Script/gi, 'JavaScript'],
+    [/Post\s*\n+\s*gre\s*SQL/gi, 'PostgreSQL'],
+    [/Spring\s*\n+\s*Boot/gi, 'Spring Boot'],
+    [/Power\s*\n+\s*BI/gi, 'Power BI'],
+    [/Node\s*\n+\s*js/gi, 'Node.js'],
+    [/React\s*\n+\s*js/gi, 'React.js'],
+    [/Next\s*\n+\s*js/gi, 'Next.js'],
+    [/Mon\s*\n+\s*go\s*DB/gi, 'MongoDB'],
+    [/Kube\s*\n+\s*rnetes/gi, 'Kubernetes'],
+    [/Ten\s*\n+\s*sor\s*Flow/gi, 'TensorFlow'],
+    [/Git\s*\n+\s*Hub/gi, 'GitHub'],
+    [/VS\s*\n+\s*Code/gi, 'VS Code'],
+    [/Chat\s*\n+\s*GPT/gi, 'ChatGPT'],
+    [/CI\s*\n+\s*CD/gi, 'CI/CD'],
+    [/De\s*\n+\s*vOps/gi, 'DevOps'],
+  ];
+
+  for (const [pattern, replacement] of COMPOUND_TERMS) {
+    cleanInput = cleanInput.replace(pattern, replacement);
+  }
+
+  // Insert newlines before section headers ONLY when at boundary
   for (const sec of SECTION_NAMES_LIST) {
-    const reg = new RegExp(`([^\\n])\\s*(${sec})`, 'gi');
-    cleanInput = cleanInput.replace(reg, '$1\n\n$2\n');
+    const reg = new RegExp(`(^|\\n)\\s*(${sec})\\b`, 'gi');
+    cleanInput = cleanInput.replace(reg, '\n\n$2\n');
   }
 
   // Separate candidate name from contact info if on same line (e.g. PEYYALA LOHITIndia)

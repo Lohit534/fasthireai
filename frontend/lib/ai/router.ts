@@ -114,41 +114,75 @@ export function serializeResumeJSONToText(json: ResumeJSON): string {
 }
 
 export function sanitizeResumeText(text: string): string {
-  return text
-    // Remove ALL LaTeX commands with arguments
+  if (!text) return "";
+
+  let result = text;
+
+  // 1. Rejoin split compound tech terms
+  const COMPOUND_TERMS: [RegExp, string][] = [
+    [/My\s*\n+\s*SQL/gi, 'MySQL'],
+    [/Type\s*\n+\s*Script/gi, 'TypeScript'],
+    [/Java\s*\n+\s*Script/gi, 'JavaScript'],
+    [/Post\s*\n+\s*gre\s*SQL/gi, 'PostgreSQL'],
+    [/Spring\s*\n+\s*Boot/gi, 'Spring Boot'],
+    [/Power\s*\n+\s*BI/gi, 'Power BI'],
+    [/Node\s*\n+\s*js/gi, 'Node.js'],
+    [/React\s*\n+\s*js/gi, 'React.js'],
+    [/Next\s*\n+\s*js/gi, 'Next.js'],
+    [/Mon\s*\n+\s*go\s*DB/gi, 'MongoDB'],
+    [/Kube\s*\n+\s*rnetes/gi, 'Kubernetes'],
+    [/Ten\s*\n+\s*sor\s*Flow/gi, 'TensorFlow'],
+    [/Git\s*\n+\s*Hub/gi, 'GitHub'],
+    [/VS\s*\n+\s*Code/gi, 'VS Code'],
+    [/Chat\s*\n+\s*GPT/gi, 'ChatGPT'],
+    [/CI\s*\n+\s*CD/gi, 'CI/CD'],
+    [/De\s*\n+\s*vOps/gi, 'DevOps'],
+  ];
+
+  for (const [pattern, replacement] of COMPOUND_TERMS) {
+    result = result.replace(pattern, replacement);
+  }
+
+  // 2. Remove LaTeX & Markdown artifacts safely without destroying newlines
+  result = result
     .replace(/\\[a-zA-Z]+\{([^}]*)\}/g, '$1')
-    // Remove LaTeX commands without arguments
     .replace(/\\[a-zA-Z]+/g, '')
-    // Remove remaining LaTeX braces
     .replace(/\{|\}/g, '')
-    // Remove markdown bold/italic
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\*([^*]+)\*/g, '$1')
-    // Remove markdown headers
-    .replace(/#{1,6}\s/g, '')
-    // Remove markdown underline
     .replace(/_{2}([^_]+)_{2}/g, '$1')
-    // Remove LaTeX environments
-    .replace(/\\begin\{[^}]*\}/g, '')
-    .replace(/\\end\{[^}]*\}/g, '')
-    // Remove LaTeX special characters
-    .replace(/\\textbf|\\textit|\\emph/g, '')
-    .replace(/\\resumeItem|\\item/g, '• ')
-    // Normalize all bullet types to •
-    .replace(/^[\s]*[-–—]\s/gm, '• ')
-    .replace(/^[\s]*\*\s/gm, '• ')
-    // Force section headers to new lines
-    .replace(
-      /(PROFESSIONAL SUMMARY|SUMMARY|EDUCATION|EXPERIENCE|PROJECTS|SKILLS|TECHNICAL SKILLS|CERTIFICATIONS|ACHIEVEMENTS|LANGUAGES|INTERNSHIP|VOLUNTEER|AWARDS)/gi,
-      '\n\n$1\n'
-    )
-    // Split merged text — lowercase then CAPS
-    .replace(/([a-z\.\,\)])([A-Z]{3,})/g, '$1\n\n$2')
-    // Remove triple+ newlines
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+
+  // 3. Rejoin broken words split across lines within lower-case sentence continuations
+  result = result.replace(/([a-z,])\r?\n([a-z])/g, '$1 $2');
+
+  // 4. Normalize bullets
+  result = result.replace(/^[\s]*[-–—·○►▪✓→]\s*/gm, '• ');
+
+  // 5. Section headers: Ensure double newlines before section headers ONLY when on boundary
+  const SECTIONS = [
+    'PROFESSIONAL SUMMARY', 'SUMMARY', 'OBJECTIVE',
+    'TECHNICAL SKILLS', 'SKILLS', 'CORE SKILLS', 'KEY SKILLS',
+    'PROFESSIONAL EXPERIENCE', 'WORK EXPERIENCE', 'EMPLOYMENT HISTORY', 'INTERNSHIP', 'INTERNSHIPS', 'EXPERIENCE',
+    'PROJECTS', 'PERSONAL PROJECTS',
+    'EDUCATION', 'ACADEMIC BACKGROUND',
+    'CERTIFICATIONS', 'ACHIEVEMENTS', 'AWARDS',
+    'LANGUAGES'
+  ];
+
+  for (const sec of SECTIONS) {
+    const reg = new RegExp(`(^|\\n)\\s*(${sec})\\b`, 'gi');
+    result = result.replace(reg, '\n\n$2\n');
+  }
+
+  // 6. Clean spacing
+  result = result
     .replace(/\n{3,}/g, '\n\n')
-    // Remove multiple spaces
     .replace(/[ \t]{2,}/g, ' ')
     .trim();
+
+  return result;
 }
 
 function parseAIResponse(raw: string, fallbackText: string): AIResult {
