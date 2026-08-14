@@ -20,7 +20,7 @@ export function generateSkillRoadmap(skill: string): string {
   ) {
     return (
       `# 🚀 90-Day "Watch & Build" Roadmap: AI Application Engineer\n` +
-      `*Focus on practical implementation (building apps) rather than pure theory to land an AI Engineering role in shortest time.*\n\n` +
+      `Focus on practical implementation (building apps) rather than pure theory to land an AI Engineering role in shortest time.\n\n` +
       `---\n\n` +
       `## 📅 Phase 1: Python Mastery & GenAI Basics (Weeks 1–4)\n` +
       `**Goal:** Write professional-grade Python and execute your first LLM API pipelines.\n` +
@@ -30,7 +30,7 @@ export function generateSkillRoadmap(skill: string): string {
       `- Prompt Engineering principles & Structured JSON outputs\n\n` +
       `📺 **Best YouTube Channels:**\n` +
       `- **Corey Schafer:** The gold standard for Python OOP & Async APIs.\n` +
-      `- **Krish Naik:** Dedicated *Generative AI Playlist* covering foundations from scratch.\n` +
+      `- **Krish Naik:** Dedicated Generative AI Playlist covering foundations from scratch.\n` +
       `- **Tech With Tim:** Fast-paced Python AI project warmups.\n\n` +
       `---\n\n` +
       `## 📅 Phase 2: RAG, Vector DBs & LangChain / LlamaIndex (Weeks 5–8)\n` +
@@ -84,7 +84,7 @@ export function generateSkillRoadmap(skill: string): string {
   ) {
     return (
       `# 🚀 90-Day "Watch & Build" Roadmap: Data Analyst & Business Intelligence\n` +
-      `*Master high-demand data analytics skills and build an impressive portfolio to land top analytics roles.*\n\n` +
+      `Master high-demand data analytics skills and build an impressive portfolio to land top analytics roles.\n\n` +
       `---\n\n` +
       `## 📅 Phase 1: Advanced SQL & Data Manipulation (Weeks 1–4)\n` +
       `**Goal:** Write complex SQL queries and clean dirty real-world datasets.\n` +
@@ -145,7 +145,7 @@ export function generateSkillRoadmap(skill: string): string {
   ) {
     return (
       `# 🚀 90-Day "Watch & Build" Roadmap: Cloud & DevOps Architect\n` +
-      `*Learn to architect, automate, and deploy enterprise infrastructure on AWS/Azure using Infrastructure as Code (IaC).*\n\n` +
+      `Learn to architect, automate, and deploy enterprise infrastructure on AWS/Azure using Infrastructure as Code (IaC).\n\n` +
       `---\n\n` +
       `## 📅 Phase 1: Cloud Fundamentals, Linux & Networking (Weeks 1–4)\n` +
       `**Goal:** Master Linux shell, networking concepts, and IAM security.\n` +
@@ -203,7 +203,7 @@ export function generateSkillRoadmap(skill: string): string {
   ) {
     return (
       `# 🚀 90-Day "Watch & Build" Roadmap: Cybersecurity & Ethical Hacking\n` +
-      `*Build hands-on penetration testing and security operations skills to land cybersecurity roles.*\n\n` +
+      `Build hands-on penetration testing and security operations skills to land cybersecurity roles.\n\n` +
       `---\n\n` +
       `## 📅 Phase 1: Networking & OS Foundations (Weeks 1–4)\n` +
       `**Goal:** Master TCP/IP networking, packet analysis, and Linux administration.\n` +
@@ -264,7 +264,7 @@ export function generateSkillRoadmap(skill: string): string {
   ) {
     return (
       `# 🚀 90-Day "Watch & Build" Roadmap: Full-Stack Web Engineer (${cleanSkill})\n` +
-      `*Master modern full-stack development with Next.js, TypeScript, and serverless backends.*\n\n` +
+      `Master modern full-stack development with Next.js, TypeScript, and serverless backends.\n\n` +
       `---\n\n` +
       `## 📅 Phase 1: Modern TypeScript & React Mastery (Weeks 1–4)\n` +
       `**Goal:** Build clean, strongly-typed React components.\n` +
@@ -315,7 +315,7 @@ export function generateSkillRoadmap(skill: string): string {
   // 6. Generic Fallback for any other custom skill (e.g. Java, C++, Mobile, Machine Learning)
   return (
     `# 🚀 90-Day "Watch & Build" Roadmap: ${cleanSkill}\n` +
-    `*Master ${cleanSkill} through practical implementation, hands-on projects, and curated top tutorials.*\n\n` +
+    `Master ${cleanSkill} through practical implementation, hands-on projects, and curated top tutorials.\n\n` +
     `---\n\n` +
     `## 📅 Phase 1: Core Fundamentals & Syntax (Weeks 1–4)\n` +
     `**Goal:** Write clean, modular code in ${cleanSkill}.\n` +
@@ -341,8 +341,8 @@ export function generateSkillRoadmap(skill: string): string {
     `## 📅 Phase 3: Real-World Micro-Projects (Weeks 9–10)\n` +
     `**Goal:** Build 2 functional projects demonstrating ${cleanSkill} in action.\n` +
     `**What to Learn:**\n` +
-    `- *Project 1:* Command-line utility or standalone script using ${cleanSkill}\n` +
-    `- *Project 2:* Full-featured application connecting to a database\n` +
+    `- Project 1: Command-line utility or standalone script using ${cleanSkill}\n` +
+    `- Project 2: Full-featured application connecting to a database\n` +
     `- Writing unit tests & error handling\n\n` +
     `---\n\n` +
     `## 📅 Phase 4: Production Deployment & Portfolio (Weeks 11–12)\n` +
