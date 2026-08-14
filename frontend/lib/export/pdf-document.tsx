@@ -292,7 +292,16 @@ export type ParsedResumeBlock =
 
 export type ResumeBlock = ParsedResumeBlock;
 
-export function getCleanExportFilename(text: string, ext = ".pdf", fallbackTitle?: string): string {
+export function getCleanExportFilename(text: string, ext = ".pdf", jobTitle?: string): string {
+  // Prefer jobTitle as filename (e.g. "Java_Full_Stack_Developer_Resume.pdf")
+  if (jobTitle && jobTitle.trim() && jobTitle.toLowerCase() !== 'optimized resume' && jobTitle.toLowerCase() !== 'resume') {
+    const cleanRole = jobTitle.replace(/[^a-zA-Z0-9\s]/g, "").trim().replace(/\s+/g, "_");
+    if (cleanRole && cleanRole.length > 2) {
+      return `${cleanRole}_Resume${ext}`;
+    }
+  }
+
+  // Fallback: use candidate name from first line
   let candidateName = "";
   if (text) {
     const firstLine = text.trim().split("\n")[0] || "";
@@ -300,13 +309,6 @@ export function getCleanExportFilename(text: string, ext = ".pdf", fallbackTitle
       .replace(/[^a-zA-Z0-9\s_]/g, "")
       .trim()
       .replace(/\s+/g, "_");
-  }
-
-  if (!candidateName || candidateName.length < 2 || candidateName.toUpperCase().includes("RESUME")) {
-    if (fallbackTitle) {
-      const cleanFallback = fallbackTitle.replace(/[^a-zA-Z0-9\s_]/g, "").trim().replace(/\s+/g, "_");
-      if (cleanFallback) candidateName = cleanFallback;
-    }
   }
 
   if (!candidateName || candidateName.length < 2) {
@@ -525,17 +527,16 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
       continue;
     }
 
-    // Parse LANGUAGES into individual bullet point items (e.g. • English, • Telugu)
+    // Parse LANGUAGES as individual bullet items (• English, • Telugu)
     if (currentSection === 'LANGUAGES' || currentSection === 'LANGUAGES SPOKEN' || currentSection === 'LANGUAGES KNOWN') {
       const cleanVal = stripMarkdownAsterisks(line.replace(/^[•\-\*–\s\u2022]+/, ""));
-      if (cleanVal) {
-        const items = cleanVal.split(/[,|\n]+\s*/);
-        for (const item of items) {
-          const lang = item.trim();
-          if (lang && !lang.toUpperCase().includes('LANGUAGES')) {
-            blocks.push({ type: 'bullet', text: lang });
-          }
-        }
+      if (!cleanVal || cleanVal.toUpperCase() === 'LANGUAGES') {
+        continue;
+      }
+      // Split by comma or pipe into individual language bullet items
+      const items = cleanVal.split(/[,|]+\s*/).map(s => s.trim()).filter(s => s && !s.toUpperCase().startsWith('LANGUAGE'));
+      for (const lang of items) {
+        blocks.push({ type: 'bullet', text: lang });
       }
       continue;
     }
@@ -755,8 +756,10 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
       continue;
     }
 
-    if (currentSection === 'CERTIFICATIONS' || currentSection === 'ACHIEVEMENTS' || currentSection === 'AWARDS') {
-      blocks.push({ type: 'cert', text: line });
+    if (currentSection === 'CERTIFICATIONS' || currentSection === 'ACHIEVEMENTS' || currentSection === 'AWARDS' ||
+        currentSection === 'CERTIFICATIONS & ACHIEVEMENTS' || currentSection === 'HONORS' || currentSection === 'CERTIFICATES') {
+      const cleanCertLine = stripMarkdownAsterisks(line.replace(/^[•\-\*–\s\u2022]+/, ''));
+      if (cleanCertLine) blocks.push({ type: 'cert', text: cleanCertLine });
       continue;
     }
 

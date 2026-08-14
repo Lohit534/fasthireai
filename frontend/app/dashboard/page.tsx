@@ -658,6 +658,7 @@ export default function DashboardPage() {
                   jobDescription={jobDescription}
                   userId={user?.id || ""}
                   userPlan={userPlan}
+                  jobTitle={optimizeResult.jobTitle || ""}
                 />
               </ScrollFadeIn>
 

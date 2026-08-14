@@ -31,6 +31,7 @@ interface ResumeViewerProps {
   jobDescription: string;
   userId?: string;
   userPlan?: string;
+  jobTitle?: string;
 }
 
 export default function ResumeViewer({
@@ -39,7 +40,8 @@ export default function ResumeViewer({
   resumeId,
   jobDescription,
   userId = "",
-  userPlan = "free"
+  userPlan = "free",
+  jobTitle = ""
 }: ResumeViewerProps) {
   const [copied, setCopied] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -121,7 +123,7 @@ export default function ResumeViewer({
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = getCleanExportFilename(text, ".pdf");
+      link.download = getCleanExportFilename(text, ".pdf", jobTitle);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -149,7 +151,7 @@ export default function ResumeViewer({
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = getCleanExportFilename(text, ".docx");
+      link.download = getCleanExportFilename(text, ".docx", jobTitle);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

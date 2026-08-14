@@ -224,7 +224,28 @@ export async function POST(request: NextRequest) {
     const generatedId = generateUUID();
     let resumeRecord: any = null;
 
-    const finalJobTitle = aiResult.detectedJobTitle || jobTitle || "Optimized Resume";
+    // Extract job title: prefer AI-detected, then user-provided, then extract from JD text
+    let finalJobTitle = aiResult.detectedJobTitle || jobTitle || "";
+    if (!finalJobTitle || finalJobTitle.toLowerCase() === "optimized resume") {
+      // Try extracting role from JD text
+      const jdText = (jobDescription || "").substring(0, 500);
+      const rolePatterns = [
+        /(?:position|role|job title|hiring for|looking for)[:\s]+([A-Za-z][A-Za-z\s\/\-]{3,50}?)(?:\n|,|\.|\|)/i,
+        /^([A-Z][A-Za-z\s\/\-]{5,50}?)(?:\n|$)/m,
+        /(?:we are hiring|we are looking for)[:\s]+(?:a|an)?\s*([A-Za-z][A-Za-z\s\/\-]{3,50}?)(?:\n|,|\.|\s*-)/i,
+      ];
+      for (const pattern of rolePatterns) {
+        const match = jdText.match(pattern);
+        if (match && match[1]) {
+          const extracted = match[1].trim().replace(/\s+/g, " ");
+          if (extracted.length > 4 && extracted.length < 60) {
+            finalJobTitle = extracted;
+            break;
+          }
+        }
+      }
+    }
+    if (!finalJobTitle) finalJobTitle = "Optimized Resume";
     const finalCompany = aiResult.detectedCompany || company || "General Application";
 
     try {
