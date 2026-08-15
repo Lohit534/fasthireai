@@ -248,6 +248,25 @@ export default function AdminDashboard() {
   const premiumUsers = users.filter(u => u.plan === "premium").length;
   const freeUsers = users.filter(u => u.plan === "free").length;
 
+  // Chronologically separate first 50 early adopters from 51st+ paying users
+  const chronologicalUsers = [...users].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+  const first50UsersList = chronologicalUsers.slice(0, 50);
+  const post50UsersList = chronologicalUsers.slice(50);
+
+  // Early adopter promo concessions tracked under Expenses
+  const earlyAdopterProCount = first50UsersList.filter(u => u.plan === "premium").length;
+  const earlyAdopterExpenses = earlyAdopterProCount * 99;
+
+  // Paid users from 51st user onwards
+  const payingUsers = post50UsersList.filter(u => u.plan === "premium" || u.plan === "promax");
+  const paidPremium = payingUsers.filter(u => u.plan === "premium").length;
+  const paidProMax = payingUsers.filter(u => u.plan === "promax").length;
+  const totalRevenue = paidPremium * 99 + paidProMax * 199;
+  const totalReceived = totalRevenue;
+  const netBalance = totalReceived;
+
   const filteredUsers = users.filter(u => {
     const q = userSearch.toLowerCase();
     return u.email.toLowerCase().includes(q) || (u.name || "").toLowerCase().includes(q);
@@ -341,10 +360,10 @@ export default function AdminDashboard() {
             {/* Revenue cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: "Revenue", value: `₹${(premiumUsers * 99 + promaxUsers * 199).toLocaleString()}`, icon: TrendingUp, sub: `${users.filter(u => u.plan !== "free").length} paid users`, color: "text-white" },
-                { label: "Received", value: `₹${(premiumUsers * 99 + promaxUsers * 199).toLocaleString()}`, icon: TrendingUp, sub: "Payments collected", color: "text-white" },
-                { label: "Expenses", value: "₹0", icon: TrendingDown, sub: "Team & tools", color: "text-red-400" },
-                { label: "Net Balance", value: `₹${(premiumUsers * 99 + promaxUsers * 199).toLocaleString()}`, icon: Wallet, sub: "Received minus expenses", color: "text-emerald-400" },
+                { label: "Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: TrendingUp, sub: `${payingUsers.length} paying user${payingUsers.length !== 1 ? 's' : ''} (51st onwards)`, color: "text-white" },
+                { label: "Received", value: `₹${totalReceived.toLocaleString()}`, icon: TrendingUp, sub: "Collected from paid users", color: "text-white" },
+                { label: "Expenses", value: `₹${earlyAdopterExpenses.toLocaleString()}`, icon: TrendingDown, sub: `${earlyAdopterProCount} early adopters (1-yr free)`, color: "text-red-400" },
+                { label: "Net Balance", value: `₹${netBalance.toLocaleString()}`, icon: Wallet, sub: "Collected net revenue", color: "text-emerald-400" },
               ].map((card, i) => (
                 <div key={i} className="bg-[#0e0f21]/60 border border-white/10 rounded-2xl p-5 space-y-3 hover:border-white/20 transition-all">
                   <div className="flex items-center gap-2 text-slate-300 text-sm font-semibold">

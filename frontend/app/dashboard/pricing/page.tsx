@@ -729,19 +729,40 @@ export default function PricingPage() {
 
             <form onSubmit={handleCheckoutSubmit} className="space-y-4 text-xs select-none">
 
-              {/* Plan Selected Summary */}
-              <div className="bg-[#070814] p-4 rounded-xl border border-white/5 flex justify-between items-center">
-                <div>
-                  <span className="font-bold text-white text-xs">{selectedPlan.name} Subscription</span>
-                  <p className="text-[10px] text-slate-500 mt-1">Renews {billingCycle}ly until canceled</p>
-                </div>
-                <div className="text-right">
-                  <span className="font-black text-white text-lg">
-                    {billingCycle === "monthly" ? selectedPlan.priceMonthly : selectedPlan.priceYearly}
-                  </span>
-                  <span className="text-[9px] text-slate-500 font-bold block">/ {billingCycle === "monthly" ? "month" : "year"}</span>
-                </div>
-              </div>
+              {/* Plan Selected Summary & Itemized GST Invoice */}
+              {(() => {
+                const basePrice = selectedPlan.id === "premium"
+                  ? (billingCycle === "monthly" ? 99 : 999)
+                  : (billingCycle === "monthly" ? 199 : 1999);
+                const gstAndFee = selectedPlan.id === "premium"
+                  ? (billingCycle === "monthly" ? 18 : 180)
+                  : (billingCycle === "monthly" ? 36 : 360);
+                const totalPayable = basePrice + gstAndFee;
+
+                return (
+                  <div className="bg-[#070814] p-4 rounded-xl border border-white/10 space-y-3">
+                    <div className="flex justify-between items-center pb-2 border-b border-white/5">
+                      <div>
+                        <span className="font-bold text-white text-xs">{selectedPlan.name}</span>
+                        <p className="text-[10px] text-slate-500">Billed {billingCycle}ly</p>
+                      </div>
+                      <span className="font-bold text-slate-300 text-xs">₹{basePrice}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-[11px] text-slate-400">
+                      <span>GST &amp; Payment Gateway Surcharge (18%)</span>
+                      <span className="text-emerald-400 font-semibold">+₹{gstAndFee}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-2 border-t border-white/10">
+                      <span className="font-extrabold text-white text-xs">Total Payable</span>
+                      <span className="font-black text-white text-lg text-gradient bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
+                        ₹{totalPayable}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Secure Checkout Notice */}
               <div className="p-4 bg-violet-950/10 border border-violet-500/15 rounded-xl space-y-2 text-slate-300">
@@ -750,14 +771,14 @@ export default function PricingPage() {
                   <span>Secure Razorpay Gateway</span>
                 </div>
                 <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
-                  Click the button below to initiate payment. You will pay securely via Razorpay's standard checkout interface (supporting UPI, Cards, NetBanking, and Wallets). No credit card credentials are stored or processed on our servers.
+                  You will pay securely via Razorpay (supporting UPI, GPay, PhonePe, Cards, NetBanking). Transactions are 256-Bit SSL encrypted.
                 </p>
               </div>
 
               {/* Trust statement */}
-              <div className="flex items-center gap-2 text-[9px] text-slate-500 bg-[#00e699]/5 border border-[#00e699]/15 p-3 rounded-xl leading-relaxed">
-                <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0" />
-                <span>PCI-DSS compliant. Secure 256-Bit SSL encrypted transaction.</span>
+              <div className="flex items-center gap-2 text-[9px] text-slate-500 bg-[#00e699]/5 border border-[#00e699]/15 p-2.5 rounded-xl leading-relaxed">
+                <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+                <span>PCI-DSS Level 1 compliant payment security.</span>
               </div>
 
               {/* Non-refundable Warning */}
@@ -779,7 +800,7 @@ export default function PricingPage() {
                   </>
                 ) : (
                   <>
-                    Proceed to Pay {billingCycle === "monthly" ? selectedPlan.priceMonthly : selectedPlan.priceYearly} via Razorpay
+                    Proceed to Pay ₹{selectedPlan.id === "premium" ? (billingCycle === "monthly" ? 117 : 1179) : (billingCycle === "monthly" ? 235 : 2359)} via Razorpay
                   </>
                 )}
               </Button>
