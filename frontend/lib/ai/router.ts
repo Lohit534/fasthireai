@@ -299,80 +299,105 @@ export async function callAI(prompt: string, rawText = ""): Promise<AIResult> {
   }
 }
 
+const GROQ_MODELS = [
+  process.env.GROQ_MODEL,
+  "llama-3.1-8b-instant",
+  "llama-3.3-70b-specdec",
+  "qwen-2.5-32b",
+  "deepseek-r1-distill-llama-70b",
+  "gemma2-9b-it",
+].filter(Boolean) as string[];
+
 export async function callAIText(prompt: string): Promise<string> {
   const apiKeyGroq = process.env.GROQ_API_KEY || "";
   if (apiKeyGroq) {
-    try {
-      logger.info("AI Router: Generating text response via Groq...");
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKeyGroq}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: process.env.GROQ_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct",
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.3,
-        }),
-      });
+    for (const modelName of GROQ_MODELS) {
+      try {
+        logger.info(`AI Router: Generating text response via Groq (${modelName})...`);
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKeyGroq}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.3,
+          }),
+        });
 
-      if (response.ok) {
-        const json = await response.json();
-        const content = json.choices?.[0]?.message?.content;
-        if (content) return content.trim();
+        if (response.ok) {
+          const json = await response.json();
+          const content = json.choices?.[0]?.message?.content;
+          if (content) return content.trim();
+        }
+      } catch (e) {
+        logger.warn(`AI Router: Groq text call with ${modelName} failed, trying next...`, e);
       }
-    } catch (e) {
-      logger.warn("AI Router: Groq text call failed, trying Gemini fallback...", e);
     }
   }
 
   // Fallback to Gemini
   if (process.env.GEMINI_API_KEY) {
-    try {
-      logger.info("AI Router: Generating text response via Gemini...");
-      const { GoogleGenerativeAI } = await import("@google/generative-ai");
-      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
-      if (text) return text.trim();
-    } catch (e) {
-      logger.error("AI Router: Gemini text generation failed.", e);
+    const GEMINI_MODELS = ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+    for (const modelName of GEMINI_MODELS) {
+      try {
+        logger.info(`AI Router: Generating text response via Gemini (${modelName})...`);
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        if (text) return text.trim();
+      } catch (e) {
+        logger.warn(`AI Router: Gemini text generation with ${modelName} failed, trying next...`, e);
+      }
     }
   }
 
   throw new Error("AI service unavailable for text generation.");
 }
 
-// Raw Groq call returning string content (no JSON.parse here)
+// Raw Groq call returning string content (with multi-model fallback)
 async function callGroqRaw(prompt: string): Promise<string> {
   const apiKey = process.env.GROQ_API_KEY || "";
   if (!apiKey) throw new Error("Groq API key is missing");
 
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: process.env.GROQ_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.25,
-      response_format: { type: "json_object" },
-    }),
-  });
+  let lastError: any = null;
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Groq API returned status ${response.status}: ${errorText}`);
+  for (const modelName of GROQ_MODELS) {
+    try {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: modelName,
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.25,
+          response_format: { type: "json_object" },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Groq API (${modelName}) returned status ${response.status}: ${errorText}`);
+      }
+
+      const json = await response.json();
+      const content = json.choices?.[0]?.message?.content;
+      if (content) return content;
+    } catch (err: any) {
+      lastError = err;
+      logger.warn(`Groq model ${modelName} failed, trying fallback model...`, err?.message);
+    }
   }
 
-  const json = await response.json();
-  const content = json.choices?.[0]?.message?.content;
-  if (!content) throw new Error("Empty content returned from Groq.");
-  return content;
+  throw lastError || new Error("All Groq model attempts failed.");
 }
 
 // Raw Gemini call returning string content
