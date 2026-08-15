@@ -18,9 +18,13 @@ ABSOLUTE OUTPUT RULES — NEVER VIOLATE:
 - Bullets: • character only — each on its own line
 - Name: line 1, ALL CAPS (e.g. PEYYALA LOHIT)
 - Contact info: line 2, separated by | (e.g. email | phone | location | LinkedIn | GitHub)
-- Technical Skills lines: Category Label: Skill1, Skill2 (e.g. Programming Languages: Python, C, SQL)
+- Technical Skills format: Each category on a SINGLE LINE formatted as "Category Name: Skill1, Skill2, Skill3" (e.g., Programming Languages: Python, Java, JavaScript, TypeScript, Go, C#)
+  - Categories to use: Programming Languages, Frameworks & Libraries, Databases & Backend, Cloud & DevOps, Developer Tools
+  - NEVER split a category name and its colon/skills across multiple lines
+  - NEVER include spoken/human languages in Technical Skills
 - Project line: Title | Tech Stack or Description on line 1, bullets on lines below
 - Education line: Degree | Dates on line 1, Institution | CGPA on line 2
+- Languages section (at the bottom): Strictly for spoken/communication languages ONLY (e.g., English, Telugu, Hindi, Spanish). NEVER put programming languages here. Each spoken language MUST be formatted as its own bullet point on a new line (e.g., • English\n• Telugu).
 - Preserve ALL URLs exactly as written
 - Return valid JSON only with "resume" as a multi-line string containing real \n newlines between lines!
 
@@ -30,8 +34,8 @@ STEP 1 — KEYWORD INJECTION (highest priority)
 Missing keywords to inject: ${missingKeywords.slice(0, 20).join(', ')}
 Rules:
 - Inject EVERY missing keyword at least once
-- Add missing tech skills directly to Skills section
-- Inject remaining keywords into existing bullets
+- Add missing technical skills directly to the appropriate category in Technical Skills
+- Inject remaining keywords into existing bullets with quantifiable achievements
 - Match exact casing from job description
 - Must read naturally — never keyword stuff
 - Rewrite Summary to include 5+ JD keywords
@@ -60,21 +64,22 @@ Rewrite Professional Summary to:
 - Include minimum 5 keywords from JD
 
 STEP 4 — SKILLS REORGANIZATION
-- List JD-matching skills FIRST in skills section
+- List JD-matching skills FIRST in each skill category
 - Add all missing technical skills from JD
-- Group by category: Languages, Frameworks, Tools, Databases, Cloud, Methodologies
-- Keep only skills the person actually has
+- Group by category: Programming Languages, Frameworks & Libraries, Databases & Backend, Cloud & DevOps, Developer Tools
+- Keep only skills relevant to the candidate's profile
 
 STEP 5 — SECTION ORDER FOR ATS
-Reorder to this sequence for maximum ATS score:
+Reorder to this universal sequence for maximum ATS score:
 1. Name + Contact
-2. Professional Summary
-3. Technical Skills
-4. Experience / Internship
-5. Projects
-6. Education
-7. Certifications
-8. Languages
+2. PROFESSIONAL SUMMARY
+3. TECHNICAL SKILLS
+4. PROFESSIONAL EXPERIENCE
+5. PROJECTS
+6. EDUCATION
+7. CERTIFICATIONS
+8. ACHIEVEMENTS
+9. LANGUAGES (Spoken languages with • bullets only)
 
 JOB DESCRIPTION:
 ${jobDescription.slice(0, 3000)}

@@ -43,7 +43,9 @@ export function serializeResumeJSONToText(json: ResumeJSON): string {
   if (json.skills?.length) {
     lines.push("TECHNICAL SKILLS");
     for (const s of json.skills) {
-      lines.push(`${s.category}: ${s.items.join(", ")}`);
+      let cat = (s.category || "Technical Skills").trim();
+      if (/^languages?$/i.test(cat)) cat = "Programming Languages";
+      lines.push(`${cat}: ${s.items.join(", ")}`);
     }
     lines.push("");
   }
@@ -105,7 +107,8 @@ export function serializeResumeJSONToText(json: ResumeJSON): string {
   if (json.languages?.length) {
     lines.push("LANGUAGES");
     json.languages.forEach((lang: string) => {
-      lines.push(`• ${lang}`);
+      const clean = lang.replace(/^[•\-\*–—\s]+/, "").trim();
+      if (clean) lines.push(`• ${clean}`);
     });
     lines.push("");
   }
@@ -143,7 +146,12 @@ export function sanitizeResumeText(text: string): string {
     result = result.replace(pattern, replacement);
   }
 
-  // 2. Remove LaTeX & Markdown artifacts safely without destroying newlines
+  // 2. Rejoin broken category headers in Technical Skills (e.g. "Languages\n: Python..." -> "Programming Languages: Python...")
+  result = result.replace(/^([A-Za-z &\/]+)\s*\n+\s*:\s*/gm, '$1: ');
+  result = result.replace(/^Languages\s*\n+:\s*/gim, 'Programming Languages: ');
+  result = result.replace(/^Languages:\s*(Python|Java|C\b|C\+\+|C#|JavaScript|TypeScript|Go|Ruby|PHP|Swift|Kotlin|Rust|R\b|SQL|HTML)/gim, 'Programming Languages: $1');
+
+  // 3. Remove LaTeX & Markdown artifacts safely without destroying newlines
   result = result
     .replace(/\\[a-zA-Z]+\{([^}]*)\}/g, '$1')
     .replace(/\\[a-zA-Z]+/g, '')
@@ -154,13 +162,13 @@ export function sanitizeResumeText(text: string): string {
     .replace(/^#{1,6}\s+/gm, '')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
 
-  // 3. Rejoin broken words split across lines within lower-case sentence continuations
+  // 4. Rejoin broken words split across lines within lower-case sentence continuations
   result = result.replace(/([a-z,])\r?\n([a-z])/g, '$1 $2');
 
-  // 4. Normalize bullets
+  // 5. Normalize bullets
   result = result.replace(/^[\s]*[-–—·○►▪✓→]\s*/gm, '• ');
 
-  // 5. Section headers: Ensure double newlines before section headers ONLY when on boundary
+  // 6. Section headers: Ensure double newlines before section headers ONLY when on boundary
   const SECTIONS = [
     'PROFESSIONAL SUMMARY', 'SUMMARY', 'OBJECTIVE',
     'TECHNICAL SKILLS', 'SKILLS', 'CORE SKILLS', 'KEY SKILLS',
@@ -176,7 +184,24 @@ export function sanitizeResumeText(text: string): string {
     result = result.replace(reg, '\n\n$2\n');
   }
 
-  // 6. Clean spacing
+  // 7. Ensure LANGUAGES section at the bottom is bullet points only
+  const langMatch = result.match(/(?:^|\n)(LANGUAGES)\n([\s\S]*?)(?=\n[A-Z\s]{4,}|\n*$)/i);
+  if (langMatch) {
+    const rawLangContent = langMatch[2].trim();
+    if (rawLangContent) {
+      const items = rawLangContent
+        .split(/[\n,–—|•]+/)
+        .map(s => s.trim())
+        .filter(s => s && !s.toUpperCase().startsWith("LANGUAGE"));
+      
+      if (items.length > 0) {
+        const bulletLangs = items.map(l => `• ${l}`).join('\n');
+        result = result.replace(langMatch[0], `\nLANGUAGES\n${bulletLangs}\n`);
+      }
+    }
+  }
+
+  // 8. Clean spacing
   result = result
     .replace(/\n{3,}/g, '\n\n')
     .replace(/[ \t]{2,}/g, ' ')

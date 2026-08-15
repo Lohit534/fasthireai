@@ -515,13 +515,25 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
     if (currentSection === 'TECHNICAL SKILLS' || currentSection === 'SKILLS' || currentSection === 'CORE SKILLS' || currentSection === 'SOFT SKILLS' || currentSection === 'SKILLS & COMPETENCIES' || currentSection === 'KEY SKILLS') {
       if (line.includes(':')) {
         const colonIdx = line.indexOf(':');
-        const label = stripMarkdownAsterisks(line.substring(0, colonIdx));
-        const value = stripMarkdownAsterisks(line.substring(colonIdx + 1).replace(/^[•\-\*–\s\u2022]+/, ""));
-        blocks.push({ type: 'skillLine', label, value });
+        let label = stripMarkdownAsterisks(line.substring(0, colonIdx)).trim();
+        if (/^languages?$/i.test(label)) label = 'Programming Languages';
+        const value = stripMarkdownAsterisks(line.substring(colonIdx + 1).replace(/^[•\-\*–\s\u2022]+/, "")).trim();
+        if (value) {
+          blocks.push({ type: 'skillLine', label: label || 'Technical Skills', value });
+        }
       } else {
-        const cleanVal = stripMarkdownAsterisks(line.replace(/^[•\-\*–\s\u2022]+/, ""));
+        const cleanVal = stripMarkdownAsterisks(line.replace(/^[•\-\*–\s\u2022]+/, "")).trim();
         if (cleanVal) {
-          blocks.push({ type: 'skillLine', label: currentSection === 'SOFT SKILLS' ? 'Soft Skills' : 'Skills', value: cleanVal });
+          // If the next line starts with a colon, merge them
+          if (idx + 1 < rawLines.length && rawLines[idx + 1].trim().startsWith(':')) {
+            const nextVal = stripMarkdownAsterisks(rawLines[idx + 1].replace(/^:\s*/, '')).trim();
+            let label = cleanVal;
+            if (/^languages?$/i.test(label)) label = 'Programming Languages';
+            blocks.push({ type: 'skillLine', label, value: nextVal });
+            idx++; // skip the colon line
+          } else {
+            blocks.push({ type: 'skillLine', label: currentSection === 'SOFT SKILLS' ? 'Soft Skills' : 'Technical Skills', value: cleanVal });
+          }
         }
       }
       continue;
@@ -533,8 +545,12 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
       if (!cleanVal || cleanVal.toUpperCase() === 'LANGUAGES') {
         continue;
       }
-      // Split by comma or pipe into individual language bullet items
-      const items = cleanVal.split(/[,|]+\s*/).map(s => s.trim()).filter(s => s && !s.toUpperCase().startsWith('LANGUAGE'));
+      // Split by comma, pipe, en-dash, em-dash, or hyphen into individual language bullet items
+      const items = cleanVal
+        .split(/[,|–—\-\/]+\s*/)
+        .map(s => s.trim())
+        .filter(s => s && !s.toUpperCase().startsWith('LANGUAGE') && !/^(proficient|fluent|native|intermediate|basic|read|write|speak)$/i.test(s));
+
       for (const lang of items) {
         blocks.push({ type: 'bullet', text: lang });
       }
