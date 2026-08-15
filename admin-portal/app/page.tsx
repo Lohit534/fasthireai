@@ -29,12 +29,27 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // 1. Listen for auth state transitions (handles incoming OAuth tokens & hash redirects)
+    const { data: authListener } = (supabase as any).auth.onAuthStateChange(
+      (event: string, session: any) => {
+        if (session?.user && isAdminEmail(session.user.email)) {
+          window.location.href = "/dashboard";
+        }
+      }
+    );
+
+    // 2. Immediate session evaluation
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user && isAdminEmail(data.session.user.email)) {
         window.location.href = "/dashboard";
+        return;
       }
       setChecking(false);
     });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {

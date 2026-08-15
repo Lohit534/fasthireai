@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, KeyRound, Mail, User, AlertCircle, CheckCircle2, Briefcase, Check, ArrowLeft } from "lucide-react";
+import { Loader2, KeyRound, Mail, User, AlertCircle, CheckCircle2, Briefcase, Check, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +18,7 @@ function SignupFormContent() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -361,14 +362,22 @@ function SignupFormContent() {
                   <div className="relative">
                     <KeyRound className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
                     <Input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       disabled={loading}
-                      className="pl-11 h-10 border-white/5 bg-[#0b0c1b] text-white focus:border-violet-500 focus:ring-violet-500 rounded-xl"
+                      className="pl-11 pr-11 h-10 border-white/5 bg-[#0b0c1b] text-white focus:border-violet-500 focus:ring-violet-500 rounded-xl"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-3 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
 

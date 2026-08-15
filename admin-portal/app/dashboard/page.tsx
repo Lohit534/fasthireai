@@ -63,9 +63,9 @@ export default function AdminDashboard() {
 
   /* ── Auth guard ── */
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      const user = data.session?.user;
-      const token = data.session?.access_token;
+    const checkAndInit = (session: any) => {
+      const user = session?.user;
+      const token = session?.access_token;
       if (!user || !isAdminEmail(user.email)) {
         window.location.href = "/";
         return;
@@ -75,7 +75,31 @@ export default function AdminDashboard() {
       loadUsers(token);
       loadTickets(token);
       loadFeedback(token);
+    };
+
+    const { data: authListener } = (supabase as any).auth.onAuthStateChange(
+      (_event: string, session: any) => {
+        if (session?.user) {
+          checkAndInit(session);
+        }
+      }
+    );
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        checkAndInit(data.session);
+      } else {
+        // Allow brief time if OAuth hash is present in URL
+        if (typeof window !== "undefined" && window.location.hash.includes("access_token")) {
+          return;
+        }
+        window.location.href = "/";
+      }
     });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
   }, []);
 
   const authHeaders = (token: string | null) => ({

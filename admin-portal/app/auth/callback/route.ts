@@ -14,5 +14,6 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(new URL("/?error=auth-error", requestUrl.origin));
+  // If redirected without code (e.g. implicit hash token flow), forward to dashboard so client parses hash
+  return NextResponse.redirect(new URL(next, requestUrl.origin));
 }
