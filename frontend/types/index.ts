@@ -72,10 +72,11 @@ export const MAX_JD_CHARS = 5000;
 export const MIN_RESUME_CHARS = 100;
 export const MIN_JD_CHARS = 50;
 
-// Owner emails get unlimited access — credit limits are bypassed entirely
-export const OWNER_EMAIL = "lohithpeyyala@gmail.com";
+// Owner email is stored in environment variable only — never in source code
+export const OWNER_EMAIL = process.env.OWNER_EMAIL || process.env.ADMIN_EMAIL || "";
 export const isOwnerEmail = (email?: string): boolean => {
   if (!email) return false;
-  const e = email.toLowerCase().trim();
-  return e === "lohithpeyyala@gmail.com";
+  const ownerEmail = process.env.OWNER_EMAIL || process.env.ADMIN_EMAIL || "";
+  if (!ownerEmail) return false;
+  return email.toLowerCase().trim() === ownerEmail.toLowerCase().trim();
 };

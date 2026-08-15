@@ -311,7 +311,7 @@ export async function callAIText(prompt: string): Promise<string> {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
+          model: process.env.GROQ_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct",
           messages: [{ role: "user", content: prompt }],
           temperature: 0.3,
         }),
@@ -357,7 +357,7 @@ async function callGroqRaw(prompt: string): Promise<string> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
+      model: process.env.GROQ_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.25,
       response_format: { type: "json_object" },
