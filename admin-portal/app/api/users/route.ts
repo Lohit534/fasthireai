@@ -14,7 +14,7 @@ async function verifyAdmin(request: NextRequest) {
   return data.user;
 }
 
-// GET /api/users — list all users with real Credit records & analytics
+// GET /api/users — list all users with strict real plan status from database
 export async function GET(request: NextRequest) {
   const admin_user = await verifyAdmin(request);
   if (!admin_user) {
@@ -39,36 +39,25 @@ export async function GET(request: NextRequest) {
 
     if (creditsErr) throw creditsErr;
 
-    // 3. Fetch first 50 early adopters list (for early adopter Pro accounts)
-    const { data: first50Users } = await adminClient
-      .from("User")
-      .select("id")
-      .order("createdAt", { ascending: true })
-      .limit(50);
-
-    const first50Set = new Set((first50Users || []).map((u: any) => u.id));
-    const totalCount = users?.length || 0;
-
-    // 4. Map credit records by userId
+    // 3. Map credit records by userId
     const creditMap: Record<string, any> = {};
     for (const c of credits || []) {
       creditMap[c.userId] = c;
     }
 
-    // 5. Merge user profiles with their real plan & credit balance
+    // 4. Merge user profiles with their strict actual plan & paid credit balance
     const enriched = (users || []).map((u: any) => {
       const cred = creditMap[u.id] || {};
       const paidCredits = cred.paidCredits ?? 0;
       const freeUsed = cred.freeUsed ?? 0;
       const planId = (cred.planId || "").toLowerCase();
-      const isFirst50 = totalCount <= 50 || first50Set.has(u.id);
 
       let plan: "owner" | "promax" | "premium" | "free" = "free";
       if (isAdminEmail(u.email)) {
         plan = "owner";
       } else if (paidCredits > 900000 || planId === "promax") {
         plan = "promax";
-      } else if (paidCredits > 0 || planId === "premium" || isFirst50) {
+      } else if (paidCredits > 0 || planId === "premium") {
         plan = "premium";
       } else {
         plan = "free";
@@ -77,19 +66,21 @@ export async function GET(request: NextRequest) {
       return {
         ...u,
         plan,
-        paidCredits: plan === "promax" ? 999999 : paidCredits > 0 ? paidCredits : isFirst50 ? 15 : 0,
+        paidCredits: plan === "owner" ? 999999 : paidCredits,
         freeUsed,
       };
     });
 
-    // 6. Analytics metrics
+    // 5. Fetch platform usage counts
     const { count: totalOptimizations } = await adminClient
       .from("Resume")
-      .select("id", { count: "exact", head: true });
+      .select("id", { count: "exact", head: true })
+      .neq("jobTitle", "SUPPORT_TICKET");
 
     const { count: totalTickets } = await adminClient
-      .from("SupportMessage")
-      .select("id", { count: "exact", head: true });
+      .from("Resume")
+      .select("id", { count: "exact", head: true })
+      .eq("jobTitle", "SUPPORT_TICKET");
 
     const analytics = {
       totalOptimizations: totalOptimizations || 0,
