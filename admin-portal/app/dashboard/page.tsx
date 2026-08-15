@@ -244,7 +244,7 @@ export default function AdminDashboard() {
 
   /* ── Derived values ── */
   const totalUsers = users.length;
-  const promaxUsers = users.filter(u => u.plan === "promax").length;
+  const promaxUsers = users.filter(u => u.plan === "promax" || u.plan === "owner").length;
   const premiumUsers = users.filter(u => u.plan === "premium").length;
   const freeUsers = users.filter(u => u.plan === "free").length;
 
@@ -472,23 +472,23 @@ export default function AdminDashboard() {
                           <span className="text-[10px] text-slate-500 font-semibold block truncate mt-0.5">{u.email}</span>
                         </div>
                         <span className={`text-[8px] font-black px-2 py-0.5 rounded-full border shrink-0 ${
-                          u.plan === "owner" ? "bg-violet-500/10 border-violet-500/20 text-violet-400" :
+                          u.plan === "owner" ? "bg-gradient-to-r from-violet-500/20 to-indigo-500/20 border-violet-500/30 text-violet-300 shadow-sm" :
                           u.plan === "promax" ? "bg-indigo-500/10 border-indigo-500/20 text-indigo-400" :
                           u.plan === "premium" ? "bg-cyan-500/10 border-cyan-500/20 text-cyan-400" :
                           "bg-slate-500/10 border-slate-500/20 text-slate-400"
                         }`}>
-                          {u.plan === "promax" ? "Pro Max" : u.plan === "premium" ? "Premium" : u.plan === "owner" ? "Owner" : "Free"}
+                          {u.plan === "owner" ? "👑 Owner (Pro Max)" : u.plan === "promax" ? "Pro Max" : u.plan === "premium" ? "Premium Pro" : "Free Tier"}
                         </span>
                       </div>
                       <div className="border-t border-white/5 pt-3 space-y-1.5 text-[10px] font-semibold text-slate-400">
                         <div className="flex justify-between"><span>Registered:</span><span className="text-white">{new Date(u.createdAt).toLocaleDateString()}</span></div>
                         <div className="flex justify-between"><span>Free scans used:</span><span className="text-white">{u.freeUsed}</span></div>
-                        <div className="flex justify-between"><span>Paid balance:</span><span className="text-white">{u.paidCredits > 9999 ? "Unlimited" : `${u.paidCredits} credits`}</span></div>
+                        <div className="flex justify-between"><span>Paid balance:</span><span className="text-white">{u.plan === "owner" || u.paidCredits > 9999 ? "Unlimited (Pro Max)" : `${u.paidCredits} credits`}</span></div>
                       </div>
                       <div className="border-t border-white/5 pt-3 flex items-center justify-between">
                         <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Modify Plan</span>
                         {u.plan === "owner" ? (
-                          <span className="text-[9px] text-slate-600 font-bold">Immutable Owner</span>
+                          <span className="text-[9px] text-violet-300 font-bold bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-md">👑 Pro Max Unlimited (Owner)</span>
                         ) : updatingPlanId === u.id ? (
                           <Loader2 className="h-3 w-3 text-violet-500 animate-spin" />
                         ) : (
