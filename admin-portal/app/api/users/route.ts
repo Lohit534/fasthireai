@@ -14,7 +14,7 @@ async function verifyAdmin(request: NextRequest) {
   return data.user;
 }
 
-// GET /api/users — list all users with strict real plan status from database
+// GET /api/users — list all users with synchronized plan status, 1-year claim checks, and pricing credits
 export async function GET(request: NextRequest) {
   const admin_user = await verifyAdmin(request);
   if (!admin_user) {
@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const adminClient = getAdminClient() as any;
+    const now = new Date();
 
     // 1. Fetch all registered users
     const { data: users, error: usersErr } = await adminClient
@@ -45,33 +46,49 @@ export async function GET(request: NextRequest) {
       creditMap[c.userId] = c;
     }
 
-    // 4. Merge user profiles with their strict actual plan & paid credit balance
+    // 4. Merge user profiles with exact database credits, 1-year early adopter perk status, and pricing plans
     const enriched = (users || []).map((u: any) => {
       const cred = creditMap[u.id] || {};
-      const paidCredits = cred.paidCredits ?? 0;
+      const rawPaidCredits = cred.paidCredits ?? 0;
       const freeUsed = cred.freeUsed ?? 0;
       const planId = (cred.planId || "").toLowerCase();
+      const billingCycle = cred.billingCycle || "monthly";
+
+      // Check expiry date if user claimed 1-year perk or purchased subscription
+      let isExpired = false;
+      if (cred.expiresAt) {
+        const exp = new Date(cred.expiresAt);
+        if (now > exp) isExpired = true;
+      }
 
       let plan: "owner" | "promax" | "premium" | "free" = "free";
+      let displayPaidCredits = rawPaidCredits;
+
       if (isAdminEmail(u.email)) {
         plan = "owner";
-      } else if (paidCredits > 900000 || planId === "promax") {
+        displayPaidCredits = 999999;
+      } else if (!isExpired && (rawPaidCredits > 900000 || planId === "promax")) {
         plan = "promax";
-      } else if (paidCredits > 0 || planId === "premium") {
+        displayPaidCredits = 999999;
+      } else if (!isExpired && (rawPaidCredits > 0 || planId === "premium" || billingCycle === "yearly")) {
         plan = "premium";
+        displayPaidCredits = rawPaidCredits > 0 ? rawPaidCredits : 15;
       } else {
         plan = "free";
+        displayPaidCredits = 0;
       }
 
       return {
         ...u,
         plan,
-        paidCredits: plan === "owner" ? 999999 : paidCredits,
+        paidCredits: displayPaidCredits,
         freeUsed,
+        billingCycle,
+        expiresAt: cred.expiresAt || null,
       };
     });
 
-    // 5. Fetch platform usage counts
+    // 5. Fetch platform analytics
     const { count: totalOptimizations } = await adminClient
       .from("Resume")
       .select("id", { count: "exact", head: true })
@@ -93,7 +110,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/users — modify a user's plan in Supabase "Credit" table
+// POST /api/users — modify a user's plan and credits in Supabase "Credit" table
 export async function POST(request: NextRequest) {
   const admin_user = await verifyAdmin(request);
   if (!admin_user) {
@@ -101,16 +118,32 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { targetUserId, planId } = await request.json();
+    const { targetUserId, planId, customCredits } = await request.json();
     if (!targetUserId || !planId) {
       return NextResponse.json({ error: "targetUserId and planId are required" }, { status: 400 });
     }
 
     const adminClient = getAdminClient() as any;
+    const now = new Date();
 
+    // Map plan to exact pricing credits and expiry cycle
     let paidCredits = 0;
-    if (planId === "premium") paidCredits = 15;
-    else if (planId === "promax") paidCredits = 999999;
+    let billingCycle = "monthly";
+    let expiresAt: string | null = null;
+
+    if (customCredits !== undefined && Number(customCredits) >= 0) {
+      paidCredits = Number(customCredits);
+    } else if (planId === "premium") {
+      paidCredits = 15;
+      expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    } else if (planId === "promax") {
+      paidCredits = 999999;
+      expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    } else {
+      // Free plan
+      paidCredits = 0;
+      expiresAt = null;
+    }
 
     const { error } = await adminClient
       .from("Credit")
@@ -119,14 +152,16 @@ export async function POST(request: NextRequest) {
           userId: targetUserId,
           planId: planId,
           paidCredits: paidCredits,
-          updatedAt: new Date().toISOString(),
+          billingCycle: billingCycle,
+          expiresAt: expiresAt,
+          updatedAt: now.toISOString(),
         },
         { onConflict: "userId" }
       );
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, paidCredits });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
