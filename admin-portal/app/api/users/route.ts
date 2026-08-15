@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase, getAdminClient } from "@/lib/supabase";
+import { getAdminClient } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -8,7 +8,9 @@ async function verifyAdmin(request: NextRequest) {
   const authHeader = request.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) return null;
   const token = authHeader.replace("Bearer ", "").trim();
-  const { data } = await supabase.auth.getUser(token);
+  // Use service role client to verify the JWT securely
+  const adminClient = getAdminClient();
+  const { data } = await adminClient.auth.getUser(token);
   if (!data?.user || !isAdminEmail(data.user.email)) return null;
   return data.user;
 }
@@ -45,16 +47,6 @@ export async function GET(request: NextRequest) {
     const creditMap: Record<string, any> = {};
     for (const c of credits || []) {
       creditMap[c.userId] = c;
-    }
-
-    const resumeCount: Record<string, number> = {};
-    for (const r of resumes || []) {
-      resumeCount[r.userId] = (resumeCount[r.userId] || 0) + 1;
-    }
-
-    const ticketCount: Record<string, number> = {};
-    for (const t of tickets || []) {
-      ticketCount[t.userId] = (ticketCount[t.userId] || 0) + 1;
     }
 
     const enriched = (users || []).map((u: any) => {

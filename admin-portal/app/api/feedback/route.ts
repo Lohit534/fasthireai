@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase, getAdminClient } from "@/lib/supabase";
+import { getAdminClient } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -8,7 +8,8 @@ async function verifyAdmin(request: NextRequest) {
   const authHeader = request.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) return null;
   const token = authHeader.replace("Bearer ", "").trim();
-  const { data } = await supabase.auth.getUser(token);
+  const adminClient = getAdminClient();
+  const { data } = await adminClient.auth.getUser(token);
   if (!data?.user || !isAdminEmail(data.user.email)) return null;
   return data.user;
 }
