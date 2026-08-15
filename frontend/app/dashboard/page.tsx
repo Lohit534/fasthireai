@@ -254,15 +254,7 @@ export default function DashboardPage() {
       return;
     }
 
-    // Detect missing fields before running optimization
-    const missing = detectMissingFields(resumeText);
-    if (missing.length > 0) {
-      setPendingResumeText(resumeText);
-      setMissingFields(missing);
-      setShowMissingModal(true);
-      return;
-    }
-
+    // Directly proceed to AI optimization without interrupting the user
     runAIAutoImprove(resumeText);
   };
 

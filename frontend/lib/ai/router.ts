@@ -35,7 +35,8 @@ export function serializeResumeJSONToText(json: ResumeJSON): string {
   // Summary
   if (json.summary) {
     lines.push("PROFESSIONAL SUMMARY");
-    lines.push(json.summary);
+    const cleanSummary = json.summary.replace(/^[•\-\*–—\s]+/gm, "").replace(/\n+/g, " ").trim();
+    lines.push(cleanSummary);
     lines.push("");
   }
 
@@ -184,7 +185,21 @@ export function sanitizeResumeText(text: string): string {
     result = result.replace(reg, '\n\n$2\n');
   }
 
-  // 7. Ensure LANGUAGES section at the bottom is bullet points only
+  // 7. Ensure PROFESSIONAL SUMMARY is pure narrative text without bullets
+  const summaryMatch = result.match(/(?:^|\n)(PROFESSIONAL SUMMARY|SUMMARY|OBJECTIVE)\n([\s\S]*?)(?=\n[A-Z\s]{4,}|\n*$)/i);
+  if (summaryMatch) {
+    const rawSummaryContent = summaryMatch[2].trim();
+    const cleanSummaryText = rawSummaryContent
+      .split('\n')
+      .map(line => line.replace(/^[•\-\*–—\s]+/, '').trim())
+      .filter(Boolean)
+      .join(' ');
+    if (cleanSummaryText) {
+      result = result.replace(summaryMatch[0], `\n${summaryMatch[1].toUpperCase()}\n${cleanSummaryText}\n`);
+    }
+  }
+
+  // 8. Ensure LANGUAGES section at the bottom is bullet points only
   const langMatch = result.match(/(?:^|\n)(LANGUAGES)\n([\s\S]*?)(?=\n[A-Z\s]{4,}|\n*$)/i);
   if (langMatch) {
     const rawLangContent = langMatch[2].trim();
@@ -201,7 +216,7 @@ export function sanitizeResumeText(text: string): string {
     }
   }
 
-  // 8. Clean spacing
+  // 9. Clean spacing
   result = result
     .replace(/\n{3,}/g, '\n\n')
     .replace(/[ \t]{2,}/g, ' ')

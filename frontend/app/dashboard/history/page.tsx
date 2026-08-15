@@ -33,7 +33,8 @@ import {
   HelpCircle,
   GraduationCap,
   Sparkle,
-  Briefcase
+  Briefcase,
+  Trash2
 } from "lucide-react";
 
 import Link from "next/link";
@@ -722,6 +723,7 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
   const [selected, setSelected] = useState<ResumeRecord | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ResumeRecord | null>(null);
   const [userPlan, setUserPlan] = useState<string>("free");
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
@@ -842,7 +844,7 @@ export default function HistoryPage() {
               resume={selected}
               userPlan={userPlan}
               onBack={() => setSelected(null)}
-              onDelete={() => handleDelete(selected)}
+              onDelete={() => setDeleteTarget(selected)}
             />
           ) : (
             /* List optimizations dashboard view */
@@ -900,7 +902,7 @@ export default function HistoryPage() {
                       <HistoryRow
                         resume={resume}
                         onClick={() => setSelected(resume)}
-                        onDelete={() => handleDelete(resume)}
+                        onDelete={() => setDeleteTarget(resume)}
                       />
                     </ScrollFadeIn>
                   ))}
@@ -951,6 +953,54 @@ export default function HistoryPage() {
           )}
         </ScrollFadeIn>
       </main>
+
+      {/* CENTERED DELETE CONFIRMATION POPUP MODAL */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-[#060713]/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-[#0d0e1f] border border-red-500/20 p-6 rounded-2xl space-y-4 shadow-2xl shadow-red-950/20 animate-in fade-in zoom-in-95 duration-150 select-none">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shrink-0">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-white text-sm">Delete Optimization Record</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Are you sure you want to delete this optimization history record?</p>
+              </div>
+            </div>
+
+            <div className="bg-[#070814] p-3 rounded-xl border border-white/5 text-xs text-slate-300">
+              <span className="font-bold text-white block truncate">{deleteTarget.jobTitle || "Resume Optimization"}</span>
+              <span className="text-[10px] text-slate-500">{formatDate(deleteTarget.createdAt)}</span>
+            </div>
+
+            <p className="text-[11px] text-red-400/90 font-medium">
+              This action cannot be undone and will permanently remove this record from your history.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setDeleteTarget(null)}
+                className="text-slate-400 hover:text-white text-xs font-semibold px-4 h-9 rounded-xl hover:bg-white/5"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  handleDelete(deleteTarget);
+                  setDeleteTarget(null);
+                }}
+                className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 h-9 rounded-xl shadow-lg shadow-red-600/20"
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

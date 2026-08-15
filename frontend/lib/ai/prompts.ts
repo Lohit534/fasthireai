@@ -22,6 +22,7 @@ ABSOLUTE OUTPUT RULES — NEVER VIOLATE:
   - Categories to use: Programming Languages, Frameworks & Libraries, Databases & Backend, Cloud & DevOps, Developer Tools
   - NEVER split a category name and its colon/skills across multiple lines
   - NEVER include spoken/human languages in Technical Skills
+- Professional Summary format: Strictly a cohesive 2-4 sentence narrative paragraph (NO bullet points, NO dashes, text only).
 - Project line: Title | Tech Stack or Description on line 1, bullets on lines below
 - Education line: Degree | Dates on line 1, Institution | CGPA on line 2
 - Languages section (at the bottom): Strictly for spoken/communication languages ONLY (e.g., English, Telugu, Hindi, Spanish). NEVER put programming languages here. Each spoken language MUST be formatted as its own bullet point on a new line (e.g., • English\n• Telugu).
@@ -57,6 +58,7 @@ Quantification rules:
 
 STEP 3 — SUMMARY REWRITE
 Rewrite Professional Summary to:
+- Pure narrative text paragraph ONLY — ABSOLUTELY NO bullet points (•) or dashes
 - First sentence: target job title + top 3 JD skills
 - Second sentence: experience + key achievement
 - Third sentence: value you bring to this role
