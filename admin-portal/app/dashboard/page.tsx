@@ -241,19 +241,28 @@ export default function AdminDashboard() {
       <Toaster position="top-right" toastOptions={{ style: { background: "#0d0e22", color: "#e2e8f0", border: "1px solid rgba(255,255,255,0.08)", fontSize: "12px" } }} />
 
       {/* Top bar */}
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#060713]/90 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="h-7 w-7 rounded-lg bg-violet-500/15 border border-violet-500/25 flex items-center justify-center">
-              <ShieldAlert className="h-4 w-4 text-violet-400" />
+      <header className="sticky top-0 z-50 border-b border-white/8 bg-[#060713]/90 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3 select-none">
+            <img 
+              src="/logo.png" 
+              alt="FastHire Logo" 
+              className="h-8 w-8 rounded-xl object-cover shadow-md shadow-violet-500/20 ring-1 ring-white/10" 
+            />
+            <div className="flex flex-col">
+              <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-[#c2c1ff] via-[#8b5cf6] to-[#0A84FF] bg-clip-text text-transparent">
+                FastHire AI
+              </span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-violet-400">
+                Admin Console
+              </span>
             </div>
-            <span className="font-extrabold text-white text-sm tracking-tight">FastHire AI <span className="text-violet-400">Admin</span></span>
           </div>
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
+            className="flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-white px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer shadow-sm"
           >
-            <LogOut className="h-3.5 w-3.5" />
+            <LogOut className="h-3.5 w-3.5 text-slate-400" />
             Sign Out
           </button>
         </div>
