@@ -315,19 +315,27 @@ export default function BillingPage() {
                 ) : (
                   <div className="divide-y divide-white/5">
                     {invoices.map((inv) => (
-                      <div key={inv.id} className="py-3 flex justify-between items-center gap-4 text-xs font-semibold">
-                        <div className="space-y-0.5 truncate">
-                          <span className="text-white block text-[11px] truncate max-w-full">{inv.description}</span>
+                      <div
+                        key={inv.id}
+                        onClick={() => handlePrintReceipt(inv)}
+                        className="py-3 flex justify-between items-center gap-4 text-xs font-semibold cursor-pointer group hover:bg-white/[0.02] -mx-2 px-2 rounded-lg transition-colors"
+                      >
+                        <div className="space-y-0.5 truncate flex-1">
+                          <span className="text-white group-hover:text-violet-300 transition-colors block text-[11px] truncate max-w-full">{inv.description}</span>
                           <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">{inv.date} &bull; {inv.id}</span>
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
                           <span className="text-white text-xs font-bold">{inv.amount}</span>
                           <button
-                            onClick={() => handlePrintReceipt(inv)}
-                            className="p-1.5 rounded hover:bg-white/5 border border-white/5 text-slate-400 hover:text-white transition-colors"
-                            title="Download Receipt"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePrintReceipt(inv);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-violet-500/10 group-hover:bg-violet-600 border border-violet-500/20 text-violet-300 group-hover:text-white transition-all flex items-center gap-1.5 text-[10px] font-bold shadow-sm"
+                            title="Download Official GST Tax Invoice"
                           >
                             <FileText className="h-3.5 w-3.5" />
+                            <span>Invoice</span>
                           </button>
                         </div>
                       </div>

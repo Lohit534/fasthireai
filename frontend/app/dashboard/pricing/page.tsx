@@ -516,45 +516,13 @@ export default function PricingPage() {
             </button>
           </div>
 
-          {/* Active Paid Plan Status with GST Invoice Download Button */}
-          {currentPlan !== "free" && (
-            <div className="max-w-xl mx-auto mb-6 p-4 rounded-2xl bg-gradient-to-r from-violet-950/40 via-[#0e0f21] to-indigo-950/40 border border-violet-500/30 flex items-center justify-between gap-4 shadow-xl select-none animate-in fade-in duration-200">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-violet-500/10 border border-violet-500/25 flex items-center justify-center text-violet-400 shrink-0">
-                  <Receipt className="h-5 w-5" />
-                </div>
-                <div>
-                  <span className="font-extrabold text-white text-xs block">Active Subscription: {currentPlan === "promax" ? "Pro Max" : "Premium Pro"}</span>
-                  <span className="text-[10px] text-slate-400 font-medium">Official GST payment invoice ready</span>
-                </div>
-              </div>
-              <Button
-                onClick={() => {
-                  const base = currentPlan === "promax" ? (billingCycle === "monthly" ? 199 : 1999) : (billingCycle === "monthly" ? 99 : 999);
-                  const gst = currentPlan === "promax" ? (billingCycle === "monthly" ? 36 : 360) : (billingCycle === "monthly" ? 18 : 180);
-                  const total = currentPlan === "promax" ? (billingCycle === "monthly" ? 235 : 2359) : (billingCycle === "monthly" ? 117 : 1179);
-                  
-                  setInvoiceData({
-                    invoiceNumber: `INV-2026-${(userId || "SUB").slice(0, 6).toUpperCase()}`,
-                    date: new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
-                    userName: "FastHire Subscriber",
-                    userEmail: userEmail || "subscriber@fasthire.ai",
-                    planName: currentPlan === "promax" ? "FastHire Pro Max (Individual Unlimited)" : "FastHire Premium Pro",
-                    billingCycle: billingCycle,
-                    basePrice: base,
-                    gstAmount: gst,
-                    totalAmount: total,
-                  });
-                  setIsInvoiceOpen(true);
-                }}
-                size="sm"
-                className="bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs h-9 px-3.5 rounded-xl flex items-center gap-1.5 shadow-md shadow-violet-600/20 shrink-0"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Download GST Invoice
-              </Button>
-            </div>
-          )}
+          {/* Non-refundable policy notice */}
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-center max-w-xl mx-auto select-none">
+            <p className="text-[11px] text-amber-300 font-semibold flex items-center justify-center gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+              <span><strong>Policy Notice:</strong> All payments &amp; plan switches are final. Money is <strong>strictly non-refundable</strong> under any circumstances.</span>
+            </p>
+          </div>
         </ScrollFadeIn>
 
         {/* Pricing Cards Grid */}
