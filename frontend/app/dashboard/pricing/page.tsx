@@ -18,10 +18,13 @@ import {
   ChevronDown,
   ChevronUp,
   HelpCircle,
-  AlertTriangle
+  AlertTriangle,
+  Receipt,
+  Download
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import ScrollFadeIn from "@/components/ScrollFadeIn";
+import GstInvoiceModal, { InvoiceData } from "@/components/GstInvoiceModal";
 
 interface Plan {
   id: "free" | "premium" | "promax";
@@ -57,7 +60,7 @@ const PLANS: Plan[] = [
     id: "premium",
     name: "Premium Pro",
     priceMonthly: "₹99",
-    priceYearly: "₹166",
+    priceYearly: "₹999",
     periodMonthly: "month",
     periodYearly: "year",
     description: "For active job hunters targeting multiple roles.",
@@ -80,7 +83,7 @@ const PLANS: Plan[] = [
     id: "promax",
     name: "Pro Max (Individual Unlimited)",
     priceMonthly: "₹199",
-    priceYearly: "₹332",
+    priceYearly: "₹1,999",
     periodMonthly: "month",
     periodYearly: "year",
     description: "For hardcore job seekers needing absolute limit bypass and priority features.",
@@ -147,12 +150,17 @@ const FAQ_ITEMS: FAQItem[] = [
 export default function PricingPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
   const [authLoading, setAuthLoading] = useState(true);
   const [currentPlan, setCurrentPlan] = useState<string>("free");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [isOwner, setIsOwner] = useState(false);
   const [isFirst50, setIsFirst50] = useState(false);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
+
+  // GST Invoice Modal State
+  const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+  const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
 
   // Checkout Modal State
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
@@ -185,6 +193,7 @@ export default function PricingPage() {
           return;
         }
         setUserId(data.user.id);
+        if (data.user.email) setUserEmail(data.user.email);
 
         // Pre-load cached plan and billing cycle immediately to eliminate UI flash
         const cachedPlan = localStorage.getItem(`fastHire_plan_${data.user.id}`);
@@ -504,19 +513,48 @@ export default function PricingPage() {
                 }`}
             >
               Bill Yearly
-              <Badge className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[9px] font-bold px-1.5 py-0.5 rounded-md">
-                2 Months Free
-              </Badge>
             </button>
           </div>
 
-          {/* Non-refundable policy notice */}
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-center max-w-xl mx-auto select-none">
-            <p className="text-[11px] text-amber-300 font-semibold flex items-center justify-center gap-2">
-              <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-              <span><strong>Policy Notice:</strong> All payments &amp; plan switches are final. Money is <strong>strictly non-refundable</strong> under any circumstances.</span>
-            </p>
-          </div>
+          {/* Active Paid Plan Status with GST Invoice Download Button */}
+          {currentPlan !== "free" && (
+            <div className="max-w-xl mx-auto mb-6 p-4 rounded-2xl bg-gradient-to-r from-violet-950/40 via-[#0e0f21] to-indigo-950/40 border border-violet-500/30 flex items-center justify-between gap-4 shadow-xl select-none animate-in fade-in duration-200">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-violet-500/10 border border-violet-500/25 flex items-center justify-center text-violet-400 shrink-0">
+                  <Receipt className="h-5 w-5" />
+                </div>
+                <div>
+                  <span className="font-extrabold text-white text-xs block">Active Subscription: {currentPlan === "promax" ? "Pro Max" : "Premium Pro"}</span>
+                  <span className="text-[10px] text-slate-400 font-medium">Official GST payment invoice ready</span>
+                </div>
+              </div>
+              <Button
+                onClick={() => {
+                  const base = currentPlan === "promax" ? (billingCycle === "monthly" ? 199 : 1999) : (billingCycle === "monthly" ? 99 : 999);
+                  const gst = currentPlan === "promax" ? (billingCycle === "monthly" ? 36 : 360) : (billingCycle === "monthly" ? 18 : 180);
+                  const total = currentPlan === "promax" ? (billingCycle === "monthly" ? 235 : 2359) : (billingCycle === "monthly" ? 117 : 1179);
+                  
+                  setInvoiceData({
+                    invoiceNumber: `INV-2026-${(userId || "SUB").slice(0, 6).toUpperCase()}`,
+                    date: new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+                    userName: "FastHire Subscriber",
+                    userEmail: userEmail || "subscriber@fasthire.ai",
+                    planName: currentPlan === "promax" ? "FastHire Pro Max (Individual Unlimited)" : "FastHire Premium Pro",
+                    billingCycle: billingCycle,
+                    basePrice: base,
+                    gstAmount: gst,
+                    totalAmount: total,
+                  });
+                  setIsInvoiceOpen(true);
+                }}
+                size="sm"
+                className="bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs h-9 px-3.5 rounded-xl flex items-center gap-1.5 shadow-md shadow-violet-600/20 shrink-0"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Download GST Invoice
+              </Button>
+            </div>
+          )}
         </ScrollFadeIn>
 
         {/* Pricing Cards Grid */}
@@ -727,9 +765,9 @@ export default function PricingPage() {
               </button>
             </div>
 
-            <form onSubmit={handleCheckoutSubmit} className="space-y-4 text-xs select-none">
+            <form onSubmit={handleCheckoutSubmit} className="space-y-4 select-none">
 
-              {/* Plan Selected Summary & Itemized GST Invoice */}
+              {/* Reference Image Style Itemized Order Summary Card */}
               {(() => {
                 const basePrice = selectedPlan.id === "premium"
                   ? (billingCycle === "monthly" ? 99 : 999)
@@ -740,67 +778,49 @@ export default function PricingPage() {
                 const totalPayable = basePrice + gstAndFee;
 
                 return (
-                  <div className="bg-[#070814] p-4 rounded-xl border border-white/10 space-y-3">
-                    <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                      <div>
-                        <span className="font-bold text-white text-xs">{selectedPlan.name}</span>
-                        <p className="text-[10px] text-slate-500">Billed {billingCycle}ly</p>
+                  <div className="bg-[#0e0f22] p-5 rounded-2xl border border-white/10 space-y-4 shadow-inner">
+                    <div className="space-y-2.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-slate-400 font-medium">{selectedPlan.name} (Base Price)</span>
+                        <span className="font-semibold text-white">₹{basePrice.toLocaleString()}</span>
                       </div>
-                      <span className="font-bold text-slate-300 text-xs">₹{basePrice}</span>
+
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-slate-400 font-medium">Taxes &amp; Fees (18% GST)</span>
+                        <span className="font-semibold text-white">₹{gstAndFee.toLocaleString()}</span>
+                      </div>
                     </div>
 
-                    <div className="flex justify-between items-center text-[11px] text-slate-400">
-                      <span>GST &amp; Payment Gateway Surcharge (18%)</span>
-                      <span className="text-emerald-400 font-semibold">+₹{gstAndFee}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center pt-2 border-t border-white/10">
-                      <span className="font-extrabold text-white text-xs">Total Payable</span>
-                      <span className="font-black text-white text-lg text-gradient bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
-                        ₹{totalPayable}
+                    <div className="border-t border-white/10 pt-3 flex justify-between items-center">
+                      <span className="font-extrabold text-white text-sm">Total Amount</span>
+                      <span className="font-black text-white text-xl">
+                        ₹{totalPayable.toLocaleString()}
                       </span>
                     </div>
                   </div>
                 );
               })()}
 
-              {/* Secure Checkout Notice */}
-              <div className="p-4 bg-violet-950/10 border border-violet-500/15 rounded-xl space-y-2 text-slate-300">
-                <div className="flex items-center gap-2 font-bold text-white text-xs">
-                  <ShieldCheck className="h-4.5 w-4.5 text-emerald-400 shrink-0" />
-                  <span>Secure Razorpay Gateway</span>
-                </div>
-                <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
-                  You will pay securely via Razorpay (supporting UPI, GPay, PhonePe, Cards, NetBanking). Transactions are 256-Bit SSL encrypted.
-                </p>
-              </div>
-
-              {/* Trust statement */}
-              <div className="flex items-center gap-2 text-[9px] text-slate-500 bg-[#00e699]/5 border border-[#00e699]/15 p-2.5 rounded-xl leading-relaxed">
+              {/* Secure Trust Badge */}
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400 font-semibold bg-white/5 py-2.5 px-3 rounded-xl border border-white/5">
                 <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span>PCI-DSS Level 1 compliant payment security.</span>
-              </div>
-
-              {/* Non-refundable Warning */}
-              <div className="text-[10px] font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl text-center flex items-center justify-center gap-1.5">
-                <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                <span>Note: All plan sales &amp; switches are strictly <strong>non-refundable</strong>.</span>
+                <span>256-Bit SSL Encrypted &bull; Razorpay PCI-DSS Secured</span>
               </div>
 
               {/* Submit actions */}
               <Button
                 type="submit"
                 disabled={checkoutLoading}
-                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-11 rounded-xl flex items-center justify-center gap-1.5 shadow-lg shadow-violet-600/15"
+                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-sm h-12 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-violet-600/25 transition-all"
               >
                 {checkoutLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Opening Payment Gateway...
+                    Opening Razorpay Gateway...
                   </>
                 ) : (
                   <>
-                    Proceed to Pay ₹{selectedPlan.id === "premium" ? (billingCycle === "monthly" ? 117 : 1179) : (billingCycle === "monthly" ? 235 : 2359)} via Razorpay
+                    Proceed to Pay ₹{selectedPlan.id === "premium" ? (billingCycle === "monthly" ? "117" : "1,179") : (billingCycle === "monthly" ? "235" : "2,359")}
                   </>
                 )}
               </Button>
@@ -808,6 +828,15 @@ export default function PricingPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* OFFICIAL GST INVOICE DOWNLOAD MODAL */}
+      {invoiceData && (
+        <GstInvoiceModal
+          isOpen={isInvoiceOpen}
+          onClose={() => setIsInvoiceOpen(false)}
+          invoice={invoiceData}
+        />
       )}
 
     </div>

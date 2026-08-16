@@ -25,10 +25,11 @@ import {
   TrendingUp,
   Sparkles
 } from "lucide-react";
+import { CreditInfo } from "@/types";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
-import { CreditInfo } from "@/types";
 import ScrollFadeIn from "@/components/ScrollFadeIn";
+import GstInvoiceModal, { InvoiceData } from "@/components/GstInvoiceModal";
 
 interface Invoice {
   id: string;
@@ -41,6 +42,7 @@ interface Invoice {
 export default function BillingPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
   const [authLoading, setAuthLoading] = useState(true);
   
   // States
@@ -48,6 +50,8 @@ export default function BillingPage() {
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [credits, setCredits] = useState<CreditInfo | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+  const [selectedInvoiceData, setSelectedInvoiceData] = useState<InvoiceData | null>(null);
 
   // Initialize page variables
   useEffect(() => {
@@ -62,6 +66,7 @@ export default function BillingPage() {
 
         const user = data.user;
         setUserId(user.id);
+        if (user.email) setUserEmail(user.email);
         setAuthLoading(false);
 
         // 1. Plan Tier & Credits Loading directly from DB
@@ -137,7 +142,25 @@ export default function BillingPage() {
 
 
   const handlePrintReceipt = (invoice: Invoice) => {
-    toast.success(`Downloading PDF Invoice for ${invoice.id}...`);
+    const isProMax = activePlan === "promax" || activePlan === "team" || invoice.description.includes("Pro Max");
+    const isYear = billingCycle === "yearly";
+    const base = isProMax ? (isYear ? 1999 : 199) : (isYear ? 999 : 99);
+    const gst = isProMax ? (isYear ? 360 : 36) : (isYear ? 180 : 18);
+    const total = isProMax ? (isYear ? 2359 : 235) : (isYear ? 1179 : 117);
+
+    setSelectedInvoiceData({
+      invoiceNumber: invoice.id.toUpperCase(),
+      date: invoice.date,
+      userName: "FastHire Subscriber",
+      userEmail: userEmail || "subscriber@fasthire.ai",
+      planName: isProMax ? "FastHire Pro Max (Individual Unlimited)" : "FastHire Premium Pro",
+      billingCycle: (isYear ? "yearly" : "monthly") as any,
+      basePrice: base,
+      gstAmount: gst,
+      totalAmount: total,
+      paymentId: `rzp_live_${invoice.id}`,
+    });
+    setIsInvoiceOpen(true);
   };
 
   if (authLoading) {
@@ -324,6 +347,16 @@ export default function BillingPage() {
           </div>
         </ScrollFadeIn>
       </main>
+
+      {/* OFFICIAL GST INVOICE DOWNLOAD MODAL */}
+      {selectedInvoiceData && (
+        <GstInvoiceModal
+          isOpen={isInvoiceOpen}
+          onClose={() => setIsInvoiceOpen(false)}
+          invoice={selectedInvoiceData}
+        />
+      )}
+
     </div>
   );
 }
