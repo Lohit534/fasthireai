@@ -741,11 +741,11 @@ export default function PricingPage() {
               {/* Reference Image Style Itemized Order Summary Card */}
               {(() => {
                 const basePrice = selectedPlan.id === "premium"
-                  ? (billingCycle === "monthly" ? 99 : 999)
-                  : (billingCycle === "monthly" ? 199 : 1999);
+                  ? (billingCycle === "monthly" ? 99 : 166)
+                  : (billingCycle === "monthly" ? 199 : 332);
                 const gstAndFee = selectedPlan.id === "premium"
-                  ? (billingCycle === "monthly" ? 18 : 180)
-                  : (billingCycle === "monthly" ? 36 : 360);
+                  ? (billingCycle === "monthly" ? 18 : 30)
+                  : (billingCycle === "monthly" ? 36 : 60);
                 const totalPayable = basePrice + gstAndFee;
 
                 return (
@@ -791,7 +791,7 @@ export default function PricingPage() {
                   </>
                 ) : (
                   <>
-                    Proceed to Pay ₹{selectedPlan.id === "premium" ? (billingCycle === "monthly" ? "117" : "1,179") : (billingCycle === "monthly" ? "235" : "2,359")}
+                    Proceed to Pay ₹{selectedPlan.id === "premium" ? (billingCycle === "monthly" ? "117" : "196") : (billingCycle === "monthly" ? "235" : "392")}
                   </>
                 )}
               </Button>

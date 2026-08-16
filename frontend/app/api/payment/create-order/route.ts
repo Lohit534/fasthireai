@@ -11,12 +11,12 @@ import { logger } from "@/lib/logger";
 // Plan amount mapping in paise (INR × 100) including 18% GST and Razorpay 2% transaction surcharge
 const PLAN_AMOUNTS: Record<string, Record<string, number>> = {
   premium: {
-    monthly: 11700,  // ₹117 (₹99 Base + ₹18 GST & Gateway fees)
-    yearly:  117900, // ₹1,179 (₹999 Base + ₹180 GST & Gateway fees)
+    monthly: 11700, // ₹117 (₹99 Base + ₹18 GST & Gateway fees)
+    yearly:  19600, // ₹196 (₹166 Base + ₹30 GST & Gateway fees)
   },
   promax: {
-    monthly: 23500,  // ₹235 (₹199 Base + ₹36 GST & Gateway fees)
-    yearly:  235900, // ₹2,359 (₹1,999 Base + ₹360 GST & Gateway fees)
+    monthly: 23500, // ₹235 (₹199 Base + ₹36 GST & Gateway fees)
+    yearly:  39200, // ₹392 (₹332 Base + ₹60 GST & Gateway fees)
   },
 };
 
