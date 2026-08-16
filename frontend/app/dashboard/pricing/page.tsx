@@ -60,7 +60,7 @@ const PLANS: Plan[] = [
     id: "premium",
     name: "Premium Pro",
     priceMonthly: "₹99",
-    priceYearly: "₹999",
+    priceYearly: "₹166",
     periodMonthly: "month",
     periodYearly: "year",
     description: "For active job hunters targeting multiple roles.",
@@ -83,7 +83,7 @@ const PLANS: Plan[] = [
     id: "promax",
     name: "Pro Max (Individual Unlimited)",
     priceMonthly: "₹199",
-    priceYearly: "₹1,999",
+    priceYearly: "₹332",
     periodMonthly: "month",
     periodYearly: "year",
     description: "For hardcore job seekers needing absolute limit bypass and priority features.",
@@ -513,6 +513,9 @@ export default function PricingPage() {
                 }`}
             >
               Bill Yearly
+              <Badge className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+                2 Months Free
+              </Badge>
             </button>
           </div>
 
