@@ -122,7 +122,7 @@ export default function GstInvoiceModal({
 
             <div className="space-y-1 bg-[#070814] print:bg-slate-50 p-3 sm:p-3.5 rounded-xl border border-white/5 print:border-slate-200">
               <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 print:text-slate-500 uppercase tracking-wider block">Transaction Details</span>
-              <p className="text-slate-300 print:text-slate-700 text-xs">Billing: <strong className="text-white print:text-black capitalize">{invoice.billingCycle}ly</strong></p>
+              <p className="text-slate-300 print:text-slate-700 text-xs">Billing: <strong className="text-white print:text-black capitalize">{invoice.billingCycle}</strong></p>
               <p className="text-slate-400 print:text-slate-600 text-[10px] truncate">Ref: {invoice.paymentId || "rzp_live_" + invoice.invoiceNumber.toLowerCase()}</p>
             </div>
           </div>

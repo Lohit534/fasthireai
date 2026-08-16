@@ -361,7 +361,7 @@ export default function JobTrackerPage() {
           <Card className="border-white/5 bg-[#0e0f21]/40 shadow-md">
             <CardContent className="p-4 flex items-center justify-between">
               <div>
-                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Offers Recieved</p>
+                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Offers Received</p>
                 <h3 className="text-xl font-black text-white mt-1 text-emerald-400">{stats.offers}</h3>
               </div>
               <CheckCircle className="h-6 w-6 text-emerald-400 opacity-60" />
