@@ -144,9 +144,9 @@ export default function BillingPage() {
   const handlePrintReceipt = (invoice: Invoice) => {
     const isProMax = activePlan === "promax" || activePlan === "team" || invoice.description.includes("Pro Max");
     const isYear = billingCycle === "yearly";
-    const base = isProMax ? (isYear ? 1999 : 199) : (isYear ? 999 : 99);
-    const gst = isProMax ? (isYear ? 360 : 36) : (isYear ? 180 : 18);
-    const total = isProMax ? (isYear ? 2359 : 235) : (isYear ? 1179 : 117);
+    const base = isProMax ? (isYear ? 332 : 199) : (isYear ? 166 : 99);
+    const gst = isProMax ? (isYear ? 17 : 10) : (isYear ? 8 : 5);
+    const total = isProMax ? (isYear ? 349 : 209) : (isYear ? 174 : 104);
 
     setSelectedInvoiceData({
       invoiceNumber: invoice.id.toUpperCase(),

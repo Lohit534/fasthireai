@@ -744,8 +744,8 @@ export default function PricingPage() {
                   ? (billingCycle === "monthly" ? 99 : 166)
                   : (billingCycle === "monthly" ? 199 : 332);
                 const gstAndFee = selectedPlan.id === "premium"
-                  ? (billingCycle === "monthly" ? 18 : 30)
-                  : (billingCycle === "monthly" ? 36 : 60);
+                  ? (billingCycle === "monthly" ? 5 : 8)
+                  : (billingCycle === "monthly" ? 10 : 17);
                 const totalPayable = basePrice + gstAndFee;
 
                 return (
@@ -757,7 +757,7 @@ export default function PricingPage() {
                       </div>
 
                       <div className="flex justify-between items-center text-xs">
-                        <span className="text-slate-400 font-medium">Taxes &amp; Fees (18% GST)</span>
+                        <span className="text-slate-400 font-medium">Taxes &amp; Fees (5% GST)</span>
                         <span className="font-semibold text-white">₹{gstAndFee.toLocaleString()}</span>
                       </div>
                     </div>
@@ -791,7 +791,7 @@ export default function PricingPage() {
                   </>
                 ) : (
                   <>
-                    Proceed to Pay ₹{selectedPlan.id === "premium" ? (billingCycle === "monthly" ? "117" : "196") : (billingCycle === "monthly" ? "235" : "392")}
+                    Proceed to Pay ₹{selectedPlan.id === "premium" ? (billingCycle === "monthly" ? "104" : "174") : (billingCycle === "monthly" ? "209" : "349")}
                   </>
                 )}
               </Button>

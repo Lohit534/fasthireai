@@ -8,15 +8,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
 
-// Plan amount mapping in paise (INR × 100) including 18% GST and Razorpay 2% transaction surcharge
+// Plan amount mapping in paise (INR × 100) including 5% GST and payment gateway surcharge
 const PLAN_AMOUNTS: Record<string, Record<string, number>> = {
   premium: {
-    monthly: 11700, // ₹117 (₹99 Base + ₹18 GST & Gateway fees)
-    yearly:  19600, // ₹196 (₹166 Base + ₹30 GST & Gateway fees)
+    monthly: 10400, // ₹104 (₹99 Base + ₹5 GST & Gateway fees)
+    yearly:  17400, // ₹174 (₹166 Base + ₹8 GST & Gateway fees)
   },
   promax: {
-    monthly: 23500, // ₹235 (₹199 Base + ₹36 GST & Gateway fees)
-    yearly:  39200, // ₹392 (₹332 Base + ₹60 GST & Gateway fees)
+    monthly: 20900, // ₹209 (₹199 Base + ₹10 GST & Gateway fees)
+    yearly:  34900, // ₹349 (₹332 Base + ₹17 GST & Gateway fees)
   },
 };
 

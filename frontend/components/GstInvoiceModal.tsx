@@ -153,11 +153,11 @@ export default function GstInvoiceModal({
                 <span>₹{invoice.basePrice.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-slate-400 print:text-slate-600">
-                <span>CGST (9.00%)</span>
+                <span>CGST (2.50%)</span>
                 <span>+₹{cgst}</span>
               </div>
               <div className="flex justify-between text-slate-400 print:text-slate-600">
-                <span>SGST (9.00%)</span>
+                <span>SGST (2.50%)</span>
                 <span>+₹{sgst}</span>
               </div>
               <div className="flex justify-between text-slate-400 print:text-slate-600">
