@@ -162,7 +162,7 @@ export default function LandingPage() {
       try {
         const { data } = await supabase.auth.getUser();
         if (data?.user) router.replace("/dashboard");
-      } catch (e) {}
+      } catch (e) { }
     }
     checkLoggedIn();
 
@@ -320,7 +320,7 @@ Requirements:
 
                 {/* Main ATS score card (Level 1 surface #161B22 + glass-stroke) */}
                 <div className="diamond-gleam relative bg-[#161B22] border border-white/12 rounded-2xl p-7 shadow-2xl overflow-hidden">
-                  
+
                   {/* Radial emerald glow on right side */}
                   <div
                     className="absolute right-0 top-1/2 -translate-y-1/2 w-[220px] h-[220px] rounded-full pointer-events-none"
@@ -491,10 +491,10 @@ Requirements:
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              { value: 1000,  suffix: "+", label: "Users Optimized",  color: "#c2c1ff", sub: "Active job seekers" },
-              { value: 94,    suffix: "%", label: "Success Rate",     color: "#30D158", sub: "Got more callbacks" },
-              { value: 57,    suffix: "+", label: "Avg. Score Lift",  color: "#64D2FF", sub: "ATS points gained" },
-              { value: 3500,  suffix: "+", label: "Positive Reviews", color: "#FFD60A", sub: "5-star feedbacks" },
+              { value: 1000, suffix: "+", label: "Users Optimized", color: "#c2c1ff", sub: "Active job seekers" },
+              { value: 94, suffix: "%", label: "Success Rate", color: "#30D158", sub: "Got more callbacks" },
+              { value: 57, suffix: "+", label: "Avg. Score Lift", color: "#64D2FF", sub: "ATS points gained" },
+              { value: 500, suffix: "+", label: "Positive Reviews", color: "#FFD60A", sub: "5-star feedbacks" },
             ].map(({ value, suffix, label, color, sub }) => (
               <div
                 key={label}
@@ -576,12 +576,12 @@ Requirements:
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
-              { name: "Arjun Sharma", role: "SDE at Amazon",  country: "🇮🇳 India",  rating: 5, text: "My ATS score went from 42% to 89% in 25 seconds. Got interview calls from 4 companies within a week. Absolutely game-changing!" },
-              { name: "Priya Menon",  role: "Data Analyst at Infosys", country: "🇮🇳 India", rating: 5, text: "FastHire AI rewrote my bullet points to match the JD perfectly. I used to get zero callbacks. Now I have 3 interviews lined up." },
-              { name: "Rohan Gupta",  role: "Full Stack Dev at Flipkart", country: "🇮🇳 India", rating: 5, text: "The keyword matching is incredibly accurate. It identified 17 keywords I was missing and filled them in naturally. Highly recommended!" },
-              { name: "Sarah Chen",   role: "PM at Microsoft",  country: "🇸🇬 Singapore", rating: 5, text: "I was skeptical at first but the ATS score improvement was immediate and visible. Landed my dream job at Microsoft. Thank you FastHire!" },
-              { name: "Rahul Verma",  role: "DevOps at Wipro",  country: "🇮🇳 India",   rating: 5, text: "The cover letter generator is brilliant too. I had 10 tailored cover letters ready in 30 minutes. No other tool comes close." },
-              { name: "Ayesha Khan",  role: "UI/UX at Razorpay", country: "🇵🇰 Pakistan", rating: 5, text: "Went from 6 months of rejections to getting 2 offers in 3 weeks after using FastHire AI. The difference is night and day!" },
+              { name: "Arjun Sharma", role: "SDE at Amazon", country: "🇮🇳 India", rating: 5, text: "My ATS score went from 42% to 89% in 25 seconds. Got interview calls from 4 companies within a week. Absolutely game-changing!" },
+              { name: "Priya Menon", role: "Data Analyst at Infosys", country: "🇮🇳 India", rating: 5, text: "FastHire AI rewrote my bullet points to match the JD perfectly. I used to get zero callbacks. Now I have 3 interviews lined up." },
+              { name: "Rohan Gupta", role: "Full Stack Dev at Flipkart", country: "🇮🇳 India", rating: 5, text: "The keyword matching is incredibly accurate. It identified 17 keywords I was missing and filled them in naturally. Highly recommended!" },
+              { name: "Sarah Chen", role: "PM at Microsoft", country: "🇸🇬 Singapore", rating: 5, text: "I was skeptical at first but the ATS score improvement was immediate and visible. Landed my dream job at Microsoft. Thank you FastHire!" },
+              { name: "Rahul Verma", role: "DevOps at Wipro", country: "🇮🇳 India", rating: 5, text: "The cover letter generator is brilliant too. I had 10 tailored cover letters ready in 30 minutes. No other tool comes close." },
+              { name: "Ayesha Khan", role: "UI/UX at Razorpay", country: "🇵🇰 Pakistan", rating: 5, text: "Went from 6 months of rejections to getting 2 offers in 3 weeks after using FastHire AI. The difference is night and day!" },
             ].map(({ name, role, country, rating, text }, i) => (
               <div
                 key={i}
