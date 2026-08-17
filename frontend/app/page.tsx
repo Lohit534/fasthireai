@@ -15,11 +15,83 @@ import {
   Download,
   Play,
   Film,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import ScrollFadeIn from "@/components/ScrollFadeIn";
 import CircleGauge from "@/components/CircleGauge";
 import { supabase } from "@/lib/supabase/client";
 import { DemoVideoModal } from "@/components/DemoVideoModal";
+
+/* ── Landing FAQ ─────────────────────────────────────────── */
+const LANDING_FAQS = [
+  {
+    q: "Is FastHire AI completely free?",
+    a: "Yes! You get 2 free AI resume optimizations every month with no credit card required. You can upgrade to Premium Pro or Pro Max for more optimizations and features.",
+  },
+  {
+    q: "How does FastHire AI improve my resume?",
+    a: "Our AI analyzes your resume against the job description, identifies missing keywords, rewrites bullet points for impact, and scores your ATS compatibility — all in under 30 seconds.",
+  },
+  {
+    q: "Will my resume actually pass ATS systems?",
+    a: "Our AI is trained specifically on ATS parsing patterns. Users see an average ATS score lift of 57+ points after optimization. Results depend on how well your experience matches the target role.",
+  },
+  {
+    q: "Is my resume data safe and private?",
+    a: "Absolutely. Your resume is only used for the optimization request and is never sold, shared, or used to train third-party AI models. We take privacy very seriously.",
+  },
+  {
+    q: "What file formats can I download?",
+    a: "You can download your optimized resume as a professionally formatted PDF and DOCX (Word) file. Both are ATS-compatible and recruiter-ready.",
+  },
+  {
+    q: "Can I use FastHire AI for different job roles?",
+    a: "Yes! You can optimize your resume for as many different job roles or companies as you want. Just paste a new job description each time to get role-specific optimization.",
+  },
+  {
+    q: "How is FastHire AI different from ChatGPT?",
+    a: "FastHire AI is purpose-built for ATS optimization. It doesn't just rewrite — it scores your resume, identifies specific missing keywords, generates PDF/DOCX exports, tracks your history, and produces cover letters tailored to each JD.",
+  },
+  {
+    q: "Do I need to install anything?",
+    a: "No downloads required. FastHire AI works entirely in your browser. Just sign up and start optimizing your resume in seconds.",
+  },
+];
+
+function LandingFAQ() {
+  const [openIdx, setOpenIdx] = React.useState<number | null>(null);
+  return (
+    <div className="space-y-3">
+      {LANDING_FAQS.map((faq, idx) => {
+        const isOpen = openIdx === idx;
+        return (
+          <div
+            key={idx}
+            className="border border-white/8 bg-[#161B22]/60 rounded-xl overflow-hidden transition-all duration-300"
+          >
+            <button
+              onClick={() => setOpenIdx(isOpen ? null : idx)}
+              className="w-full flex items-center justify-between p-4 text-left font-semibold text-sm text-white hover:text-[#c2c1ff] transition-colors"
+            >
+              <span>{faq.q}</span>
+              {isOpen ? (
+                <ChevronUp className="h-4 w-4 text-slate-400 shrink-0 ml-2" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-slate-400 shrink-0 ml-2" />
+              )}
+            </button>
+            {isOpen && (
+              <div className="px-4 pb-4 text-sm text-slate-400 font-normal leading-relaxed border-t border-white/5 pt-3">
+                {faq.a}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 /* ── Animated number counter ─────────────────────────────── */
 function AnimatedCounter({
@@ -384,6 +456,221 @@ Requirements:
               </div>
             ))}
           </div>
+        </div>
+      </ScrollFadeIn>
+
+      {/* ── STATS SECTION ────────────────────────────────────── */}
+      <ScrollFadeIn className="py-16 md:py-20 border-t border-white/12 bg-[#0c0e12]/80">
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 space-y-3">
+            <span className="text-xs font-mono font-medium uppercase tracking-widest text-[#c2c1ff]">
+              By The Numbers
+            </span>
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Trusted by Job Seekers Worldwide
+            </h2>
+            <p className="text-slate-400 text-sm max-w-md mx-auto">
+              Thousands of candidates have already landed interviews using FastHire AI.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              { value: 12000, suffix: "+", label: "Users Optimized", color: "#c2c1ff", sub: "Active job seekers" },
+              { value: 94,    suffix: "%", label: "Success Rate",    color: "#30D158", sub: "Got more callbacks" },
+              { value: 57,    suffix: "+",  label: "Avg. Score Lift", color: "#64D2FF", sub: "ATS points gained" },
+              { value: 4800,  suffix: "+",  label: "Positive Reviews", color: "#FFD60A", sub: "5-star feedbacks" },
+            ].map(({ value, suffix, label, color, sub }) => (
+              <div
+                key={label}
+                className="relative overflow-hidden bg-[#161B22] border border-white/8 rounded-2xl p-6 text-center group hover:border-white/20 transition-all duration-300 hover:scale-[1.02]"
+              >
+                <div
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  style={{ background: `radial-gradient(ellipse at top, ${color}12 0%, transparent 70%)` }}
+                />
+                <div className="relative z-10 space-y-1">
+                  <div className="text-4xl sm:text-5xl font-black tracking-tight" style={{ color }}>
+                    <AnimatedCounter from={0} to={value} duration={1800} suffix={suffix} />
+                  </div>
+                  <div className="text-sm font-bold text-white mt-2">{label}</div>
+                  <div className="text-[11px] text-slate-500 font-medium">{sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </ScrollFadeIn>
+
+      {/* ── TOP COMPANIES MARQUEE ─────────────────────────────── */}
+      <ScrollFadeIn className="py-14 border-t border-white/12">
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10 space-y-2">
+            <span className="text-xs font-mono font-medium uppercase tracking-widest text-[#c2c1ff]">
+              Top Companies
+            </span>
+            <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              Resumes Shortlisted At
+            </h2>
+            <p className="text-slate-400 text-sm max-w-md mx-auto">
+              Our users have been shortlisted and hired at these industry-leading companies.
+            </p>
+          </div>
+
+          {/* Infinite scroll marquee */}
+          <div className="relative overflow-hidden">
+            {/* Left / right fade masks */}
+            <div className="absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(to right, #111318, transparent)" }} />
+            <div className="absolute right-0 top-0 bottom-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(to left, #111318, transparent)" }} />
+
+            <div className="flex animate-marquee gap-8 whitespace-nowrap">
+              {[
+                "Google", "Microsoft", "Amazon", "Meta", "Apple",
+                "Flipkart", "Infosys", "Wipro", "TCS", "Accenture",
+                "Deloitte", "IBM", "Capgemini", "HCL", "Cognizant",
+                "Swiggy", "Zomato", "BYJU'S", "Razorpay", "PhonePe",
+                "Paytm", "Freshworks", "Zoho", "MakeMyTrip", "OYO",
+              ].concat([
+                "Google", "Microsoft", "Amazon", "Meta", "Apple",
+                "Flipkart", "Infosys", "Wipro", "TCS", "Accenture",
+              ]).map((company, i) => (
+                <div
+                  key={i}
+                  className="inline-flex items-center px-6 py-3 rounded-xl bg-[#161B22] border border-white/8 text-slate-300 font-semibold text-sm hover:border-violet-500/30 hover:text-white transition-all duration-200 shrink-0"
+                >
+                  <span className="h-2 w-2 rounded-full bg-violet-500/60 mr-2 shrink-0" />
+                  {company}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </ScrollFadeIn>
+
+      {/* ── USER TESTIMONIALS ─────────────────────────────────── */}
+      <ScrollFadeIn className="py-16 md:py-20 border-t border-white/12 bg-[#0c0e12]/60">
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 space-y-3">
+            <span className="text-xs font-mono font-medium uppercase tracking-widest text-[#c2c1ff]">
+              Real Feedback
+            </span>
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              What Job Seekers Are Saying
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[
+              { name: "Arjun Sharma", role: "SDE at Amazon",  country: "🇮🇳 India",  rating: 5, text: "My ATS score went from 42% to 89% in 25 seconds. Got interview calls from 4 companies within a week. Absolutely game-changing!" },
+              { name: "Priya Menon",  role: "Data Analyst at Infosys", country: "🇮🇳 India", rating: 5, text: "FastHire AI rewrote my bullet points to match the JD perfectly. I used to get zero callbacks. Now I have 3 interviews lined up." },
+              { name: "Rohan Gupta",  role: "Full Stack Dev at Flipkart", country: "🇮🇳 India", rating: 5, text: "The keyword matching is incredibly accurate. It identified 17 keywords I was missing and filled them in naturally. Highly recommended!" },
+              { name: "Sarah Chen",   role: "PM at Microsoft",  country: "🇸🇬 Singapore", rating: 5, text: "I was skeptical at first but the ATS score improvement was immediate and visible. Landed my dream job at Microsoft. Thank you FastHire!" },
+              { name: "Rahul Verma",  role: "DevOps at Wipro",  country: "🇮🇳 India",   rating: 5, text: "The cover letter generator is brilliant too. I had 10 tailored cover letters ready in 30 minutes. No other tool comes close." },
+              { name: "Ayesha Khan",  role: "UI/UX at Razorpay", country: "🇵🇰 Pakistan", rating: 5, text: "Went from 6 months of rejections to getting 2 offers in 3 weeks after using FastHire AI. The difference is night and day!" },
+            ].map(({ name, role, country, rating, text }, i) => (
+              <div
+                key={i}
+                className="relative bg-[#161B22] border border-white/8 rounded-2xl p-6 space-y-4 hover:border-violet-500/25 hover:scale-[1.01] transition-all duration-300"
+              >
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: rating }).map((_, j) => (
+                    <span key={j} className="text-[#FFD60A] text-sm">★</span>
+                  ))}
+                </div>
+                <p className="text-sm text-slate-300 leading-relaxed font-normal">"{text}"</p>
+                <div className="flex items-center gap-3 pt-2 border-t border-white/5">
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-violet-600 to-indigo-500 flex items-center justify-center text-white font-black text-sm shrink-0">
+                    {name[0]}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white">{name}</div>
+                    <div className="text-[11px] text-slate-400">{role} &bull; {country}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </ScrollFadeIn>
+
+      {/* ── COUNTRIES MARQUEE ─────────────────────────────────── */}
+      <ScrollFadeIn className="py-14 border-t border-white/12">
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10 space-y-2">
+            <span className="text-xs font-mono font-medium uppercase tracking-widest text-[#c2c1ff]">
+              Global Reach
+            </span>
+            <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              Used Across the World
+            </h2>
+            <p className="text-slate-400 text-sm max-w-md mx-auto">
+              Job seekers from over 30 countries use FastHire AI to land interviews faster.
+            </p>
+          </div>
+
+          {/* Reverse-direction marquee for countries */}
+          <div className="relative overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(to right, #111318, transparent)" }} />
+            <div className="absolute right-0 top-0 bottom-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(to left, #111318, transparent)" }} />
+
+            <div className="flex animate-marquee-reverse gap-6 whitespace-nowrap">
+              {[
+                { flag: "🇮🇳", name: "India" },
+                { flag: "🇺🇸", name: "USA" },
+                { flag: "🇬🇧", name: "UK" },
+                { flag: "🇩🇪", name: "Germany" },
+                { flag: "🇨🇦", name: "Canada" },
+                { flag: "🇦🇺", name: "Australia" },
+                { flag: "🇸🇬", name: "Singapore" },
+                { flag: "🇦🇪", name: "UAE" },
+                { flag: "🇯🇵", name: "Japan" },
+                { flag: "🇫🇷", name: "France" },
+                { flag: "🇧🇷", name: "Brazil" },
+                { flag: "🇵🇰", name: "Pakistan" },
+                { flag: "🇳🇱", name: "Netherlands" },
+                { flag: "🇸🇪", name: "Sweden" },
+                { flag: "🇿🇦", name: "South Africa" },
+                { flag: "🇧🇩", name: "Bangladesh" },
+                { flag: "🇵🇭", name: "Philippines" },
+                { flag: "🇮🇩", name: "Indonesia" },
+                { flag: "🇲🇾", name: "Malaysia" },
+                { flag: "🇨🇭", name: "Switzerland" },
+              ].concat([
+                { flag: "🇮🇳", name: "India" },
+                { flag: "🇺🇸", name: "USA" },
+                { flag: "🇬🇧", name: "UK" },
+                { flag: "🇩🇪", name: "Germany" },
+                { flag: "🇨🇦", name: "Canada" },
+              ]).map(({ flag, name }, i) => (
+                <div
+                  key={i}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#161B22] border border-white/8 text-slate-300 font-medium text-sm hover:border-emerald-500/30 hover:text-white transition-all shrink-0"
+                >
+                  <span className="text-base">{flag}</span>
+                  <span>{name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </ScrollFadeIn>
+
+      {/* ── FAQ SECTION ───────────────────────────────────────── */}
+      <ScrollFadeIn className="py-16 md:py-20 border-t border-white/12 bg-[#0c0e12]/60">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 space-y-3">
+            <span className="text-xs font-mono font-medium uppercase tracking-widest text-[#c2c1ff]">
+              FAQ
+            </span>
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-slate-400 text-sm max-w-md mx-auto">
+              Everything you need to know about FastHire AI.
+            </p>
+          </div>
+
+          <LandingFAQ />
         </div>
       </ScrollFadeIn>
 
