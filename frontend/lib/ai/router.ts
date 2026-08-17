@@ -225,9 +225,70 @@ export function sanitizeResumeText(text: string): string {
   return result;
 }
 
+function cleanAndExtractJSON(raw: string): any {
+  let cleaned = raw.trim();
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned
+      .replace(/^```(?:json)?\r?\n?/i, "")
+      .replace(/\r?\n?```$/i, "")
+      .trim();
+  }
+
+  // 1. Direct JSON parse
+  try {
+    return JSON.parse(cleaned);
+  } catch (_e1) {}
+
+  // 2. Try to isolate between outer { and }
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start !== -1 && end !== -1 && end > start) {
+    const candidate = cleaned.substring(start, end + 1);
+    try {
+      return JSON.parse(candidate);
+    } catch (_e2) {}
+
+    // 3. Repair unescaped newlines inside "resume" string literal
+    try {
+      const repaired = candidate.replace(
+        /"resume"\s*:\s*"([\s\S]*?)"\s*,\s*"(?:keywordsAdded|bulletsRewritten|changesCount|summary)/i,
+        (match, resumeVal) => {
+          const escapedVal = resumeVal
+            .replace(/\\/g, "\\\\")
+            .replace(/"/g, '\\"')
+            .replace(/\r?\n/g, "\\n")
+            .replace(/\t/g, "\\t");
+          return `"resume": "${escapedVal}", "${match.split('", "')[1] || 'keywordsAdded'}`;
+        }
+      );
+      return JSON.parse(repaired);
+    } catch (_e3) {}
+
+    // 4. Regex extraction if JSON is partially malformed
+    try {
+      const resumeMatch = candidate.match(/"resume"\s*:\s*"([\s\S]*?)"\s*(?:,\s*"|\})/);
+      const summaryMatch = candidate.match(/"summary(?:Changes)?"\s*:\s*"([^"]*)"/);
+      const keywordsMatch = candidate.match(/"keywordsAdded"\s*:\s*\[(.*?)\]/);
+      if (resumeMatch && resumeMatch[1]) {
+        const resumeText = resumeMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
+        const keywords = keywordsMatch ? keywordsMatch[1].split(",").map(k => k.replace(/["']/g, "").trim()).filter(Boolean) : [];
+        return {
+          resume: resumeText,
+          keywordsAdded: keywords,
+          changesCount: keywords.length || 5,
+          summary: summaryMatch ? summaryMatch[1] : "Optimized."
+        };
+      }
+    } catch (_e4) {}
+  }
+
+  throw new Error("Unable to parse AI response as JSON");
+}
+
 function parseAIResponse(raw: string, fallbackText: string): AIResult {
+  const safeFallbackText = fallbackText && fallbackText.trim().length > 20 ? fallbackText : "";
   const defaultFallback: AIResult = {
-    resume: fallbackText,
+    resume: safeFallbackText,
     resumeJSON: null,
     keywordsAdded: [],
     changesCount: 0,
@@ -236,70 +297,50 @@ function parseAIResponse(raw: string, fallbackText: string): AIResult {
     detectedCompany: "General Application",
   };
 
-  let cleaned = raw.trim();
-  // Strip markdown fences if present
-  if (cleaned.startsWith("```")) {
-    cleaned = cleaned
-      .replace(/^```(?:json)?\r?\n?/i, "")
-      .replace(/\r?\n?```$/i, "")
-      .trim();
-  }
-
   let parsed: any;
   try {
-    parsed = JSON.parse(cleaned);
-  } catch {
-    // Try to extract JSON object from the string
-    const match = cleaned.match(/\{[\s\S]*\}/);
-    if (match) {
-      try {
-        parsed = JSON.parse(match[0]);
-      } catch {
-        logger.warn("[router] Could not parse AI JSON response, using fallback text.");
-        return defaultFallback;
-      }
-    } else {
-      logger.warn("[router] No JSON object found in AI response, using fallback text.");
-      return defaultFallback;
-    }
+    parsed = cleanAndExtractJSON(raw);
+  } catch (err: any) {
+    logger.warn("[router] Could not parse AI response, using fallback text:", err?.message);
+    return defaultFallback;
   }
 
-  // If it looks like the old flat schema (has "resume" string directly)
-  if (typeof parsed?.resume === "string" && !parsed?.header) {
+  // Schema A: Flat "resume" string schema
+  if (typeof parsed?.resume === "string" && parsed.resume.trim().length > 30) {
     return {
       resume: sanitizeResumeText(parsed.resume),
       resumeJSON: null,
-      keywordsAdded: parsed.keywordsAdded || [],
-      changesCount: parsed.changesCount || 0,
+      keywordsAdded: Array.isArray(parsed.keywordsAdded) ? parsed.keywordsAdded : [],
+      changesCount: typeof parsed.changesCount === "number" ? parsed.changesCount : (parsed.keywordsAdded?.length || 0),
       summary: parsed.summaryChanges || parsed.summary || "Optimized.",
       detectedJobTitle: parsed.detectedJobTitle,
       detectedCompany: parsed.detectedCompany,
     };
   }
 
-  // New structured ResumeJSON schema
-  const json = parsed as ResumeJSON;
-  if (!json?.header?.name) {
-    logger.warn("[router] ResumeJSON missing header.name, using fallback text.");
-    return defaultFallback;
+  // Schema B: Structured ResumeJSON schema
+  if (parsed?.header?.name) {
+    const json = parsed as ResumeJSON;
+    const plainText = serializeResumeJSONToText(json);
+    return {
+      resume: sanitizeResumeText(plainText),
+      resumeJSON: json,
+      keywordsAdded: Array.isArray(json.keywordsAdded) ? json.keywordsAdded : [],
+      changesCount: typeof json.changesCount === "number" ? json.changesCount : (json.keywordsAdded?.length || 0),
+      summary: json.summaryChanges || "Optimized.",
+      detectedJobTitle: json.detectedJobTitle,
+      detectedCompany: json.detectedCompany,
+    };
   }
 
-  const plainText = serializeResumeJSONToText(json);
-
-  return {
-    resume: sanitizeResumeText(plainText),
-    resumeJSON: json,
-    keywordsAdded: json.keywordsAdded || [],
-    changesCount: json.changesCount || 0,
-    summary: json.summaryChanges || "Optimized.",
-    detectedJobTitle: json.detectedJobTitle,
-    detectedCompany: json.detectedCompany,
-  };
+  logger.warn("[router] AI JSON response missing valid resume content, using fallback text.");
+  return defaultFallback;
 }
 
 export async function callAI(prompt: string, rawText = ""): Promise<AIResult> {
+  const safeRawText = sanitizeResumeText(rawText);
   const defaultFallback: AIResult = {
-    resume: rawText,
+    resume: safeRawText,
     resumeJSON: null,
     keywordsAdded: [],
     changesCount: 0,
@@ -313,11 +354,12 @@ export async function callAI(prompt: string, rawText = ""): Promise<AIResult> {
   if (hasGroq) {
     try {
       logger.info("AI Router: Routing optimization request to Groq...");
-      // Call raw — we do our own JSON parsing
       const raw = await callGroqRaw(prompt);
-      const result = parseAIResponse(raw, rawText);
-      logger.info("AI Router: Successfully optimized using Groq.");
-      return result;
+      const result = parseAIResponse(raw, safeRawText);
+      if (result.resume && result.resume.trim().length > 50) {
+        logger.info("AI Router: Successfully optimized using Groq.");
+        return result;
+      }
     } catch (error) {
       logger.warn("AI Router: Groq call failed, falling back to Gemini.", error);
     }
@@ -325,18 +367,17 @@ export async function callAI(prompt: string, rawText = ""): Promise<AIResult> {
 
   try {
     logger.info("AI Router: Routing optimization request to Gemini...");
-    const raw = await callGeminiRaw(prompt);
-    const result = parseAIResponse(raw, rawText);
-    logger.info("AI Router: Successfully optimized using Gemini.");
-    return result;
+    const raw = await callGeminiRaw(prompt, safeRawText);
+    const result = parseAIResponse(raw, safeRawText);
+    if (result.resume && result.resume.trim().length > 50) {
+      logger.info("AI Router: Successfully optimized using Gemini.");
+      return result;
+    }
   } catch (error: any) {
     logger.error("AI Router: Critical failure. Both Groq and Gemini calls failed.", error);
-    return {
-      ...defaultFallback,
-      summary: `Optimized (AI Critical Failure: ${error?.message || "unknown"}).`,
-      resume: sanitizeResumeText(rawText),
-    };
   }
+
+  return defaultFallback;
 }
 
 const GROQ_MODELS = [
@@ -442,9 +483,9 @@ async function callGroqRaw(prompt: string): Promise<string> {
 }
 
 // Raw Gemini call returning string content
-async function callGeminiRaw(prompt: string): Promise<string> {
+async function callGeminiRaw(prompt: string, rawText = ""): Promise<string> {
   const { callGemini } = await import("./gemini");
-  const result = await callGemini(prompt, "");
+  const result = await callGemini(prompt, rawText);
   // callGemini returns a parsed object — re-stringify it so parseAIResponse handles it uniformly
   return JSON.stringify(result);
 }
