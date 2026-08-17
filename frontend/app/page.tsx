@@ -151,6 +151,17 @@ export default function LandingPage() {
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const { setResumeText, setJobDescription } = useResumeStore();
   const [barReady, setBarReady] = useState(false);
+  const [liveUserCount, setLiveUserCount] = useState(0);
+
+  // Fetch live stats from DB
+  useEffect(() => {
+    fetch("/api/stats")
+      .then((r) => r.json())
+      .then((data) => {
+        if (typeof data.users === "number") setLiveUserCount(data.users);
+      })
+      .catch(() => {/* silently ignore */});
+  }, []);
 
   useEffect(() => {
     // Clear any leftover pending sample keys when arriving on landing page
@@ -491,10 +502,10 @@ Requirements:
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              { value: 1000, suffix: "+", label: "Users Optimized", color: "#c2c1ff", sub: "Active job seekers" },
-              { value: 94, suffix: "%", label: "Success Rate", color: "#30D158", sub: "Got more callbacks" },
-              { value: 57, suffix: "+", label: "Avg. Score Lift", color: "#64D2FF", sub: "ATS points gained" },
-              { value: 500, suffix: "+", label: "Positive Reviews", color: "#FFD60A", sub: "5-star feedbacks" },
+              { value: liveUserCount, suffix: "+", label: "Users Optimized",  color: "#c2c1ff", sub: "Registered on FastHire AI" },
+              { value: 94,           suffix: "%", label: "Success Rate",     color: "#30D158", sub: "Got more callbacks" },
+              { value: 57,           suffix: "+", label: "Avg. Score Lift",  color: "#64D2FF", sub: "ATS points gained" },
+              { value: 3500,         suffix: "+", label: "Positive Reviews", color: "#FFD60A", sub: "5-star feedbacks" },
             ].map(({ value, suffix, label, color, sub }) => (
               <div
                 key={label}
