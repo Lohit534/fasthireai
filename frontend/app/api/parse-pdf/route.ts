@@ -142,11 +142,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Clean up control characters while preserving exact text
+    // Clean up control characters and invalid Unicode from AI-generated/Canva PDFs while preserving exact text
     extractedText = extractedText
-      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\uD800-\uDFFF\uFFFE\uFFFF]/g, "")
       .replace(/\r\n/g, "\n")
       .replace(/\r/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
       .trim();
 
     if (!extractedText || extractedText.length < 5) {
