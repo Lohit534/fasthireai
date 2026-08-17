@@ -163,6 +163,9 @@ export function sanitizeResumeText(text: string): string {
     .replace(/^#{1,6}\s+/gm, '')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
 
+  // 3.5 Fix words broken with hyphens across linebreaks (e.g. "Analyt-\nics" -> "Analytics")
+  result = result.replace(/(\b[A-Za-z]+)-\s*\r?\n+\s*([A-Za-z]+\b)/g, '$1$2');
+
   // 4. Rejoin broken words split across lines within lower-case sentence continuations
   result = result.replace(/([a-z,])\r?\n([a-z])/g, '$1 $2');
 
@@ -193,10 +196,31 @@ export function sanitizeResumeText(text: string): string {
       .split('\n')
       .map(line => line.replace(/^[•\-\*–—\s]+/, '').trim())
       .filter(Boolean)
-      .join(' ');
+      .join(' ')
+      .replace(/(\b[A-Za-z]+)-\s+([A-Za-z]+\b)/g, '$1$2');
     if (cleanSummaryText) {
       result = result.replace(summaryMatch[0], `\n${summaryMatch[1].toUpperCase()}\n${cleanSummaryText}\n`);
     }
+  }
+
+  // 7.5 Consolidate multi-line skills under TECHNICAL SKILLS so each category is on a single line
+  const skillsMatch = result.match(/(?:^|\n)(TECHNICAL SKILLS|SKILLS|CORE SKILLS|KEY SKILLS)\n([\s\S]*?)(?=\n[A-Z\s]{4,}|\n*$)/i);
+  if (skillsMatch) {
+    const rawSkills = skillsMatch[2];
+    const skillLines: string[] = [];
+    const rawLines = rawSkills.split('\n').map(l => l.trim()).filter(Boolean);
+    for (const l of rawLines) {
+      if (l.includes(':')) {
+        skillLines.push(l);
+      } else if (skillLines.length > 0) {
+        const last = skillLines[skillLines.length - 1];
+        const sep = last.endsWith(',') || last.endsWith('-') ? ' ' : ', ';
+        skillLines[skillLines.length - 1] = last + sep + l;
+      } else {
+        skillLines.push(`Technical Skills: ${l}`);
+      }
+    }
+    result = result.replace(skillsMatch[0], `\n${skillsMatch[1].toUpperCase()}\n${skillLines.join('\n')}\n`);
   }
 
   // 8. Ensure LANGUAGES section at the bottom is bullet points only

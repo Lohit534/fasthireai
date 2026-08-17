@@ -248,7 +248,11 @@ export default function ResumeViewer({
                 );
               case "summary":
                 return (
-                  <p key={idx} className="text-[10px] mb-1 text-slate-800 leading-normal select-text font-serif">
+                  <p
+                    key={idx}
+                    className="text-[10px] mb-1 text-slate-800 leading-relaxed select-text font-serif"
+                    style={{ textAlign: "justify", textJustify: "inter-word", hyphens: "none" }}
+                  >
                     {renderHighlightedText(block.text)}
                   </p>
                 );
@@ -256,7 +260,7 @@ export default function ResumeViewer({
                 return (
                   <div key={idx} className="flex text-[10.5px] mb-1.5 leading-normal select-text font-serif">
                     <span className="font-bold text-black w-[190px] shrink-0">{block.label}:</span>
-                    <span className="text-slate-800 flex-1">{renderHighlightedText(block.value)}</span>
+                    <span className="text-slate-800 flex-1" style={{ hyphens: "none" }}>{renderHighlightedText(block.value)}</span>
                   </div>
                 );
               case "project":

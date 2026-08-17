@@ -399,8 +399,9 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
 
   let cleanInput = (text || "");
 
-  // Rejoin compound tech terms
+  // Rejoin compound tech terms and unwrap hyphenated words broken across linebreaks
   const COMPOUND_TERMS: [RegExp, string][] = [
+    [/(\b[A-Za-z]+)-\s*\r?\n+\s*([A-Za-z]+\b)/g, '$1$2'],
     [/My\s*\n+\s*SQL/gi, 'MySQL'],
     [/Type\s*\n+\s*Script/gi, 'TypeScript'],
     [/Java\s*\n+\s*Script/gi, 'JavaScript'],
@@ -456,14 +457,17 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
       continue;
     }
 
-    // 2. Contact row detection
+    // 2. Contact row detection (collect all contact rows before any section header)
     const isContactLine = 
       line.includes('@') || 
       /\+?\d[\d\s\-\(\)]{7,}/.test(line) ||
       line.toLowerCase().includes('linkedin.com') ||
-      line.toLowerCase().includes('github.com');
+      line.toLowerCase().includes('github.com') ||
+      line.toLowerCase().includes('linkedin') ||
+      line.toLowerCase().includes('github') ||
+      line.toLowerCase().includes('portfolio');
       
-    if (isContactLine && blocks.filter(b => b.type === 'contact').length === 0) {
+    if (isContactLine && blocks.filter(b => b.type === 'section').length === 0) {
       const parts = line.split(/\s*(?:[|•\u2022—–]|\s+-\s+)\s*/);
       const segments: ContactSegment[] = [];
       
@@ -493,7 +497,14 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
         }
       });
       
-      blocks.push({ type: 'contact', segments });
+      if (segments.length > 0) {
+        const existingContact = blocks.find(b => b.type === 'contact') as { type: 'contact'; segments: ContactSegment[] } | undefined;
+        if (existingContact) {
+          existingContact.segments.push(...segments);
+        } else {
+          blocks.push({ type: 'contact', segments });
+        }
+      }
       continue;
     }
 
@@ -532,7 +543,14 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
             blocks.push({ type: 'skillLine', label, value: nextVal });
             idx++; // skip the colon line
           } else {
-            blocks.push({ type: 'skillLine', label: currentSection === 'SOFT SKILLS' ? 'Soft Skills' : 'Technical Skills', value: cleanVal });
+            // Check if previous block was a skillLine — append to it instead of creating duplicate Technical Skills heading
+            const lastBlock = blocks[blocks.length - 1];
+            if (lastBlock && lastBlock.type === 'skillLine') {
+              const sep = lastBlock.value.endsWith(',') || lastBlock.value.endsWith('-') ? ' ' : ', ';
+              lastBlock.value += sep + cleanVal;
+            } else {
+              blocks.push({ type: 'skillLine', label: currentSection === 'SOFT SKILLS' ? 'Soft Skills' : 'Technical Skills', value: cleanVal });
+            }
           }
         }
       }
