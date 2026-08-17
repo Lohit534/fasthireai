@@ -341,6 +341,7 @@ export async function callAI(prompt: string, rawText = ""): Promise<AIResult> {
 
 const GROQ_MODELS = [
   process.env.GROQ_MODEL,
+  "llama-3.3-70b-versatile",
   "llama-3.1-8b-instant",
   "llama-3.3-70b-specdec",
   "qwen-2.5-32b",
@@ -380,7 +381,7 @@ export async function callAIText(prompt: string): Promise<string> {
 
   // Fallback to Gemini
   if (process.env.GEMINI_API_KEY) {
-    const GEMINI_MODELS = ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
+    const GEMINI_MODELS = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash", "gemini-1.5-flash-8b"];
     const { GoogleGenerativeAI } = await import("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 

@@ -28,10 +28,10 @@ Keep your answers friendly, professional, highly actionable (3-5 concise sentenc
     // 1. Primary Engine for Chatbot: Google Gemini
     if (geminiKey) {
       const GEMINI_MODELS = [
-        "gemini-1.5-flash-latest",
         "gemini-1.5-flash",
-        "gemini-1.5-pro-latest",
-        "gemini-pro"
+        "gemini-1.5-pro",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash-8b",
       ];
 
       for (const modelName of GEMINI_MODELS) {

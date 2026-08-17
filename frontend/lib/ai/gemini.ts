@@ -6,11 +6,10 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 // Available Gemini models in priority order
 const GEMINI_MODELS = [
-  "gemini-1.5-flash-latest",
   "gemini-1.5-flash",
-  "gemini-1.5-pro-latest",
   "gemini-1.5-pro",
-  "gemini-pro",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash-8b",
 ];
 
 // Returns parsed object or fallback
