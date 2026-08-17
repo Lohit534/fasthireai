@@ -93,11 +93,11 @@ function LandingFAQ() {
   );
 }
 
-/* ── Animated number counter ─────────────────────────────── */
+/* ── Animated number counter (scroll-triggered) ─────────── */
 function AnimatedCounter({
   from,
   to,
-  duration = 1400,
+  duration = 1800,
   suffix = "",
 }: {
   from: number;
@@ -106,11 +106,28 @@ function AnimatedCounter({
   suffix?: string;
 }) {
   const [count, setCount] = useState(from);
+  const [started, setStarted] = useState(false);
+  const ref = React.useRef<HTMLSpanElement>(null);
 
+  // Trigger only when element enters the viewport
   useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started) setStarted(true);
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [started]);
+
+  // Run animation once started
+  useEffect(() => {
+    if (!started) return;
     setCount(from);
     const startTime = performance.now();
-
     const tick = (now: number) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
@@ -118,16 +135,14 @@ function AnimatedCounter({
       setCount(Math.round(from + (to - from) * eased));
       if (progress < 1) requestAnimationFrame(tick);
     };
-
     const raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [from, to, duration]);
+  }, [started, from, to, duration]);
 
   return (
-    <>
-      {count}
-      {suffix}
-    </>
+    <span ref={ref}>
+      {count}{suffix}
+    </span>
   );
 }
 
@@ -476,10 +491,10 @@ Requirements:
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              { value: 12000, suffix: "+", label: "Users Optimized", color: "#c2c1ff", sub: "Active job seekers" },
-              { value: 94,    suffix: "%", label: "Success Rate",    color: "#30D158", sub: "Got more callbacks" },
-              { value: 57,    suffix: "+",  label: "Avg. Score Lift", color: "#64D2FF", sub: "ATS points gained" },
-              { value: 4800,  suffix: "+",  label: "Positive Reviews", color: "#FFD60A", sub: "5-star feedbacks" },
+              { value: 1000,  suffix: "+", label: "Users Optimized",  color: "#c2c1ff", sub: "Active job seekers" },
+              { value: 94,    suffix: "%", label: "Success Rate",     color: "#30D158", sub: "Got more callbacks" },
+              { value: 57,    suffix: "+", label: "Avg. Score Lift",  color: "#64D2FF", sub: "ATS points gained" },
+              { value: 3500,  suffix: "+", label: "Positive Reviews", color: "#FFD60A", sub: "5-star feedbacks" },
             ].map(({ value, suffix, label, color, sub }) => (
               <div
                 key={label}
