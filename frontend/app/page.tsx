@@ -400,22 +400,37 @@ Requirements:
             </p>
           </div>
 
-          <div className="flex flex-row items-center justify-center gap-8 md:gap-16">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-16">
+            {/* Before gauge */}
             <div className="flex flex-col items-center gap-2">
-              <CircleGauge value={34} label="Before" size={110} />
+              <div className="block md:hidden">
+                <CircleGauge value={34} label="Before" size={90} />
+              </div>
+              <div className="hidden md:block">
+                <CircleGauge value={34} label="Before" size={110} />
+              </div>
               <p className="text-xs text-slate-400 font-mono font-medium">14 keywords missing</p>
             </div>
 
+            {/* AI Engine connector — horizontal on md+, vertical on mobile */}
             <div className="flex flex-col items-center gap-2 shrink-0">
-              <div className="h-px w-12 md:w-20 bg-gradient-to-r from-[#FF453A]/40 to-[#5E5CE6]/40" />
-              <span className="text-xs font-mono font-semibold text-[#c2c1ff] bg-[#5E5CE6]/15 border border-[#5E5CE6]/30 px-3 py-1 rounded-full">
+              <div className="h-px w-10 md:w-20 bg-gradient-to-r from-[#FF453A]/40 to-[#5E5CE6]/40 md:block hidden" />
+              <div className="h-6 w-px bg-gradient-to-b from-[#FF453A]/40 to-[#5E5CE6]/40 md:hidden block" />
+              <span className="text-xs font-mono font-semibold text-[#c2c1ff] bg-[#5E5CE6]/15 border border-[#5E5CE6]/30 px-3 py-1 rounded-full whitespace-nowrap">
                 ⚡ AI Engine
               </span>
-              <div className="h-px w-12 md:w-20 bg-gradient-to-r from-[#5E5CE6]/40 to-[#30D158]/40" />
+              <div className="h-px w-10 md:w-20 bg-gradient-to-r from-[#5E5CE6]/40 to-[#30D158]/40 md:block hidden" />
+              <div className="h-6 w-px bg-gradient-to-b from-[#5E5CE6]/40 to-[#30D158]/40 md:hidden block" />
             </div>
 
+            {/* After gauge */}
             <div className="flex flex-col items-center gap-2">
-              <CircleGauge value={91} label="After" size={110} />
+              <div className="block md:hidden">
+                <CircleGauge value={91} label="After" size={90} />
+              </div>
+              <div className="hidden md:block">
+                <CircleGauge value={91} label="After" size={110} />
+              </div>
               <p className="text-xs text-slate-400 font-mono font-medium">ATS-ready ✓</p>
             </div>
           </div>
