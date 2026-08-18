@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { FREE_CREDITS_PER_MONTH, isOwnerEmail } from "@/types";
+import { FREE_CREDITS_PER_MONTH, PRO_CREDITS_PER_MONTH, isOwnerEmail } from "@/types";
 import { logger } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
@@ -217,7 +217,7 @@ export async function GET(request: NextRequest) {
       if (isFirst50) {
         paidCredits = 365;
       } else if (paidCredits > 0 && paidCredits < 900000) {
-        paidCredits = 15;
+        paidCredits = PRO_CREDITS_PER_MONTH;
       } else if (paidCredits >= 900000) {
         paidCredits = 999999;
       } else {
@@ -240,10 +240,13 @@ export async function GET(request: NextRequest) {
       planId = "promax";
     }
 
+    const totalAllowed = isOwner || planId === "promax" ? 999999 : (planId === "premium" ? PRO_CREDITS_PER_MONTH : FREE_CREDITS_PER_MONTH);
+    const freeRemaining = Math.max(0, totalAllowed - freeUsed);
+
     return NextResponse.json({
       freeUsed,
       paidCredits,
-      freeRemaining: Math.max(0, (planId !== "free" ? 15 : FREE_CREDITS_PER_MONTH) - freeUsed),
+      freeRemaining,
       resetAt: isNewMonth ? now.toISOString() : creditRow.resetAt,
       isOwner: false,
       isFirst50: isFirst50,
@@ -319,7 +322,7 @@ export async function POST(request: NextRequest) {
     let expiresAt: Date | null = null;
 
     if (planId === "premium") {
-      paidCredits = 15;
+      paidCredits = PRO_CREDITS_PER_MONTH;
       const days = billingCycle === "yearly" ? 365 : 30;
       expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
     } else if (planId === "team" || planId === "promax") {

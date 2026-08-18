@@ -65,7 +65,7 @@ const PLANS: Plan[] = [
     periodYearly: "year",
     description: "For active job hunters targeting multiple roles.",
     features: [
-      "15 AI resume optimizations per month",
+      "20 AI resume optimizations per month",
       "Unlimited PDF + DOCX downloads",
       "5 cover letters / month",
       "Skills learning roadmap (5/month)",
@@ -119,7 +119,7 @@ const FAQ_ITEMS: FAQItem[] = [
   },
   {
     question: "What is Premium Pro?",
-    answer: "Premium Pro is our signature individual package designed for active job hunters, providing 15 monthly AI optimizations, full PDF/DOCX downloads, and custom instruction tuning."
+    answer: "Premium Pro is our signature individual package designed for active job hunters, providing 20 monthly AI optimizations, full PDF/DOCX downloads, and custom instruction tuning."
   },
   {
     question: "What counts as a \"skill roadmap\"?",

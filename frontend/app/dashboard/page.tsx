@@ -191,7 +191,7 @@ export default function DashboardPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        if (response.status === 403) throw new Error("Free limit reached. Upgrade to continue.");
+        if (response.status === 403) throw new Error(errorData.error || "Optimization quota limit reached. Please upgrade to continue.");
         throw new Error(errorData.error || "Optimization failed.");
       }
 

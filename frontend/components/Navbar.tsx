@@ -92,7 +92,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
     // Immediately load cached plan from localStorage to avoid UI flash
     const cachedPlan = localStorage.getItem(`fastHire_plan_${userId}`);
     if (cachedPlan === "premium" || cachedPlan === "promax" || cachedPlan === "owner") {
-      setCredits((prev) => prev || { isOwner: cachedPlan === "owner", paidCredits: cachedPlan === "promax" ? 999999 : 15, freeRemaining: 15, freeUsed: 0, resetAt: new Date().toISOString(), planId: cachedPlan });
+      setCredits((prev) => prev || { isOwner: cachedPlan === "owner", paidCredits: cachedPlan === "promax" ? 999999 : 20, freeRemaining: 20, freeUsed: 0, resetAt: new Date().toISOString(), planId: cachedPlan });
     }
 
     async function fetchCredits() {

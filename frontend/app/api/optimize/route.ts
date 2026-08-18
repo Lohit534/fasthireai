@@ -6,7 +6,7 @@ import { buildOptimizationPrompt } from "@/lib/ai/prompts";
 import { callAI } from "@/lib/ai/router";
 import { scoreResume } from "@/lib/ats/scorer";
 import { generateUUID } from "@/lib/utils";
-import { isOwnerEmail } from "@/types";
+import { isOwnerEmail, FREE_CREDITS_PER_MONTH, PRO_CREDITS_PER_MONTH } from "@/types";
 import fs from "fs";
 import path from "path";
 
@@ -15,7 +15,6 @@ export const maxDuration = 60; // 60s timeout for AI optimization
 
 const MIN_RESUME_CHARS = 100;
 const MIN_JD_CHARS = 50;
-const FREE_CREDITS_PER_MONTH = 1;
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,24 +37,25 @@ export async function POST(request: NextRequest) {
     }
 
     if (authError || !user) {
-      logger.warn("[optimize] Unauthorized request");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Please sign in to optimize your resume." },
+        { status: 401 }
+      );
     }
 
     // 2. Parse and validate body
-    const body = await request.json();
-    const { resumeText, jobDescription, instructions, lengthOption, jobTitle, company } = body;
+    const { resumeText, jobDescription, instructions, lengthOption, jobTitle, company } = await request.json();
 
-    if (!resumeText || typeof resumeText !== "string" || resumeText.trim().length < MIN_RESUME_CHARS) {
+    if (!resumeText || resumeText.length < MIN_RESUME_CHARS) {
       return NextResponse.json(
-        { error: `Resume text must be at least ${MIN_RESUME_CHARS} characters.` },
+        { error: `Resume text is too short. Please provide at least ${MIN_RESUME_CHARS} characters.` },
         { status: 400 }
       );
     }
 
-    if (!jobDescription || typeof jobDescription !== "string" || jobDescription.trim().length < MIN_JD_CHARS) {
+    if (!jobDescription || jobDescription.length < MIN_JD_CHARS) {
       return NextResponse.json(
-        { error: `Job description must be at least ${MIN_JD_CHARS} characters.` },
+        { error: `Job description is too short. Please provide at least ${MIN_JD_CHARS} characters.` },
         { status: 400 }
       );
     }
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     const admin = getAdminClient() as any;
     const now = new Date();
 
-    // Resolve user record ID in public.User to prevent email unique constraint violations or foreign key errors
+    // Resolve user record ID in public.User
     let activeUserId = user.id;
     try {
         const { data: existingUser } = await admin
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
 
     let freeUsed = 0;
     let paidCredits = 0;
-    let creditId: string | null = null;
+    let isUnlimited = isOwner;
 
     if (!isOwner) {
       const { data: earlyUsers } = await admin
@@ -121,13 +121,11 @@ export async function POST(request: NextRequest) {
       const earlyUserIds = (earlyUsers || []).map((u: any) => u.id);
       const isFirst50 = earlyUserIds.includes(activeUserId) || earlyUserIds.includes(user.id);
 
-      const { data: existingCredit, error: creditFetchErr } = await admin
+      let { data: creditRow, error: creditFetchErr } = await admin
         .from("Credit")
         .select("*")
         .eq("userId", activeUserId)
         .maybeSingle();
-
-      let creditRow = existingCredit;
 
       if (!creditRow && !creditFetchErr) {
         const initialPaidCredits = isFirst50 ? 365 : 0;
@@ -149,14 +147,15 @@ export async function POST(request: NextRequest) {
       }
 
       if (creditRow) {
-        creditId = creditRow.id;
         const resetAt = new Date(creditRow.resetAt);
         const isNewMonth =
           now.getMonth() !== resetAt.getMonth() ||
           now.getFullYear() !== resetAt.getFullYear();
 
-        freeUsed = isNewMonth ? 0 : creditRow.freeUsed;
-        paidCredits = isNewMonth ? (isFirst50 ? 365 : creditRow.paidCredits) : creditRow.paidCredits;
+        freeUsed = isNewMonth ? 0 : (creditRow.freeUsed || 0);
+        paidCredits = isNewMonth 
+          ? (isFirst50 ? 365 : (creditRow.paidCredits >= 900000 ? 999999 : (creditRow.paidCredits > 0 ? PRO_CREDITS_PER_MONTH : 0))) 
+          : (creditRow.paidCredits || 0);
 
         if (isNewMonth) {
           await admin
@@ -169,17 +168,31 @@ export async function POST(request: NextRequest) {
             .eq("userId", activeUserId);
         }
 
-        const freeRemaining = Math.max(0, (isFirst50 ? 15 : FREE_CREDITS_PER_MONTH) - freeUsed);
-        if (freeRemaining <= 0 && paidCredits <= 0) {
-          return NextResponse.json(
-            { error: "Free limit reached. Upgrade to continue." },
-            { status: 403 }
-          );
+        isUnlimited = isFirst50 || paidCredits >= 900000;
+
+        // STRICT QUOTA ENFORCEMENT
+        if (!isUnlimited) {
+          const isProPlan = paidCredits > 0;
+          const allowedLimit = isProPlan ? PRO_CREDITS_PER_MONTH : FREE_CREDITS_PER_MONTH;
+
+          if (freeUsed >= allowedLimit) {
+            if (isProPlan) {
+              return NextResponse.json(
+                { error: `Monthly quota of ${PRO_CREDITS_PER_MONTH} optimizations reached for Pro plan. Please upgrade to Pro Max for unlimited access or wait for your monthly cycle reset.` },
+                { status: 403 }
+              );
+            } else {
+              return NextResponse.json(
+                { error: `Monthly limit of ${FREE_CREDITS_PER_MONTH} optimizations reached for Free plan. Please upgrade to Premium Pro (20 optimizations) or Pro Max to continue.` },
+                { status: 403 }
+              );
+            }
+          }
         }
       }
     }
 
-    logger.info(`[optimize] User: ${user.email} | activeUserId=${activeUserId} | freeUsed=${freeUsed} | paid=${paidCredits} | owner=${isOwner}`);
+    logger.info(`[optimize] User: ${user.email} | activeUserId=${activeUserId} | freeUsed=${freeUsed} | paid=${paidCredits} | isUnlimited=${isUnlimited} | owner=${isOwner}`);
 
     // Core AI optimization pipeline
     const scoreBefore = await scoreResume(resumeText, jobDescription);
@@ -363,6 +376,24 @@ export async function POST(request: NextRequest) {
       fs.writeFileSync(FILE_PATH, JSON.stringify(localResumes, null, 2), "utf8");
     } catch (localErr: any) {
       logger.warn("[optimize] Local JSON file fallback failed:", localErr.message);
+    }
+
+    // Strictly deduct credit usage in database for non-owners
+    if (!isOwner) {
+      try {
+        const newFreeUsed = freeUsed + 1;
+        const newPaidCredits = paidCredits > 0 && paidCredits < 900000 ? Math.max(0, paidCredits - 1) : paidCredits;
+        await admin
+          .from("Credit")
+          .update({
+            freeUsed: newFreeUsed,
+            paidCredits: newPaidCredits,
+          })
+          .eq("userId", activeUserId);
+        logger.info(`[optimize] Strictly updated credit in DB for ${user.email}: freeUsed=${newFreeUsed}, paidCredits=${newPaidCredits}`);
+      } catch (creditErr: any) {
+        logger.error("[optimize] Failed to increment credit usage in DB:", creditErr.message);
+      }
     }
 
     return NextResponse.json({

@@ -179,7 +179,7 @@ export default function BillingPage() {
   }
 
   // Quota computations
-  const totalLimit = activePlan === "free" ? 2 : activePlan === "premium" ? 15 : 999999;
+  const totalLimit = activePlan === "free" ? 2 : activePlan === "premium" ? 20 : 999999;
   const isUnlimited = activePlan === "team" || activePlan === "promax" || credits?.isOwner;
   const used = credits?.freeUsed ?? 0;
   const remaining = isUnlimited ? "Unlimited" : Math.max(0, totalLimit - used);
@@ -199,7 +199,7 @@ export default function BillingPage() {
     ? (billingCycle === "yearly" ? "₹166 / year" : "₹99 / month") 
     : (billingCycle === "yearly" ? "₹332 / year" : "₹199 / month");
 
-  const pdfDownloadLimit = activePlan === "free" ? "1 PDF (Sample)" : activePlan === "premium" ? "15 PDFs / month" : "30 PDFs / month";
+  const pdfDownloadLimit = activePlan === "free" ? "1 PDF (Sample)" : "Unlimited PDFs / month";
 
   return (
     <div className="flex flex-col min-h-screen bg-[#070913] text-slate-100 font-sans">
@@ -385,7 +385,7 @@ export default function BillingPage() {
                 {/* Action Footer */}
                 <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/6">
                   <span className="text-[11px] text-slate-400">
-                    {activePlan === "free" ? "Upgrade anytime to unlock 15–30 monthly resumes." : "Need to upgrade or switch plans?"}
+                    {activePlan === "free" ? "Upgrade anytime to unlock 20 monthly optimizations or unlimited access." : "Need to upgrade or switch plans?"}
                   </span>
                   <Link href="/dashboard/pricing">
                     <Button className="bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs h-9 rounded-xl px-5 shadow-md">

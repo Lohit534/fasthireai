@@ -67,6 +67,7 @@ export const ATS_THRESHOLDS = {
 } as const;
 
 export const FREE_CREDITS_PER_MONTH = 2;
+export const PRO_CREDITS_PER_MONTH = 20;
 export const MAX_RESUME_CHARS = 8000;
 export const MAX_JD_CHARS = 5000;
 export const MIN_RESUME_CHARS = 100;
