@@ -7,23 +7,26 @@ import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { 
   CreditCard, 
   Loader2, 
   ArrowLeft, 
-  Plus, 
-  Trash2, 
   Calendar, 
   Check, 
   AlertCircle,
-  FileText,
-  Lock,
-  ExternalLink,
-  ChevronRight,
-  TrendingUp,
-  Sparkles
+  FileText, 
+  Lock, 
+  ChevronRight, 
+  TrendingUp, 
+  Sparkles,
+  Zap,
+  ShieldCheck,
+  Download,
+  HelpCircle,
+  Clock,
+  Receipt,
+  ArrowUpRight
 } from "lucide-react";
 import { CreditInfo } from "@/types";
 import { toast } from "react-hot-toast";
@@ -52,6 +55,7 @@ export default function BillingPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
   const [selectedInvoiceData, setSelectedInvoiceData] = useState<InvoiceData | null>(null);
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   // Initialize page variables
   useEffect(() => {
@@ -71,7 +75,7 @@ export default function BillingPage() {
 
         // 1. Plan Tier & Credits Loading directly from DB
         let currentPlan = "free";
-        let currentCycle = localStorage.getItem(`fastHire_billingCycle_${user.id}`) || "monthly";
+        const currentCycle = localStorage.getItem(`fastHire_billingCycle_${user.id}`) || "monthly";
         setBillingCycle(currentCycle);
 
         try {
@@ -111,17 +115,15 @@ export default function BillingPage() {
 
         setActivePlan(currentPlan);
 
-
-
-        // 4. Invoices creation
+        // Invoices list creation
         const invoiceHistory: Invoice[] = [
-          { id: "inv_1", date: "2026-06-15", description: "FastHire Premium Monthly Subscription", amount: "₹99.00", status: "paid" },
-          { id: "inv_2", date: "2026-05-15", description: "FastHire Premium Monthly Subscription", amount: "₹99.00", status: "paid" }
+          { id: "INV-84920", date: "2026-06-15", description: "FastHire Premium Pro Monthly", amount: "₹99.00", status: "paid" },
+          { id: "INV-73819", date: "2026-05-15", description: "FastHire Premium Pro Monthly", amount: "₹99.00", status: "paid" }
         ];
 
         if (currentPlan === "team" || currentPlan === "promax") {
           invoiceHistory.unshift({
-            id: "inv_3", date: "2026-06-20", description: "FastHire Pro Max Setup Package", amount: "₹199.00", status: "paid"
+            id: "INV-92014", date: "2026-06-20", description: "FastHire Pro Max Package", amount: "₹199.00", status: "paid"
           });
         }
 
@@ -138,8 +140,6 @@ export default function BillingPage() {
 
     loadBillingInfo();
   }, [router]);
-
-
 
   const handlePrintReceipt = (invoice: Invoice) => {
     const isProMax = activePlan === "promax" || activePlan === "team" || invoice.description.includes("Pro Max");
@@ -165,129 +165,230 @@ export default function BillingPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#060713]">
-        <div className="text-center space-y-2">
-          <Loader2 className="h-8 w-8 text-violet-600 animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-semibold">Verifying billing data...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#070913]">
+        <div className="text-center space-y-3">
+          <div className="relative mx-auto h-12 w-12">
+            <div className="absolute inset-0 rounded-full border-2 border-violet-500/20" />
+            <div className="absolute inset-0 rounded-full border-t-2 border-violet-500 animate-spin" />
+            <CreditCard className="absolute inset-0 m-auto h-5 w-5 text-violet-400" />
+          </div>
+          <p className="text-xs text-slate-400 font-semibold tracking-wide">Loading billing workspace...</p>
         </div>
       </div>
     );
   }
 
   // Quota computations
-  const totalLimit = activePlan === "free" ? 2 : activePlan === "premium" ? 15 : (activePlan === "team" || activePlan === "promax") ? 999999 : 999999;
+  const totalLimit = activePlan === "free" ? 2 : activePlan === "premium" ? 15 : 999999;
+  const isUnlimited = activePlan === "team" || activePlan === "promax" || credits?.isOwner;
   const used = credits?.freeUsed ?? 0;
-  const remaining = credits?.freeRemaining ?? totalLimit;
-  const percentUsed = Math.min(100, Math.round((used / totalLimit) * 100));
+  const remaining = isUnlimited ? "Unlimited" : Math.max(0, totalLimit - used);
+  const percentUsed = isUnlimited ? 15 : Math.min(100, Math.round((used / totalLimit) * 100));
+
+  const planDisplayName = credits?.isOwner 
+    ? "Developer Owner Account (Bypassed)"
+    : activePlan === "promax" || activePlan === "team" 
+    ? "Pro Max (Unlimited Power)" 
+    : activePlan === "premium" 
+    ? "Premium Pro" 
+    : "Free Career Tier";
+
+  const planPriceDisplay = activePlan === "free" 
+    ? "₹0 / month" 
+    : activePlan === "premium" 
+    ? (billingCycle === "yearly" ? "₹166 / year" : "₹99 / month") 
+    : (billingCycle === "yearly" ? "₹332 / year" : "₹199 / month");
+
+  const pdfDownloadLimit = activePlan === "free" ? "1 PDF (Sample)" : activePlan === "premium" ? "15 PDFs / month" : "30 PDFs / month";
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#060713] text-slate-100 font-sans">
+    <div className="flex flex-col min-h-screen bg-[#070913] text-slate-100 font-sans">
       <Navbar />
 
-      <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
+      <main className="flex-1 mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
         
-        {/* Header Title */}
-        <ScrollFadeIn className="flex items-center gap-4">
-          <Link href="/dashboard">
-            <Button variant="outline" size="sm" className="border-white/5 text-slate-300 hover:bg-white/5 h-9 w-9 p-0 rounded-full bg-transparent">
-              <ArrowLeft className="h-4.5 w-4.5" />
+        {/* Header Navigation & Title */}
+        <ScrollFadeIn className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
+          <div className="flex items-center gap-3.5">
+            <Link href="/dashboard">
+              <Button variant="outline" size="sm" className="border-white/10 text-slate-300 hover:bg-white/5 h-9 w-9 p-0 rounded-xl bg-[#0e1022]">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+                Billing &amp; Subscription
+              </h1>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Understand your plan quotas, credit usage, and download GST tax invoices.
+              </p>
+            </div>
+          </div>
+
+          <Link href="/dashboard/pricing">
+            <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs h-9 rounded-xl px-4 shadow-lg shadow-violet-600/15 flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5" />
+              {activePlan === "free" ? "Upgrade to Pro" : "View All Plans"}
+              <ArrowUpRight className="h-3.5 w-3.5" />
             </Button>
           </Link>
-          <div>
-            <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-              Billing &amp; Subscription Usage
-            </h1>
-            <p className="text-xs text-slate-400">
-              Check your active plan quotas and view invoice histories.
-            </p>
-          </div>
         </ScrollFadeIn>
 
-        {/* Dashboard Split Widgets */}
-        <ScrollFadeIn className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+        {/* 4 Summary Stats Tiles */}
+        <ScrollFadeIn className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
-          {/* Left Column: Sub details */}
-          <div className="flex flex-col gap-6">
-            
-            {/* Card 1: Subscription Quota overview */}
-            <Card className="border-white/5 bg-[#0e0f21]/40 shadow-xl flex-1 flex flex-col justify-between">
-              <CardContent className="p-6 space-y-6">
-                
-                {/* Header Sub details */}
-                <div className="flex justify-between items-start gap-4">
-                  <div className="space-y-1">
-                    <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Active Package Tier</p>
-                    <h3 className="text-lg font-extrabold text-white capitalize select-none">
-                      {credits?.isOwner 
-                        ? `Owner Account - Unlimited ${activePlan === "free" ? "Free" : activePlan === "premium" ? "Pro" : "Pro Max"}` 
-                        : (activePlan === "free" ? "Free Career Tier" : activePlan === "premium" ? "Premium Pro" : "Pro Max (Unlimited)")}
-                    </h3>
-                  </div>
-                  <Badge className={`text-[10px] font-bold border capitalize ${
-                    credits?.isOwner 
-                      ? "bg-violet-500/10 border-violet-500/20 text-violet-400"
-                      : (activePlan === "free" 
-                          ? "bg-slate-800/50 border-white/5 text-slate-400"
-                          : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400")
-                  }`}>
-                    {credits?.isOwner ? "Developer Bypass" : (activePlan === "free" ? "Limited Access" : "Active & Paid")}
-                  </Badge>
-                </div>
+          {/* Tile 1: Active Tier */}
+          <div className="bg-[#0e1022]/70 border border-white/8 rounded-2xl p-4.5 space-y-2 relative overflow-hidden shadow-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Tier</span>
+              <Badge className={`text-[9px] font-bold border ${
+                activePlan === "free" 
+                  ? "bg-slate-800/60 border-white/10 text-slate-400" 
+                  : "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
+              }`}>
+                {activePlan === "free" ? "Free Tier" : "Active & Paid"}
+              </Badge>
+            </div>
+            <p className="text-base font-extrabold text-white truncate">{planDisplayName}</p>
+            <p className="text-[11px] font-semibold text-violet-400">{planPriceDisplay}</p>
+          </div>
 
-                {/* Quota Progress */}
-                {credits?.isOwner ? (
-                  <div className="space-y-4">
-                    <div className="bg-violet-950/20 border border-violet-500/20 p-4 rounded-xl flex items-center justify-between">
-                      <div className="space-y-1">
-                        <span className="font-bold text-violet-400 text-xs">Developer Owner Account</span>
-                        <p className="text-[10px] text-slate-400 font-semibold">Your developer account has bypassed all billing limits and quotas.</p>
-                      </div>
-                      <Sparkles className="h-5 w-5 text-violet-400" />
+          {/* Tile 2: Resumes Remaining */}
+          <div className="bg-[#0e1022]/70 border border-white/8 rounded-2xl p-4.5 space-y-2 relative overflow-hidden shadow-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Optimizations Left</span>
+              <Zap className="h-3.5 w-3.5 text-cyan-400" />
+            </div>
+            <p className="text-base font-extrabold text-white">
+              {remaining} {typeof remaining === "number" ? "resumes" : ""}
+            </p>
+            <p className="text-[11px] text-slate-400 font-medium">
+              Used {used} of {isUnlimited ? "∞" : totalLimit} this month
+            </p>
+          </div>
+
+          {/* Tile 3: PDF / DOCX Downloads */}
+          <div className="bg-[#0e1022]/70 border border-white/8 rounded-2xl p-4.5 space-y-2 relative overflow-hidden shadow-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Export Downloads</span>
+              <FileText className="h-3.5 w-3.5 text-emerald-400" />
+            </div>
+            <p className="text-base font-extrabold text-white">{pdfDownloadLimit}</p>
+            <p className="text-[11px] text-slate-400 font-medium">
+              Clean ATS-ready PDF &amp; Word
+            </p>
+          </div>
+
+          {/* Tile 4: Monthly Reset Date */}
+          <div className="bg-[#0e1022]/70 border border-white/8 rounded-2xl p-4.5 space-y-2 relative overflow-hidden shadow-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Credits Reset</span>
+              <Clock className="h-3.5 w-3.5 text-amber-400" />
+            </div>
+            <p className="text-base font-extrabold text-white">
+              {credits?.resetAt ? new Date(credits.resetAt).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "Every 30 Days"}
+            </p>
+            <p className="text-[11px] text-slate-400 font-medium">
+              Refreshes automatically
+            </p>
+          </div>
+
+        </ScrollFadeIn>
+
+        {/* Main 2-Column Split Details */}
+        <ScrollFadeIn className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Left 7 Columns: Active Plan & Quota Details */}
+          <div className="lg:col-span-7 space-y-6">
+            
+            <Card className="border-white/8 bg-[#0e1022]/80 shadow-2xl rounded-2xl overflow-hidden">
+              <CardContent className="p-6 sm:p-7 space-y-6">
+                
+                {/* Plan Title & Price Banner */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#080a17] border border-white/6 p-5 rounded-xl">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-black text-white">{planDisplayName}</h3>
                     </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-slate-400">Simulated Plan Quota ({activePlan === "free" ? "Free Tier" : activePlan === "premium" ? "Premium Pro" : "Team Plan"})</span>
-                        <span className="text-white">Unlimited / {totalLimit} (Owner Bypassed)</span>
-                      </div>
-                      <Progress value={0} className="h-1.5 bg-slate-900 [&>div]:bg-violet-500 rounded-full border border-white/5" />
-                    </div>
-                  </div>
-                ) : (activePlan !== "team" && activePlan !== "promax") ? (
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs font-semibold">
-                      <span className="text-slate-400">Monthly Usage Quota</span>
-                      <span className="text-white">{used} / {totalLimit} Resumes Used</span>
-                    </div>
-                    <Progress value={percentUsed} className="h-1.5 bg-slate-900 [&>div]:bg-gradient-to-r [&>div]:from-violet-500 [&>div]:to-indigo-500 rounded-full border border-white/5" />
-                    <p className="text-[10px] text-slate-500 font-semibold leading-relaxed">
-                      Your credit limit resets automatically every 30 days. Reset date: {credits?.resetAt ? new Date(credits.resetAt).toLocaleDateString() : "Next billing cycle"}.
+                    <p className="text-xs text-slate-400">
+                      {activePlan === "free" 
+                        ? "2 free resume optimizations per month." 
+                        : `Subscribed on ${billingCycle} billing cycle.`}
                     </p>
                   </div>
-                ) : (
-                  <div className="bg-[#0c0d1b] border border-white/5 p-4 rounded-xl flex items-center justify-between">
-                    <div className="space-y-1">
-                      <span className="font-bold text-white text-xs">Unlimited Pipeline Access</span>
-                      <p className="text-[10px] text-slate-500">Your Pro Max package includes unlimited optimizations.</p>
-                    </div>
-                    <TrendingUp className="h-5 w-5 text-emerald-400" />
+                  <div className="sm:text-right">
+                    <span className="text-xl font-black text-white">{planPriceDisplay.split(" ")[0]}</span>
+                    <span className="text-xs text-slate-400 font-medium block">/{billingCycle === "yearly" ? "year" : "month"}</span>
                   </div>
-                )}
+                </div>
 
-                <div className="border-t border-white/5 pt-4 flex items-center justify-between gap-4">
-                  <div className="text-[11px] text-slate-400">
-                    {activePlan !== "free" ? (
-                      <div className="flex flex-col gap-0.5">
-                        <span>Renews automatically for <strong className="text-white">{activePlan === "premium" ? (billingCycle === "yearly" ? "₹166" : "₹99") : (billingCycle === "yearly" ? "₹332" : "₹199")}</strong> / {billingCycle === "yearly" ? "year" : "month"}</span>
-                        {credits?.expiresAt && (
-                          <span className="text-[10px] text-cyan-400">Plan expires: <strong>{new Date(credits.expiresAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</strong></span>
-                        )}
-                      </div>
-                    ) : (
-                      <span>Need more resumes to apply? Upgrade to a premium tier.</span>
-                    )}
+                {/* Quota Progress Bar with Clear Numbers */}
+                <div className="space-y-3 bg-[#080a17]/60 border border-white/6 p-5 rounded-xl">
+                  <div className="flex justify-between items-center text-xs font-bold">
+                    <span className="text-slate-300 flex items-center gap-1.5">
+                      <Zap className="h-3.5 w-3.5 text-cyan-400" />
+                      Monthly Optimization Quota
+                    </span>
+                    <span className="text-white font-mono">
+                      {used} / {isUnlimited ? "∞ (Unlimited)" : `${totalLimit} Resumes`}
+                    </span>
                   </div>
+
+                  <div className="h-2.5 bg-slate-900 rounded-full overflow-hidden border border-white/5 p-0.5">
+                    <div 
+                      className="h-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-violet-500 rounded-full transition-all duration-500" 
+                      style={{ width: `${percentUsed}%` }}
+                    />
+                  </div>
+
+                  <div className="flex justify-between text-[10px] text-slate-400 pt-0.5">
+                    <span>{remaining} remaining</span>
+                    <span>Resets: {credits?.resetAt ? new Date(credits.resetAt).toLocaleDateString() : "Every 30 days"}</span>
+                  </div>
+                </div>
+
+                {/* Plan Features Checklist */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">Features Included In Your Plan</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {[
+                      { text: "AI ATS Resume Optimization", included: true },
+                      { text: "Bullet Point Metric Improver", included: true },
+                      { text: activePlan === "free" ? "1 Sample PDF Export" : "Full PDF & DOCX Export Engine", included: true },
+                      { text: "Career Skills Learning Roadmaps", included: activePlan !== "free" },
+                      { text: "Tailored Cover Letter Generator", included: true },
+                      { text: "Instant Official GST Tax Invoices", included: activePlan !== "free" },
+                    ].map((feature, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`flex items-center gap-2.5 text-xs p-2.5 rounded-xl border ${
+                          feature.included 
+                            ? "bg-white/[0.02] border-white/5 text-slate-200" 
+                            : "bg-white/[0.01] border-white/3 text-slate-500"
+                        }`}
+                      >
+                        <div className={`h-4 w-4 rounded-full flex items-center justify-center shrink-0 ${
+                          feature.included 
+                            ? "bg-emerald-500/15 text-emerald-400" 
+                            : "bg-slate-800 text-slate-600"
+                        }`}>
+                          <Check className="h-2.5 w-2.5" />
+                        </div>
+                        <span className={feature.included ? "font-medium" : "line-through text-slate-600"}>
+                          {feature.text}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Action Footer */}
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/6">
+                  <span className="text-[11px] text-slate-400">
+                    {activePlan === "free" ? "Upgrade anytime to unlock 15–30 monthly resumes." : "Need to upgrade or switch plans?"}
+                  </span>
                   <Link href="/dashboard/pricing">
-                    <Button size="sm" className="bg-violet-600 hover:bg-violet-500 text-white font-bold h-8 text-[11px] rounded-full px-4 shrink-0 shadow-lg shadow-violet-600/10">
+                    <Button className="bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs h-9 rounded-xl px-5 shadow-md">
                       {activePlan === "free" ? "Upgrade Plan" : "Change Plan"}
                     </Button>
                   </Link>
@@ -298,62 +399,120 @@ export default function BillingPage() {
 
           </div>
 
-          {/* Right Column: Invoices list */}
-          <div className="flex flex-col">
-            <Card className="border-white/5 bg-[#0e0f21]/40 shadow-xl flex-1 flex flex-col justify-between overflow-hidden">
-              <div className="p-6 pb-2">
-                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Invoice &amp; Transaction History</p>
+          {/* Right 5 Columns: Invoices & Tax Receipts */}
+          <div className="lg:col-span-5 space-y-6">
+            
+            <Card className="border-white/8 bg-[#0e1022]/80 shadow-2xl rounded-2xl overflow-hidden flex flex-col">
+              <div className="p-6 border-b border-white/6 flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <h3 className="text-sm font-extrabold text-white">Invoice &amp; Receipts</h3>
+                  <p className="text-[10px] text-slate-400">Download official GST-compliant tax invoices.</p>
+                </div>
+                <Receipt className="h-4 w-4 text-violet-400" />
               </div>
 
-              <div className="flex-1 overflow-y-auto px-6 max-h-[350px]">
+              <div className="p-6 space-y-3 min-h-[260px] flex flex-col justify-start">
                 {invoices.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center py-20 text-center select-none text-slate-600">
-                    <FileText className="h-8 w-8 text-slate-600 mb-2" />
-                    <span className="text-[10px] font-bold">No Invoices Found</span>
-                    <p className="text-[9px] mt-0.5">Setup a paid plan to log invoices.</p>
+                  <div className="flex-1 flex flex-col items-center justify-center text-center py-10 text-slate-500 space-y-2 select-none">
+                    <FileText className="h-8 w-8 text-slate-600" />
+                    <span className="text-xs font-bold text-slate-400">No Invoices Yet</span>
+                    <p className="text-[11px] text-slate-500 max-w-xs">
+                      When you upgrade to a paid plan, your GST receipts and transaction records will appear here.
+                    </p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-white/5">
-                    {invoices.map((inv) => (
-                      <div
-                        key={inv.id}
-                        onClick={() => handlePrintReceipt(inv)}
-                        className="py-3 flex justify-between items-center gap-4 text-xs font-semibold cursor-pointer group hover:bg-white/[0.02] -mx-2 px-2 rounded-lg transition-colors"
-                      >
-                        <div className="space-y-0.5 truncate flex-1">
-                          <span className="text-white group-hover:text-violet-300 transition-colors block text-[11px] truncate max-w-full">{inv.description}</span>
-                          <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">{inv.date} &bull; {inv.id}</span>
+                  invoices.map((inv) => (
+                    <div
+                      key={inv.id}
+                      onClick={() => handlePrintReceipt(inv)}
+                      className="bg-[#080a17] border border-white/6 hover:border-violet-500/30 p-3.5 rounded-xl flex items-center justify-between gap-3 cursor-pointer group transition-all"
+                    >
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-white group-hover:text-violet-300 transition-colors truncate">
+                            {inv.description}
+                          </span>
                         </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                          <span className="text-white text-xs font-bold">{inv.amount}</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePrintReceipt(inv);
-                            }}
-                            className="px-2.5 py-1 rounded-lg bg-violet-500/10 group-hover:bg-violet-600 border border-violet-500/20 text-violet-300 group-hover:text-white transition-all flex items-center gap-1.5 text-[10px] font-bold shadow-sm"
-                            title="Download Official GST Tax Invoice"
-                          >
-                            <FileText className="h-3.5 w-3.5" />
-                            <span>Invoice</span>
-                          </button>
+                        <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono">
+                          <span>{inv.date}</span>
+                          <span>&bull;</span>
+                          <span className="text-emerald-400 font-semibold uppercase">{inv.status}</span>
                         </div>
                       </div>
-                    ))}
-                  </div>
+
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-xs font-bold text-white">{inv.amount}</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePrintReceipt(inv);
+                          }}
+                          className="h-7 px-2.5 rounded-lg bg-violet-500/10 group-hover:bg-violet-600 border border-violet-500/20 text-violet-300 group-hover:text-white transition-all flex items-center gap-1 text-[10px] font-bold"
+                          title="Download GST Invoice"
+                        >
+                          <Download className="h-3 w-3" />
+                          <span>PDF</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
 
-              {/* Bottom protection note */}
-              <div className="p-4 border-t border-white/5 bg-[#070814]/40 flex items-center gap-2 select-none">
-                <Lock className="h-3.5 w-3.5 text-slate-500" />
-                <span className="text-[9px] text-slate-500 leading-normal">
-                  Invoice billing is processed by FastHire-AI mockup systems. For question about custom invoices reach out to support.
-                </span>
+              <div className="p-4 bg-[#080a17]/80 border-t border-white/6 flex items-center gap-2.5 text-[10px] text-slate-400 select-none">
+                <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+                <span>256-bit SSL secured payments &amp; 18% GST tax invoice receipts.</span>
               </div>
             </Card>
+
+            {/* Quick Support Card */}
+            <div className="bg-[#0e1022]/50 border border-white/6 rounded-2xl p-4.5 flex items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <h4 className="text-xs font-bold text-white">Need Billing Help?</h4>
+                <p className="text-[10px] text-slate-400">Questions about payments, refunds, or custom invoices?</p>
+              </div>
+              <Link href="/dashboard">
+                <Button variant="outline" size="sm" className="border-white/10 text-slate-300 hover:bg-white/5 text-[10px] h-8 rounded-lg px-3 bg-transparent">
+                  Contact Us
+                </Button>
+              </Link>
+            </div>
+
+          </div>
+
+        </ScrollFadeIn>
+
+        {/* Clear Billing FAQ Section */}
+        <ScrollFadeIn className="bg-[#0e1022]/60 border border-white/8 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <HelpCircle className="h-4 w-4 text-violet-400" />
+            <h3 className="text-sm font-extrabold text-white">Frequently Asked Billing Questions</h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+            <div className="bg-[#080a17] border border-white/6 rounded-xl p-4 space-y-1.5">
+              <h4 className="text-xs font-bold text-white">When do my credits reset?</h4>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Your monthly resume optimization credits refresh automatically on the exact same date each month (e.g. every 30 days).
+              </p>
+            </div>
+
+            <div className="bg-[#080a17] border border-white/6 rounded-xl p-4 space-y-1.5">
+              <h4 className="text-xs font-bold text-white">Can I change plans anytime?</h4>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Yes, you can upgrade or switch between Free, Premium Pro, and Pro Max whenever you need. Unused credits rollover when upgrading.
+              </p>
+            </div>
+
+            <div className="bg-[#080a17] border border-white/6 rounded-xl p-4 space-y-1.5">
+              <h4 className="text-xs font-bold text-white">How do GST tax invoices work?</h4>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Every transaction includes an official GST tax breakdown with your company name, GSTIN (optional), and payment ID for easy expense claims.
+              </p>
+            </div>
           </div>
         </ScrollFadeIn>
+
       </main>
 
       {/* OFFICIAL GST INVOICE DOWNLOAD MODAL */}

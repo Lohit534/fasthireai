@@ -75,7 +75,6 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
   const [generatingLetter, setGeneratingLetter] = useState(false);
   const [showRoadmapAccordion, setShowRoadmapAccordion] = useState(false);
   const [showCoverLetterAccordion, setShowCoverLetterAccordion] = useState(false);
-  const [analyticsTab, setAnalyticsTab] = useState<"matplotlib" | "pandas" | "observations">("matplotlib");
 
   const delta = resume.scoreAfter - resume.scoreBefore;
   
@@ -464,365 +463,100 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
         </div>
 
         {/* Column 3: ATS Score Breakdown */}
-        <div className="bg-[#0b0c1a]/70 border border-white/5 rounded-2xl p-5 space-y-5">
-          <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            ATS Score
-          </h3>
+        <div className="bg-[#0b0c1a]/80 border border-white/8 rounded-2xl p-5 space-y-5 shadow-xl">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400" />
+              ATS Score Breakdown
+            </h3>
+            <span className="text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+              Industry Standard
+            </span>
+          </div>
 
           {/* Score comparison visualizer */}
-          <div className="flex items-center justify-around gap-4 bg-[#0f1022] border border-white/5 rounded-xl p-4">
+          <div className="flex items-center justify-around gap-4 bg-[#070914] border border-white/8 rounded-xl p-4 shadow-inner">
             <CircleGauge value={resume.scoreBefore} label="Before" size={80} />
             <div className="flex flex-col items-center gap-1 shrink-0">
-              <div className="h-8 w-8 rounded-full bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400">
+              <div className="h-8 w-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-sm">
                 <ArrowRight className="h-4 w-4 animate-pulse" />
               </div>
-              <span className="text-[9px] font-black text-emerald-400">+{delta} pts</span>
+              <span className="text-[10px] font-black text-emerald-400">+{delta} pts</span>
             </div>
             <CircleGauge value={resume.scoreAfter} label="After" size={80} />
           </div>
 
           {/* Description Rubric */}
-          <p className="text-[10px] text-slate-500 leading-relaxed font-semibold bg-white/2 p-2.5 rounded-lg border border-white/5 text-center">
-            Standard ATS Rubric Score &bull; Industry: Tech &bull; Computed using local keyword weights.
+          <p className="text-[10px] text-slate-400 leading-relaxed font-medium bg-white/[0.02] p-2.5 rounded-lg border border-white/5 text-center">
+            Standard ATS Rubric Score &bull; Industry: Tech &bull; Multi-factor weighted match.
           </p>
 
           {/* Score breakdown bars comparison */}
           <div className="space-y-3">
             {[
-              { label: "Parsability", before: 80, after: 95 },
-              { label: "Keyword Density", before: 30, after: 75 },
-              { label: "Title Alignment", before: 40, after: 80 },
-              { label: "Experience Match", before: 50, after: 85 }
+              { label: "Parsability", before: 80, after: 95, gain: "+15%", status: "Optimal" },
+              { label: "Keyword Density", before: 30, after: 75, gain: "+45%", status: "Strong Match" },
+              { label: "Title Alignment", before: 40, after: 80, gain: "+40%", status: "Aligned" },
+              { label: "Experience Match", before: 50, after: 85, gain: "+35%", status: "Target Met" }
             ].map((item, idx) => (
-              <div key={idx} className="space-y-1 text-[10px]">
-                <div className="flex justify-between font-bold text-slate-400">
-                  <span>{item.label}</span>
-                  <span>{item.before}% → {item.after}%</span>
+              <div key={idx} className="bg-[#0f1124]/60 border border-white/5 rounded-xl p-3 space-y-2 hover:border-white/10 transition-colors">
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <span className="text-white font-bold text-[11px]">{item.label}</span>
+                  <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                    <span className="text-slate-400">{item.before}%</span>
+                    <span className="text-slate-600">&rarr;</span>
+                    <span className="text-cyan-400 font-bold">{item.after}%</span>
+                    <span className="text-[9px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded font-bold ml-1">
+                      {item.gain}
+                    </span>
+                  </div>
                 </div>
-                {/* Bar progress */}
-                <div className="h-2 bg-slate-900 rounded-full overflow-hidden flex border border-white/5">
-                  <div className="h-full bg-slate-700" style={{ width: `${item.before}%` }} />
-                  <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-500" style={{ width: `${item.after - item.before}%` }} />
+
+                {/* Visual dual progress bar */}
+                <div className="h-2 bg-slate-900 rounded-full overflow-hidden flex p-0.5 border border-white/5">
+                  <div
+                    className="h-full bg-slate-600 rounded-l-full"
+                    style={{ width: `${item.before}%` }}
+                    title={`Baseline: ${item.before}%`}
+                  />
+                  <div
+                    className="h-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-violet-500 rounded-r-full shadow-sm"
+                    style={{ width: `${item.after - item.before}%` }}
+                    title={`Improvement: +${item.after - item.before}%`}
+                  />
                 </div>
               </div>
             ))}
           </div>
 
           {/* Actionable Tips */}
-          <div className="space-y-2">
+          <div className="space-y-2 pt-1">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Recommended Next Steps</span>
-            <ul className="space-y-1.5 text-[10px] text-slate-400 font-medium">
-              <li className="flex items-center gap-1.5">
-                <Check className="h-3 w-3 text-emerald-400 shrink-0" />
-                <span>Verify page margins do not exceed 1".</span>
+            <ul className="space-y-2 text-[10px] text-slate-300 font-medium">
+              <li className="flex items-center gap-2 bg-white/[0.02] border border-white/5 rounded-lg p-2">
+                <div className="h-4 w-4 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
+                  <Check className="h-2.5 w-2.5" />
+                </div>
+                <span>Verify page margins do not exceed standard 1" format.</span>
               </li>
-              <li className="flex items-center gap-1.5">
-                <Check className="h-3 w-3 text-emerald-400 shrink-0" />
-                <span>Save and upload in PDF format only.</span>
+              <li className="flex items-center gap-2 bg-white/[0.02] border border-white/5 rounded-lg p-2">
+                <div className="h-4 w-4 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
+                  <Check className="h-2.5 w-2.5" />
+                </div>
+                <span>Save and upload in single-column PDF format for 100% parser accuracy.</span>
               </li>
             </ul>
           </div>
 
           {/* Feedback Box */}
-          <div className="bg-violet-950/10 border border-violet-500/10 rounded-xl p-3 flex gap-2">
+          <div className="bg-violet-950/15 border border-violet-500/15 rounded-xl p-3 flex items-start gap-2.5">
             <MessageSquare className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" />
-            <p className="text-[9px] text-slate-500 leading-relaxed font-semibold">
-              Have feedback? We read every message and improve based on what you share.
+            <p className="text-[10px] text-slate-400 leading-relaxed">
+              Have feedback on this match? We read every suggestion to continually improve scoring precision.
             </p>
           </div>
         </div>
 
-      </div>
-
-      {/* ─── DATA SCIENCE & AI ANALYTICS SUITE (Pandas & Matplotlib aesthetic) ─── */}
-      <div className="bg-[#0b0e14] border border-cyan-500/20 rounded-2xl p-6 space-y-6 shadow-2xl relative overflow-hidden">
-        {/* Ambient glow */}
-        <div className="absolute top-0 right-0 w-72 h-72 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
-
-        {/* Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center text-cyan-400">
-              <Activity className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-extrabold text-white tracking-tight">
-                  Quantitative ATS Observations &amp; Statistical Profiling
-                </h3>
-                <span className="text-[9px] font-mono font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full">
-                  Pandas &bull; NumPy &bull; Matplotlib
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Vector space similarity, feature density delta, and quartile distribution metrics computed across optimization epochs.
-              </p>
-            </div>
-          </div>
-
-          {/* View Tab Selector */}
-          <div className="flex items-center bg-[#07090e] border border-white/8 rounded-xl p-1 shrink-0">
-            <button
-              onClick={() => setAnalyticsTab("matplotlib")}
-              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
-                analyticsTab === "matplotlib"
-                  ? "bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <LineChart className="h-3.5 w-3.5" />
-              Matplotlib Plot
-            </button>
-            <button
-              onClick={() => setAnalyticsTab("pandas")}
-              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
-                analyticsTab === "pandas"
-                  ? "bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <Table className="h-3.5 w-3.5" />
-              Pandas DataFrame
-            </button>
-            <button
-              onClick={() => setAnalyticsTab("observations")}
-              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
-                analyticsTab === "observations"
-                  ? "bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <Terminal className="h-3.5 w-3.5" />
-              Scientific Observations
-            </button>
-          </div>
-        </div>
-
-        {/* Tab 1: Matplotlib Visual Plot */}
-        {analyticsTab === "matplotlib" && (
-          <div className="space-y-4">
-            <div className="bg-[#07090e] border border-white/8 rounded-xl p-5 relative font-mono text-xs">
-              {/* Plot Header Bar */}
-              <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-4 text-[10px] text-slate-400">
-                <span className="text-cyan-400 font-semibold">figure_ats_distribution_delta.png &mdash; Matplotlib 3.8.2 / Dark Style</span>
-                <div className="flex items-center gap-4">
-                  <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-slate-500" /> Raw Baseline (μ = {resume.scoreBefore})</span>
-                  <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400" /> ATS Engineered (μ = {resume.scoreAfter})</span>
-                </div>
-              </div>
-
-              {/* Matplotlib SVG Multi-series Chart */}
-              <div className="w-full h-56 relative flex items-end">
-                {/* SVG Coordinate Grid & Line Paths */}
-                <svg className="w-full h-full overflow-visible" viewBox="0 0 500 200" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="optGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.25" />
-                      <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.0" />
-                    </linearGradient>
-                  </defs>
-
-                  {/* Horizontal Grid lines */}
-                  <line x1="40" y1="20" x2="490" y2="20" stroke="#1f293d" strokeDasharray="3,3" />
-                  <line x1="40" y1="60" x2="490" y2="60" stroke="#1f293d" strokeDasharray="3,3" />
-                  <line x1="40" y1="100" x2="490" y2="100" stroke="#1f293d" strokeDasharray="3,3" />
-                  <line x1="40" y1="140" x2="490" y2="140" stroke="#1f293d" strokeDasharray="3,3" />
-                  <line x1="40" y1="180" x2="490" y2="180" stroke="#334155" />
-
-                  {/* Y Axis Ticks */}
-                  <text x="5" y="24" fill="#64748b" fontSize="9" fontFamily="monospace">100%</text>
-                  <text x="12" y="64" fill="#64748b" fontSize="9" fontFamily="monospace">75%</text>
-                  <text x="12" y="104" fill="#64748b" fontSize="9" fontFamily="monospace">50%</text>
-                  <text x="12" y="144" fill="#64748b" fontSize="9" fontFamily="monospace">25%</text>
-                  <text x="18" y="184" fill="#64748b" fontSize="9" fontFamily="monospace">0%</text>
-
-                  {/* Baseline Series Line & Dots (Points: [Keyword:30%, Verbs:45%, Metrics:35%, Cosine:50%, Parser:80%]) */}
-                  <polyline
-                    fill="none"
-                    stroke="#64748b"
-                    strokeWidth="2"
-                    strokeDasharray="4,4"
-                    points="70,140 160,110 260,130 360,100 460,40"
-                  />
-                  <circle cx="70" cy="140" r="3.5" fill="#64748b" />
-                  <circle cx="160" cy="110" r="3.5" fill="#64748b" />
-                  <circle cx="260" cy="130" r="3.5" fill="#64748b" />
-                  <circle cx="360" cy="100" r="3.5" fill="#64748b" />
-                  <circle cx="460" cy="40" r="3.5" fill="#64748b" />
-
-                  {/* Optimized Series Gradient Area Fill */}
-                  <polygon
-                    fill="url(#optGradient)"
-                    points="70,180 70,50 160,30 260,35 360,25 460,15 460,180"
-                  />
-
-                  {/* Optimized Series Line & Nodes (Points: [Keyword:75%, Verbs:88%, Metrics:85%, Cosine:92%, Parser:95%]) */}
-                  <polyline
-                    fill="none"
-                    stroke="#06b6d4"
-                    strokeWidth="2.5"
-                    points="70,50 160,30 260,35 360,25 460,15"
-                  />
-                  <circle cx="70" cy="50" r="4.5" fill="#06b6d4" stroke="#07090e" strokeWidth="1.5" />
-                  <circle cx="160" cy="30" r="4.5" fill="#06b6d4" stroke="#07090e" strokeWidth="1.5" />
-                  <circle cx="260" cy="35" r="4.5" fill="#06b6d4" stroke="#07090e" strokeWidth="1.5" />
-                  <circle cx="360" cy="25" r="4.5" fill="#06b6d4" stroke="#07090e" strokeWidth="1.5" />
-                  <circle cx="460" cy="15" r="4.5" fill="#06b6d4" stroke="#07090e" strokeWidth="1.5" />
-                </svg>
-              </div>
-
-              {/* X Axis Labels */}
-              <div className="grid grid-cols-5 text-center text-[10px] text-slate-400 font-mono pt-3 border-t border-white/5">
-                <div>
-                  <span className="block font-bold text-slate-200">K_cov</span>
-                  <span className="text-[9px] text-slate-500">Keyword Cov.</span>
-                </div>
-                <div>
-                  <span className="block font-bold text-slate-200">V_act</span>
-                  <span className="text-[9px] text-slate-500">Action Verbs</span>
-                </div>
-                <div>
-                  <span className="block font-bold text-slate-200">Q_met</span>
-                  <span className="text-[9px] text-slate-500">Quant. Metrics</span>
-                </div>
-                <div>
-                  <span className="block font-bold text-slate-200">S_cos</span>
-                  <span className="text-[9px] text-slate-500">Cosine Sim.</span>
-                </div>
-                <div>
-                  <span className="block font-bold text-slate-200">F_ats</span>
-                  <span className="text-[9px] text-slate-500">Parser Score</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 2: Pandas DataFrame Matrix */}
-        {analyticsTab === "pandas" && (
-          <div className="bg-[#07090e] border border-white/8 rounded-xl overflow-hidden font-mono text-xs shadow-inner">
-            <div className="bg-[#0d111a] px-4 py-2.5 border-b border-white/5 flex items-center justify-between text-[11px] text-slate-400">
-              <span className="text-cyan-400 font-bold">&gt;&gt;&gt; df_optimization_metrics.describe()</span>
-              <span>shape: (6, 6) &bull; memory: 0.48 kB</span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-[11px]">
-                <thead>
-                  <tr className="border-b border-white/10 bg-[#0a0d16] text-slate-400 font-semibold">
-                    <th className="py-2.5 px-3.5 text-slate-500">#</th>
-                    <th className="py-2.5 px-3.5">Feature Variable (X)</th>
-                    <th className="py-2.5 px-3.5 text-center">Baseline (t₀)</th>
-                    <th className="py-2.5 px-3.5 text-center text-cyan-400">Optimized (t₁)</th>
-                    <th className="py-2.5 px-3.5 text-center text-emerald-400">Variance (Δ)</th>
-                    <th className="py-2.5 px-3.5 text-center">Benchmark</th>
-                    <th className="py-2.5 px-3.5 text-right">Significance</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5 text-slate-300">
-                  <tr className="hover:bg-white/2 transition-colors">
-                    <td className="py-2.5 px-3.5 text-slate-600 font-mono">0</td>
-                    <td className="py-2.5 px-3.5 font-bold text-white">Lexical Keyword Overlap (K_cov)</td>
-                    <td className="py-2.5 px-3.5 text-center text-slate-400 font-mono">30.0%</td>
-                    <td className="py-2.5 px-3.5 text-center text-cyan-300 font-mono font-bold">78.5%</td>
-                    <td className="py-2.5 px-3.5 text-center text-emerald-400 font-mono font-bold">+48.5%</td>
-                    <td className="py-2.5 px-3.5 text-center text-slate-400 font-mono">&gt; 70.0%</td>
-                    <td className="py-2.5 px-3.5 text-right text-emerald-400 font-bold">p &lt; 0.001 (High)</td>
-                  </tr>
-                  <tr className="hover:bg-white/2 transition-colors">
-                    <td className="py-2.5 px-3.5 text-slate-600 font-mono">1</td>
-                    <td className="py-2.5 px-3.5 font-bold text-white">Action Verb Commencement (V_act)</td>
-                    <td className="py-2.5 px-3.5 text-center text-slate-400 font-mono">45.0%</td>
-                    <td className="py-2.5 px-3.5 text-center text-cyan-300 font-mono font-bold">91.6%</td>
-                    <td className="py-2.5 px-3.5 text-center text-emerald-400 font-mono font-bold">+46.6%</td>
-                    <td className="py-2.5 px-3.5 text-center text-slate-400 font-mono">&gt; 80.0%</td>
-                    <td className="py-2.5 px-3.5 text-right text-emerald-400 font-bold">p &lt; 0.001 (High)</td>
-                  </tr>
-                  <tr className="hover:bg-white/2 transition-colors">
-                    <td className="py-2.5 px-3.5 text-slate-600 font-mono">2</td>
-                    <td className="py-2.5 px-3.5 font-bold text-white">Quantifiable Metric Proofs (Q_met)</td>
-                    <td className="py-2.5 px-3.5 text-center text-slate-400 font-mono">35.0%</td>
-                    <td className="py-2.5 px-3.5 text-center text-cyan-300 font-mono font-bold">85.0%</td>
-                    <td className="py-2.5 px-3.5 text-center text-emerald-400 font-mono font-bold">+50.0%</td>
-                    <td className="py-2.5 px-3.5 text-center text-slate-400 font-mono">&gt; 65.0%</td>
-                    <td className="py-2.5 px-3.5 text-right text-emerald-400 font-bold">p &lt; 0.001 (High)</td>
-                  </tr>
-                  <tr className="hover:bg-white/2 transition-colors">
-                    <td className="py-2.5 px-3.5 text-slate-600 font-mono">3</td>
-                    <td className="py-2.5 px-3.5 font-bold text-white">Semantic Cosine Alignment (S_cos)</td>
-                    <td className="py-2.5 px-3.5 text-center text-slate-400 font-mono">0.502</td>
-                    <td className="py-2.5 px-3.5 text-center text-cyan-300 font-mono font-bold">0.924</td>
-                    <td className="py-2.5 px-3.5 text-center text-emerald-400 font-mono font-bold">+0.422</td>
-                    <td className="py-2.5 px-3.5 text-center text-slate-400 font-mono">&gt; 0.850</td>
-                    <td className="py-2.5 px-3.5 text-right text-emerald-400 font-bold">p &lt; 0.001 (High)</td>
-                  </tr>
-                  <tr className="hover:bg-white/2 transition-colors">
-                    <td className="py-2.5 px-3.5 text-slate-600 font-mono">4</td>
-                    <td className="py-2.5 px-3.5 font-bold text-white">Deterministic ATS Parsability (F_ats)</td>
-                    <td className="py-2.5 px-3.5 text-center text-slate-400 font-mono">80.0%</td>
-                    <td className="py-2.5 px-3.5 text-center text-cyan-300 font-mono font-bold">96.5%</td>
-                    <td className="py-2.5 px-3.5 text-center text-emerald-400 font-mono font-bold">+16.5%</td>
-                    <td className="py-2.5 px-3.5 text-center text-slate-400 font-mono">&gt; 90.0%</td>
-                    <td className="py-2.5 px-3.5 text-right text-emerald-400 font-bold">Optimal</td>
-                  </tr>
-                  <tr className="bg-cyan-950/20 font-bold border-t border-cyan-500/20">
-                    <td className="py-2.5 px-3.5 text-cyan-400 font-mono">&Sigma;</td>
-                    <td className="py-2.5 px-3.5 text-cyan-300">Composite Overall Score (S_ATS)</td>
-                    <td className="py-2.5 px-3.5 text-center text-slate-300 font-mono">{resume.scoreBefore}</td>
-                    <td className="py-2.5 px-3.5 text-center text-cyan-300 font-mono text-sm">{resume.scoreAfter}</td>
-                    <td className="py-2.5 px-3.5 text-center text-emerald-400 font-mono text-sm">+{delta} pts</td>
-                    <td className="py-2.5 px-3.5 text-center text-cyan-400 font-mono">&gt; 80</td>
-                    <td className="py-2.5 px-3.5 text-right text-emerald-400 font-mono">Top 8th Percentile</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 3: Scientific Observations & Inferences */}
-        {analyticsTab === "observations" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
-            <div className="bg-[#07090e] border border-white/8 rounded-xl p-4 space-y-2">
-              <div className="flex items-center gap-2 text-cyan-400 font-bold text-[11px]">
-                <Cpu className="h-4 w-4" />
-                <span>Obs 01: Vector Domain Alignment</span>
-              </div>
-              <p className="text-[10px] text-slate-300 leading-relaxed font-sans">
-                Dense n-gram vector matching verified that technical taxonomy (including <span className="text-cyan-300 font-bold">{keywords.slice(0, 3).join(", ")}</span>) has been organically incorporated into the primary experience vectors.
-              </p>
-              <div className="text-[9px] text-slate-500 pt-1 font-mono">
-                Cosine Similarity: <strong className="text-emerald-400">0.924</strong> &bull; Distance: <strong className="text-emerald-400">-0.422</strong>
-              </div>
-            </div>
-
-            <div className="bg-[#07090e] border border-white/8 rounded-xl p-4 space-y-2">
-              <div className="flex items-center gap-2 text-emerald-400 font-bold text-[11px]">
-                <BarChart3 className="h-4 w-4" />
-                <span>Obs 02: Metric Quantification Gain</span>
-              </div>
-              <p className="text-[10px] text-slate-300 leading-relaxed font-sans">
-                Action-to-outcome ratio improved significantly. Rewrote <span className="text-emerald-300 font-bold">{rewrittenBullets} bullet points</span> with quantitative metrics, ensuring optimal score generation on Taleo &amp; Workday parsers.
-              </p>
-              <div className="text-[9px] text-slate-500 pt-1 font-mono">
-                Quantification Density: <strong className="text-emerald-400">85.0%</strong> (+50%)
-              </div>
-            </div>
-
-            <div className="bg-[#07090e] border border-white/8 rounded-xl p-4 space-y-2">
-              <div className="flex items-center gap-2 text-violet-400 font-bold text-[11px]">
-                <Layers className="h-4 w-4" />
-                <span>Obs 03: Distribution Quartile Shift</span>
-              </div>
-              <p className="text-[10px] text-slate-300 leading-relaxed font-sans">
-                The candidate's profile shifted from the <span className="text-slate-400">45th percentile</span> to the <span className="text-violet-300 font-bold">92nd percentile</span> across standard applicant screening thresholds.
-              </p>
-              <div className="text-[9px] text-slate-500 pt-1 font-mono">
-                Score Delta: <strong className="text-violet-400">+{delta} pts</strong> ({resume.scoreBefore} &rarr; {resume.scoreAfter})
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* BOTTOM ACCORDIONS */}
