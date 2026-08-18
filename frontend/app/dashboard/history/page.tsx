@@ -260,19 +260,19 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
         </div>
       </div>
 
-      {/* 3-COLUMN LAYOUT */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      {/* 3-COLUMN EQUAL-HEIGHT LAYOUT */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         
         {/* Column 1: Your Optimized Resume */}
-        <div className="bg-[#0b0c1a]/70 border border-white/5 rounded-2xl p-5 space-y-4">
+        <div className="bg-gradient-to-b from-[#0e1124] to-[#080916] border border-violet-500/20 hover:border-violet-500/35 rounded-2xl p-5.5 shadow-2xl shadow-violet-950/20 flex flex-col justify-between h-full relative overflow-hidden transition-all space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-violet-500" />
+              <span className="h-2.5 w-2.5 rounded-full bg-violet-400 shadow-sm shadow-violet-400 animate-pulse" />
               Your Optimized Resume
             </h3>
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all text-slate-400 hover:text-white border border-white/5 bg-[#0f1022]"
+              className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all text-slate-300 hover:text-white border border-white/10 bg-[#12142d] hover:bg-violet-600/20"
             >
               {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
               {copied ? "Copied!" : "Copy"}
@@ -281,7 +281,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
 
           {/* Times New Roman document container */}
           <div
-            className="w-full bg-white text-slate-900 border border-slate-200 rounded-xl p-5 shadow-2xl overflow-y-auto max-h-[460px] font-serif select-text relative"
+            className="w-full bg-white text-slate-900 border border-slate-200 rounded-xl p-5 shadow-2xl overflow-y-auto flex-1 min-h-[460px] max-h-[490px] font-serif select-text relative"
             style={{ fontFamily: "'Times New Roman', Times, serif" }}
           >
             {/* Watermark for free plan downloads */}
@@ -325,7 +325,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
           </div>
 
           {/* Download & Share Actions */}
-          <div className="space-y-3">
+          <div className="space-y-3 pt-1">
             {isLocked ? (
               <Link href="/dashboard/pricing" className="w-full block">
                 <Button className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs h-11 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-violet-600/15">
@@ -338,7 +338,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                 <Button
                   onClick={() => downloadFile("pdf")}
                   disabled={pdfLoading}
-                  className="bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-1.5"
+                  className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-violet-600/20"
                 >
                   {pdfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-4 w-4" />}
                   Download PDF
@@ -347,7 +347,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                   onClick={() => downloadFile("docx")}
                   disabled={docxLoading}
                   variant="outline"
-                  className="border-white/10 text-slate-300 hover:bg-white/5 font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-1.5"
+                  className="border-white/10 text-slate-200 hover:bg-white/10 font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-1.5 bg-[#12142d]"
                 >
                   {docxLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-4 w-4" />}
                   Download DOCX
@@ -355,14 +355,14 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
               </div>
             )}
 
-            <div className="border-t border-white/5 pt-3 text-center">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Share your result 🚀</span>
+            <div className="border-t border-white/8 pt-3 text-center">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Share your result 🚀</span>
               <div className="flex justify-center gap-3">
                 <a
                   href={linkedinShareUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-white/5 bg-[#0f1022] hover:bg-white/5 text-slate-400 hover:text-white transition-colors"
+                  className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-white/10 bg-[#12142d] hover:bg-violet-600/20 text-slate-300 hover:text-white transition-colors"
                 >
                   <Share2 className="h-3 w-3" />
                   LinkedIn
@@ -371,7 +371,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                   href={whatsappShareUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-white/5 bg-[#0f1022] hover:bg-white/5 text-slate-400 hover:text-white transition-colors"
+                  className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-white/10 bg-[#12142d] hover:bg-violet-600/20 text-slate-300 hover:text-white transition-colors"
                 >
                   <Share2 className="h-3 w-3" />
                   WhatsApp
@@ -382,176 +382,191 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
         </div>
 
         {/* Column 2: What Changed */}
-        <div className="bg-[#0b0c1a]/70 border border-white/5 rounded-2xl p-5 space-y-5">
-          <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-sky-500" />
-            What Changed
-          </h3>
-
-          {/* Metrics row */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-[#0f1022] border border-white/5 rounded-xl p-3 text-center">
-              <span className="text-lg font-black text-emerald-400">{keywords.length}</span>
-              <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider mt-1">Keywords Added</span>
-            </div>
-            <div className="bg-[#0f1022] border border-white/5 rounded-xl p-3 text-center">
-              <span className="text-lg font-black text-violet-400">
-                {rewrittenBullets}
+        <div className="bg-gradient-to-b from-[#0a1528] to-[#070d1a] border border-cyan-500/20 hover:border-cyan-500/35 rounded-2xl p-5.5 shadow-2xl shadow-cyan-950/20 flex flex-col justify-between h-full relative overflow-hidden transition-all space-y-5">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400 animate-pulse" />
+                What Changed
+              </h3>
+              <span className="text-[9px] font-mono font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/25 px-2 py-0.5 rounded-full">
+                AI Optimization
               </span>
-              <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider mt-1">Bullets Rewritten</span>
             </div>
-            <div className="bg-[#0f1022] border border-white/5 rounded-xl p-3 text-center">
-              <span className="text-lg font-black text-sky-400">
-                {Math.min(100, Math.round(resume.scoreAfter * 0.95))}%
-              </span>
-              <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider mt-1">Skills Matched</span>
-            </div>
-          </div>
 
-          {/* Keywords Injected Section */}
-          <div className="space-y-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">ATS Keywords Injected</span>
-            <div className="flex flex-wrap gap-1.5">
-              {keywords.length > 0 ? (
-                keywords.map((kw, i) => (
+            {/* Metrics row */}
+            <div className="grid grid-cols-3 gap-2.5">
+              <div className="bg-[#0c1c33]/80 border border-emerald-500/20 rounded-xl p-3 text-center shadow-inner">
+                <span className="text-lg font-black text-emerald-400">{keywords.length}</span>
+                <span className="text-[9px] text-emerald-300/80 font-bold block uppercase tracking-wider mt-1">Keywords Added</span>
+              </div>
+              <div className="bg-[#0c1c33]/80 border border-violet-500/20 rounded-xl p-3 text-center shadow-inner">
+                <span className="text-lg font-black text-violet-400">
+                  {rewrittenBullets}
+                </span>
+                <span className="text-[9px] text-violet-300/80 font-bold block uppercase tracking-wider mt-1">Bullets Rewritten</span>
+              </div>
+              <div className="bg-[#0c1c33]/80 border border-cyan-500/20 rounded-xl p-3 text-center shadow-inner">
+                <span className="text-lg font-black text-cyan-400">
+                  {Math.min(100, Math.round(resume.scoreAfter * 0.95))}%
+                </span>
+                <span className="text-[9px] text-cyan-300/80 font-bold block uppercase tracking-wider mt-1">Skills Matched</span>
+              </div>
+            </div>
+
+            {/* Keywords Injected Section */}
+            <div className="space-y-2">
+              <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider block">ATS Keywords Injected</span>
+              <div className="flex flex-wrap gap-1.5 max-h-[90px] overflow-y-auto">
+                {keywords.length > 0 ? (
+                  keywords.map((kw, i) => (
+                    <span
+                      key={i}
+                      className="text-[10px] font-semibold bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 px-2 py-0.5 rounded-md shadow-sm"
+                    >
+                      + {kw}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-[10px] text-slate-400 italic">No new keywords were required.</span>
+                )}
+              </div>
+            </div>
+
+            {/* Existing keywords */}
+            <div className="space-y-2">
+              <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider block">Keywords Already Present</span>
+              <div className="flex flex-wrap gap-1.5 max-h-[90px] overflow-y-auto">
+                {existingKeywords.map((kw, i) => (
                   <span
                     key={i}
-                    className="text-[10px] font-semibold bg-[#22c55e]/10 border border-[#22c55e]/20 text-[#22c55e] px-2 py-0.5 rounded"
+                    className="text-[10px] font-semibold bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 px-2 py-0.5 rounded-md shadow-sm"
                   >
-                    + {kw}
+                    ✓ {kw}
                   </span>
-                ))
-              ) : (
-                <span className="text-[10px] text-slate-500 italic">No new keywords were required.</span>
-              )}
+                ))}
+              </div>
+            </div>
+
+            {/* AI changes bullet points */}
+            <div className="space-y-2">
+              <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider block">AI Optimization Suggestions</span>
+              <ul className="space-y-2 text-[10px] text-slate-300 font-medium leading-relaxed">
+                <li className="flex items-start gap-2 bg-white/[0.02] border border-white/5 rounded-lg p-2">
+                  <span className="text-cyan-400 font-bold">&bull;</span>
+                  <span>Expanded action verbs (e.g. replaced "worked on" with "spearheaded", "developed" with "architected").</span>
+                </li>
+                <li className="flex items-start gap-2 bg-white/[0.02] border border-white/5 rounded-lg p-2">
+                  <span className="text-cyan-400 font-bold">&bull;</span>
+                  <span>Integrated {keywords.length} critical skills extracted from the target job description organically.</span>
+                </li>
+                <li className="flex items-start gap-2 bg-white/[0.02] border border-white/5 rounded-lg p-2">
+                  <span className="text-cyan-400 font-bold">&bull;</span>
+                  <span>Enforced single-column layout, line breaks, and density rules for 100% parser accuracy.</span>
+                </li>
+              </ul>
             </div>
           </div>
 
-          {/* Existing keywords */}
-          <div className="space-y-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Keywords Already Present</span>
-            <div className="flex flex-wrap gap-1.5">
-              {existingKeywords.map((kw, i) => (
-                <span
-                  key={i}
-                  className="text-[10px] font-semibold bg-sky-500/10 border border-sky-500/20 text-sky-400 px-2 py-0.5 rounded"
-                >
-                  ✓ {kw}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* AI changes bullet points */}
-          <div className="space-y-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">AI Optimization Suggestions</span>
-            <ul className="space-y-2 text-[10px] text-slate-400 font-medium leading-relaxed">
-              <li className="flex items-start gap-1.5">
-                <span className="text-violet-400 font-bold">-</span>
-                <span>Expanded action verbs (e.g. replaced "worked on" with "spearheaded", "developed" with "architected").</span>
-              </li>
-              <li className="flex items-start gap-1.5">
-                <span className="text-violet-400 font-bold">-</span>
-                <span>Integrated {keywords.length} critical skills extracted from the target job description organically.</span>
-              </li>
-              <li className="flex items-start gap-1.5">
-                <span className="text-violet-400 font-bold">-</span>
-                <span>Enforced page formatting, line breaks, and density rules to guarantee clean parser readability.</span>
-              </li>
-            </ul>
+          <div className="bg-cyan-950/20 border border-cyan-500/20 rounded-xl p-3 text-center">
+            <span className="text-[10px] text-cyan-300 font-semibold">
+              ✨ All keywords integrated naturally with zero keyword stuffing.
+            </span>
           </div>
         </div>
 
         {/* Column 3: ATS Score Breakdown */}
-        <div className="bg-[#0b0c1a]/80 border border-white/8 rounded-2xl p-5 space-y-5 shadow-xl">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400" />
-              ATS Score Breakdown
-            </h3>
-            <span className="text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-              Industry Standard
-            </span>
-          </div>
-
-          {/* Score comparison visualizer */}
-          <div className="flex items-center justify-around gap-4 bg-[#070914] border border-white/8 rounded-xl p-4 shadow-inner">
-            <CircleGauge value={resume.scoreBefore} label="Before" size={80} />
-            <div className="flex flex-col items-center gap-1 shrink-0">
-              <div className="h-8 w-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-sm">
-                <ArrowRight className="h-4 w-4 animate-pulse" />
-              </div>
-              <span className="text-[10px] font-black text-emerald-400">+{delta} pts</span>
+        <div className="bg-gradient-to-b from-[#091a18] to-[#060e10] border border-emerald-500/20 hover:border-emerald-500/35 rounded-2xl p-5.5 shadow-2xl shadow-emerald-950/20 flex flex-col justify-between h-full relative overflow-hidden transition-all space-y-5">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400 animate-pulse" />
+                ATS Score Breakdown
+              </h3>
+              <span className="text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/25 px-2 py-0.5 rounded-full">
+                Industry Standard
+              </span>
             </div>
-            <CircleGauge value={resume.scoreAfter} label="After" size={80} />
-          </div>
 
-          {/* Description Rubric */}
-          <p className="text-[10px] text-slate-400 leading-relaxed font-medium bg-white/[0.02] p-2.5 rounded-lg border border-white/5 text-center">
-            Standard ATS Rubric Score &bull; Industry: Tech &bull; Multi-factor weighted match.
-          </p>
+            {/* Score comparison visualizer */}
+            <div className="flex items-center justify-around gap-4 bg-[#081816]/90 border border-emerald-500/20 rounded-xl p-4 shadow-inner">
+              <CircleGauge value={resume.scoreBefore} label="Before" size={80} />
+              <div className="flex flex-col items-center gap-1 shrink-0">
+                <div className="h-8 w-8 rounded-full bg-emerald-500/15 border border-emerald-500/35 flex items-center justify-center text-emerald-400 shadow-sm">
+                  <ArrowRight className="h-4 w-4 animate-pulse" />
+                </div>
+                <span className="text-[10px] font-black text-emerald-400">+{delta} pts</span>
+              </div>
+              <CircleGauge value={resume.scoreAfter} label="After" size={80} />
+            </div>
 
-          {/* Score breakdown bars comparison */}
-          <div className="space-y-3">
-            {[
-              { label: "Parsability", before: 80, after: 95, gain: "+15%", status: "Optimal" },
-              { label: "Keyword Density", before: 30, after: 75, gain: "+45%", status: "Strong Match" },
-              { label: "Title Alignment", before: 40, after: 80, gain: "+40%", status: "Aligned" },
-              { label: "Experience Match", before: 50, after: 85, gain: "+35%", status: "Target Met" }
-            ].map((item, idx) => (
-              <div key={idx} className="bg-[#0f1124]/60 border border-white/5 rounded-xl p-3 space-y-2 hover:border-white/10 transition-colors">
-                <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="text-white font-bold text-[11px]">{item.label}</span>
-                  <div className="flex items-center gap-1.5 font-mono text-[11px]">
-                    <span className="text-slate-400">{item.before}%</span>
-                    <span className="text-slate-600">&rarr;</span>
-                    <span className="text-cyan-400 font-bold">{item.after}%</span>
-                    <span className="text-[9px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded font-bold ml-1">
-                      {item.gain}
-                    </span>
+            {/* Description Rubric */}
+            <p className="text-[10px] text-emerald-200/80 leading-relaxed font-medium bg-emerald-950/20 p-2.5 rounded-lg border border-emerald-500/15 text-center">
+              Standard ATS Rubric Score &bull; Industry: Tech &bull; Multi-factor weighted match.
+            </p>
+
+            {/* Score breakdown bars comparison */}
+            <div className="space-y-2.5">
+              {[
+                { label: "Parsability", before: 80, after: 95, gain: "+15%", status: "Optimal" },
+                { label: "Keyword Density", before: 30, after: 75, gain: "+45%", status: "Strong Match" },
+                { label: "Title Alignment", before: 40, after: 80, gain: "+40%", status: "Aligned" },
+                { label: "Experience Match", before: 50, after: 85, gain: "+35%", status: "Target Met" }
+              ].map((item, idx) => (
+                <div key={idx} className="bg-[#0b1e1d]/70 border border-emerald-500/15 rounded-xl p-3 space-y-2 hover:border-emerald-500/30 transition-colors">
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="text-white font-bold text-[11px]">{item.label}</span>
+                    <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                      <span className="text-slate-400">{item.before}%</span>
+                      <span className="text-slate-500">&rarr;</span>
+                      <span className="text-emerald-300 font-bold">{item.after}%</span>
+                      <span className="text-[9px] text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded font-bold ml-1">
+                        {item.gain}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Visual dual progress bar */}
+                  <div className="h-2 bg-slate-900 rounded-full overflow-hidden flex p-0.5 border border-emerald-500/20">
+                    <div
+                      className="h-full bg-slate-600 rounded-l-full"
+                      style={{ width: `${item.before}%` }}
+                      title={`Baseline: ${item.before}%`}
+                    />
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 rounded-r-full shadow-sm"
+                      style={{ width: `${item.after - item.before}%` }}
+                      title={`Improvement: +${item.after - item.before}%`}
+                    />
                   </div>
                 </div>
+              ))}
+            </div>
 
-                {/* Visual dual progress bar */}
-                <div className="h-2 bg-slate-900 rounded-full overflow-hidden flex p-0.5 border border-white/5">
-                  <div
-                    className="h-full bg-slate-600 rounded-l-full"
-                    style={{ width: `${item.before}%` }}
-                    title={`Baseline: ${item.before}%`}
-                  />
-                  <div
-                    className="h-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-violet-500 rounded-r-full shadow-sm"
-                    style={{ width: `${item.after - item.before}%` }}
-                    title={`Improvement: +${item.after - item.before}%`}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Actionable Tips */}
-          <div className="space-y-2 pt-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Recommended Next Steps</span>
-            <ul className="space-y-2 text-[10px] text-slate-300 font-medium">
-              <li className="flex items-center gap-2 bg-white/[0.02] border border-white/5 rounded-lg p-2">
-                <div className="h-4 w-4 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
-                  <Check className="h-2.5 w-2.5" />
-                </div>
-                <span>Verify page margins do not exceed standard 1" format.</span>
-              </li>
-              <li className="flex items-center gap-2 bg-white/[0.02] border border-white/5 rounded-lg p-2">
-                <div className="h-4 w-4 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
-                  <Check className="h-2.5 w-2.5" />
-                </div>
-                <span>Save and upload in single-column PDF format for 100% parser accuracy.</span>
-              </li>
-            </ul>
+            {/* Actionable Tips */}
+            <div className="space-y-2 pt-1">
+              <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider block">Recommended Next Steps</span>
+              <ul className="space-y-2 text-[10px] text-slate-300 font-medium">
+                <li className="flex items-center gap-2 bg-[#0b1e1d]/50 border border-emerald-500/15 rounded-lg p-2">
+                  <div className="h-4 w-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <Check className="h-2.5 w-2.5" />
+                  </div>
+                  <span>Verify page margins do not exceed standard 1" format.</span>
+                </li>
+                <li className="flex items-center gap-2 bg-[#0b1e1d]/50 border border-emerald-500/15 rounded-lg p-2">
+                  <div className="h-4 w-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <Check className="h-2.5 w-2.5" />
+                  </div>
+                  <span>Save and upload in single-column PDF format for 100% parser accuracy.</span>
+                </li>
+              </ul>
+            </div>
           </div>
 
           {/* Feedback Box */}
-          <div className="bg-violet-950/15 border border-violet-500/15 rounded-xl p-3 flex items-start gap-2.5">
-            <MessageSquare className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" />
-            <p className="text-[10px] text-slate-400 leading-relaxed">
+          <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-3 flex items-start gap-2.5">
+            <MessageSquare className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+            <p className="text-[10px] text-slate-300 leading-relaxed">
               Have feedback on this match? We read every suggestion to continually improve scoring precision.
             </p>
           </div>
