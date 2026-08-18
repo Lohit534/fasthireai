@@ -254,7 +254,15 @@ export default function DashboardPage() {
       return;
     }
 
-    // Directly proceed to AI optimization without interrupting the user
+    // Detect missing critical fields in resume and prompt user to enrich if needed
+    const missing = detectMissingFields(resumeText);
+    if (missing && missing.length > 0) {
+      setMissingFields(missing);
+      setPendingResumeText(resumeText);
+      setShowMissingModal(true);
+      return;
+    }
+
     runAIAutoImprove(resumeText);
   };
 

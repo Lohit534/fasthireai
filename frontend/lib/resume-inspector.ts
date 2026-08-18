@@ -160,6 +160,26 @@ export function detectMissingFields(resumeText: string): MissingField[] {
     });
   }
 
+  // ── 7. Summary / Objective missing ──────────────────────────────────
+  const hasSummary =
+    upperText.includes("SUMMARY") ||
+    upperText.includes("OBJECTIVE") ||
+    upperText.includes("PROFILE") ||
+    upperText.includes("ABOUT ME");
+
+  if (!hasSummary) {
+    fields.push({
+      id: "summary_objective",
+      label: "Professional Summary / Objective",
+      description:
+        "Provide a brief summary or career objective (target roles and key strengths)",
+      placeholder: "e.g. Full Stack Developer with 3+ years experience building scalable web apps with React and Node.js",
+      type: "textarea",
+      section: "Professional Summary",
+      required: false,
+    });
+  }
+
   return fields;
 }
 
@@ -193,6 +213,9 @@ export function enrichResumeWithAnswers(
   }
   if (answers.profile_links?.trim()) {
     enrichments.push(`[User Provided] Profile Links: ${answers.profile_links.trim()}`);
+  }
+  if (answers.summary_objective?.trim()) {
+    enrichments.push(`[User Provided] Summary/Objective: ${answers.summary_objective.trim()}`);
   }
 
   if (enrichments.length === 0) return resumeText;

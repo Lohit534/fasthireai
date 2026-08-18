@@ -246,16 +246,40 @@ export default function ResumeViewer({
                     {block.text}
                   </h2>
                 );
-              case "summary":
+              case "summary": {
+                // Break down continuous summary text line-by-line with text-justify
+                const cleanText = block.text.trim();
+                const sentences = cleanText
+                  .split(/(?<=[.!?])\s+(?=[A-Z0-9])|\n+/)
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+
+                if (sentences.length <= 1) {
+                  return (
+                    <p
+                      key={idx}
+                      className="text-[10px] mb-1.5 text-slate-800 leading-relaxed select-text font-serif text-justify w-full"
+                      style={{ textAlign: "justify", textJustify: "inter-word", hyphens: "none" }}
+                    >
+                      {renderHighlightedText(cleanText)}
+                    </p>
+                  );
+                }
+
                 return (
-                  <p
-                    key={idx}
-                    className="text-[10px] mb-1 text-slate-800 leading-relaxed select-text font-serif"
-                    style={{ textAlign: "justify", textJustify: "inter-word", hyphens: "none" }}
-                  >
-                    {renderHighlightedText(block.text)}
-                  </p>
+                  <div key={idx} className="mb-2 space-y-1 select-text font-serif w-full">
+                    {sentences.map((sentence, sIdx) => (
+                      <p
+                        key={sIdx}
+                        className="text-[10px] text-slate-800 leading-relaxed select-text font-serif text-justify w-full"
+                        style={{ textAlign: "justify", textJustify: "inter-word", hyphens: "none" }}
+                      >
+                        {renderHighlightedText(sentence)}
+                      </p>
+                    ))}
+                  </div>
                 );
+              }
               case "skillLine":
                 return (
                   <div key={idx} className="flex text-[10.5px] mb-1.5 leading-normal select-text font-serif">

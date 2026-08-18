@@ -519,7 +519,17 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
 
     // 4. Section dependent parsing
     if (currentSection === 'PROFESSIONAL SUMMARY' || currentSection === 'SUMMARY' || currentSection === 'OBJECTIVE') {
-      blocks.push({ type: 'summary', text: line });
+      const summarySentences = line
+        .split(/(?<=[.!?])\s+(?=[A-Z0-9])/)
+        .map(s => s.trim())
+        .filter(Boolean);
+      if (summarySentences.length > 1) {
+        for (const sentence of summarySentences) {
+          blocks.push({ type: 'summary', text: sentence });
+        }
+      } else {
+        blocks.push({ type: 'summary', text: line });
+      }
       continue;
     }
 

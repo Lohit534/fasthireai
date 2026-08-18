@@ -208,13 +208,29 @@ export default function MissingDetailsModal({
             <button
               onClick={onCancel}
               disabled={submitting}
-              className="h-9 px-4 text-xs font-bold rounded-xl transition-all text-slate-400 hover:text-white"
+              className="h-9 px-3.5 text-xs font-bold rounded-xl transition-all text-slate-400 hover:text-white"
               style={{
                 background: "rgba(255,255,255,0.04)",
                 border: "1px solid rgba(255,255,255,0.08)",
               }}
             >
               Cancel
+            </button>
+
+            {/* Skip & Optimize Anyway */}
+            <button
+              onClick={() => {
+                setSubmitting(true);
+                setTimeout(() => onContinue({}), 300);
+              }}
+              disabled={submitting}
+              className="h-9 px-3.5 text-xs font-semibold rounded-xl transition-all text-slate-400 hover:text-slate-200"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              Skip & Optimize
             </button>
 
             {/* Continue */}
@@ -247,7 +263,7 @@ export default function MissingDetailsModal({
               ) : (
                 <>
                   <Sparkles className="h-3.5 w-3.5" />
-                  Continue Optimization
+                  Apply & Optimize
                   <ChevronRight className="h-3.5 w-3.5" />
                 </>
               )}
