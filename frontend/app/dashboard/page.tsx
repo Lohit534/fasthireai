@@ -8,7 +8,7 @@ import Navbar from "@/components/Navbar";
 import ResumeInput from "@/components/ResumeInput";
 import JobDescriptionInput from "@/components/JobDescriptionInput";
 import KeywordBadges from "@/components/KeywordBadges";
-import { generateSkillRoadmap } from "@/lib/roadmap-generator";
+import { generateSkillRoadmap, generateMultiSkillRoadmap } from "@/lib/roadmap-generator";
 import ResumeViewer from "@/components/ResumeViewer";
 import BulletImprover from "@/components/BulletImprover";
 import LoadingOverlay from "@/components/LoadingOverlay";
@@ -77,7 +77,7 @@ export default function DashboardPage() {
   const [currentResumeId, setCurrentResumeId] = useState<string | null>(null);
 
   // Roadmap & Cover letter generator states
-  const [selectedRoadmapSkill, setSelectedRoadmapSkill] = useState<string | null>(null);
+  const [selectedRoadmapSkills, setSelectedRoadmapSkills] = useState<string[]>([]);
   const [roadmapContent, setRoadmapContent] = useState<string | null>(null);
   const [roadmapLoading, setRoadmapLoading] = useState(false);
   const [coverLetterGenerated, setCoverLetterGenerated] = useState<string | null>(null);
@@ -170,7 +170,7 @@ export default function DashboardPage() {
     
     // Clear detail view states
     setRoadmapContent(null);
-    setSelectedRoadmapSkill(null);
+    setSelectedRoadmapSkills([]);
     setCoverLetterGenerated(null);
     setShowRoadmapAccordion(false);
     setShowCoverLetterAccordion(false);
@@ -346,15 +346,30 @@ export default function DashboardPage() {
     setTrackerAdded(true);
   };
 
-  const handleGenerateRoadmap = async (skill: string) => {
+  const toggleRoadmapSkill = (skill: string) => {
+    if (selectedRoadmapSkills.includes(skill)) {
+      setSelectedRoadmapSkills(selectedRoadmapSkills.filter(s => s !== skill));
+    } else {
+      if (selectedRoadmapSkills.length >= 3) {
+        toast.error("You can select up to 3 skills for your comprehensive roadmap.");
+        return;
+      }
+      setSelectedRoadmapSkills([...selectedRoadmapSkills, skill]);
+    }
+  };
+
+  const handleGenerateRoadmap = async () => {
     const isOwner = userPlan === "owner" || (user?.email && isOwnerEmail(user.email));
-    
-    // Strict Plan Restriction: Only Pro, Pro Max, and Owner users can access Skill Roadmaps
     if (userPlan === "free" && !isOwner) {
       toast.error("Skills learning roadmaps are a Pro & Pro Max feature. Please upgrade your plan to unlock instant career roadmaps!");
       setTimeout(() => {
         router.push("/dashboard/pricing");
       }, 1800);
+      return;
+    }
+
+    if (selectedRoadmapSkills.length === 0) {
+      toast.error("Please select at least 1 skill (up to 3) to generate your roadmap.");
       return;
     }
 
@@ -374,13 +389,13 @@ export default function DashboardPage() {
       localStorage.setItem(storageKey, (currentCount + 1).toString());
     }
 
-    setSelectedRoadmapSkill(skill);
     setRoadmapLoading(true);
     setRoadmapContent(null);
     try {
       await new Promise(resolve => setTimeout(resolve, 800));
-      const content = generateSkillRoadmap(skill);
+      const content = generateMultiSkillRoadmap(selectedRoadmapSkills);
       setRoadmapContent(content);
+      toast.success(`Generated 90-day roadmap for ${selectedRoadmapSkills.length} selected skill${selectedRoadmapSkills.length > 1 ? "s" : ""}!`);
     } catch (e) {
       toast.error("Failed to generate learning roadmap.");
     } finally {
@@ -738,7 +753,7 @@ export default function DashboardPage() {
                           <Badge className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold border-cyan-500/20">PRO</Badge>
                         )}
                       </div>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Generate a step-by-step master plan to learn target job keywords (Pro: 5/month, Pro Max: 15/month).</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Select up to 3 skills to generate a comprehensive 90-day learning roadmap.</p>
                     </div>
                   </div>
                   <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${showRoadmapAccordion ? "rotate-180" : ""}`} />
@@ -746,7 +761,7 @@ export default function DashboardPage() {
 
                 {showRoadmapAccordion && (
                   <div className="p-5 border-t border-white/5 bg-[#050e18]/40 space-y-4">
-                    {userPlan === "free" ? (
+                    {userPlan === "free" && !(user?.email && isOwnerEmail(user.email)) ? (
                       <div className="text-center py-6 max-w-md mx-auto space-y-3">
                         <Lock className="h-8 w-8 text-cyan-400 mx-auto" />
                         <h5 className="text-xs font-bold text-white">Pro Access Required</h5>
@@ -758,32 +773,71 @@ export default function DashboardPage() {
                     ) : (
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Select a keyword to build roadmap:</span>
-                          <div className="flex flex-wrap gap-2">
-                            {afterScore?.missingKeywords && afterScore.missingKeywords.length > 0 ? (
-                              afterScore.missingKeywords.slice(0, userPlan === "premium" ? 5 : 15).map((skill: string) => (
-                                <button
-                                  key={skill}
-                                  onClick={() => handleGenerateRoadmap(skill)}
-                                  className={`text-[10px] font-semibold py-1.5 px-3 rounded-xl border transition-all ${
-                                    selectedRoadmapSkill === skill
-                                      ? "bg-cyan-500/15 border-cyan-500/40 text-cyan-400"
-                                      : "bg-[#0b1c30] border-white/5 text-slate-400 hover:text-white"
-                                  }`}
-                                >
-                                  {skill}
-                                </button>
-                              ))
-                            ) : (
-                              <span className="text-[10px] text-slate-500 italic">No missing keywords found to build a roadmap.</span>
-                            )}
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                              Choose up to 3 target skills:
+                            </span>
+                            <span className="text-[10px] font-mono font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full">
+                              {selectedRoadmapSkills.length}/3 Selected
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 max-h-[140px] overflow-y-auto pr-1">
+                            {(() => {
+                              const candidateSkills = Array.from(new Set([
+                                ...(beforeScore?.extractedSkills || []),
+                                ...(afterScore?.missingKeywords || []),
+                                ...(afterScore?.foundKeywords || []),
+                                ...(optimizeResult?.keywordsAdded || [])
+                              ])).filter(s => s && s.length > 1 && !/^(resume|summary|skills|experience|education|project|teamwork|development|software|engineer|manager|developer|analyst|overview|responsibilities)$/i.test(s));
+
+                              const listToRender = candidateSkills.length > 0 ? candidateSkills : ["Python", "SQL", "Machine Learning", "Docker", "REST APIs"];
+                              return listToRender.map((skill: string) => {
+                                const isSelected = selectedRoadmapSkills.includes(skill);
+                                return (
+                                  <button
+                                    key={skill}
+                                    type="button"
+                                    onClick={() => toggleRoadmapSkill(skill)}
+                                    className={`text-[10px] font-semibold py-1.5 px-3 rounded-xl border transition-all flex items-center gap-1.5 ${
+                                      isSelected
+                                        ? "bg-cyan-500/20 border-cyan-500 text-cyan-300 font-bold shadow-sm"
+                                        : "bg-[#0b1c30] border-white/5 text-slate-400 hover:text-white hover:border-white/20"
+                                    }`}
+                                  >
+                                    {isSelected && <span className="text-cyan-300 font-bold">✓</span>}
+                                    {skill}
+                                  </button>
+                                );
+                              });
+                            })()}
+                          </div>
+
+                          <div className="pt-2 flex items-center justify-between gap-3">
+                            <span className="text-[10px] text-slate-400">
+                              {selectedRoadmapSkills.length === 0 
+                                ? "Click 1 to 3 skills above to build your roadmap." 
+                                : `Selected: ${selectedRoadmapSkills.join(", ")}`}
+                            </span>
+                            <Button
+                              onClick={handleGenerateRoadmap}
+                              disabled={selectedRoadmapSkills.length === 0 || roadmapLoading}
+                              className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs h-9 px-4 rounded-xl shadow-md disabled:opacity-50"
+                            >
+                              {roadmapLoading ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                              ) : (
+                                <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                              )}
+                              Generate Complete Roadmap ({selectedRoadmapSkills.length}/3)
+                            </Button>
                           </div>
                         </div>
 
                         {roadmapLoading && (
-                          <div className="flex items-center gap-2 text-[10px] text-slate-400 py-4 justify-center bg-[#050e18] border border-white/5 rounded-xl">
+                          <div className="flex items-center gap-2 text-[10px] text-slate-400 py-6 justify-center bg-[#050e18] border border-white/5 rounded-xl">
                             <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
-                            <span>Building custom skills roadmap...</span>
+                            <span>Synthesizing tailored 90-day mastery curriculum for {selectedRoadmapSkills.join(", ")}...</span>
                           </div>
                         )}
 

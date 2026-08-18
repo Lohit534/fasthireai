@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResumeRecord, CreditInfo, isOwnerEmail } from "@/types";
 import { logger } from "@/lib/logger";
-import { generateSkillRoadmap } from "@/lib/roadmap-generator";
+import { generateSkillRoadmap, generateMultiSkillRoadmap } from "@/lib/roadmap-generator";
 import { extractTechTerms, extractKeywords } from "@/lib/ats/keywords";
 import { saveAs } from "file-saver";
 import {
@@ -68,7 +68,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
   const [copied, setCopied] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [docxLoading, setDocxLoading] = useState(false);
-  const [selectedRoadmapSkill, setSelectedRoadmapSkill] = useState<string | null>(null);
+  const [selectedRoadmapSkills, setSelectedRoadmapSkills] = useState<string[]>([]);
   const [roadmapContent, setRoadmapContent] = useState<string | null>(null);
   const [roadmapLoading, setRoadmapLoading] = useState(false);
   const [coverLetterGenerated, setCoverLetterGenerated] = useState<string | null>(null);
@@ -78,10 +78,11 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
 
   const delta = resume.scoreAfter - resume.scoreBefore;
   
-  // Dynamic keyword extraction & fallback
+  // Dynamic keyword & tech skill extraction
   const rawKeywordsAdded = Array.isArray(resume.keywordsAdded) ? resume.keywordsAdded.filter(Boolean) : [];
   const optimizedTech = extractTechTerms(resume.optimizedText || "");
   const originalTech = extractTechTerms(resume.originalText || "");
+  const jdTech = extractTechTerms(resume.jobDescription || "");
   const originalTechSet = new Set(originalTech.map(t => t.toLowerCase()));
 
   // Injected keywords: explicit keywordsAdded OR new tech terms in optimizedText
@@ -89,6 +90,14 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
   const keywords = rawKeywordsAdded.length > 0
     ? rawKeywordsAdded
     : (newlyAddedTech.length > 0 ? newlyAddedTech : (optimizedTech.length > 0 ? optimizedTech.slice(0, 8) : ["C#", "ASP.NET Core", "SQL Server", "REST APIs", "React", "Python"]));
+
+  // Clean, deduplicated list of technical skills across resume and job description
+  const availableSkills = Array.from(new Set([
+    ...optimizedTech,
+    ...originalTech,
+    ...jdTech,
+    ...rawKeywordsAdded
+  ])).filter(s => s && s.length > 1 && !/^(resume|summary|skills|experience|education|project|teamwork|development|software|engineer|manager|developer|analyst|overview|responsibilities)$/i.test(s));
 
   // Existing keywords: real tech skills already present in candidate profile
   const existingKeywords = originalTech.length > 0
@@ -147,7 +156,19 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
     }
   };
 
-  const handleGenerateRoadmap = async (skill: string) => {
+  const toggleRoadmapSkill = (skill: string) => {
+    if (selectedRoadmapSkills.includes(skill)) {
+      setSelectedRoadmapSkills(selectedRoadmapSkills.filter(s => s !== skill));
+    } else {
+      if (selectedRoadmapSkills.length >= 3) {
+        toast.error("You can select up to 3 skills for your comprehensive roadmap.");
+        return;
+      }
+      setSelectedRoadmapSkills([...selectedRoadmapSkills, skill]);
+    }
+  };
+
+  const handleGenerateRoadmap = async () => {
     // Strict Plan Restriction: Only Pro, Pro Max, and Owner users can access Skill Roadmaps
     if (userPlan === "free") {
       toast.error("Skills learning roadmaps are a Pro & Pro Max feature. Please upgrade your plan to unlock instant career roadmaps!");
@@ -157,13 +178,18 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
       return;
     }
 
-    setSelectedRoadmapSkill(skill);
+    if (selectedRoadmapSkills.length === 0) {
+      toast.error("Please select at least 1 skill (up to 3) to generate your roadmap.");
+      return;
+    }
+
     setRoadmapLoading(true);
     setRoadmapContent(null);
     try {
       await new Promise(resolve => setTimeout(resolve, 800));
-      const content = generateSkillRoadmap(skill);
+      const content = generateMultiSkillRoadmap(selectedRoadmapSkills);
       setRoadmapContent(content);
+      toast.success(`Generated 90-day roadmap for ${selectedRoadmapSkills.length} selected skill${selectedRoadmapSkills.length > 1 ? "s" : ""}!`);
     } catch (e) {
       toast.error("Failed to generate learning roadmap.");
     } finally {
@@ -574,7 +600,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                     <span className="bg-violet-600 border border-violet-500 text-[8px] text-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider">PRO</span>
                   )}
                 </span>
-                <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Pick up to 3 skills - 1/1 roadmaps left this month</p>
+                <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Select up to 3 skills to build a complete 90-day learning roadmap</p>
               </div>
             </div>
             <ChevronRight className={`h-4.5 w-4.5 text-slate-500 transition-transform ${showRoadmapAccordion ? "rotate-90" : ""}`} />
@@ -582,45 +608,83 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
 
           {showRoadmapAccordion && (
             <div className="px-5 pb-5 pt-3 border-t border-white/5 bg-[#070814]/30 space-y-4">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Click a skill to generate roadmap:</span>
-                <div className="flex flex-wrap gap-2">
-                  {keywords.length > 0 ? (
-                    keywords.map((kw, i) => (
-                      <button
-                        key={i}
-                        onClick={() => handleGenerateRoadmap(kw)}
-                        className={`text-[10px] font-semibold px-2.5 py-1 rounded transition-all border ${
-                          selectedRoadmapSkill === kw
-                            ? "bg-violet-500/20 border-violet-500 text-white font-bold"
-                            : "bg-[#0f1022] border-white/5 text-slate-400 hover:text-white"
-                        }`}
-                      >
-                        {kw}
-                      </button>
-                    ))
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider block">
+                    Choose up to 3 target skills:
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-violet-400 bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-full">
+                    {selectedRoadmapSkills.length}/3 Selected
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-2 max-h-[140px] overflow-y-auto pr-1">
+                  {availableSkills.length > 0 ? (
+                    availableSkills.map((skill, i) => {
+                      const isSelected = selectedRoadmapSkills.includes(skill);
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => toggleRoadmapSkill(skill)}
+                          className={`text-[11px] font-semibold px-3 py-1.5 rounded-xl transition-all border flex items-center gap-1.5 ${
+                            isSelected
+                              ? "bg-violet-600 border-violet-500 text-white font-bold shadow-md shadow-violet-600/20"
+                              : "bg-[#0f1022] border-white/10 text-slate-300 hover:text-white hover:border-white/20"
+                          }`}
+                        >
+                          {isSelected && <Check className="h-3 w-3 text-white" />}
+                          {skill}
+                        </button>
+                      );
+                    })
                   ) : (
-                    ["Machine Learning", "Generative AI", "APIs"].map((kw, i) => (
-                      <button
-                        key={i}
-                        onClick={() => handleGenerateRoadmap(kw)}
-                        className={`text-[10px] font-semibold px-2.5 py-1 rounded transition-all border ${
-                          selectedRoadmapSkill === kw
-                            ? "bg-violet-500/20 border-violet-500 text-white font-bold"
-                            : "bg-[#0f1022] border-white/5 text-slate-400 hover:text-white"
-                        }`}
-                      >
-                        {kw}
-                      </button>
-                    ))
+                    ["Machine Learning", "Generative AI", "Python", "SQL", "Docker"].map((skill, i) => {
+                      const isSelected = selectedRoadmapSkills.includes(skill);
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => toggleRoadmapSkill(skill)}
+                          className={`text-[11px] font-semibold px-3 py-1.5 rounded-xl transition-all border flex items-center gap-1.5 ${
+                            isSelected
+                              ? "bg-violet-600 border-violet-500 text-white font-bold shadow-md shadow-violet-600/20"
+                              : "bg-[#0f1022] border-white/10 text-slate-300 hover:text-white hover:border-white/20"
+                          }`}
+                        >
+                          {isSelected && <Check className="h-3 w-3 text-white" />}
+                          {skill}
+                        </button>
+                      );
+                    })
                   )}
+                </div>
+
+                <div className="pt-2 flex items-center justify-between gap-3">
+                  <span className="text-[10px] text-slate-400">
+                    {selectedRoadmapSkills.length === 0 
+                      ? "Click 1 to 3 skills above to build your roadmap." 
+                      : `Selected: ${selectedRoadmapSkills.join(", ")}`}
+                  </span>
+                  <Button
+                    onClick={handleGenerateRoadmap}
+                    disabled={selectedRoadmapSkills.length === 0 || roadmapLoading}
+                    className="bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs h-9 px-4 rounded-xl shadow-md disabled:opacity-50"
+                  >
+                    {roadmapLoading ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                    )}
+                    Generate Complete Roadmap ({selectedRoadmapSkills.length}/3)
+                  </Button>
                 </div>
               </div>
 
               {roadmapLoading && (
-                <div className="flex items-center gap-2 text-[10px] text-slate-400 py-4 justify-center bg-[#070814]/40 border border-white/5 rounded-xl">
+                <div className="flex items-center gap-2 text-[10px] text-slate-400 py-6 justify-center bg-[#070814]/40 border border-white/5 rounded-xl">
                   <Loader2 className="h-4 w-4 animate-spin text-violet-400" />
-                  <span>Generating tailored learning roadmap...</span>
+                  <span>Synthesizing tailored 90-day mastery curriculum for {selectedRoadmapSkills.join(", ")}...</span>
                 </div>
               )}
 

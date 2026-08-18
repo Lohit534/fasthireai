@@ -3,6 +3,63 @@
  * Tailored to in-demand tech roles: AI Engineer, Data Analyst, Cloud Architect, Cybersecurity, Full-Stack, etc.
  */
 
+export function generateMultiSkillRoadmap(skills: string[]): string {
+  if (!skills || skills.length === 0) {
+    return "Please select at least 1 skill (up to 3) to generate your comprehensive learning roadmap.";
+  }
+
+  if (skills.length === 1) {
+    return generateSkillRoadmap(skills[0]);
+  }
+
+  const skillNames = skills.join(", ");
+  return (
+    `🚀 90-Day Integrated Mastery Roadmap: [${skillNames}]\n` +
+    `A comprehensive, multi-skill curriculum designed to master ${skillNames} in tandem and build high-impact portfolio projects.\n\n` +
+    `---\n\n` +
+    `📅 Phase 1: Core Fundamentals & Syntax Synergy (Weeks 1–4)\n` +
+    `Goal: Master the syntax, development environment, and core primitives for each target skill.\n` +
+    `What to Learn:\n` +
+    skills.map((s, idx) => `• [${s}]: Core fundamentals, data types, environment setup, and standard APIs.`).join("\n") +
+    `\n• Integration warm-up: Connect basic scripts across your tools.\n\n` +
+    `📺 Recommended Learning Channels:\n` +
+    `• FreeCodeCamp / Traversy Media: Foundational syntax playlists.\n` +
+    `• ArjanCodes: Modular design patterns and clean code structure.\n\n` +
+    `---\n\n` +
+    `📅 Phase 2: Frameworks, APIs & Data Pipelines (Weeks 5–8)\n` +
+    `Goal: Build functional intermediate modules combining ${skillNames}.\n` +
+    `What to Learn:\n` +
+    skills.map((s, idx) => `• [${s}]: Modern frameworks, asynchronous execution, and performance optimization.`).join("\n") +
+    `\n• Microservice & API communication between your stack components.\n` +
+    `• Unit testing & automated error handling.\n\n` +
+    `📺 Recommended Learning Channels:\n` +
+    `• Web Dev Simplified / TechWorld with Nana: Architecture tutorials.\n` +
+    `• Alex The Analyst / Krish Naik: Industry-standard workflows & pipelines.\n\n` +
+    `---\n\n` +
+    `📅 Phase 3: Integrated Full-Scale Project Build (Weeks 9–10)\n` +
+    `Goal: Build a flagship capstone application uniting [${skillNames}] into a single production repo.\n` +
+    `What to Build:\n` +
+    `• End-to-end full-stack or data-driven application utilizing all ${skills.length} skills.\n` +
+    `• Database integration, authentication, and background task processing.\n` +
+    `• Benchmarking and speed optimization.\n\n` +
+    `📺 Recommended Learning Channels:\n` +
+    `• Code With Antonio / Jack Herrington: Full-stack SaaS walkthroughs.\n` +
+    `• ByteByteGo: System design, data consistency, and scalable architectures.\n\n` +
+    `---\n\n` +
+    `📅 Phase 4: Production Deployment, CI/CD & Portfolio Showcase (Weeks 11–12)\n` +
+    `Goal: Deploy live to the cloud and document on GitHub for hiring managers.\n` +
+    `What to Learn:\n` +
+    `• Docker containerization and cloud hosting (Vercel, AWS, Render, or Hugging Face).\n` +
+    `• Writing comprehensive README documentation with architecture diagrams and live demo links.\n` +
+    `• Tailoring your resume bullet points with quantifiable impact using ${skillNames}.\n\n` +
+    `---\n\n` +
+    `⚡ Daily Execution Routine:\n` +
+    `1. Morning (45 mins): Watch 1 targeted concept tutorial.\n` +
+    `2. Afternoon (60-90 mins): Hands-on coding and commit line-by-line.\n` +
+    `3. Weekend: Integrate modules into your live GitHub capstone repository.`
+  );
+}
+
 export function generateSkillRoadmap(skill: string): string {
   const cleanSkill = skill.trim();
   const lower = cleanSkill.toLowerCase();
