@@ -309,7 +309,7 @@ export default function SupportChatbot() {
           className="h-14 w-14 rounded-full bg-black hover:bg-[#14162e] text-white shadow-2xl flex items-center justify-center border border-white/20 hover:scale-105 active:scale-95 transition-all duration-300 select-none cursor-pointer"
           title="Open Help Center"
         >
-          <HeadphonesIcon className="h-6 w-6 text-white" />
+          <HeadphonesIcon className="h-6 w-6 text-teal-400" />
         </button>
       )}
 
@@ -324,9 +324,14 @@ export default function SupportChatbot() {
             <div className="flex flex-col h-full bg-[#0a0c1a]">
               {/* Header */}
               <div className="bg-[#121428] border-b border-white/8 p-5 flex items-start justify-between select-none">
-                <div className="space-y-1">
-                  <h3 className="font-extrabold text-white text-base tracking-tight">Help center</h3>
-                  <p className="text-xs text-slate-400 font-medium">How can we help you today?</p>
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 shrink-0">
+                    <HelpCircle className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <h3 className="font-extrabold text-white text-base tracking-tight">Help center</h3>
+                    <p className="text-xs text-slate-400 font-medium">How can we help you today?</p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
