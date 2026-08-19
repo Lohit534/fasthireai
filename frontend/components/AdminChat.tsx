@@ -123,13 +123,13 @@ export default function AdminChat() {
           {/* Header */}
           <div className="bg-[#12132a] border-b border-white/5 p-4 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <div className="h-8 w-8 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white">
                 <HeadphonesIcon className="h-4 w-4" />
               </div>
               <div>
                 <h3 className="font-extrabold text-white text-xs tracking-tight">Admin Support</h3>
                 <span className="text-[9px] text-slate-400 font-semibold flex items-center gap-1 select-none">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
                   Send message to our team
                 </span>
               </div>
@@ -146,7 +146,7 @@ export default function AdminChat() {
           <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#090a18]/45">
             {loadingTickets ? (
               <div className="flex flex-col items-center justify-center py-20 gap-2">
-                <Loader2 className="h-5 w-5 text-emerald-500 animate-spin" />
+                <Loader2 className="h-5 w-5 text-white animate-spin" />
                 <p className="text-[10px] text-slate-500 font-semibold select-none">Loading messages...</p>
               </div>
             ) : adminTickets.length === 0 ? (
@@ -167,7 +167,7 @@ export default function AdminChat() {
                   </span>
                   <button
                     onClick={loadAdminTickets}
-                    className="text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-bold"
+                    className="text-slate-200 hover:text-white flex items-center gap-1 font-bold"
                   >
                     <RefreshCw className="h-2.5 w-2.5" /> Refresh
                   </button>
@@ -177,10 +177,10 @@ export default function AdminChat() {
                   <div key={ticket.id} className="space-y-2.5">
                     {/* User message */}
                     <div className="flex justify-end">
-                      <div className="max-w-[85%] bg-emerald-700 text-white rounded-2xl rounded-br-none px-3.5 py-2 text-xs leading-relaxed">
+                      <div className="max-w-[85%] bg-black border border-white/20 text-white rounded-2xl rounded-br-none px-3.5 py-2 text-xs leading-relaxed">
                         <p>{ticket.message}</p>
                         <div className="flex items-center justify-end gap-1.5 mt-1 border-t border-white/10 pt-0.5">
-                          <span className="text-[8px] text-emerald-200">
+                          <span className="text-[8px] text-slate-400">
                             {new Date(ticket.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                           </span>
                           <Badge className="bg-white/10 border-none text-white text-[7px] font-bold px-1 rounded">Sent</Badge>
@@ -191,9 +191,9 @@ export default function AdminChat() {
                     {/* Admin reply */}
                     {ticket.reply ? (
                       <div className="flex justify-start">
-                        <div className="max-w-[85%] bg-[#0f1d19] border border-emerald-500/20 text-slate-200 rounded-2xl rounded-bl-none px-3.5 py-2 text-xs leading-relaxed">
-                          <div className="flex items-center gap-1 text-[8px] text-emerald-400 font-extrabold uppercase tracking-wide mb-1">
-                            <ShieldCheck className="h-3 w-3 shrink-0" />
+                        <div className="max-w-[85%] bg-[#14162e] border border-white/10 text-slate-100 rounded-2xl rounded-bl-none px-3.5 py-2 text-xs leading-relaxed">
+                          <div className="flex items-center gap-1 text-[8px] text-white font-extrabold uppercase tracking-wide mb-1">
+                            <ShieldCheck className="h-3 w-3 shrink-0 text-white" />
                             Admin Reply
                           </div>
                           <p>{ticket.reply}</p>
@@ -228,14 +228,14 @@ export default function AdminChat() {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 disabled={loading}
-                className="flex-1 bg-[#060714] border-white/5 text-xs text-white focus:border-emerald-500 rounded-xl h-9"
+                className="flex-1 bg-[#060714] border-white/10 text-xs text-white focus:border-white/30 rounded-xl h-9"
               />
               <Button
                 type="submit"
                 disabled={loading || !inputText.trim()}
-                className="h-9 w-9 p-0 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-emerald-600/10"
+                className="h-9 w-9 p-0 bg-black hover:bg-white/10 text-white border border-white/20 rounded-xl flex items-center justify-center shrink-0 shadow-lg"
               >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Send className="h-4 w-4" />}
               </Button>
             </form>
           </div>
@@ -246,10 +246,10 @@ export default function AdminChat() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="h-14 w-14 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-2xl flex items-center justify-center border border-white/10 hover:scale-105 active:scale-95 transition-all duration-300"
+          className="h-14 w-14 rounded-full bg-black hover:bg-[#14162e] text-white shadow-2xl flex items-center justify-center border border-white/20 hover:scale-105 active:scale-95 transition-all duration-300"
           title="Contact Admin Support"
         >
-          <HeadphonesIcon className="h-6 w-6" />
+          <HeadphonesIcon className="h-6 w-6 text-white" />
         </button>
       )}
     </div>

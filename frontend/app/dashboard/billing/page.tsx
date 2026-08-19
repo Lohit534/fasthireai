@@ -471,11 +471,14 @@ export default function BillingPage() {
                 <h4 className="text-xs font-bold text-white">Need Billing Help?</h4>
                 <p className="text-[10px] text-slate-400">Questions about payments, refunds, or custom invoices?</p>
               </div>
-              <Link href="/dashboard">
-                <Button variant="outline" size="sm" className="border-white/10 text-slate-300 hover:bg-white/5 text-[10px] h-8 rounded-lg px-3 bg-transparent">
-                  Contact Us
-                </Button>
-              </Link>
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent("open-support-chatbot", { detail: { mode: "admin" } }));
+                }}
+                className="bg-black hover:bg-white/10 text-white border border-white/20 text-[10px] font-bold h-8 rounded-lg px-3.5 transition-all cursor-pointer shrink-0"
+              >
+                Contact Us
+              </button>
             </div>
 
           </div>
