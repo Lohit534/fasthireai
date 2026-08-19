@@ -1287,22 +1287,11 @@ export default function ResumesPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
                 <Check className="h-3.5 w-3.5" />
                 <span>Auto-saved</span>
               </div>
-              <Button
-                onClick={() => {
-                  const compiledText = editorData ? compileStructuredResume(editorData) : (editingResume.optimizedText || editingResume.originalText);
-                  store.setResumeText(compiledText);
-                  router.push("/dashboard");
-                }}
-                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-8 text-[11px] rounded-full px-4 flex items-center gap-1.5 shadow-lg shadow-violet-600/10"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                Optimize in AI
-              </Button>
             </div>
           </header>
 
@@ -1927,12 +1916,20 @@ export default function ResumesPage() {
                 </>
               )}
 
-              {/* Bottom promo promotion banner (Image 2) */}
+              {/* Bottom promo promotion banner linking to pricing */}
               {activePlan !== "team" && activePlan !== "promax" && (
-                <div className="p-4 border border-white/5 bg-[#0c0d1b] rounded-xl flex items-center justify-center gap-2 text-center text-slate-400 font-bold text-[10px] tracking-wide select-none">
-                  <Sparkles className="h-4.5 w-4.5 text-violet-500 animate-pulse" />
-                  <span>Upgrade to Premium to unlock AI enhancements and bulk export templates.</span>
-                </div>
+                <Link
+                  href="/dashboard/pricing"
+                  className="p-3.5 border border-violet-500/20 hover:border-violet-500/50 bg-[#0c0d1b] hover:bg-[#12132d] rounded-xl flex items-center justify-between gap-3 text-slate-300 font-bold text-[11px] tracking-wide transition-all group shadow-lg cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Sparkles className="h-4 w-4 text-violet-400 group-hover:animate-pulse shrink-0" />
+                    <span className="text-slate-300 group-hover:text-white">Upgrade to Pro Max to unlock unlimited AI optimizations &amp; exports</span>
+                  </div>
+                  <span className="text-violet-400 font-bold text-[10px] group-hover:text-violet-300 flex items-center gap-1 shrink-0">
+                    Pricing &rarr;
+                  </span>
+                </Link>
               )}
 
             </div>
