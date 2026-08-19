@@ -228,35 +228,35 @@ export async function scoreResume(
     score = localScore(resumeText, jobDescription);
   }
 
-  // Minimum floor rules for optimization
+  // Floor benchmarks for optimization
   const missingCount = score.missingKeywords.filter(k => k.length > 3).length;
   if (missingCount === 0) {
-    score.overall = Math.max(score.overall, 84);
-  }
-  if (missingCount <= 5) {
-    score.overall = Math.max(score.overall, 76);
-  }
-  if (missingCount <= 10) {
-    score.overall = Math.max(score.overall, 68);
+    score.overall = Math.max(score.overall, 74);
+  } else if (missingCount <= 5) {
+    score.overall = Math.max(score.overall, 70);
+  } else if (missingCount <= 10) {
+    score.overall = Math.max(score.overall, 65);
   }
 
   if (scoreBefore !== undefined && scoreBefore > 0) {
-    const minVal = Math.max(85, scoreBefore + 8);
-    const maxVal = Math.min(98, Math.max(92, scoreBefore + 16));
+    // Official benchmark for initial optimization: 65 - 75 range
+    const minVal = Math.min(72, Math.max(65, scoreBefore + 12));
+    const maxVal = Math.min(76, Math.max(70, scoreBefore + 18));
 
     let targetScore = getDeterministicScore(resumeText, minVal, maxVal);
 
-    if (bulletImprovementsCount) {
-      targetScore = Math.min(99, targetScore + Math.round(bulletImprovementsCount * 0.5));
+    // After auto-improve bullets, increase slightly by a small value (+1 per improved bullet)
+    if (bulletImprovementsCount && bulletImprovementsCount > 0) {
+      targetScore = Math.min(96, targetScore + bulletImprovementsCount * 1);
     }
 
     if (score.overall < targetScore) {
       score.overall = targetScore;
       if (score.semanticMatch < targetScore) {
-        score.semanticMatch = Math.min(98, targetScore + 2);
+        score.semanticMatch = Math.min(95, targetScore + 2);
       }
       if (score.keywordMatch < targetScore - 5) {
-        score.keywordMatch = Math.max(72, targetScore - 3);
+        score.keywordMatch = Math.max(62, targetScore - 3);
       }
     }
   }
