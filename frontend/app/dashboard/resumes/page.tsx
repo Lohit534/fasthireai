@@ -1920,14 +1920,11 @@ export default function ResumesPage() {
               {activePlan !== "team" && activePlan !== "promax" && (
                 <Link
                   href="/dashboard/pricing"
-                  className="p-3.5 border border-violet-500/20 hover:border-violet-500/50 bg-[#0c0d1b] hover:bg-[#12132d] rounded-xl flex items-center justify-between gap-3 text-slate-300 font-bold text-[11px] tracking-wide transition-all group shadow-lg cursor-pointer"
+                  className="p-3.5 border border-amber-500/20 hover:border-amber-500/40 bg-[#0d0d18] hover:bg-[#16140e] rounded-xl flex items-center justify-center gap-2.5 text-[11px] tracking-wide transition-all group shadow-lg cursor-pointer select-none"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Sparkles className="h-4 w-4 text-violet-400 group-hover:animate-pulse shrink-0" />
-                    <span className="text-slate-300 group-hover:text-white">Upgrade to Pro Max to unlock unlimited AI optimizations &amp; exports</span>
-                  </div>
-                  <span className="text-violet-400 font-bold text-[10px] group-hover:text-violet-300 flex items-center gap-1 shrink-0">
-                    Pricing &rarr;
+                  <Sparkles className="h-4 w-4 text-amber-400 group-hover:scale-110 transition-transform shrink-0" />
+                  <span className="text-slate-300">
+                    <strong className="text-amber-400 font-extrabold group-hover:text-amber-300 transition-colors">Upgrade to Pro Max</strong> to unlock unlimited AI optimizations &amp; exports
                   </span>
                 </Link>
               )}
