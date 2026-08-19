@@ -18,7 +18,6 @@ import {
   ArrowLeft, 
   FileText, 
   Trash2, 
-  Download, 
   Plus, 
   Edit3,
   Calendar,
@@ -38,8 +37,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
-import { saveAs } from "file-saver";
-import { getCleanExportFilename } from "@/lib/export/pdf-document";
 
 // Structured Resume Form Types
 interface StructuredResume {
@@ -672,55 +669,7 @@ export default function ResumesPage() {
     }
   };
 
-  // Download PDF file
-  const handleDownloadPDF = async (record: ResumeRecord) => {
-    setActionLoading(`pdf-${record.id}`);
-    try {
-      const text = editorData ? compileStructuredResume(editorData) : (record.optimizedText || record.originalText);
-      const response = await fetch("/api/export/pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeId: record.id, text })
-      });
 
-      if (!response.ok) {
-        throw new Error("Failed to export PDF.");
-      }
-
-      const blob = await response.blob();
-      const exportFilename = getCleanExportFilename(text, ".pdf", record.jobTitle || undefined);
-      saveAs(blob, exportFilename);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to download PDF.");
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  // Download DOCX file
-  const handleDownloadDOCX = async (record: ResumeRecord) => {
-    setActionLoading(`docx-${record.id}`);
-    try {
-      const text = editorData ? compileStructuredResume(editorData) : (record.optimizedText || record.originalText);
-      const response = await fetch("/api/export/docx", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeId: record.id, text })
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to export DOCX.");
-      }
-
-      const blob = await response.blob();
-      const exportFilename = getCleanExportFilename(text, ".docx", record.jobTitle || undefined);
-      saveAs(blob, exportFilename);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to download DOCX.");
-    } finally {
-      setActionLoading(null);
-    }
-  };
 
   // Sync state changes back to database
   const saveEditorData = async (updatedData: StructuredResume, updateRecordFields: Partial<ResumeRecord> = {}) => {
@@ -1338,31 +1287,21 @@ export default function ResumesPage() {
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
+                <Check className="h-3.5 w-3.5" />
+                <span>Auto-saved</span>
+              </div>
               <Button
-                onClick={() => handleDownloadPDF(editingResume)}
-                disabled={actionLoading === `pdf-${editingResume.id}`}
-                className="bg-violet-600 hover:bg-violet-500 text-white font-bold h-8 text-[11px] rounded-full px-4 flex items-center gap-1.5 shadow-lg shadow-violet-600/10"
+                onClick={() => {
+                  const compiledText = editorData ? compileStructuredResume(editorData) : (editingResume.optimizedText || editingResume.originalText);
+                  store.setResumeText(compiledText);
+                  router.push("/dashboard");
+                }}
+                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-8 text-[11px] rounded-full px-4 flex items-center gap-1.5 shadow-lg shadow-violet-600/10"
               >
-                {actionLoading === `pdf-${editingResume.id}` ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Download className="h-3.5 w-3.5" />
-                )}
-                PDF
-              </Button>
-              <Button
-                onClick={() => handleDownloadDOCX(editingResume)}
-                disabled={actionLoading === `docx-${editingResume.id}`}
-                variant="outline"
-                className="border-slate-800 text-slate-300 hover:bg-slate-900 hover:text-white font-bold h-8 text-[11px] rounded-full px-4 flex items-center gap-1.5"
-              >
-                {actionLoading === `docx-${editingResume.id}` ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Download className="h-3.5 w-3.5" />
-                )}
-                Word (DOCX)
+                <Sparkles className="h-3.5 w-3.5" />
+                Optimize in AI
               </Button>
             </div>
           </header>
