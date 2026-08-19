@@ -47,16 +47,18 @@ const S = StyleSheet.create({
   // ── Header ──
   name: {
     fontFamily: "Times-Bold",
-    fontSize: 18,
+    fontSize: 17,
     textAlign: "center",
     letterSpacing: 0.4,
-    marginBottom: 3,
+    marginBottom: 6,
+    paddingBottom: 2,
   },
   contactRow: {
     flexDirection: "row",
     justifyContent: "center",
     flexWrap: "wrap",
-    marginBottom: 2,
+    marginTop: 2,
+    marginBottom: 8,
   },
   contactText: {
     fontFamily: "Times-Roman",

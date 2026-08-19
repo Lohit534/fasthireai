@@ -212,13 +212,13 @@ export default function ResumeViewer({
             switch (block.type) {
               case "name":
                 return (
-                  <h1 key={idx} className="text-xl font-bold text-center text-black mb-1 leading-normal select-text font-serif">
+                  <h1 key={idx} className="text-xl font-bold text-center text-black mb-2 pb-0.5 leading-normal select-text font-serif">
                     {block.text}
                   </h1>
                 );
               case "contact":
                 return (
-                  <div key={idx} className="flex justify-center flex-wrap text-[10px] text-center text-slate-600 mb-3 leading-normal select-text font-serif">
+                  <div key={idx} className="flex justify-center flex-wrap text-[10px] text-center text-slate-600 mt-1 mb-4 leading-normal select-text font-serif">
                     {block.segments.map((seg, sIdx) => {
                       const label = seg.isLink && seg.url ? getReadableLinkLabel(seg.url, seg.text) : seg.text;
                       const el = seg.isLink && seg.url ? (

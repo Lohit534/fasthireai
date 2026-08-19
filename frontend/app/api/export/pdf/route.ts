@@ -103,18 +103,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // 4. Generate PDF
+    // 4. Generate PDF strictly for optimized resume
     let pdfBuffer: Buffer;
-    const textToExport = type === "original"
-      ? (resume.originalText || "")
-      : (resume.optimizedText || "");
+    const textToExport = resume.optimizedText || resume.originalText || "";
 
-    logger.info(`Generating PDF for resume ${resumeId} (type=${type}, watermarked=${watermarked})`);
+    logger.info(`Generating PDF for resume ${resumeId} (watermarked=${watermarked})`);
     pdfBuffer = await generatePDF(textToExport, watermarked);
 
     // 5. Return PDF download
-    const textForFilename = type === "original" ? (resume.originalText || "") : (resume.optimizedText || "");
-    const filename = getCleanExportFilename(textForFilename, ".pdf", resume.jobTitle);
+    const filename = getCleanExportFilename(textToExport, ".pdf", resume.jobTitle);
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,

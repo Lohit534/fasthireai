@@ -330,7 +330,13 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                 const isFirstLine = i === 0 && trimmed.length > 0;
                 if (isFirstLine && trimmed.length > 0) {
                   return (
-                    <p key={i} className="text-sm font-black text-slate-900 tracking-tight mb-0.5">{trimmed}</p>
+                    <p key={i} className="text-sm font-black text-slate-900 tracking-tight mb-2 pb-0.5">{trimmed}</p>
+                  );
+                }
+                const isContactLine = i <= 2 && (trimmed.includes("@") || trimmed.includes("|") || /\+?\d{7,}/.test(trimmed));
+                if (isContactLine) {
+                  return (
+                    <p key={i} className="text-[10.5px] text-slate-600 mt-1 mb-3.5 leading-normal">{trimmed}</p>
                   );
                 }
                 if (isSectionHeader) {

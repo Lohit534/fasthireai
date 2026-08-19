@@ -88,11 +88,11 @@ export async function generateDOCX(resumeText: string, watermarked = false): Pro
                 new TextRun({
                   text: name,
                   font: "Times New Roman",
-                  size: 36, // 18pt
+                  size: 34, // 17pt
                   bold: true
                 })
               ],
-              spacing: { after: 60 }
+              spacing: { before: 0, after: 120 }
             })
           );
         } else {
@@ -105,11 +105,11 @@ export async function generateDOCX(resumeText: string, watermarked = false): Pro
                 new TextRun({
                   text: contactLine,
                   font: "Times New Roman",
-                  size: 20, // 10pt
+                  size: 19, // 9.5pt
                   color: "222222"
                 })
               ],
-              spacing: { after: 40 }
+              spacing: { before: 40, after: 140 }
             })
           );
         }
