@@ -61,23 +61,23 @@ export default function KeywordBadges({ added, missing }: KeywordBadgesProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-xl border border-slate-800 bg-slate-950/20">
+    <div className="flex flex-col gap-4 p-4 rounded-xl border border-white/5 bg-[#080a18]/40">
       {/* Keywords Added */}
       {renderBadgeList(
         added,
         "added",
-        "Keywords Added",
+        "Keywords Injected from JD",
         <Check className="h-3 w-3 text-emerald-400" />,
-        "border-emerald-500/20 bg-emerald-500/5 text-emerald-400"
+        "border-emerald-500/20 bg-emerald-500/10 text-emerald-300 font-semibold text-[10px]"
       )}
 
       {/* Still Missing */}
       {renderBadgeList(
         missing,
         "missing",
-        "Still Missing",
+        "Missing Keywords",
         <AlertTriangle className="h-3 w-3 text-amber-400" />,
-        "border-amber-500/20 bg-amber-500/5 text-amber-400"
+        "border-amber-500/20 bg-amber-500/10 text-amber-300 font-semibold text-[10px]"
       )}
     </div>
   );

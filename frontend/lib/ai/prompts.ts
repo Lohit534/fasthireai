@@ -91,8 +91,10 @@ ${resumeText.slice(0, 4000)}
 
 Return ONLY this JSON with no markdown, no preamble, no explanation whatsoever:
 {
+  "detectedJobTitle": "Exact extracted Job Title from the Job Description (e.g., Full Stack Developer, AI/ML Engineer, Data Analyst, Software Engineer)",
+  "detectedCompany": "Exact Company Name extracted from the Job Description (or General Application if not mentioned)",
   "resume": "COMPLETE optimized resume — every section, every bullet, nothing omitted, minimum same length as original",
-  "keywordsAdded": ["keyword1", "keyword2"],
+  "keywordsAdded": ["keyword1", "keyword2", "keyword3"],
   "bulletsRewritten": 8,
   "changesCount": 15,
   "summary": "Brief: X keywords injected, Y bullets rewritten"

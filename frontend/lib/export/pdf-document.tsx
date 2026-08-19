@@ -523,16 +523,14 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
 
     // 4. Section dependent parsing
     if (currentSection === 'PROFESSIONAL SUMMARY' || currentSection === 'SUMMARY' || currentSection === 'OBJECTIVE') {
-      const summarySentences = line
-        .split(/(?<=[.!?])\s+(?=[A-Z0-9])/)
-        .map(s => s.trim())
-        .filter(Boolean);
-      if (summarySentences.length > 1) {
-        for (const sentence of summarySentences) {
-          blocks.push({ type: 'summary', text: sentence });
+      const cleanLine = stripMarkdownAsterisks(line).trim();
+      if (cleanLine) {
+        const lastBlock = blocks[blocks.length - 1];
+        if (lastBlock && lastBlock.type === 'summary') {
+          lastBlock.text = `${lastBlock.text} ${cleanLine}`.replace(/\s+/g, ' ');
+        } else {
+          blocks.push({ type: 'summary', text: cleanLine });
         }
-      } else {
-        blocks.push({ type: 'summary', text: line });
       }
       continue;
     }

@@ -264,27 +264,27 @@ export async function POST(request: NextRequest) {
     let resumeRecord: any = null;
 
     // Extract job title: prefer AI-detected, then user-provided, then extract from JD text
-    let finalJobTitle = aiResult.detectedJobTitle || jobTitle || "";
-    if (!finalJobTitle || finalJobTitle.toLowerCase() === "optimized resume") {
-      // Try extracting role from JD text
-      const jdText = (jobDescription || "").substring(0, 500);
+    let finalJobTitle = (aiResult.detectedJobTitle || jobTitle || "").trim();
+    if (!finalJobTitle || finalJobTitle.toLowerCase() === "optimized resume" || finalJobTitle.toLowerCase() === "untitled resume") {
+      const jdText = (jobDescription || "").substring(0, 1000);
       const rolePatterns = [
-        /(?:position|role|job title|hiring for|looking for)[:\s]+([A-Za-z][A-Za-z\s\/\-]{3,50}?)(?:\n|,|\.|\|)/i,
-        /^([A-Z][A-Za-z\s\/\-]{5,50}?)(?:\n|$)/m,
-        /(?:we are hiring|we are looking for)[:\s]+(?:a|an)?\s*([A-Za-z][A-Za-z\s\/\-]{3,50}?)(?:\n|,|\.|\s*-)/i,
+        /(?:job\s*title|position|role|designation|looking for a|hiring for a|hiring|opportunity for)[:\s]+([A-Za-z0-9][A-Za-z0-9\s\/\-&,]{3,50}?)(?:\n|,|\.|\||\()/i,
+        /(?:title)[:\s]+([A-Za-z0-9\s\/\-&]{3,50}?)(?:\n|$)/i,
+        /(?:senior|junior|lead|staff|principal|associate|graduate)?\s*(?:full\s*stack|front\s*end|back\s*end|software|ai\/ml|machine\s*learning|data|devops|cloud|mobile|ios|android|qa|product|project|security|systems)\s*(?:engineer|developer|scientist|architect|manager|analyst|consultant|specialist)/i,
+        /^([A-Z][A-Za-z0-9\s\/\-&]{4,50}?)(?:\n|$)/m,
       ];
       for (const pattern of rolePatterns) {
         const match = jdText.match(pattern);
-        if (match && match[1]) {
-          const extracted = match[1].trim().replace(/\s+/g, " ");
-          if (extracted.length > 4 && extracted.length < 60) {
-            finalJobTitle = extracted;
+        if (match) {
+          const candidate = (match[1] || match[0]).trim().replace(/\s+/g, " ");
+          if (candidate.length > 3 && candidate.length < 60 && !/^(the|a|an|about|overview|summary|requirements|responsibilities)$/i.test(candidate)) {
+            finalJobTitle = candidate;
             break;
           }
         }
       }
     }
-    if (!finalJobTitle) finalJobTitle = "Optimized Resume";
+    if (!finalJobTitle) finalJobTitle = "Target Role Application";
     const finalCompany = aiResult.detectedCompany || company || "General Application";
 
     try {

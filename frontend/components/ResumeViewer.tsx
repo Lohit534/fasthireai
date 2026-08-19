@@ -247,37 +247,15 @@ export default function ResumeViewer({
                   </h2>
                 );
               case "summary": {
-                // Break down continuous summary text line-by-line with text-justify
                 const cleanText = block.text.trim();
-                const sentences = cleanText
-                  .split(/(?<=[.!?])\s+(?=[A-Z0-9])|\n+/)
-                  .map((s) => s.trim())
-                  .filter(Boolean);
-
-                if (sentences.length <= 1) {
-                  return (
-                    <p
-                      key={idx}
-                      className="text-[10px] mb-1.5 text-slate-800 leading-relaxed select-text font-serif text-justify w-full"
-                      style={{ textAlign: "justify", textJustify: "inter-word", hyphens: "none" }}
-                    >
-                      {renderHighlightedText(cleanText)}
-                    </p>
-                  );
-                }
-
                 return (
-                  <div key={idx} className="mb-2 space-y-1 select-text font-serif w-full">
-                    {sentences.map((sentence, sIdx) => (
-                      <p
-                        key={sIdx}
-                        className="text-[10px] text-slate-800 leading-relaxed select-text font-serif text-justify w-full"
-                        style={{ textAlign: "justify", textJustify: "inter-word", hyphens: "none" }}
-                      >
-                        {renderHighlightedText(sentence)}
-                      </p>
-                    ))}
-                  </div>
+                  <p
+                    key={idx}
+                    className="text-[10px] mb-2 text-slate-800 leading-relaxed select-text font-serif text-justify w-full"
+                    style={{ textAlign: "justify", textJustify: "inter-word", hyphens: "none" }}
+                  >
+                    {renderHighlightedText(cleanText)}
+                  </p>
                 );
               }
               case "skillLine":
