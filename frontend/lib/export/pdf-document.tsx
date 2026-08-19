@@ -359,7 +359,8 @@ function swapEducationAndSkillsIfNeeded(blocks: ParsedResumeBlock[]): ParsedResu
     if (['PROJECTS', 'PERSONAL PROJECTS', 'KEY PROJECTS', 'ACADEMIC PROJECTS'].includes(name)) return 'PROJECTS';
     if (['TECHNICAL SKILLS', 'SKILLS', 'CORE SKILLS', 'SOFT SKILLS', 'SKILLS & COMPETENCIES', 'KEY SKILLS'].includes(name)) return 'SKILLS';
     if (['EDUCATION', 'ACADEMIC BACKGROUND', 'QUALIFICATIONS', 'ACADEMICS'].includes(name)) return 'EDUCATION';
-    if (['CERTIFICATIONS', 'CERTIFICATIONS & ACHIEVEMENTS', 'ACHIEVEMENTS', 'AWARDS', 'HONORS', 'CERTIFICATES'].includes(name)) return 'CERTIFICATIONS';
+    if (['CERTIFICATIONS', 'CERTIFICATES'].includes(name)) return 'CERTIFICATIONS';
+    if (['ACHIEVEMENTS', 'KEY ACHIEVEMENTS', 'AWARDS', 'HONORS', 'CERTIFICATIONS & ACHIEVEMENTS'].includes(name)) return 'ACHIEVEMENTS';
     if (['LANGUAGES', 'LANGUAGES SPOKEN', 'LANGUAGES KNOWN'].includes(name)) return 'LANGUAGES';
     return name;
   };
@@ -379,8 +380,8 @@ function swapEducationAndSkillsIfNeeded(blocks: ParsedResumeBlock[]): ParsedResu
   }
 
   // Strict section priority order:
-  // HEADER -> SUMMARY -> SKILLS -> EXPERIENCE -> PROJECTS -> EDUCATION -> CERTIFICATIONS -> LANGUAGES
-  const priorityOrder = ['HEADER', 'SUMMARY', 'SKILLS', 'EXPERIENCE', 'PROJECTS', 'EDUCATION', 'CERTIFICATIONS', 'LANGUAGES'];
+  // HEADER -> SUMMARY -> SKILLS -> EXPERIENCE -> PROJECTS -> EDUCATION -> CERTIFICATIONS -> ACHIEVEMENTS -> LANGUAGES
+  const priorityOrder = ['HEADER', 'SUMMARY', 'SKILLS', 'EXPERIENCE', 'PROJECTS', 'EDUCATION', 'CERTIFICATIONS', 'ACHIEVEMENTS', 'LANGUAGES'];
 
   sectionGroups.sort((a, b) => {
     const idxA = priorityOrder.indexOf(a.category);

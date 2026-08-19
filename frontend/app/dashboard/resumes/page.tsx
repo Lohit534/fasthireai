@@ -536,17 +536,17 @@ export default function ResumesPage() {
       text += `\n`;
     }
 
-    if (data.languages && data.languages.length > 0) {
-      text += `LANGUAGES\n`;
-      text += `${data.languages.join(", ")}\n\n`;
-    }
-
     if (data.achievements && data.achievements.length > 0) {
       text += `ACHIEVEMENTS\n`;
       data.achievements.forEach(ach => {
         text += `• ${ach}\n`;
       });
       text += `\n`;
+    }
+
+    if (data.languages && data.languages.length > 0) {
+      text += `LANGUAGES\n`;
+      text += `${data.languages.join(", ")}\n\n`;
     }
     
     return text.trim();
@@ -1916,17 +1916,20 @@ export default function ResumesPage() {
                 </>
               )}
 
-              {/* Bottom promo promotion banner linking to pricing */}
+              {/* Bottom promo promotion banner with only Upgrade word linkable in gold */}
               {activePlan !== "team" && activePlan !== "promax" && (
-                <Link
-                  href="/dashboard/pricing"
-                  className="p-3.5 border border-amber-500/20 hover:border-amber-500/40 bg-[#0d0d18] hover:bg-[#16140e] rounded-xl flex items-center justify-center gap-2.5 text-[11px] tracking-wide transition-all group shadow-lg cursor-pointer select-none"
-                >
-                  <Sparkles className="h-4 w-4 text-amber-400 group-hover:scale-110 transition-transform shrink-0" />
-                  <span className="text-slate-300">
-                    <strong className="text-amber-400 font-extrabold group-hover:text-amber-300 transition-colors">Upgrade to Pro Max</strong> to unlock unlimited AI optimizations &amp; exports
+                <div className="p-3.5 border border-white/5 bg-[#0c0d1b] rounded-xl flex items-center justify-center gap-2 text-center text-slate-400 text-[11px] select-none font-medium">
+                  <Sparkles className="h-4 w-4 text-slate-500 shrink-0" />
+                  <span>
+                    <Link
+                      href="/dashboard/pricing"
+                      className="text-amber-400 font-extrabold hover:text-amber-300 underline underline-offset-2 transition-colors cursor-pointer"
+                    >
+                      Upgrade
+                    </Link>{" "}
+                    to Pro Max to unlock unlimited AI optimizations &amp; exports.
                   </span>
-                </Link>
+                </div>
               )}
 
             </div>
@@ -2094,22 +2097,6 @@ export default function ResumesPage() {
                       </div>
                     )}
 
-                    {/* Languages Section */}
-                    {editorData.languages && editorData.languages.length > 0 && editorData.languages[0] && (
-                      <div className="space-y-1">
-                        <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5">
-                          Languages
-                        </h2>
-                        <ul className="list-disc pl-4 space-y-0.5">
-                          {editorData.languages.filter(Boolean).map((lang, idx) => (
-                            <li key={idx} className="leading-relaxed">
-                              {renderRichText(lang)}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
                     {/* Achievements Section */}
                     {editorData.achievements && editorData.achievements.length > 0 && editorData.achievements[0] && (
                       <div className="space-y-1">
@@ -2120,6 +2107,22 @@ export default function ResumesPage() {
                           {editorData.achievements.filter(Boolean).map((ach, idx) => (
                             <li key={idx} className="leading-relaxed">
                               {renderRichText(ach)}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Languages Section */}
+                    {editorData.languages && editorData.languages.length > 0 && editorData.languages[0] && (
+                      <div className="space-y-1">
+                        <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5">
+                          Languages
+                        </h2>
+                        <ul className="list-disc pl-4 space-y-0.5">
+                          {editorData.languages.filter(Boolean).map((lang, idx) => (
+                            <li key={idx} className="leading-relaxed">
+                              {renderRichText(lang)}
                             </li>
                           ))}
                         </ul>
