@@ -71,7 +71,7 @@ const FAQS: FAQItem[] = [
   {
     id: "gst-invoices",
     question: "How do GST tax invoices work?",
-    answer: "Every transaction generates an official 18% GST tax invoice with an official breakdown. You can preview and download GST invoices as PDFs anytime on your Billing page."
+    answer: "Every transaction generates an official 5% GST tax invoice with an official breakdown. You can preview and download GST invoices as PDFs anytime on your Billing page."
   },
   {
     id: "plan-switching",

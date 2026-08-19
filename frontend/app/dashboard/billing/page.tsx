@@ -461,7 +461,7 @@ export default function BillingPage() {
 
               <div className="p-4 bg-[#080a17]/80 border-t border-white/6 flex items-center gap-2.5 text-[10px] text-slate-400 select-none">
                 <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span>256-bit SSL secured payments &amp; 18% GST tax invoice receipts.</span>
+                <span>256-bit SSL secured payments &amp; 5% GST tax invoice receipts.</span>
               </div>
             </Card>
 
