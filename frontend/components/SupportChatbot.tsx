@@ -227,7 +227,10 @@ export default function SupportChatbot() {
       const response = await fetch("/api/support/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: userMsg })
+        body: JSON.stringify({ 
+          question: userMsg,
+          userPlan: activePlan.toLowerCase().includes("promax") ? "promax" : activePlan.toLowerCase().includes("premium") ? "premium" : "free"
+        })
       });
 
       if (response.ok) {
@@ -469,19 +472,38 @@ export default function SupportChatbot() {
                   <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0" />
                 </button>
 
-                {/* Option 2: AI Assistant Chat */}
+                {/* Option 2: AI Assistant Chat (Pro Max Exclusive) */}
                 <button
-                  onClick={() => setView("ai-chat")}
+                  onClick={() => {
+                    const isProMax = activePlan.toLowerCase().includes("promax") || 
+                                     activePlan.toLowerCase().includes("pro max") || 
+                                     activePlan.toLowerCase().includes("owner") || 
+                                     (rawCredits?.isOwner ?? false) || 
+                                     (rawCredits?.paidCredits ?? 0) >= 99999;
+                    if (!isProMax) {
+                      toast.error("24/7 AI Chatbot is an exclusive feature of the Pro Max plan. Please upgrade to Pro Max.");
+                      setTimeout(() => {
+                        window.location.href = "/dashboard/pricing";
+                      }, 1500);
+                      return;
+                    }
+                    setView("ai-chat");
+                  }}
                   className="w-full p-4 bg-[#121429] hover:bg-[#181b36] border border-white/8 hover:border-white/20 rounded-2xl flex items-center justify-between gap-4 text-left transition-all group shadow-lg cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5">
-                    <div className="h-10 w-10 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400 group-hover:scale-105 transition-transform shrink-0">
-                      <MessageSquare className="h-5 w-5" />
+                    <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform shrink-0">
+                      <Sparkles className="h-5 w-5" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-extrabold text-white group-hover:text-violet-300 transition-colors">
-                        Chat
-                      </h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xs font-extrabold text-white group-hover:text-amber-300 transition-colors">
+                          Chat
+                        </h4>
+                        <Badge className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 border border-amber-300 text-slate-950 text-[8px] font-black uppercase tracking-wider px-1.5 py-0 rounded select-none">
+                          PRO MAX
+                        </Badge>
+                      </div>
                       <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
                         Instant AI Assistant &bull; 24/7 Support
                       </p>

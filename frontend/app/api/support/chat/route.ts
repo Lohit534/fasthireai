@@ -1,10 +1,13 @@
 /**
  * POST /api/support/chat
  *
- * FastHire-AI Assistant Chatbot handler.
+ * FastHire-AI Pro Max Exclusive Assistant Chatbot handler.
  * Powered by Google Gemini and Groq AI, with intelligent contextual fallbacks.
  */
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
+import { isOwnerEmail } from "@/types";
 import { logger } from "@/lib/logger";
 import { callAIText } from "@/lib/ai/router";
 
@@ -40,9 +43,48 @@ function getSmartContextualAnswer(question: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { question } = await request.json();
+    // 1. Verify User Authentication
+    const supabase = createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Please sign in to access the AI Career Assistant." },
+        { status: 401 }
+      );
+    }
+
+    // 2. Verify Pro Max Tier Access (Pro Max & Owner Only)
+    const isOwner = isOwnerEmail(user.email);
+    let isProMax = isOwner;
+
+    if (!isProMax) {
+      try {
+        const admin = getAdminClient() as any;
+        const { data: creditRow } = await admin
+          .from("Credit")
+          .select("paidCredits")
+          .eq("userId", user.id)
+          .maybeSingle();
+
+        if (creditRow && (creditRow.paidCredits >= 99999 || creditRow.paidCredits > 200)) {
+          isProMax = true;
+        }
+      } catch (err) {
+        logger.warn("[support-chat] Failed to check database credits, proceeding with fallback verification.");
+      }
+    }
+
+    const { question, userPlan } = await request.json();
     if (!question || typeof question !== "string") {
       return NextResponse.json({ error: "Question is required." }, { status: 400 });
+    }
+
+    if (!isProMax && userPlan !== "promax" && userPlan !== "team" && !isOwner) {
+      return NextResponse.json(
+        { error: "24/7 AI Chatbot is an exclusive feature for Pro Max members. Please upgrade to Pro Max on the Pricing page." },
+        { status: 403 }
+      );
     }
 
     const systemPrompt = `You are the FastHire-AI Career & Support Assistant — an intelligent, helpful career mentor and platform guide.
@@ -54,7 +96,7 @@ Keep your answers friendly, professional, highly actionable (3-5 concise sentenc
 
 User Question: ${question}`;
 
-    // 1. Try primary AI text router (Groq multi-model + Gemini fallback)
+    // 3. Try primary AI text router (Groq multi-model + Gemini fallback)
     try {
       const aiResponse = await callAIText(systemPrompt);
       if (aiResponse && aiResponse.trim().length > 10) {
@@ -64,7 +106,7 @@ User Question: ${question}`;
       logger.warn("[support-chat] AI text router failed, evaluating fallback:", aiErr?.message);
     }
 
-    // 2. Secondary direct Gemini call if callAIText failed
+    // 4. Secondary direct Gemini call if callAIText failed
     const geminiKey = process.env.GEMINI_API_KEY || "";
     if (geminiKey) {
       const GEMINI_MODELS = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"];
@@ -95,7 +137,7 @@ User Question: ${question}`;
       }
     }
 
-    // 3. Smart contextual fallback if APIs are offline / rate-limited
+    // 5. Smart contextual fallback if APIs are offline / rate-limited
     const smartFallback = getSmartContextualAnswer(question);
     return NextResponse.json({
       answer: smartFallback,
