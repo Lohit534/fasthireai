@@ -108,13 +108,19 @@ export default function DashboardPage() {
       sampleLoadedRef.current = true;
       setResumeText(sampleResume || SAMPLE_RESUME_TEXT);
       setJobDescription(sampleJD || SAMPLE_JD_TEXT);
-      toast.success("✨ Sample resume loaded! Ready to optimize.");
       // Clean up sample storage once loaded into state
       localStorage.removeItem("fastHire_pendingSample");
       localStorage.removeItem("fastHire_sampleResume");
       localStorage.removeItem("fastHire_sampleJD");
+      // Clean up URL so a page refresh clears sample data
+      if (typeof window !== "undefined" && window.location.search.includes("sample")) {
+        window.history.replaceState({}, "", "/dashboard");
+      }
+    } else {
+      // Normal refresh or direct navigation: reset store and start clean
+      resetStore();
     }
-  }, [setResumeText, setJobDescription]);
+  }, [resetStore, setResumeText, setJobDescription]);
 
   useEffect(() => {
     async function checkAuth() {

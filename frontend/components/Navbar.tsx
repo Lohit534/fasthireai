@@ -39,6 +39,7 @@ import FeedbackBanner from "@/components/FeedbackBanner";
 import { Gift } from "lucide-react";
 import { ReferralModal } from "@/components/ReferralModal";
 import { DemoVideoModal } from "@/components/DemoVideoModal";
+import { DataPreferencesModal } from "@/components/DataPreferencesModal";
 
 interface NavbarProps {
   refreshKey?: number;
@@ -53,12 +54,18 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isReferralOpen, setIsReferralOpen] = useState(false);
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+  const [isDataPreferencesOpen, setIsDataPreferencesOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleOpenDemo = () => setIsDemoModalOpen(true);
+    const handleOpenDataPref = () => setIsDataPreferencesOpen(true);
     window.addEventListener("open-demo-video", handleOpenDemo);
-    return () => window.removeEventListener("open-demo-video", handleOpenDemo);
+    window.addEventListener("open-data-preferences", handleOpenDataPref);
+    return () => {
+      window.removeEventListener("open-demo-video", handleOpenDemo);
+      window.removeEventListener("open-data-preferences", handleOpenDataPref);
+    };
   }, []);
 
   // Sync auth state
@@ -335,14 +342,17 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                           <MessageSquare className="h-4 w-4 text-slate-400" />
                           Feedback
                         </button>
-                        <Link
-                          href="/privacy"
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors cursor-pointer"
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            setIsDataPreferencesOpen(true);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors text-left cursor-pointer"
                         >
                           <Lock className="h-4 w-4 text-slate-400" />
                           Data Preferences
-                        </Link>
+                        </button>
                       </div>
 
                       {/* Divider */}
@@ -384,6 +394,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
       <FeedbackToast isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} userEmail={user?.email} />
       <ReferralModal isOpen={isReferralOpen} onClose={() => setIsReferralOpen(false)} />
       <DemoVideoModal isOpen={isDemoModalOpen} onClose={() => setIsDemoModalOpen(false)} />
+      <DataPreferencesModal isOpen={isDataPreferencesOpen} onClose={() => setIsDataPreferencesOpen(false)} />
     </>
   );
 }
