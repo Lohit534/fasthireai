@@ -14,17 +14,11 @@ export function createClient(useServiceRole = false) {
     supabaseKey === "placeholder-service-key" || 
     supabaseKey.trim() === ""
   ) {
-    const mockUser = {
-      id: "demo-user-id",
-      email: "demo@fasthire.ai",
-      role: "authenticated",
-      user_metadata: { full_name: "Demo Candidate" }
-    };
     return {
       auth: {
-        getUser: async () => ({ data: { user: mockUser }, error: null }),
-        getSession: async () => ({ data: { session: { user: mockUser } }, error: null }),
-        exchangeCodeForSession: async (code: string) => ({ data: { session: { user: mockUser } }, error: null }),
+        getUser: async () => ({ data: { user: null }, error: null }),
+        getSession: async () => ({ data: { session: null }, error: null }),
+        exchangeCodeForSession: async (_code: string) => ({ data: { session: null }, error: null }),
       }
     } as any;
   }

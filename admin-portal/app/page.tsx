@@ -118,7 +118,7 @@ export default function LoginPage() {
 
   if (checking) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#060713]">
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
         <div className="text-center space-y-3">
           <div className="relative mx-auto h-12 w-12 flex items-center justify-center">
             <img src="/logo.png" alt="FastHire Logo" className="h-8 w-8 rounded-lg animate-pulse" />
@@ -130,26 +130,26 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-[#060713] text-slate-100 font-sans selection:bg-violet-500/30">
+    <div className="min-h-screen flex bg-[#f8fafc] text-slate-900 font-sans selection:bg-[#0d6e5a]/15">
       
       {/* ── LEFT PANE: Professional Admin Showroom (Desktop Only) ── */}
-      <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 lg:p-16 bg-[#090b1c] border-r border-white/8 relative overflow-hidden">
-        {/* Ambient Glows */}
-        <div className="absolute top-1/4 left-1/4 h-[400px] w-[400px] rounded-full bg-violet-600/10 blur-[130px] -z-10 pointer-events-none" />
-        <div className="absolute bottom-10 right-10 h-[300px] w-[300px] rounded-full bg-indigo-600/10 blur-[120px] -z-10 pointer-events-none" />
+      <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 lg:p-16 bg-gradient-to-br from-slate-50 via-teal-50/20 to-slate-100/70 border-r border-slate-200 relative overflow-hidden">
+        {/* Subtle Ambient Glows */}
+        <div className="absolute top-1/4 left-1/4 h-[400px] w-[400px] rounded-full bg-teal-500/5 blur-[120px] -z-10 pointer-events-none" />
+        <div className="absolute bottom-10 right-10 h-[300px] w-[300px] rounded-full bg-emerald-500/5 blur-[100px] -z-10 pointer-events-none" />
 
-        {/* Top: FastHire F Logo & Brand Header */}
+        {/* Top: FastHire Logo & Brand Header */}
         <div className="flex items-center gap-3 select-none">
           <img 
             src="/logo.png" 
             alt="FastHire Logo" 
-            className="h-9 w-9 rounded-xl object-cover shadow-lg shadow-violet-500/20 ring-1 ring-white/10" 
+            className="h-9 w-9 rounded-xl object-cover shadow-sm ring-1 ring-slate-200" 
           />
           <div className="flex flex-col">
-            <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-[#c2c1ff] via-[#8b5cf6] to-[#0A84FF] bg-clip-text text-transparent">
+            <span className="font-extrabold text-lg tracking-tight text-slate-900">
               FastHire AI
             </span>
-            <span className="text-[10px] font-black uppercase tracking-widest text-violet-400">
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#0d6e5a]">
               Admin Workspace
             </span>
           </div>
@@ -158,14 +158,14 @@ export default function LoginPage() {
         {/* Middle: Feature highlights and telemetry */}
         <div className="space-y-8 max-w-lg my-auto">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-bold">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-[#0d6e5a] text-xs font-bold">
               <ShieldCheck className="h-3.5 w-3.5" />
               Secure Enterprise Console
             </div>
-            <h2 className="text-3xl lg:text-4xl font-black tracking-tight text-white leading-tight">
+            <h2 className="text-3xl lg:text-4xl font-black tracking-tight text-slate-900 leading-tight">
               Control, monitor, and scale FastHire AI in real-time.
             </h2>
-            <p className="text-sm text-slate-400 font-medium leading-relaxed">
+            <p className="text-sm text-slate-600 font-medium leading-relaxed">
               Unified command center for registered users, billing tier modifications, support ticketing workflows, and user feedback telemetry.
             </p>
           </div>
@@ -191,14 +191,14 @@ export default function LoginPage() {
             ].map((item, idx) => (
               <div
                 key={idx}
-                className="flex items-start gap-3.5 p-3.5 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors"
+                className="flex items-start gap-3.5 p-3.5 rounded-xl bg-white border border-slate-200 hover:border-slate-300 shadow-sm transition-colors"
               >
-                <div className="h-8 w-8 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0 text-violet-400 mt-0.5">
+                <div className="h-8 w-8 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center shrink-0 text-[#0d6e5a] mt-0.5">
                   <item.icon className="h-4 w-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-white">{item.title}</h4>
-                  <p className="text-[11px] text-slate-400 leading-relaxed mt-0.5">{item.desc}</p>
+                  <h4 className="text-xs font-bold text-slate-900">{item.title}</h4>
+                  <p className="text-[11px] text-slate-600 leading-relaxed mt-0.5">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -206,57 +206,57 @@ export default function LoginPage() {
         </div>
 
         {/* Bottom: System Status & Security */}
-        <div className="pt-6 border-t border-white/5 flex items-center justify-between text-xs text-slate-500 font-semibold select-none">
+        <div className="pt-6 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500 font-semibold select-none">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="text-slate-400 text-[11px]">System Status: Operational</span>
+            <span className="text-slate-600 text-[11px] font-medium">System Status: Operational</span>
           </div>
           <span className="text-[11px] text-slate-500">FastHire Admin v2.0</span>
         </div>
       </div>
 
       {/* ── RIGHT PANE: Authentication Box ── */}
-      <div className="flex-1 flex flex-col justify-center items-center p-6 sm:p-12 lg:p-16 relative">
+      <div className="flex-1 flex flex-col justify-center items-center p-6 sm:p-12 lg:p-16 relative bg-slate-50/50">
         <div className="w-full max-w-md space-y-6">
 
           {/* Mobile Top Header (only visible on mobile) */}
           <div className="flex lg:hidden items-center justify-center gap-2.5 mb-2 select-none">
             <img src="/logo.png" alt="FastHire Logo" className="h-8 w-8 rounded-lg object-cover" />
-            <span className="font-extrabold text-lg tracking-tight text-white">
-              FastHire AI <span className="text-violet-400 text-xs uppercase ml-1 font-black">Admin</span>
+            <span className="font-extrabold text-lg tracking-tight text-slate-900">
+              FastHire AI <span className="text-[#0d6e5a] text-xs uppercase ml-1 font-black">Admin</span>
             </span>
           </div>
 
           {/* Sign In Header */}
           <div className="space-y-1.5 text-center lg:text-left">
-            <h1 className="text-2xl font-black tracking-tight text-white">
+            <h1 className="text-2xl font-black tracking-tight text-slate-900">
               Administrator Login
             </h1>
-            <p className="text-xs text-slate-400 font-medium">
+            <p className="text-xs text-slate-500 font-medium">
               Enter your credentials to access the management portal.
             </p>
           </div>
 
           {/* Login Card */}
-          <div className="bg-[#0b0d1e] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-5 shadow-2xl relative">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-5 shadow-lg relative">
             
             {magicSent ? (
               <div className="text-center space-y-4 py-4">
-                <div className="h-12 w-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+                <div className="h-12 w-12 rounded-full bg-teal-50 border border-teal-200 text-[#0d6e5a] flex items-center justify-center mx-auto">
                   <Mail className="h-6 w-6" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-base font-bold text-white">Magic Login Link Dispatched</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    A secure sign-in token has been sent to <span className="text-violet-400 font-semibold">{email}</span>. Click the link in your email to authenticate.
+                  <h3 className="text-base font-bold text-slate-900">Magic Login Link Dispatched</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    A secure sign-in token has been sent to <span className="text-[#0d6e5a] font-semibold">{email}</span>. Click the link in your email to authenticate.
                   </p>
                 </div>
                 <button
                   onClick={() => setMagicSent(false)}
-                  className="text-xs text-slate-500 hover:text-slate-300 underline font-semibold pt-2 block mx-auto cursor-pointer"
+                  className="text-xs text-[#0d6e5a] hover:text-[#094d3f] underline font-semibold pt-2 block mx-auto cursor-pointer"
                 >
                   Return to Password Login
                 </button>
@@ -265,8 +265,8 @@ export default function LoginPage() {
               <form onSubmit={handleLogin} className="space-y-4">
                 {/* Email input */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <Mail className="h-3.5 w-3.5 text-violet-400" />
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5 text-[#0d6e5a]" />
                     Admin Email
                   </label>
                   <input
@@ -274,16 +274,16 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@fasthire.ai"
-                    className="w-full bg-[#060814] text-white border border-white/15 rounded-xl px-4 py-3 text-sm placeholder-slate-600 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all font-medium"
+                    placeholder="name@company.com"
+                    className="w-full bg-white text-slate-900 border border-slate-200 rounded-xl px-4 py-3 text-sm placeholder-slate-400 outline-none focus:border-[#0d6e5a] focus:ring-2 focus:ring-[#0d6e5a]/20 transition-all font-medium"
                   />
                 </div>
 
                 {/* Password input */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <KeyRound className="h-3.5 w-3.5 text-violet-400" />
+                    <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <KeyRound className="h-3.5 w-3.5 text-[#0d6e5a]" />
                       Password
                     </label>
                   </div>
@@ -294,12 +294,12 @@ export default function LoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter administrator password"
-                      className="w-full bg-[#060814] text-white border border-white/15 rounded-xl pl-4 pr-11 py-3 text-sm placeholder-slate-600 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all font-medium"
+                      className="w-full bg-white text-slate-900 border border-slate-200 rounded-xl pl-4 pr-11 py-3 text-sm placeholder-slate-400 outline-none focus:border-[#0d6e5a] focus:ring-2 focus:ring-[#0d6e5a]/20 transition-all font-medium"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -308,7 +308,7 @@ export default function LoginPage() {
 
                 {/* Error Banner */}
                 {error && (
-                  <div className="bg-red-500/10 border border-red-500/25 rounded-xl p-3.5 text-xs text-red-400 font-medium leading-relaxed">
+                  <div className="bg-rose-50 border border-rose-200 rounded-xl p-3.5 text-xs text-rose-700 font-medium leading-relaxed">
                     {error}
                   </div>
                 )}
@@ -317,11 +317,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 mt-1"
-                  style={{
-                    background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
-                    boxShadow: "0 4px 20px rgba(139,92,246,0.35)",
-                  }}
+                  className="w-full h-11 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 mt-1 bg-[#0d6e5a] hover:bg-[#094d3f] shadow-sm"
                 >
                   {loading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -336,9 +332,9 @@ export default function LoginPage() {
                 {/* Alternative login methods */}
                 <div className="pt-2 space-y-3">
                   <div className="flex items-center gap-2">
-                    <div className="h-px flex-1 bg-white/10" />
-                    <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">or authenticate with</span>
-                    <div className="h-px flex-1 bg-white/10" />
+                    <div className="h-px flex-1 bg-slate-200" />
+                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">or authenticate with</span>
+                    <div className="h-px flex-1 bg-slate-200" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2.5">
@@ -347,7 +343,7 @@ export default function LoginPage() {
                       type="button"
                       onClick={handleGoogleLogin}
                       disabled={loading}
-                      className="h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-slate-300 hover:text-white flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                      className="h-10 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 hover:text-slate-900 flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm"
                     >
                       <svg className="h-3.5 w-3.5" viewBox="0 0 24 24">
                         <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.4l3.7 2.9C6.5 7.4 9 5 12 5z" />
@@ -363,9 +359,9 @@ export default function LoginPage() {
                       type="button"
                       onClick={handleMagicLink}
                       disabled={magicLoading || loading}
-                      className="h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-slate-300 hover:text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      className="h-10 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 hover:text-slate-900 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm"
                     >
-                      {magicLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5 text-violet-400" />}
+                      {magicLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5 text-[#0d6e5a]" />}
                       Magic Link
                     </button>
                   </div>

@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="icon" href="/logo.png" type="image/png" />
       </head>
-      <body className={`${inter.className} bg-[#060713] text-slate-100 antialiased`}>
+      <body className={`${inter.className} bg-[#f8fafc] text-slate-900 antialiased`}>
         {children}
       </body>
     </html>

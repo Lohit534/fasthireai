@@ -12,21 +12,6 @@ const inMemoryDB: {
   credits: {}
 };
 
-// Seed default demo user
-inMemoryDB.users["demo@fasthire.ai"] = {
-  id: "demo-user-id",
-  email: "demo@fasthire.ai",
-  name: "Demo Candidate",
-  createdAt: new Date(),
-};
-inMemoryDB.credits["demo-user-id"] = {
-  id: "demo-credit-id",
-  userId: "demo-user-id",
-  freeUsed: 0,
-  paidCredits: 5,
-  resetAt: new Date(),
-};
-
 const prismaClientSingleton = () => {
   return new PrismaClient();
 };
@@ -92,7 +77,7 @@ function createMockFallbackProxy(target: any, path: string[] = []): any {
               if (operation === "create") {
                 const data = params.data || {};
                 const newUser = {
-                  id: data.id || "demo-user-id",
+                  id: data.id || "user-" + Math.random().toString(36).substr(2, 9),
                   email: data.email,
                   name: data.name || null,
                   createdAt: new Date(),
@@ -100,7 +85,7 @@ function createMockFallbackProxy(target: any, path: string[] = []): any {
                 inMemoryDB.users[data.email] = newUser;
                 if (data.credit?.create) {
                   inMemoryDB.credits[newUser.id] = {
-                    id: "demo-credit-id",
+                    id: "credit-" + Math.random().toString(36).substr(2, 9),
                     userId: newUser.id,
                     freeUsed: data.credit.create.freeUsed || 0,
                     paidCredits: data.credit.create.paidCredits || 0,

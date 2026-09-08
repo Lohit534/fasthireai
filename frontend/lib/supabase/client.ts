@@ -10,32 +10,20 @@ export const createClient = () => {
     supabaseAnonKey === "placeholder-anon-key" || 
     supabaseAnonKey.trim() === ""
   ) {
-    const mockUser = {
-      id: "demo-user-id",
-      email: "demo@fasthire.ai",
-      role: "authenticated",
-      user_metadata: { full_name: "Demo Candidate" }
-    };
     return {
       auth: {
-        getUser: async () => ({ data: { user: mockUser }, error: null }),
-        getSession: async () => ({ data: { session: { user: mockUser } }, error: null }),
-        signUp: async (credentials: any) => ({ data: { user: mockUser }, error: null }),
-        signInWithPassword: async (credentials: any) => ({ data: { user: mockUser }, error: null }),
-        signInWithOAuth: async (options: any) => {
-          // Simulate oauth login delay and redirection
-          setTimeout(() => {
-            window.location.href = "/dashboard";
-          }, 1000);
-          return { data: { provider: options.provider, url: "/dashboard" }, error: null };
-        },
+        getUser: async () => ({ data: { user: null }, error: null }),
+        getSession: async () => ({ data: { session: null }, error: null }),
+        signUp: async (_credentials: any) => ({ data: { user: null, session: null }, error: new Error("Authentication service is initializing. Please try again.") }),
+        signInWithPassword: async (_credentials: any) => ({ data: { user: null, session: null }, error: new Error("Invalid credentials or authentication service is initializing.") }),
+        signInWithOAuth: async (_options: any) => ({ data: null, error: new Error("OAuth sign-in service is initializing.") }),
         signOut: async () => ({ error: null }),
         onAuthStateChange: (callback: any) => {
-          callback("SIGNED_IN", { user: mockUser });
+          callback("SIGNED_OUT", null);
           return { data: { subscription: { unsubscribe: () => {} } } };
         }
       },
-      from: (table: string) => {
+      from: (_table: string) => {
         return {
           select: () => ({
             eq: () => ({
