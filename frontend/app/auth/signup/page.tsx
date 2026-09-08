@@ -155,7 +155,6 @@ function SignupFormContent() {
   };
 
   return (
-  return (
     <div className="min-h-screen flex bg-[#f8fafc] text-slate-900 font-sans">
       
       {/* LEFT PANE: Branding Showroom (Desktop Only) */}
