@@ -17,10 +17,8 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1 space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center">
-                <Zap className="h-3.5 w-3.5 text-[#0d6e5a]" />
-              </div>
+            <div className="flex items-center gap-2 select-none">
+              <img src="/logo.png" alt="FastHire Logo" className="h-7 w-7 rounded-lg object-contain shadow-xs" />
               <span className="font-extrabold text-slate-900 text-sm">FastHire AI</span>
             </div>
             <p className="text-[11px] text-slate-500 leading-relaxed max-w-[180px]">

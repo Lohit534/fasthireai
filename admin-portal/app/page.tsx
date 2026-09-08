@@ -121,7 +121,7 @@ export default function LoginPage() {
       <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
         <div className="text-center space-y-3">
           <div className="relative mx-auto h-12 w-12 flex items-center justify-center">
-            <img src="/logo.png" alt="FastHire Logo" className="h-8 w-8 rounded-lg animate-pulse" />
+            <img src="/logo.png" alt="FastHire Logo" className="h-9 w-9 rounded-xl object-contain animate-pulse" />
           </div>
           <p className="text-xs text-slate-500 font-semibold tracking-wider uppercase">Authenticating Administrative Session...</p>
         </div>
@@ -143,7 +143,7 @@ export default function LoginPage() {
           <img 
             src="/logo.png" 
             alt="FastHire Logo" 
-            className="h-9 w-9 rounded-xl object-cover shadow-sm ring-1 ring-slate-200" 
+            className="h-9 w-9 rounded-xl object-contain drop-shadow-xs" 
           />
           <div className="flex flex-col">
             <span className="font-extrabold text-lg tracking-tight text-slate-900">
@@ -224,7 +224,7 @@ export default function LoginPage() {
 
           {/* Mobile Top Header (only visible on mobile) */}
           <div className="flex lg:hidden items-center justify-center gap-2.5 mb-2 select-none">
-            <img src="/logo.png" alt="FastHire Logo" className="h-8 w-8 rounded-lg object-cover" />
+            <img src="/logo.png" alt="FastHire Logo" className="h-8 w-8 rounded-xl object-contain" />
             <span className="font-extrabold text-lg tracking-tight text-slate-900">
               FastHire AI <span className="text-[#0d6e5a] text-xs uppercase ml-1 font-black">Admin</span>
             </span>

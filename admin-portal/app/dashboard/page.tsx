@@ -290,7 +290,7 @@ export default function AdminDashboard() {
             <img 
               src="/logo.png" 
               alt="FastHire Logo" 
-              className="h-8 w-8 rounded-xl object-cover shadow-sm ring-1 ring-slate-200" 
+              className="h-8 w-8 rounded-xl object-contain drop-shadow-xs" 
             />
             <div className="flex flex-col">
               <span className="font-extrabold text-base tracking-tight text-slate-900">

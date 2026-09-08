@@ -174,7 +174,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
           {/* Left: Brand logo */}
           <div className="flex items-center gap-7">
             <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2.5 group select-none">
-              <img src="/logo.png" alt="FastHire Logo" className="h-6 w-6 rounded-lg object-cover group-hover:scale-105 transition-transform" />
+              <img src="/logo.png" alt="FastHire Logo" className="h-8 w-8 rounded-xl object-contain drop-shadow-xs group-hover:scale-105 transition-transform" />
               <span className="font-heading font-extrabold text-lg tracking-tight text-slate-900">
                 FastHire AI
               </span>

@@ -80,8 +80,8 @@ export default function LoginPage() {
         <div className="absolute top-1/4 left-1/4 h-[300px] w-[300px] rounded-full bg-white/5 blur-[100px] -z-10" />
 
         {/* Logo */}
-        <div className="flex items-center gap-2 select-none">
-          <Briefcase className="h-6 w-6 text-white" />
+        <div className="flex items-center gap-2.5 select-none">
+          <img src="/logo.png" alt="FastHire Logo" className="h-8 w-8 rounded-xl object-contain drop-shadow-sm" />
           <span className="font-extrabold text-xl tracking-tight text-white">
             FastHire
           </span>
