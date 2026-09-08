@@ -22,6 +22,7 @@ import ScrollFadeIn from "@/components/ScrollFadeIn";
 import CircleGauge from "@/components/CircleGauge";
 import { supabase } from "@/lib/supabase/client";
 import { DemoVideoModal } from "@/components/DemoVideoModal";
+import { SAMPLE_RESUME_TEXT, SAMPLE_JD_TEXT } from "@/lib/sample-data";
 
 /* ── Landing FAQ ─────────────────────────────────────────── */
 const LANDING_FAQS = [
@@ -170,58 +171,22 @@ export default function LandingPage() {
     return () => clearTimeout(t);
   }, [router]);
 
-  const handleTrySample = () => {
-    const sampleResume = `JOHN DOE
-Software Engineer | john.doe@email.com | (555) 123-4567 | San Francisco, CA
-LinkedIn: linkedin.com/in/johndoe | GitHub: github.com/johndoe
-
-PROFESSIONAL SUMMARY
-Results-driven Full Stack Engineer with 4+ years of experience designing and implementing scalable web applications, REST APIs, and microservices. Skilled in React, Node.js, Python, and AWS.
-
-EXPERIENCE
-Software Engineer | Acme Technologies | Jan 2022 – Present
-• Designed and developed high-throughput REST APIs handling 50,000+ daily active users, reducing response latency by 35%.
-• Spearheaded migration of monolithic web architecture to Docker microservices on AWS ECS, boosting system reliability to 99.9%.
-• Automated CI/CD deployment pipelines using GitHub Actions, cutting release deployment cycle time from 2 hours to 15 minutes.
-
-Frontend Developer | TechCorp Solutions | Jun 2020 – Dec 2021
-• Built responsive web dashboards using React, TypeScript, and Redux, improving page load speed by 40%.
-• Collaborated with UX designers and backend engineers to implement interactive analytics features.
-
-TECHNICAL SKILLS
-• Programming: JavaScript, TypeScript, Python, SQL, HTML/CSS
-• Frameworks: React.js, Next.js, Node.js, Express, Tailwind CSS
-• Cloud & Tools: AWS (ECS, S3, Lambda), Docker, Git, PostgreSQL, REST APIs
-
-EDUCATION
-B.S. in Computer Science | University of California, Berkeley | 2016 – 2020`;
-
-    const sampleJD = `Senior Full Stack Developer
-Company: CloudScale Systems
-Location: San Francisco, CA / Remote
-
-About the Role:
-We are looking for a Senior Full Stack Developer to build high-performance web applications and cloud API services.
-
-Key Responsibilities:
-- Architect and deploy scalable frontend components in React and Next.js.
-- Build robust, secure RESTful APIs and GraphQL endpoints in Node.js / TypeScript.
-- Implement database optimizations in PostgreSQL and Redis.
-- Drive CI/CD automation, unit testing, and Docker container deployment on AWS.
-- Collaborate with product and design teams to deliver seamless user experiences.
-
-Requirements:
-- 3+ years of experience with modern JavaScript / TypeScript, React, and Node.js.
-- Strong knowledge of REST APIs, PostgreSQL databases, and Docker containerization.
-- Experience with cloud platforms (AWS / GCP) and automated testing frameworks.
-- Bachelor's degree in Computer Science or equivalent practical experience.`;
-
-    setResumeText(sampleResume);
-    setJobDescription(sampleJD);
+  const handleTrySample = async () => {
+    setResumeText(SAMPLE_RESUME_TEXT);
+    setJobDescription(SAMPLE_JD_TEXT);
     localStorage.setItem("fastHire_pendingSample", "true");
-    localStorage.setItem("fastHire_sampleResume", sampleResume);
-    localStorage.setItem("fastHire_sampleJD", sampleJD);
-    router.push("/auth/signup?sample=true");
+    localStorage.setItem("fastHire_sampleResume", SAMPLE_RESUME_TEXT);
+    localStorage.setItem("fastHire_sampleJD", SAMPLE_JD_TEXT);
+
+    try {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        router.push("/dashboard?sample=true");
+        return;
+      }
+    } catch {}
+
+    router.push("/dashboard?sample=true");
   };
 
   return (

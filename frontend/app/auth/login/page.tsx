@@ -20,7 +20,7 @@ export default function LoginPage() {
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("sample") !== "true") {
+    if (params.get("sample") !== "true" && localStorage.getItem("fastHire_pendingSample") !== "true") {
       localStorage.removeItem("fastHire_pendingSample");
       localStorage.removeItem("fastHire_sampleResume");
       localStorage.removeItem("fastHire_sampleJD");
@@ -42,7 +42,9 @@ export default function LoginPage() {
         throw authError;
       }
 
-      router.push("/dashboard");
+      const params = new URLSearchParams(window.location.search);
+      const isSample = params.get("sample") === "true" || localStorage.getItem("fastHire_pendingSample") === "true";
+      router.push(isSample ? "/dashboard?sample=true" : "/dashboard");
       router.refresh();
     } catch (err: any) {
       setError(err.message || "Invalid email or password.");

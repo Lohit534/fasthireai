@@ -24,7 +24,7 @@ function SignupFormContent() {
   const [success, setSuccess] = useState(false);
 
   React.useEffect(() => {
-    if (searchParams.get("sample") !== "true") {
+    if (searchParams.get("sample") !== "true" && localStorage.getItem("fastHire_pendingSample") !== "true") {
       localStorage.removeItem("fastHire_pendingSample");
       localStorage.removeItem("fastHire_sampleResume");
       localStorage.removeItem("fastHire_sampleJD");
@@ -120,7 +120,8 @@ function SignupFormContent() {
         }
 
         if (data?.session) {
-          router.push("/dashboard");
+          const isSample = searchParams.get("sample") === "true" || localStorage.getItem("fastHire_pendingSample") === "true";
+          router.push(isSample ? "/dashboard?sample=true" : "/dashboard");
           router.refresh();
           return;
         }

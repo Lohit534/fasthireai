@@ -19,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ATSScore, isOwnerEmail } from "@/types";
+import { SAMPLE_RESUME_TEXT, SAMPLE_JD_TEXT } from "@/lib/sample-data";
 import {
   Sparkles,
   Loader2,
@@ -93,25 +94,29 @@ export default function DashboardPage() {
   const [showMissingModal, setShowMissingModal] = useState(false);
   const [pendingResumeText, setPendingResumeText] = useState("");
 
+  const handleLoadSample = () => {
+    setResumeText(SAMPLE_RESUME_TEXT);
+    setJobDescription(SAMPLE_JD_TEXT);
+    toast.success("✨ Sample resume template and job description loaded!");
+  };
+
   useEffect(() => {
-    // Check if sample data was explicitly requested from landing page via "Try Sample Resume" button
+    // Check if sample data was requested from landing page or query
     const isPendingSample = localStorage.getItem("fastHire_pendingSample");
     const sampleResume = localStorage.getItem("fastHire_sampleResume");
     const sampleJD = localStorage.getItem("fastHire_sampleJD");
+    const hasSampleQuery = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("sample") === "true";
 
-    if (isPendingSample === "true" && sampleResume && sampleJD) {
-      setResumeText(sampleResume);
-      setJobDescription(sampleJD);
-    } else {
-      // Normal login or refresh: start clean without sample data
-      resetStore();
+    if ((isPendingSample === "true" && sampleResume && sampleJD) || hasSampleQuery) {
+      setResumeText(sampleResume || SAMPLE_RESUME_TEXT);
+      setJobDescription(sampleJD || SAMPLE_JD_TEXT);
+      toast.success("✨ Sample resume loaded! Ready to optimize.");
+      // Clean up sample storage once loaded into state
+      localStorage.removeItem("fastHire_pendingSample");
+      localStorage.removeItem("fastHire_sampleResume");
+      localStorage.removeItem("fastHire_sampleJD");
     }
-
-    // Always clean up sample keys immediately after checking so future logins start fresh
-    localStorage.removeItem("fastHire_pendingSample");
-    localStorage.removeItem("fastHire_sampleResume");
-    localStorage.removeItem("fastHire_sampleJD");
-  }, [resetStore, setResumeText, setJobDescription]);
+  }, [setResumeText, setJobDescription]);
 
   useEffect(() => {
     async function checkAuth() {
@@ -119,7 +124,8 @@ export default function DashboardPage() {
         const { data, error } = await supabase.auth.getUser();
         if (error || !data?.user) {
           toast.error("Please sign in to continue.");
-          router.push("/auth/login");
+          const hasSample = typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("sample") === "true" || localStorage.getItem("fastHire_pendingSample") === "true");
+          router.push(hasSample ? "/auth/login?sample=true" : "/auth/login");
           return;
         }
         setUser(data.user);
@@ -984,16 +990,25 @@ export default function DashboardPage() {
                   <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
                 </div>
 
-                {/* Use Saved Resume button */}
-                <div className="flex justify-start">
+                {/* Saved Resume & Sample buttons */}
+                <div className="flex flex-wrap items-center gap-2.5 justify-start">
                   <button
                     type="button"
                     onClick={() => setIsSavedResumesOpen(true)}
                     disabled={optimizing}
-                    className="bg-white border border-slate-200 hover:border-[#0d6e5a]/40 hover:bg-[#0d6e5a]/5 py-2 px-4 text-xs font-bold rounded-lg inline-flex items-center gap-2 text-slate-600 hover:text-[#0d6e5a] transition-all shadow-sm"
+                    className="bg-white border border-slate-200 hover:border-[#0d6e5a]/40 hover:bg-[#0d6e5a]/5 py-2 px-3.5 text-xs font-bold rounded-lg inline-flex items-center gap-2 text-slate-600 hover:text-[#0d6e5a] transition-all shadow-xs cursor-pointer"
                   >
                     <FolderOpen className="h-4 w-4 text-slate-400" />
                     Use Saved Resume
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLoadSample}
+                    disabled={optimizing}
+                    className="bg-teal-50 border border-teal-200 hover:bg-teal-100/80 py-2 px-3.5 text-xs font-bold rounded-lg inline-flex items-center gap-1.5 text-[#0d6e5a] transition-all shadow-xs cursor-pointer"
+                  >
+                    <Sparkles className="h-4 w-4 text-[#0d6e5a]" />
+                    Try Sample Resume &amp; JD
                   </button>
                 </div>
               </div>

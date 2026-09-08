@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
+import { SAMPLE_RESUME_TEXT } from "@/lib/sample-data";
 
 // Structured Resume Form Types
 interface StructuredResume {
@@ -557,11 +558,15 @@ export default function ResumesPage() {
     setEditingResume(record);
     setTempTitle(record.jobTitle || "Untitled Resume");
     
-    // Check if optimizedText is present and different from originalText (i.e. it is optimized/compiled)
-    const hasOptimized = record.optimizedText && record.optimizedText.trim() !== "" && record.optimizedText !== record.originalText;
+    // Check if optimizedText or originalText is present
+    const textToParse = (record.optimizedText && record.optimizedText.trim() !== "")
+      ? record.optimizedText
+      : (record.originalText && record.originalText.trim() !== "")
+        ? record.originalText
+        : "";
     
-    const parsed = hasOptimized 
-      ? parseResumeText(record.optimizedText!) 
+    const parsed = textToParse
+      ? parseResumeText(textToParse)
       : {
           name: "",
           email: "",
@@ -582,7 +587,7 @@ export default function ResumesPage() {
   };
 
   // Create New Resume Card Trigger
-  const handleCreateNewResume = async () => {
+  const handleCreateNewResume = async (withTemplate: boolean = false) => {
     if (!userId) return;
 
     // Enforce resumes built from scratch limit (Free: 2, Pro: 20, Pro Max: 40)
@@ -600,9 +605,11 @@ export default function ResumesPage() {
       // silent — failed to check resumes limit
     }
 
-    setActionLoading("create");
+    setActionLoading(withTemplate ? "create-template" : "create");
 
-    const defaultText = ``;
+    const defaultText = withTemplate ? SAMPLE_RESUME_TEXT : ``;
+    const defaultTitle = withTemplate ? "Senior Software Engineer" : "Untitled Resume";
+    const defaultCompany = withTemplate ? "CloudScale Systems" : "General Application";
 
     try {
       const res = await fetch("/api/resumes", {
@@ -612,15 +619,15 @@ export default function ResumesPage() {
           id: generateUUID(),
           originalText: defaultText,
           optimizedText: defaultText,
-          jobDescription: "",
-          jobTitle: "Untitled Resume",
-          company: "General Application",
-          scoreBefore: 45,
-          scoreAfter: 45,
-          keywordsBefore: 0,
-          keywordsAfter: 0,
-          impactBefore: 0,
-          impactAfter: 0,
+          jobDescription: withTemplate ? "Senior Full-Stack Cloud Engineer role" : "",
+          jobTitle: defaultTitle,
+          company: defaultCompany,
+          scoreBefore: withTemplate ? 82 : 45,
+          scoreAfter: withTemplate ? 82 : 45,
+          keywordsBefore: withTemplate ? 12 : 0,
+          keywordsAfter: withTemplate ? 12 : 0,
+          impactBefore: withTemplate ? 8 : 0,
+          impactAfter: withTemplate ? 8 : 0,
           keywordsAdded: []
         })
       });
@@ -635,13 +642,28 @@ export default function ResumesPage() {
         const newRecord = data as ResumeRecord;
         setResumes(prev => [newRecord, ...prev]);
         handleOpenEditor(newRecord);
-        toast.success("New resume card created successfully!");
+        toast.success(withTemplate ? "✨ Sample resume template created!" : "New resume card created successfully!");
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to create new resume.");
     } finally {
       setActionLoading(null);
     }
+  };
+
+  // Load sample template directly into current active editor
+  const handleLoadSampleTemplate = () => {
+    const parsed = parseResumeText(SAMPLE_RESUME_TEXT);
+    setEditorData(parsed);
+    setTempTitle("Senior Software Engineer");
+    if (editingResume) {
+      saveEditorData(parsed, {
+        jobTitle: "Senior Software Engineer",
+        company: "CloudScale Systems",
+        originalText: SAMPLE_RESUME_TEXT,
+      });
+    }
+    toast.success("✨ Loaded sample resume template into editor!");
   };
 
   // Delete Resume Card
@@ -1122,18 +1144,33 @@ export default function ResumesPage() {
                   </p>
                 </div>
 
-                <Button
-                  onClick={handleCreateNewResume}
-                  disabled={actionLoading === "create" || resumes.length >= maxLimit}
-                  className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold h-9 text-xs rounded-full px-5 flex items-center gap-1.5 shadow-sm transition-colors"
-                >
-                  {actionLoading === "create" ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Plus className="h-4 w-4" />
-                  )}
-                  New Resume
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => handleCreateNewResume(true)}
+                    disabled={actionLoading === "create" || actionLoading === "create-template" || resumes.length >= maxLimit}
+                    variant="outline"
+                    className="border-teal-200 text-[#0d6e5a] bg-teal-50/80 hover:bg-teal-100 font-bold h-9 text-xs rounded-full px-4 flex items-center gap-1.5 shadow-sm transition-colors"
+                  >
+                    {actionLoading === "create-template" ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5 text-[#0d6e5a]" />
+                    )}
+                    Try Sample Template
+                  </Button>
+                  <Button
+                    onClick={() => handleCreateNewResume(false)}
+                    disabled={actionLoading === "create" || actionLoading === "create-template" || resumes.length >= maxLimit}
+                    className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold h-9 text-xs rounded-full px-5 flex items-center gap-1.5 shadow-sm transition-colors"
+                  >
+                    {actionLoading === "create" ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4" />
+                    )}
+                    New Resume
+                  </Button>
+                </div>
               </div>
 
               {/* Grid display options */}
@@ -1148,14 +1185,24 @@ export default function ResumesPage() {
                   <FileText className="h-10 w-10 text-[#0d6e5a] mb-4 animate-pulse" />
                   <h3 className="font-extrabold text-slate-900 text-lg">No Resumes Found</h3>
                   <p className="text-xs text-slate-500 max-w-xs mt-1.5 leading-relaxed font-medium">
-                    Create your first resume structure to build customized applications.
+                    Create your first resume structure or start with our tested sample template.
                   </p>
-                  <div className="mt-6">
+                  <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                     <Button 
-                      onClick={handleCreateNewResume}
-                      className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-semibold rounded-full"
+                      onClick={() => handleCreateNewResume(true)}
+                      disabled={actionLoading === "create-template"}
+                      className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-semibold rounded-full text-xs h-9 px-5 flex items-center gap-1.5 shadow-sm"
                     >
-                      Get Started
+                      {actionLoading === "create-template" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                      Try Sample Template
+                    </Button>
+                    <Button 
+                      onClick={() => handleCreateNewResume(false)}
+                      variant="outline"
+                      disabled={actionLoading === "create"}
+                      className="border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold rounded-full text-xs h-9 px-5"
+                    >
+                      Start from Scratch
                     </Button>
                   </div>
                 </div>
@@ -1226,11 +1273,14 @@ export default function ResumesPage() {
                   {/* Dashed placeholder template card */}
                   {resumes.length < maxLimit && (
                     <div
-                      onClick={handleCreateNewResume}
-                      className="border border-dashed border-slate-300 bg-white hover:bg-slate-50 hover:border-[#0d6e5a] rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 min-h-[160px] select-none shadow-sm"
+                      onClick={() => handleCreateNewResume(true)}
+                      className="group border border-dashed border-slate-300 bg-white hover:bg-teal-50/40 hover:border-[#0d6e5a] rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 min-h-[160px] select-none shadow-sm"
                     >
-                      <Plus className="h-7 w-7 text-slate-400 group-hover:text-[#0d6e5a] mb-2" />
-                      <span className="font-bold text-xs text-slate-600">New Resume</span>
+                      <div className="h-10 w-10 rounded-full bg-slate-50 group-hover:bg-teal-100/60 flex items-center justify-center mb-2 text-slate-400 group-hover:text-[#0d6e5a] transition-colors">
+                        <Sparkles className="h-5 w-5" />
+                      </div>
+                      <span className="font-bold text-xs text-slate-700 group-hover:text-[#0d6e5a]">Try Sample Template</span>
+                      <span className="text-[10px] text-slate-400 mt-0.5 font-medium">Pre-filled ATS-friendly resume</span>
                     </div>
                   )}
 
@@ -1288,6 +1338,15 @@ export default function ResumesPage() {
             </div>
 
             <div className="flex items-center gap-2">
+              <Button
+                onClick={handleLoadSampleTemplate}
+                variant="outline"
+                className="h-8 text-xs font-bold border-teal-200 text-[#0d6e5a] bg-teal-50 hover:bg-teal-100 flex items-center gap-1.5 rounded-lg transition-colors"
+                title="Fill editor with sample template data"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-[#0d6e5a]" />
+                Load Sample Template
+              </Button>
               <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
                 <Check className="h-3.5 w-3.5" />
                 <span>Auto-saved</span>
