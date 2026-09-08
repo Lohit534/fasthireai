@@ -93,21 +93,19 @@ export default function DashboardPage() {
   const [missingFields, setMissingFields] = useState<ReturnType<typeof detectMissingFields>>([]);
   const [showMissingModal, setShowMissingModal] = useState(false);
   const [pendingResumeText, setPendingResumeText] = useState("");
-
-  const handleLoadSample = () => {
-    setResumeText(SAMPLE_RESUME_TEXT);
-    setJobDescription(SAMPLE_JD_TEXT);
-    toast.success("✨ Sample resume template and job description loaded!");
-  };
+  const sampleLoadedRef = useRef(false);
 
   useEffect(() => {
+    if (sampleLoadedRef.current) return;
+
     // Check if sample data was requested from landing page or query
-    const isPendingSample = localStorage.getItem("fastHire_pendingSample");
-    const sampleResume = localStorage.getItem("fastHire_sampleResume");
-    const sampleJD = localStorage.getItem("fastHire_sampleJD");
+    const isPendingSample = typeof window !== "undefined" && localStorage.getItem("fastHire_pendingSample");
+    const sampleResume = typeof window !== "undefined" && localStorage.getItem("fastHire_sampleResume");
+    const sampleJD = typeof window !== "undefined" && localStorage.getItem("fastHire_sampleJD");
     const hasSampleQuery = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("sample") === "true";
 
-    if ((isPendingSample === "true" && sampleResume && sampleJD) || hasSampleQuery) {
+    if (isPendingSample === "true" || hasSampleQuery) {
+      sampleLoadedRef.current = true;
       setResumeText(sampleResume || SAMPLE_RESUME_TEXT);
       setJobDescription(sampleJD || SAMPLE_JD_TEXT);
       toast.success("✨ Sample resume loaded! Ready to optimize.");
@@ -990,25 +988,16 @@ export default function DashboardPage() {
                   <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
                 </div>
 
-                {/* Saved Resume & Sample buttons */}
-                <div className="flex flex-wrap items-center gap-2.5 justify-start">
+                {/* Use Saved Resume button */}
+                <div className="flex justify-start">
                   <button
                     type="button"
                     onClick={() => setIsSavedResumesOpen(true)}
                     disabled={optimizing}
-                    className="bg-white border border-slate-200 hover:border-[#0d6e5a]/40 hover:bg-[#0d6e5a]/5 py-2 px-3.5 text-xs font-bold rounded-lg inline-flex items-center gap-2 text-slate-600 hover:text-[#0d6e5a] transition-all shadow-xs cursor-pointer"
+                    className="bg-white border border-slate-200 hover:border-[#0d6e5a]/40 hover:bg-[#0d6e5a]/5 py-2 px-4 text-xs font-bold rounded-lg inline-flex items-center gap-2 text-slate-600 hover:text-[#0d6e5a] transition-all shadow-sm cursor-pointer"
                   >
                     <FolderOpen className="h-4 w-4 text-slate-400" />
                     Use Saved Resume
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleLoadSample}
-                    disabled={optimizing}
-                    className="bg-teal-50 border border-teal-200 hover:bg-teal-100/80 py-2 px-3.5 text-xs font-bold rounded-lg inline-flex items-center gap-1.5 text-[#0d6e5a] transition-all shadow-xs cursor-pointer"
-                  >
-                    <Sparkles className="h-4 w-4 text-[#0d6e5a]" />
-                    Try Sample Resume &amp; JD
                   </button>
                 </div>
               </div>

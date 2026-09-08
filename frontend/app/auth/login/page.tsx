@@ -160,7 +160,10 @@ export default function LoginPage() {
           </Link>
           <p className="text-xs text-slate-500">
             Don&apos;t have an account?{" "}
-            <Link href="/auth/signup" className="font-bold text-[#0d6e5a] hover:underline">
+            <Link
+              href={typeof window !== "undefined" && new URLSearchParams(window.location.search).get("sample") === "true" ? "/auth/signup?sample=true" : "/auth/signup"}
+              className="font-bold text-[#0d6e5a] hover:underline"
+            >
               Create an account
             </Link>
           </p>

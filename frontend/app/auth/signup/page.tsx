@@ -242,7 +242,10 @@ function SignupFormContent() {
           </Link>
           <p className="text-xs text-slate-500">
             Already have an account?{" "}
-            <Link href="/auth/login" className="font-bold text-[#0d6e5a] hover:underline">
+            <Link
+              href={searchParams.get("sample") === "true" ? "/auth/login?sample=true" : "/auth/login"}
+              className="font-bold text-[#0d6e5a] hover:underline"
+            >
               Sign In
             </Link>
           </p>
