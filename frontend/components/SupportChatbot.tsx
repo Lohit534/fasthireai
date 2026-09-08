@@ -309,55 +309,55 @@ export default function SupportChatbot() {
             setIsOpen(true);
             setView("help-center");
           }}
-          className="h-14 w-14 rounded-full bg-black hover:bg-[#14162e] text-white shadow-2xl flex items-center justify-center border border-white/20 hover:scale-105 active:scale-95 transition-all duration-300 select-none cursor-pointer"
+          className="h-14 w-14 rounded-full bg-white hover:bg-slate-50 text-[#0d6e5a] shadow-xl flex items-center justify-center border border-slate-200 hover:scale-105 active:scale-95 transition-all duration-300 select-none cursor-pointer"
           title="Open Help Center"
         >
-          <HeadphonesIcon className="h-6 w-6 text-teal-400" />
+          <HeadphonesIcon className="h-6 w-6 text-[#0d6e5a]" />
         </button>
       )}
 
       {/* Main Container Widget */}
       {isOpen && (
-        <Card className="w-80 sm:w-[380px] h-[540px] bg-[#0c0d1e] border-white/10 shadow-2xl rounded-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <Card className="w-80 sm:w-[380px] h-[540px] bg-white border-slate-200 shadow-2xl rounded-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
           
           {/* ============================================================ */}
-          {/* VIEW 1: HELP CENTER (Image 1 style)                           */}
+          {/* VIEW 1: HELP CENTER                                           */}
           {/* ============================================================ */}
           {view === "help-center" && (
-            <div className="flex flex-col h-full bg-[#0a0c1a]">
+            <div className="flex flex-col h-full bg-white">
               {/* Header */}
-              <div className="bg-[#121428] border-b border-white/8 p-5 flex items-start justify-between select-none">
+              <div className="bg-white border-b border-slate-200 p-4 sm:p-5 flex items-start justify-between select-none">
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 shrink-0">
+                  <div className="h-9 w-9 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0d6e5a] shrink-0">
                     <HelpCircle className="h-5 w-5" />
                   </div>
                   <div className="space-y-0.5">
-                    <h3 className="font-extrabold text-white text-base tracking-tight">Help center</h3>
-                    <p className="text-xs text-slate-400 font-medium">How can we help you today?</p>
+                    <h3 className="font-extrabold text-slate-900 text-base tracking-tight">Help Center</h3>
+                    <p className="text-xs text-slate-500 font-medium">How can we help you today?</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="h-7 w-7 flex items-center justify-center rounded-full text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                  className="h-7 w-7 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
               {/* Search Bar */}
-              <div className="p-4 bg-[#0a0c1a] border-b border-white/5">
+              <div className="p-3.5 bg-slate-50 border-b border-slate-200">
                 <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                   <Input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search"
-                    className="pl-9 bg-[#111326] border-white/10 text-xs text-white placeholder:text-slate-500 rounded-xl h-9 focus:border-white/30"
+                    placeholder="Search FAQs..."
+                    className="pl-9 bg-white border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 rounded-xl h-9 focus:border-[#0d6e5a]"
                   />
                   {searchQuery && (
                     <button 
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-3 top-2.5 text-slate-500 hover:text-white"
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -366,15 +366,15 @@ export default function SupportChatbot() {
               </div>
 
               {/* Popular FAQs list */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
                 <div className="flex items-center justify-between select-none">
-                  <h4 className="text-xs font-bold text-slate-300">Popular FAQs</h4>
+                  <h4 className="text-xs font-bold text-slate-800">Popular FAQs</h4>
                   <span className="text-[10px] text-slate-500 font-semibold">{filteredFaqs.length} articles</span>
                 </div>
 
                 <div className="space-y-2">
                   {filteredFaqs.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500 text-xs font-semibold">
+                    <div className="text-center py-8 text-slate-400 text-xs font-semibold">
                       No results found for &ldquo;{searchQuery}&rdquo;
                     </div>
                   ) : (
@@ -383,21 +383,21 @@ export default function SupportChatbot() {
                       return (
                         <div
                           key={faq.id}
-                          className="bg-[#121429] border border-white/5 hover:border-white/15 rounded-xl transition-all overflow-hidden"
+                          className="bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl transition-all overflow-hidden"
                         >
                           <button
                             onClick={() => setExpandedFaq(isExpanded ? null : faq.id)}
-                            className="w-full p-3.5 flex items-center justify-between text-left gap-3 text-xs font-bold text-slate-200 hover:text-white"
+                            className="w-full p-3.5 flex items-center justify-between text-left gap-3 text-xs font-bold text-slate-800 hover:text-[#0d6e5a]"
                           >
                             <span className="leading-snug">{faq.question}</span>
                             {isExpanded ? (
-                              <ChevronDown className="h-4 w-4 text-slate-400 shrink-0" />
+                              <ChevronDown className="h-4 w-4 text-slate-500 shrink-0" />
                             ) : (
-                              <ChevronRight className="h-4 w-4 text-slate-500 shrink-0" />
+                              <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />
                             )}
                           </button>
                           {isExpanded && (
-                            <div className="px-3.5 pb-3.5 pt-1 text-[11px] text-slate-400 leading-relaxed border-t border-white/5 bg-[#0e1022]">
+                            <div className="px-3.5 pb-3.5 pt-1 text-[11px] text-slate-600 leading-relaxed border-t border-slate-200 bg-white">
                               {faq.answer}
                             </div>
                           )}
@@ -409,11 +409,11 @@ export default function SupportChatbot() {
               </div>
 
               {/* Bottom "Need more help? -> Contact Us" Footer */}
-              <div className="p-4 bg-[#101224] border-t border-white/8 space-y-2.5 text-center select-none">
-                <p className="text-[11px] text-slate-400 font-semibold">Need more help?</p>
+              <div className="p-4 bg-slate-50 border-t border-slate-200 space-y-2 text-center select-none">
+                <p className="text-[11px] text-slate-500 font-semibold">Need more help?</p>
                 <Button
                   onClick={() => setView("contact-options")}
-                  className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 cursor-pointer"
+                  className="w-full bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-colors"
                 >
                   <HeadphonesIcon className="h-4 w-4" />
                   Contact Us
@@ -423,53 +423,53 @@ export default function SupportChatbot() {
           )}
 
           {/* ============================================================ */}
-          {/* VIEW 2: CONTACT US SELECTION (Image 2 style)                 */}
+          {/* VIEW 2: CONTACT US SELECTION                                 */}
           {/* ============================================================ */}
           {view === "contact-options" && (
-            <div className="flex flex-col h-full bg-[#0a0c1a]">
+            <div className="flex flex-col h-full bg-white">
               {/* Header */}
-              <div className="bg-[#121428] border-b border-white/8 p-5 flex items-center justify-between select-none">
+              <div className="bg-white border-b border-slate-200 p-4 sm:p-5 flex items-center justify-between select-none">
                 <div className="flex items-center gap-2.5">
                   <button
                     onClick={() => setView("help-center")}
-                    className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </button>
-                  <h3 className="font-extrabold text-white text-base tracking-tight">Contact Us</h3>
+                  <h3 className="font-extrabold text-slate-900 text-base tracking-tight">Contact Us</h3>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="h-7 w-7 flex items-center justify-center rounded-full text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                  className="h-7 w-7 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
               {/* Contact Options List */}
-              <div className="p-4 space-y-3 flex-1 flex flex-col justify-center">
+              <div className="p-4 space-y-3 flex-1 flex flex-col justify-center bg-slate-50/50">
                 {/* Option 1: Create Ticket (Admin Team) */}
                 <button
                   onClick={() => {
                     setView("ticket");
                     if (userId) loadAdminTickets();
                   }}
-                  className="w-full p-4 bg-[#121429] hover:bg-[#181b36] border border-white/8 hover:border-white/20 rounded-2xl flex items-center justify-between gap-4 text-left transition-all group shadow-lg cursor-pointer"
+                  className="w-full p-4 bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#0d6e5a]/40 rounded-2xl flex items-center justify-between gap-4 text-left transition-all group shadow-sm cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5">
-                    <div className="h-10 w-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform shrink-0">
+                    <div className="h-10 w-10 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0d6e5a] group-hover:scale-105 transition-transform shrink-0">
                       <Mail className="h-5 w-5" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-extrabold text-white group-hover:text-blue-300 transition-colors">
-                        Create ticket
+                      <h4 className="text-xs font-extrabold text-slate-900 group-hover:text-[#0d6e5a] transition-colors">
+                        Create Ticket
                       </h4>
-                      <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
+                      <p className="text-[10px] text-slate-500 mt-0.5 font-medium">
                         Resolution in 1-2 days &bull; Admin Support
                       </p>
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0" />
+                  <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-[#0d6e5a] group-hover:translate-x-0.5 transition-all shrink-0" />
                 </button>
 
                 {/* Option 2: AI Assistant Chat (Pro Max Exclusive) */}
@@ -489,35 +489,35 @@ export default function SupportChatbot() {
                     }
                     setView("ai-chat");
                   }}
-                  className="w-full p-4 bg-[#121429] hover:bg-[#181b36] border border-white/8 hover:border-white/20 rounded-2xl flex items-center justify-between gap-4 text-left transition-all group shadow-lg cursor-pointer"
+                  className="w-full p-4 bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#0d6e5a]/40 rounded-2xl flex items-center justify-between gap-4 text-left transition-all group shadow-sm cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5">
-                    <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform shrink-0">
+                    <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#0d6e5a] group-hover:scale-105 transition-transform shrink-0">
                       <Sparkles className="h-5 w-5" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="text-xs font-extrabold text-white group-hover:text-amber-300 transition-colors">
-                          Chat
+                        <h4 className="text-xs font-extrabold text-slate-900 group-hover:text-[#0d6e5a] transition-colors">
+                          AI Chat
                         </h4>
-                        <Badge className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 border border-amber-300 text-slate-950 text-[8px] font-black uppercase tracking-wider px-1.5 py-0 rounded select-none">
+                        <Badge className="bg-emerald-50 border border-emerald-200 text-[#0d6e5a] text-[8px] font-bold uppercase tracking-wider px-1.5 py-0 rounded select-none">
                           PRO MAX
                         </Badge>
                       </div>
-                      <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
+                      <p className="text-[10px] text-slate-500 mt-0.5 font-medium">
                         Instant AI Assistant &bull; 24/7 Support
                       </p>
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0" />
+                  <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-[#0d6e5a] group-hover:translate-x-0.5 transition-all shrink-0" />
                 </button>
               </div>
 
               {/* Bottom Quick Back Link */}
-              <div className="p-4 border-t border-white/5 text-center bg-[#0d0f20]">
+              <div className="p-4 border-t border-slate-200 text-center bg-slate-50">
                 <button
                   onClick={() => setView("help-center")}
-                  className="text-xs font-bold text-slate-400 hover:text-white transition-colors"
+                  className="text-xs font-bold text-slate-500 hover:text-[#0d6e5a] transition-colors"
                 >
                   &larr; Back to Help Center FAQs
                 </button>
@@ -529,21 +529,21 @@ export default function SupportChatbot() {
           {/* VIEW 3: ADMIN SUPPORT TICKET                                 */}
           {/* ============================================================ */}
           {view === "ticket" && (
-            <div className="flex flex-col h-full bg-[#0a0c1a]">
+            <div className="flex flex-col h-full bg-white">
               {/* Header */}
-              <div className="bg-[#121428] border-b border-white/8 p-4 flex items-center justify-between select-none">
+              <div className="bg-white border-b border-slate-200 p-4 flex items-center justify-between select-none">
                 <div className="flex items-center gap-2.5">
                   <button
                     onClick={() => setView("contact-options")}
-                    className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                     title="Back to Contact Options"
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </button>
                   <div>
-                    <h3 className="font-extrabold text-white text-xs tracking-tight">Admin Support Ticket</h3>
-                    <span className="text-[9px] text-slate-400 font-semibold flex items-center gap-1 select-none">
-                      <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                    <h3 className="font-extrabold text-slate-900 text-xs tracking-tight">Admin Support Ticket</h3>
+                    <span className="text-[9px] text-slate-500 font-semibold flex items-center gap-1 select-none">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                       Direct Admin Message
                     </span>
                   </div>
@@ -551,14 +551,14 @@ export default function SupportChatbot() {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={loadAdminTickets}
-                    className="h-7 w-7 flex items-center justify-center rounded-full text-slate-400 hover:text-white hover:bg-white/5"
+                    className="h-7 w-7 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100"
                     title="Refresh tickets"
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="h-7 w-7 flex items-center justify-center rounded-full text-slate-400 hover:text-white hover:bg-white/5"
+                    className="h-7 w-7 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -566,30 +566,30 @@ export default function SupportChatbot() {
               </div>
 
               {/* Ticket Messages Body */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#090a18]/45">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-50/70">
                 {loadingTickets ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-2 select-none">
-                    <Loader2 className="h-5 w-5 text-white animate-spin" />
+                    <Loader2 className="h-5 w-5 text-[#0d6e5a] animate-spin" />
                     <p className="text-[10px] text-slate-500 font-semibold">Loading messages...</p>
                   </div>
                 ) : adminTickets.length === 0 ? (
                   <div className="text-center py-12 px-4 space-y-2 select-none">
-                    <Mail className="h-8 w-8 text-slate-600 mx-auto" />
-                    <p className="text-[11px] font-bold text-white">Create a Support Ticket</p>
+                    <Mail className="h-8 w-8 text-slate-400 mx-auto" />
+                    <p className="text-[11px] font-bold text-slate-900">Create a Support Ticket</p>
                     <p className="text-[10px] text-slate-500 leading-relaxed">
                       Have a billing or optimization question? Send a message to our admin team and we&apos;ll reply directly here.
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="bg-[#12132a]/40 border border-white/5 p-2 rounded-lg text-[9px] text-slate-400 flex items-center justify-between select-none">
-                      <span className="flex items-center gap-1 text-slate-400">
-                        <Clock className="h-2.5 w-2.5 text-amber-400" />
+                    <div className="bg-white border border-slate-200 p-2 rounded-lg text-[9px] text-slate-500 flex items-center justify-between select-none shadow-sm">
+                      <span className="flex items-center gap-1 text-slate-500">
+                        <Clock className="h-2.5 w-2.5 text-amber-600" />
                         Auto-deletes 24h after admin reply
                       </span>
                       <button
                         onClick={loadAdminTickets}
-                        className="text-slate-200 hover:text-white flex items-center gap-1 font-bold cursor-pointer"
+                        className="text-[#0d6e5a] hover:text-[#094d3f] flex items-center gap-1 font-bold cursor-pointer"
                       >
                         <RefreshCw className="h-2.5 w-2.5" /> Refresh
                       </button>
@@ -599,13 +599,13 @@ export default function SupportChatbot() {
                       <div key={ticket.id} className="space-y-2.5">
                         {/* User message */}
                         <div className="flex justify-end">
-                          <div className="max-w-[85%] bg-black border border-white/20 text-white rounded-2xl rounded-br-none px-3.5 py-2 text-xs leading-relaxed">
+                          <div className="max-w-[85%] bg-[#0d6e5a] text-white rounded-2xl rounded-br-none px-3.5 py-2 text-xs leading-relaxed shadow-sm">
                             <p>{ticket.message}</p>
-                            <div className="flex items-center justify-end gap-1.5 mt-1 border-t border-white/10 pt-0.5">
-                              <span className="text-[8px] text-slate-400">
+                            <div className="flex items-center justify-end gap-1.5 mt-1 border-t border-white/20 pt-0.5">
+                              <span className="text-[8px] text-white/80">
                                 {new Date(ticket.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                               </span>
-                              <Badge className="bg-white/10 border-none text-white text-[7px] font-bold px-1 rounded">Sent</Badge>
+                              <Badge className="bg-white/20 border-none text-white text-[7px] font-bold px-1 rounded">Sent</Badge>
                             </div>
                           </div>
                         </div>
@@ -613,21 +613,21 @@ export default function SupportChatbot() {
                         {/* Admin reply */}
                         {ticket.reply ? (
                           <div className="flex justify-start">
-                            <div className="max-w-[85%] bg-[#14162e] border border-white/10 text-slate-100 rounded-2xl rounded-bl-none px-3.5 py-2 text-xs leading-relaxed">
-                              <div className="flex items-center gap-1 text-[8px] text-white font-extrabold uppercase tracking-wide mb-1">
-                                <ShieldCheck className="h-3 w-3 shrink-0 text-white" />
+                            <div className="max-w-[85%] bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-bl-none px-3.5 py-2 text-xs leading-relaxed shadow-sm">
+                              <div className="flex items-center gap-1 text-[8px] text-[#0d6e5a] font-extrabold uppercase tracking-wide mb-1">
+                                <ShieldCheck className="h-3 w-3 shrink-0 text-[#0d6e5a]" />
                                 Admin Reply
                               </div>
                               <p>{ticket.reply}</p>
-                              <span className="block text-[8px] text-slate-500 font-semibold text-right mt-1.5">
+                              <span className="block text-[8px] text-slate-400 font-semibold text-right mt-1.5">
                                 {new Date(ticket.repliedAt || "").toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                               </span>
                             </div>
                           </div>
                         ) : (
                           <div className="flex justify-start">
-                            <div className="max-w-[85%] bg-[#1b1710] border border-amber-500/20 text-slate-400 rounded-2xl rounded-bl-none px-3.5 py-2 text-xs leading-relaxed italic select-none">
-                              <div className="flex items-center gap-1.5 text-[8px] text-amber-500 font-bold uppercase tracking-wider animate-pulse mb-1">
+                            <div className="max-w-[85%] bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl rounded-bl-none px-3.5 py-2 text-xs leading-relaxed italic select-none">
+                              <div className="flex items-center gap-1.5 text-[8px] text-amber-700 font-bold uppercase tracking-wider animate-pulse mb-1">
                                 <Clock className="h-3 w-3" />
                                 Awaiting admin reply...
                               </div>
@@ -643,19 +643,19 @@ export default function SupportChatbot() {
               </div>
 
               {/* Compose Ticket Input */}
-              <div className="p-3.5 border-t border-white/5 bg-[#12132a]/30">
+              <div className="p-3.5 border-t border-slate-200 bg-white">
                 <form onSubmit={handleSendTicketMessage} className="flex gap-2">
                   <Input
                     placeholder="Describe your issue or request..."
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     disabled={loading}
-                    className="flex-1 bg-[#060714] border-white/10 text-xs text-white focus:border-white/30 rounded-xl h-9"
+                    className="flex-1 bg-slate-50 border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0d6e5a] focus:bg-white rounded-xl h-9"
                   />
                   <Button
                     type="submit"
                     disabled={loading || !inputText.trim()}
-                    className="h-9 w-9 p-0 bg-black hover:bg-white/10 text-white border border-white/20 rounded-xl flex items-center justify-center shrink-0 shadow-lg"
+                    className="h-9 w-9 p-0 bg-[#0d6e5a] hover:bg-[#094d3f] text-white rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-colors"
                   >
                     {loading ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Send className="h-4 w-4" />}
                   </Button>
@@ -668,47 +668,49 @@ export default function SupportChatbot() {
           {/* VIEW 4: AI ASSISTANT CHATBOT                                 */}
           {/* ============================================================ */}
           {view === "ai-chat" && (
-            <div className="flex flex-col h-full bg-[#0a0c1a]">
+            <div className="flex flex-col h-full bg-white">
               {/* Header */}
-              <div className="bg-[#121428] border-b border-white/8 p-4 flex items-center justify-between select-none">
+              <div className="bg-white border-b border-slate-200 p-4 flex items-center justify-between select-none">
                 <div className="flex items-center gap-2.5">
                   <button
                     onClick={() => setView("contact-options")}
-                    className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                     title="Back to Contact Options"
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </button>
                   <div>
-                    <h3 className="font-extrabold text-white text-xs tracking-tight">FastHire AI Assistant</h3>
-                    <span className="text-[9px] text-slate-400 font-semibold flex items-center gap-1 select-none">
-                      <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-pulse" />
+                    <h3 className="font-extrabold text-slate-900 text-xs tracking-tight">FastHire AI Assistant</h3>
+                    <span className="text-[9px] text-slate-500 font-semibold flex items-center gap-1 select-none">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#0d6e5a] animate-pulse" />
                       24/7 Instant AI Coach
                     </span>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="h-7 w-7 flex items-center justify-center rounded-full text-slate-400 hover:text-white hover:bg-white/5"
+                  className="h-7 w-7 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
               {/* AI Chat Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#090a18]/45">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-50/70">
                 {aiHistory.map((msg, index) => (
                   <div
                     key={index}
                     className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
                   >
-                    <div className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-xs leading-relaxed ${
+                    <div className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-xs leading-relaxed shadow-sm ${
                       msg.sender === "user"
-                        ? "bg-black border border-white/20 text-white rounded-br-none"
-                        : "bg-[#14162e] border border-white/5 text-slate-200 rounded-bl-none"
+                        ? "bg-[#0d6e5a] text-white rounded-br-none"
+                        : "bg-white border border-slate-200 text-slate-800 rounded-bl-none"
                     }`}>
                       {msg.text}
-                      <span className="block text-[8px] text-slate-500 font-semibold text-right mt-1.5">
+                      <span className={`block text-[8px] font-semibold text-right mt-1.5 ${
+                        msg.sender === "user" ? "text-white/80" : "text-slate-400"
+                      }`}>
                         {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
@@ -717,8 +719,8 @@ export default function SupportChatbot() {
 
                 {loading && (
                   <div className="flex justify-start">
-                    <div className="bg-[#14162e] border border-white/5 text-slate-400 rounded-2xl rounded-bl-none px-3.5 py-2.5 text-xs flex items-center gap-2">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-violet-400" />
+                    <div className="bg-white border border-slate-200 text-slate-600 rounded-2xl rounded-bl-none px-3.5 py-2.5 text-xs flex items-center gap-2 shadow-sm">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-[#0d6e5a]" />
                       <span>FastHire AI is thinking...</span>
                     </div>
                   </div>
@@ -727,7 +729,7 @@ export default function SupportChatbot() {
               </div>
 
               {/* Suggested Quick Prompt Chips */}
-              <div className="px-3.5 py-2 border-t border-white/5 bg-[#0d0f20] flex items-center gap-1.5 overflow-x-auto select-none no-scrollbar">
+              <div className="px-3.5 py-2 border-t border-slate-200 bg-slate-50 flex items-center gap-1.5 overflow-x-auto select-none no-scrollbar">
                 {[
                   "How to get 90+ ATS score?",
                   "Explain Pro Max features",
@@ -738,7 +740,7 @@ export default function SupportChatbot() {
                     onClick={() => {
                       setInputText(chip);
                     }}
-                    className="shrink-0 text-[9px] font-bold px-2.5 py-1 rounded-full bg-[#161833] hover:bg-[#1f2248] text-slate-300 hover:text-white border border-white/5 transition-colors cursor-pointer"
+                    className="shrink-0 text-[9px] font-bold px-2.5 py-1 rounded-full bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors shadow-sm cursor-pointer"
                   >
                     {chip}
                   </button>
@@ -746,19 +748,19 @@ export default function SupportChatbot() {
               </div>
 
               {/* Chat Input */}
-              <div className="p-3.5 border-t border-white/5 bg-[#12132a]/30">
+              <div className="p-3.5 border-t border-slate-200 bg-white">
                 <form onSubmit={handleSendAiMessage} className="flex gap-2">
                   <Input
                     placeholder="Ask AI anything..."
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     disabled={loading}
-                    className="flex-1 bg-[#060714] border-white/10 text-xs text-white focus:border-white/30 rounded-xl h-9"
+                    className="flex-1 bg-slate-50 border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0d6e5a] focus:bg-white rounded-xl h-9"
                   />
                   <Button
                     type="submit"
                     disabled={loading || !inputText.trim()}
-                    className="h-9 w-9 p-0 bg-black hover:bg-white/10 text-white border border-white/20 rounded-xl flex items-center justify-center shrink-0 shadow-lg"
+                    className="h-9 w-9 p-0 bg-[#0d6e5a] hover:bg-[#094d3f] text-white rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-colors"
                   >
                     {loading ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Send className="h-4 w-4" />}
                   </Button>

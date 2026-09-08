@@ -470,9 +470,9 @@ export default function PricingPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#060713]">
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
         <div className="text-center space-y-2">
-          <Loader2 className="h-8 w-8 text-violet-600 animate-spin mx-auto" />
+          <Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin mx-auto" />
           <p className="text-xs text-slate-500 font-semibold">Loading options...</p>
         </div>
       </div>
@@ -480,17 +480,17 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#060713] text-slate-100 font-sans select-text">
+    <div className="flex flex-col min-h-screen bg-[#f8fafc] text-slate-900 font-sans select-text">
       <Navbar />
 
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-10">
 
         {/* Title details */}
         <ScrollFadeIn className="text-center space-y-4">
-          <h1 className="text-3xl md:text-4.5xl font-black text-white tracking-tight leading-none">
-            Unlock Full <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-indigo-400 bg-clip-text text-transparent">FastHire Premium</span>
+          <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-none">
+            Unlock Full <span className="bg-gradient-to-r from-[#0d6e5a] via-[#0f766e] to-[#134e4a] bg-clip-text text-transparent">FastHire Premium</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto font-medium leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto font-medium leading-relaxed">
             Gain an unfair advantage in the application process. Choose the pipeline limits that align with your search.
           </p>
 
@@ -499,8 +499,8 @@ export default function PricingPage() {
             <button
               onClick={() => handleBillingCycleChange("monthly")}
               className={`text-xs font-bold px-3.5 py-1.5 rounded-full transition-all ${billingCycle === "monthly"
-                ? "bg-[#161730] text-white border border-violet-500/30"
-                : "text-slate-400 hover:text-white"
+                ? "bg-white text-slate-900 border border-slate-200 shadow-sm"
+                : "text-slate-500 hover:text-slate-900"
                 }`}
             >
               Bill Monthly
@@ -508,8 +508,8 @@ export default function PricingPage() {
             <button
               onClick={() => handleBillingCycleChange("yearly")}
               className={`text-xs font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 transition-all ${billingCycle === "yearly"
-                ? "bg-[#161730] text-white border border-violet-500/30"
-                : "text-slate-400 hover:text-white"
+                ? "bg-white text-slate-900 border border-slate-200 shadow-sm"
+                : "text-slate-500 hover:text-slate-900"
                 }`}
             >
               Bill Yearly
@@ -520,9 +520,9 @@ export default function PricingPage() {
           </div>
 
           {/* Non-refundable policy notice */}
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-center max-w-xl mx-auto select-none">
-            <p className="text-[11px] text-amber-300 font-semibold flex items-center justify-center gap-2">
-              <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center max-w-xl mx-auto select-none">
+            <p className="text-[11px] text-amber-700 font-semibold flex items-center justify-center gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
               <span><strong>Policy Notice:</strong> All payments &amp; plan switches are final. Money is <strong>strictly non-refundable</strong> under any circumstances.</span>
             </p>
           </div>
@@ -541,19 +541,19 @@ export default function PricingPage() {
             return (
               <Card
                 key={plan.id}
-                className={`relative flex flex-col justify-between overflow-hidden rounded-2xl shadow-xl transition-all duration-300 ${
+                className={`relative flex flex-col justify-between overflow-hidden rounded-xl shadow-sm transition-all duration-300 ${
                   isActive
-                    ? "border-cyan-500/50 ring-1 ring-cyan-500/30 shadow-cyan-950/20 bg-[#0e0f21]/60"
+                    ? "border-[#0d6e5a]/50 ring-1 ring-[#0d6e5a]/30 bg-[#0d6e5a]/5"
                     : isProMax
-                    ? "border-amber-500/50 ring-1 ring-amber-500/40 shadow-amber-950/30 bg-gradient-to-b from-[#1c1808]/70 via-[#131220]/50 to-[#0e0f21]/60 hover:border-amber-400"
+                    ? "border-amber-400/50 ring-1 ring-amber-400/30 bg-amber-50/50 hover:border-amber-400"
                     : isPro
-                    ? "border-violet-500/40 ring-1 ring-violet-500/30 scale-105 shadow-violet-950/20 bg-[#0e0f21]/50 hover:border-violet-400"
-                    : "border-white/5 bg-[#0e0f21]/40 hover:border-white/10"
+                    ? "border-[#0d6e5a]/30 ring-1 ring-[#0d6e5a]/20 scale-105 bg-white shadow-md hover:border-[#0d6e5a]/50"
+                    : "border-slate-200 bg-white hover:border-slate-300"
                 }`}
               >
                 {/* Active Plan Top Border Glow */}
                 {isActive && (
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500/0 via-cyan-400 to-cyan-500/0" />
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0d6e5a]/0 via-[#0d6e5a] to-[#0d6e5a]/0" />
                 )}
 
                 {/* Pro Max Golden Top Border Glow */}
@@ -564,7 +564,7 @@ export default function PricingPage() {
                 {/* Pro - Best Choice Badge */}
                 {isPro && !isActive && (
                   <div className="absolute top-0 right-0">
-                    <Badge className="bg-gradient-to-r from-violet-600 to-indigo-600 border border-violet-400 text-white rounded-bl-xl rounded-tr-none px-3 py-1 font-extrabold text-[9px] uppercase tracking-wider shadow-lg shadow-violet-600/30 select-none">
+                    <Badge className="bg-gradient-to-r from-[#0d6e5a] to-[#0f766e] border border-[#0d6e5a] text-white rounded-bl-xl rounded-tr-none px-3 py-1 font-extrabold text-[9px] uppercase tracking-wider shadow-sm select-none">
                       Best Choice
                     </Badge>
                   </div>
@@ -595,40 +595,40 @@ export default function PricingPage() {
                   {/* Tier details */}
                   <div className="space-y-4">
                     <div className="space-y-1">
-                      <h3 className={`font-extrabold text-base select-none ${isProMax ? "text-amber-300" : "text-white"}`}>
+                      <h3 className={`font-extrabold text-base select-none ${isProMax ? "text-amber-700" : isPro ? "text-[#0d6e5a]" : "text-slate-900"}`}>
                         {plan.name}
                       </h3>
-                      <p className="text-[11px] text-slate-400 leading-relaxed font-medium">{plan.description}</p>
+                      <p className="text-xs text-slate-500 leading-relaxed font-normal">{plan.description}</p>
                     </div>
 
                     {/* Price Tag */}
-                    <div className="flex items-baseline text-white">
-                      <span className={`text-3xl font-black tracking-tight ${isProMax ? "text-amber-300" : "text-white"}`}>
+                    <div className="flex items-baseline">
+                      <span className={`text-3xl font-black tracking-tight ${isProMax ? "text-amber-700" : "text-slate-900"}`}>
                         {price}
                       </span>
-                      <span className="text-[10px] text-slate-500 font-bold ml-1 uppercase tracking-wider">
+                      <span className="text-xs text-slate-500 font-semibold ml-1.5 uppercase tracking-wider">
                         / {period}
                       </span>
                     </div>
 
                     {/* Divider */}
-                    <div className={`border-t pt-4 ${isProMax ? "border-amber-500/20" : "border-white/5"}`} />
+                    <div className="border-t border-slate-200 pt-4" />
 
                     {/* Feature items */}
                     <ul className="space-y-2.5">
                       {plan.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-[11px] text-slate-300 font-medium">
-                          <Check className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${isProMax ? "text-amber-400" : "text-violet-500"}`} />
-                          <span>{feature}</span>
+                        <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-700 font-medium">
+                          <Check className={`h-4 w-4 shrink-0 mt-0.5 ${isProMax ? "text-amber-600" : "text-[#0d6e5a]"}`} />
+                          <span className="leading-snug">{feature}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
 
                   {/* Actions CTA Trigger */}
-                  <div className="space-y-2">
+                  <div className="space-y-2 pt-2">
                     {isActive && plan.id !== "free" && expiresAt && (
-                      <div className="flex flex-col items-center justify-center gap-0.5 py-1 text-xs font-semibold text-slate-400">
+                      <div className="flex flex-col items-center justify-center gap-0.5 py-1 text-xs font-semibold text-slate-500">
                         <span>
                           Plan ends: {new Date(expiresAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
                         </span>
@@ -636,14 +636,14 @@ export default function PricingPage() {
                     )}
                     <Button
                       onClick={() => handlePlanAction(plan)}
-                      className={`w-full font-bold text-xs h-10 rounded-full transition-all ${
+                      className={`w-full font-bold text-xs h-10 rounded-xl transition-all ${
                         isActive
-                          ? "bg-black border border-cyan-500/40 text-cyan-400 hover:bg-slate-900 shadow-md"
+                          ? "bg-emerald-50 border border-emerald-300 text-emerald-700 hover:bg-emerald-100 shadow-sm"
                           : isProMax
-                          ? "bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-slate-950 font-black shadow-lg shadow-amber-500/20"
+                          ? "bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-extrabold shadow-sm"
                           : isPro
-                          ? "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-600/20"
-                          : "bg-black border border-white/20 text-white hover:bg-slate-900 shadow-md"
+                          ? "bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-extrabold shadow-sm"
+                          : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm"
                       }`}
                     >
                       {isActive
@@ -661,24 +661,24 @@ export default function PricingPage() {
         </ScrollFadeIn>
 
         {/* Security badges & Trust banners */}
-        <div className="flex flex-col items-center justify-center gap-4 text-center mt-6 select-none max-w-lg mx-auto">
-          <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-            <Lock className="h-3.5 w-3.5 text-emerald-500" />
+        <div className="flex flex-col items-center justify-center gap-2 text-center mt-4 select-none max-w-lg mx-auto">
+          <div className="flex items-center gap-1.5 text-xs text-slate-600 font-bold">
+            <Lock className="h-4 w-4 text-[#0d6e5a]" />
             <span>256-Bit SSL Secure Razorpay Payments</span>
           </div>
-          <p className="text-[10px] text-slate-500 max-w-sm leading-relaxed">
+          <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
             FastHire processes transactions securely. You can downgrade, cancel, or switch billing cycles at any point from your billing profile page.
           </p>
         </div>
 
         {/* Divider line before FAQs */}
-        <div className="border-t border-white/5 my-4" />
+        <div className="border-t border-slate-200 my-4" />
 
         {/* FAQ SECTION (Accordion dropdowns list) */}
         <div className="max-w-3xl mx-auto w-full space-y-4 select-none">
           <div className="text-center space-y-1 mb-8">
-            <h2 className="text-xl font-extrabold text-white tracking-tight">Frequently Asked Questions</h2>
-            <p className="text-xs text-slate-400">Everything you need to know about FastHire-AI subscriptions.</p>
+            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Frequently Asked Questions</h2>
+            <p className="text-xs text-slate-500">Everything you need to know about FastHire AI subscriptions.</p>
           </div>
 
           <div className="space-y-3">
@@ -687,22 +687,22 @@ export default function PricingPage() {
               return (
                 <div
                   key={idx}
-                  className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden transition-all duration-300"
+                  className="border border-slate-200 bg-white rounded-xl overflow-hidden transition-all duration-200 shadow-sm"
                 >
                   <button
                     onClick={() => toggleFAQ(idx)}
-                    className="w-full flex items-center justify-between p-4 text-left font-bold text-xs text-white hover:text-violet-400 transition-colors"
+                    className="w-full flex items-center justify-between p-4 text-left font-bold text-xs text-slate-900 hover:text-[#0d6e5a] transition-colors"
                   >
                     <span>{faq.question}</span>
                     {isOpen ? (
-                      <ChevronUp className="h-4 w-4 text-slate-400 shrink-0" />
+                      <ChevronUp className="h-4 w-4 text-slate-500 shrink-0" />
                     ) : (
                       <ChevronDown className="h-4 w-4 text-slate-400 shrink-0" />
                     )}
                   </button>
 
                   {isOpen && (
-                    <div className="px-4 pb-4 text-[11px] text-slate-400 font-medium leading-relaxed border-t border-white/5 pt-3 animate-in fade-in slide-in-from-top-1 duration-150 select-text">
+                    <div className="px-4 pb-4 text-xs text-slate-600 font-normal leading-relaxed border-t border-slate-100 pt-3 animate-in fade-in slide-in-from-top-1 duration-150 select-text">
                       {faq.answer}
                     </div>
                   )}
@@ -716,21 +716,21 @@ export default function PricingPage() {
 
       {/* SECURE MOCK BILLING CHECKOUT DIALOG */}
       {isCheckoutOpen && selectedPlan && (
-        <div className="fixed inset-0 bg-[#060713]/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-[#0d0e1f] border border-white/10 p-6 rounded-2xl space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-white border border-slate-200 p-6 rounded-2xl space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
 
             {/* Header info */}
-            <div className="flex items-center justify-between pb-3 border-b border-white/5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-violet-500" />
-                <h3 className="font-extrabold text-white text-sm">
+                <CreditCard className="h-5 w-5 text-[#0d6e5a]" />
+                <h3 className="font-extrabold text-slate-900 text-sm">
                   Razorpay Secure Checkout
                 </h3>
               </div>
               <button
                 onClick={() => setIsCheckoutOpen(false)}
                 disabled={checkoutLoading}
-                className="text-slate-400 hover:text-white font-bold text-xs"
+                className="text-slate-400 hover:text-slate-700 font-bold text-xs"
               >
                 Cancel
               </button>
@@ -749,22 +749,22 @@ export default function PricingPage() {
                 const totalPayable = basePrice + gstAndFee;
 
                 return (
-                  <div className="bg-[#0e0f22] p-5 rounded-2xl border border-white/10 space-y-4 shadow-inner">
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
                     <div className="space-y-2.5">
                       <div className="flex justify-between items-center text-xs">
-                        <span className="text-slate-400 font-medium">{selectedPlan.name} (Base Price)</span>
-                        <span className="font-semibold text-white">₹{basePrice.toLocaleString()}</span>
+                        <span className="text-slate-500 font-medium">{selectedPlan.name} (Base Price)</span>
+                        <span className="font-semibold text-slate-900">₹{basePrice.toLocaleString()}</span>
                       </div>
 
                       <div className="flex justify-between items-center text-xs">
-                        <span className="text-slate-400 font-medium">Taxes &amp; Fees (5% GST)</span>
-                        <span className="font-semibold text-white">₹{gstAndFee.toLocaleString()}</span>
+                        <span className="text-slate-500 font-medium">Taxes &amp; Fees (5% GST)</span>
+                        <span className="font-semibold text-slate-900">₹{gstAndFee.toLocaleString()}</span>
                       </div>
                     </div>
 
-                    <div className="border-t border-white/10 pt-3 flex justify-between items-center">
-                      <span className="font-extrabold text-white text-sm">Total Amount</span>
-                      <span className="font-black text-white text-xl">
+                    <div className="border-t border-slate-200 pt-3 flex justify-between items-center">
+                      <span className="font-extrabold text-slate-900 text-sm">Total Amount</span>
+                      <span className="font-black text-[#0d6e5a] text-xl">
                         ₹{totalPayable.toLocaleString()}
                       </span>
                     </div>
@@ -773,8 +773,8 @@ export default function PricingPage() {
               })()}
 
               {/* Secure Trust Badge */}
-              <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400 font-semibold bg-white/5 py-2.5 px-3 rounded-xl border border-white/5">
-                <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-500 font-semibold bg-slate-50 py-2.5 px-3 rounded-xl border border-slate-200">
+                <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
                 <span>256-Bit SSL Encrypted &bull; Razorpay PCI-DSS Secured</span>
               </div>
 
@@ -782,7 +782,7 @@ export default function PricingPage() {
               <Button
                 type="submit"
                 disabled={checkoutLoading}
-                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-sm h-12 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-violet-600/25 transition-all"
+                className="w-full bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-extrabold text-sm h-12 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-colors"
               >
                 {checkoutLoading ? (
                   <>

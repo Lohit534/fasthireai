@@ -43,45 +43,28 @@ export default function MissingDetailsModal({
   return (
     // Backdrop
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-      style={{ background: "rgba(4, 5, 18, 0.85)", backdropFilter: "blur(6px)" }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
     >
       {/* Modal Card */}
       <div
-        className="relative w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl"
-        style={{
-          background: "linear-gradient(135deg, #0d0f25 0%, #0a0c1e 100%)",
-          border: "1px solid rgba(139, 92, 246, 0.25)",
-          boxShadow: "0 0 60px rgba(139, 92, 246, 0.15), 0 25px 50px rgba(0,0,0,0.6)",
-        }}
+        className="relative w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl bg-white border border-slate-200"
       >
-        {/* Top Glow Bar */}
-        <div
-          className="h-[2px] w-full"
-          style={{
-            background: "linear-gradient(90deg, transparent, #8b5cf6, #6366f1, transparent)",
-          }}
-        />
+        {/* Top Accent Bar */}
+        <div className="h-[3px] w-full bg-[#0d6e5a]" />
 
         {/* Header */}
         <div className="px-6 pt-5 pb-4 flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div
-              className="shrink-0 h-9 w-9 rounded-xl flex items-center justify-center mt-0.5"
-              style={{
-                background: "rgba(245, 158, 11, 0.12)",
-                border: "1px solid rgba(245, 158, 11, 0.25)",
-              }}
-            >
-              <AlertCircle className="h-4.5 w-4.5 text-amber-400" />
+            <div className="shrink-0 h-9 w-9 rounded-xl flex items-center justify-center mt-0.5 bg-amber-50 border border-amber-200">
+              <AlertCircle className="h-4.5 w-4.5 text-amber-600" />
             </div>
             <div>
-              <h2 className="text-sm font-black text-white tracking-tight">
+              <h2 className="text-sm font-bold text-slate-900 tracking-tight">
                 Resume Details Needed
               </h2>
-              <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
+              <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
                 We found{" "}
-                <span className="text-amber-400 font-bold">
+                <span className="text-amber-700 font-semibold">
                   {fields.length} missing field{fields.length !== 1 ? "s" : ""}
                 </span>{" "}
                 that affect optimization accuracy. Fill in what you can — the AI
@@ -92,19 +75,15 @@ export default function MissingDetailsModal({
 
           <button
             onClick={onCancel}
-            className="shrink-0 h-7 w-7 rounded-lg flex items-center justify-center transition-colors"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-            }}
+            className="shrink-0 h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors border border-slate-200"
             title="Cancel"
           >
-            <X className="h-3.5 w-3.5 text-slate-400" />
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
 
         {/* Divider */}
-        <div className="h-px mx-6" style={{ background: "rgba(255,255,255,0.06)" }} />
+        <div className="h-px mx-6 bg-slate-100" />
 
         {/* Scrollable Fields Area */}
         <div className="px-6 py-4 space-y-5 max-h-[55vh] overflow-y-auto">
@@ -114,31 +93,25 @@ export default function MissingDetailsModal({
               <div key={section} className="space-y-3">
                 {/* Section Label */}
                 <div className="flex items-center gap-2">
-                  <div
-                    className="h-px flex-1"
-                    style={{ background: "rgba(139,92,246,0.15)" }}
-                  />
-                  <span className="text-[9px] font-black text-violet-400 uppercase tracking-widest px-2">
+                  <div className="h-px flex-1 bg-slate-200" />
+                  <span className="text-[9px] font-bold text-[#0d6e5a] uppercase tracking-widest px-2">
                     {section}
                   </span>
-                  <div
-                    className="h-px flex-1"
-                    style={{ background: "rgba(139,92,246,0.15)" }}
-                  />
+                  <div className="h-px flex-1 bg-slate-200" />
                 </div>
 
                 {sectionFields.map((field) => (
                   <div key={field.id} className="space-y-1.5">
                     <label className="flex items-center gap-1.5">
-                      <span className="text-[11px] font-bold text-white">
+                      <span className="text-[11px] font-bold text-slate-800">
                         {field.label}
                       </span>
                       {field.required ? (
-                        <span className="text-[9px] font-black text-red-400 bg-red-500/10 border border-red-500/20 px-1.5 py-0.5 rounded-full">
+                        <span className="text-[9px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-full">
                           Required
                         </span>
                       ) : (
-                        <span className="text-[9px] font-semibold text-slate-500 bg-white/5 border border-white/8 px-1.5 py-0.5 rounded-full">
+                        <span className="text-[9px] font-medium text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-full">
                           Optional
                         </span>
                       )}
@@ -152,19 +125,7 @@ export default function MissingDetailsModal({
                         value={answers[field.id] || ""}
                         onChange={(e) => handleChange(field.id, e.target.value)}
                         placeholder={field.placeholder}
-                        className="w-full text-[11px] text-slate-200 placeholder-slate-600 rounded-xl px-3.5 py-2.5 resize-none outline-none transition-all"
-                        style={{
-                          background: "rgba(255,255,255,0.04)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                        }}
-                        onFocus={(e) => {
-                          e.currentTarget.style.border = "1px solid rgba(139,92,246,0.45)";
-                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(139,92,246,0.08)";
-                        }}
-                        onBlur={(e) => {
-                          e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)";
-                          e.currentTarget.style.boxShadow = "none";
-                        }}
+                        className="w-full text-xs text-slate-900 placeholder:text-slate-400 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 resize-none outline-none focus:border-[#0d6e5a] focus:bg-white focus:ring-1 focus:ring-[#0d6e5a] transition-all"
                       />
                     ) : (
                       <input
@@ -172,19 +133,7 @@ export default function MissingDetailsModal({
                         value={answers[field.id] || ""}
                         onChange={(e) => handleChange(field.id, e.target.value)}
                         placeholder={field.placeholder}
-                        className="w-full text-[11px] text-slate-200 placeholder-slate-600 rounded-xl px-3.5 py-2.5 outline-none transition-all"
-                        style={{
-                          background: "rgba(255,255,255,0.04)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                        }}
-                        onFocus={(e) => {
-                          e.currentTarget.style.border = "1px solid rgba(139,92,246,0.45)";
-                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(139,92,246,0.08)";
-                        }}
-                        onBlur={(e) => {
-                          e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)";
-                          e.currentTarget.style.boxShadow = "none";
-                        }}
+                        className="w-full text-xs text-slate-900 placeholder:text-slate-400 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0d6e5a] focus:bg-white focus:ring-1 focus:ring-[#0d6e5a] transition-all"
                       />
                     )}
                   </div>
@@ -195,9 +144,9 @@ export default function MissingDetailsModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 flex items-center justify-between gap-3">
+        <div className="px-6 py-4 flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/50">
           {/* Required indicator */}
-          <p className="text-[10px] text-slate-600 leading-relaxed">
+          <p className="text-[10px] text-slate-500 leading-relaxed">
             {requiredFields.length > 0
               ? `${requiredFields.length} required field${requiredFields.length > 1 ? "s" : ""} must be filled`
               : "All fields are optional — fill what you know"}
@@ -208,11 +157,7 @@ export default function MissingDetailsModal({
             <button
               onClick={onCancel}
               disabled={submitting}
-              className="h-9 px-3.5 text-xs font-bold rounded-xl transition-all text-slate-400 hover:text-white"
-              style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}
+              className="h-9 px-3.5 text-xs font-semibold rounded-xl transition-all text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200"
             >
               Cancel
             </button>
@@ -224,11 +169,7 @@ export default function MissingDetailsModal({
                 setTimeout(() => onContinue({}), 300);
               }}
               disabled={submitting}
-              className="h-9 px-3.5 text-xs font-semibold rounded-xl transition-all text-slate-400 hover:text-slate-200"
-              style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}
+              className="h-9 px-3.5 text-xs font-semibold rounded-xl transition-all text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200"
             >
               Skip & Optimize
             </button>
@@ -237,23 +178,11 @@ export default function MissingDetailsModal({
             <button
               onClick={handleContinue}
               disabled={!allRequiredFilled || submitting}
-              className="h-9 px-5 text-xs font-black rounded-xl flex items-center gap-2 transition-all"
-              style={{
-                background:
-                  !allRequiredFilled || submitting
-                    ? "rgba(139,92,246,0.3)"
-                    : "linear-gradient(135deg, #7c3aed, #4f46e5)",
-                border:
-                  !allRequiredFilled || submitting
-                    ? "1px solid rgba(139,92,246,0.2)"
-                    : "1px solid rgba(139,92,246,0.5)",
-                color: !allRequiredFilled ? "rgba(255,255,255,0.4)" : "white",
-                boxShadow:
-                  allRequiredFilled && !submitting
-                    ? "0 4px 20px rgba(139,92,246,0.3)"
-                    : "none",
-                cursor: !allRequiredFilled ? "not-allowed" : "pointer",
-              }}
+              className={`h-9 px-5 text-xs font-bold rounded-xl flex items-center gap-2 transition-all ${
+                !allRequiredFilled || submitting
+                  ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+                  : "bg-[#0d6e5a] hover:bg-[#094d3f] text-white shadow-sm cursor-pointer"
+              }`}
             >
               {submitting ? (
                 <>
@@ -270,14 +199,6 @@ export default function MissingDetailsModal({
             </button>
           </div>
         </div>
-
-        {/* Bottom Glow Bar */}
-        <div
-          className="h-[1px] w-full"
-          style={{
-            background: "linear-gradient(90deg, transparent, rgba(139,92,246,0.1), transparent)",
-          }}
-        />
       </div>
     </div>
   );

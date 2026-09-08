@@ -103,15 +103,15 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
       {!fileName && !loading && (
         <div
           {...getRootProps()}
-          className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200 backdrop-blur-md bg-slate-950/20 ${
+          className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200 ${
             isDragActive
-              ? "border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/5"
-              : "border-slate-800 hover:border-slate-700 hover:bg-slate-900/40"
+              ? "border-[#0d6e5a] bg-[#0d6e5a]/5 shadow-sm"
+              : "border-slate-300 bg-white hover:border-[#0d6e5a]/40 hover:bg-slate-50"
           }`}
         >
           <input {...getInputProps()} />
-          <UploadCloud className="h-8 w-8 text-indigo-400 mx-auto mb-2" />
-          <p className="text-xs font-semibold text-slate-200">
+          <UploadCloud className="h-8 w-8 text-[#0d6e5a] mx-auto mb-2" />
+          <p className="text-xs font-semibold text-slate-700">
             {isDragActive ? "Drop the resume here..." : "Drag & drop your resume file"}
           </p>
           <p className="text-[10px] text-slate-400 mt-0.5">Supports PDF, DOCX, or DOC (Max 5MB)</p>
@@ -120,23 +120,23 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
 
       {/* Upload Loading Spinner */}
       {loading && (
-        <div className="border-2 border-dashed border-slate-800 rounded-xl p-6 text-center bg-slate-950/20 animate-pulse">
-          <Loader2 className="h-7 w-7 text-indigo-400 animate-spin mx-auto mb-2" />
-          <p className="text-xs font-semibold text-slate-200">Extracting resume text...</p>
+        <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center bg-white animate-pulse">
+          <Loader2 className="h-7 w-7 text-[#0d6e5a] animate-spin mx-auto mb-2" />
+          <p className="text-xs font-semibold text-slate-700">Extracting resume text...</p>
           <p className="text-[10px] text-slate-400 mt-0.5">This will take a few seconds</p>
         </div>
       )}
 
       {/* File Details Tag */}
       {fileName && !loading && (
-        <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900 border border-slate-800">
-          <div className="flex items-center gap-2 text-sm text-slate-200 min-w-0">
-            <FileText className="h-4 w-4 text-indigo-400 shrink-0" />
+        <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200">
+          <div className="flex items-center gap-2 text-sm text-slate-700 min-w-0">
+            <FileText className="h-4 w-4 text-[#0d6e5a] shrink-0" />
             <span className="truncate font-medium">{fileName}</span>
           </div>
           <button
             onClick={handleClearFile}
-            className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-colors"
             title="Clear file and text"
             type="button"
           >
@@ -147,7 +147,7 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
 
       {/* Error Output */}
       {error && (
-        <div className="flex items-center gap-2 p-3 text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg">
+        <div className="flex items-center gap-2 p-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>
@@ -160,9 +160,9 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled || loading}
-          className="flex-1 min-h-[280px] h-full overflow-y-auto font-mono text-sm leading-relaxed border border-white/12 bg-[#0A0C10] text-[#e2e2e8] placeholder-slate-500 focus:border-[#5E5CE6] focus:ring-1 focus:ring-[#5E5CE6] rounded-lg resize-y p-3.5 pr-4"
+          className="flex-1 min-h-[280px] h-full overflow-y-auto font-mono text-sm leading-relaxed border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:border-[#0d6e5a] focus:ring-1 focus:ring-[#0d6e5a]/30 rounded-lg resize-y p-3.5 pr-4"
         />
-        <div className="absolute bottom-3 right-3 bg-[#161B22] border border-white/12 font-mono text-[10px] text-slate-400 px-2 py-0.5 rounded-full select-none">
+        <div className="absolute bottom-3 right-3 bg-white border border-slate-200 font-mono text-[10px] text-slate-400 px-2 py-0.5 rounded-full select-none">
           {wordCount} words
         </div>
       </div>

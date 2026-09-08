@@ -296,9 +296,9 @@ export default function UnifiedAdminDashboard() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#060713]">
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
         <div className="text-center space-y-2">
-          <Loader2 className="h-8 w-8 text-violet-600 animate-spin mx-auto" />
+          <Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin mx-auto" />
           <p className="text-xs text-slate-500 font-semibold">Verifying admin access...</p>
         </div>
       </div>
@@ -327,43 +327,43 @@ export default function UnifiedAdminDashboard() {
   const freeUsers = users.filter(u => u.plan === "free").length;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#060713] text-slate-100 font-sans">
+    <div className="flex flex-col min-h-screen bg-[#f8fafc] text-slate-900 font-sans">
       <Navbar />
 
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
         
         {/* Top Header Block */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
           <div className="flex items-center gap-4">
             <Link href="/dashboard">
-              <Button variant="outline" size="sm" className="border-white/5 text-slate-300 hover:bg-white/5 h-9 w-9 p-0 rounded-full bg-transparent">
+              <Button variant="outline" size="sm" className="border-slate-200 text-slate-700 hover:bg-slate-100 h-9 w-9 p-0 rounded-full bg-white shadow-sm">
                 <ArrowLeft className="h-4.5 w-4.5" />
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 select-none">
-                <Layers className="h-6 w-6 text-violet-400" />
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2 select-none">
+                <Layers className="h-6 w-6 text-[#0d6e5a]" />
                 Admin System Control
               </h1>
-              <p className="text-xs text-slate-400 mt-0.5 select-none">
+              <p className="text-xs text-slate-500 mt-0.5 select-none">
                 Monitor user statistics, upgrade plan pricing levels, and answer client help tickets.
               </p>
             </div>
           </div>
 
-          <Badge className="bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-bold px-3.5 py-1 rounded-full animate-pulse select-none">
+          <Badge className="bg-teal-50 border border-teal-200 text-[#0d6e5a] text-xs font-bold px-3.5 py-1 rounded-full select-none">
             Owner Workspace
           </Badge>
         </div>
 
         {/* Tab selection bar */}
-        <div className="flex bg-[#0d0e22] border border-white/5 p-1 rounded-xl max-w-lg select-none">
+        <div className="flex bg-white border border-slate-200 p-1 rounded-xl max-w-lg select-none shadow-sm">
           <button
             onClick={() => setActiveTab("users")}
             className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
               activeTab === "users"
-                ? "bg-violet-600 text-white shadow-md shadow-violet-600/10"
-                : "text-slate-400 hover:text-white"
+                ? "bg-[#0d6e5a] text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <Users className="h-4 w-4" />
@@ -373,8 +373,8 @@ export default function UnifiedAdminDashboard() {
             onClick={() => setActiveTab("tickets")}
             className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
               activeTab === "tickets"
-                ? "bg-violet-600 text-white shadow-md shadow-violet-600/10"
-                : "text-slate-400 hover:text-white"
+                ? "bg-[#0d6e5a] text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <MessageSquare className="h-4 w-4" />
@@ -387,14 +387,14 @@ export default function UnifiedAdminDashboard() {
             onClick={() => { setActiveTab("feedback"); loadFeedbackData(); }}
             className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
               activeTab === "feedback"
-                ? "bg-violet-600 text-white shadow-md shadow-violet-600/10"
-                : "text-slate-400 hover:text-white"
+                ? "bg-[#0d6e5a] text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <Inbox className="h-4 w-4" />
             Feedback
             {feedbackMessages.length > 0 && (
-              <span className="h-5 min-w-5 px-1.5 flex items-center justify-center rounded-full bg-emerald-500 text-[9px] font-black text-black">{feedbackMessages.length}</span>
+              <span className="h-5 min-w-5 px-1.5 flex items-center justify-center rounded-full bg-emerald-100 text-[9px] font-black text-emerald-800 border border-emerald-200">{feedbackMessages.length}</span>
             )}
           </button>
         </div>
@@ -411,22 +411,22 @@ export default function UnifiedAdminDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 
                 {/* Revenue Card */}
-                <Card className="bg-[#0e0f21]/60 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all">
+                <Card className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-slate-300 transition-all shadow-sm">
                   <CardContent className="p-5 space-y-3">
-                    <div className="flex items-center gap-2 text-slate-300 font-semibold text-sm">
-                      <div className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400">
-                        <TrendingUp className="h-4 w-4" />
+                    <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm">
+                      <div className="h-8 w-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600">
+                        <TrendingUp className="h-4 w-4 text-[#0d6e5a]" />
                       </div>
                       <span>Revenue</span>
                     </div>
                     <div>
-                      <div className="text-2xl font-black text-white">
+                      <div className="text-2xl font-black text-slate-900">
                         ₹{(premiumUsers * 99 + promaxUsers * 199).toLocaleString()}
                       </div>
-                      <p className="text-xs text-slate-400 font-medium mt-1">
+                      <p className="text-xs text-slate-500 font-medium mt-1">
                         {users.filter(u => u.plan !== "free").length} new projects
                       </p>
-                      <p className="text-[10px] text-slate-500 italic mt-0.5">
+                      <p className="text-[10px] text-slate-400 italic mt-0.5">
                         Sum of new project budgets this month
                       </p>
                     </div>
@@ -434,19 +434,19 @@ export default function UnifiedAdminDashboard() {
                 </Card>
 
                 {/* Received Card */}
-                <Card className="bg-[#0e0f21]/60 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all">
+                <Card className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-slate-300 transition-all shadow-sm">
                   <CardContent className="p-5 space-y-3">
-                    <div className="flex items-center gap-2 text-slate-300 font-semibold text-sm">
-                      <div className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 font-bold text-xs">
+                    <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm">
+                      <div className="h-8 w-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-[#0d6e5a] font-bold text-xs">
                         ₹
                       </div>
                       <span>Received</span>
                     </div>
                     <div>
-                      <div className="text-2xl font-black text-white">
+                      <div className="text-2xl font-black text-slate-900">
                         ₹{(premiumUsers * 99 + promaxUsers * 199).toLocaleString()}
                       </div>
-                      <p className="text-xs text-slate-400 font-medium mt-1">
+                      <p className="text-xs text-slate-500 font-medium mt-1">
                         Payments collected this month
                       </p>
                     </div>
@@ -454,19 +454,19 @@ export default function UnifiedAdminDashboard() {
                 </Card>
 
                 {/* Expenses Card */}
-                <Card className="bg-[#0e0f21]/60 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all">
+                <Card className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-slate-300 transition-all shadow-sm">
                   <CardContent className="p-5 space-y-3">
-                    <div className="flex items-center gap-2 text-slate-300 font-semibold text-sm">
-                      <div className="h-8 w-8 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+                    <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm">
+                      <div className="h-8 w-8 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600">
                         <TrendingDown className="h-4 w-4" />
                       </div>
                       <span>Expenses</span>
                     </div>
                     <div>
-                      <div className="text-2xl font-black text-red-400">
+                      <div className="text-2xl font-black text-rose-600">
                         ₹0
                       </div>
-                      <p className="text-xs text-slate-400 font-medium mt-1">
+                      <p className="text-xs text-slate-500 font-medium mt-1">
                         Team payouts &amp; tools
                       </p>
                     </div>
@@ -474,19 +474,19 @@ export default function UnifiedAdminDashboard() {
                 </Card>
 
                 {/* Money in account Card */}
-                <Card className="bg-emerald-950/30 border border-emerald-500/30 rounded-2xl overflow-hidden hover:border-emerald-500/50 transition-all">
+                <Card className="bg-emerald-50/50 border border-emerald-200 rounded-2xl overflow-hidden hover:border-emerald-300 transition-all shadow-sm">
                   <CardContent className="p-5 space-y-3">
-                    <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
-                      <div className="h-8 w-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                    <div className="flex items-center gap-2 text-emerald-800 font-bold text-sm">
+                      <div className="h-8 w-8 rounded-lg bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-700">
                         <Wallet className="h-4 w-4" />
                       </div>
                       <span>Money in account</span>
                     </div>
                     <div>
-                      <div className="text-2xl font-black text-emerald-400">
+                      <div className="text-2xl font-black text-emerald-700">
                         ₹{(premiumUsers * 99 + promaxUsers * 199).toLocaleString()}
                       </div>
-                      <p className="text-xs text-emerald-500/80 font-medium mt-1">
+                      <p className="text-xs text-emerald-600 font-medium mt-1">
                         Received minus expenses
                       </p>
                     </div>
@@ -499,20 +499,20 @@ export default function UnifiedAdminDashboard() {
             {/* KPI Cards row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 select-none">
               {[
-                { label: "Total Registrations", value: totalUsers, icon: Users, color: "text-white" },
-                { label: "Pro Max Tier", value: promaxUsers, icon: Sparkles, color: "text-indigo-400" },
-                { label: "Premium Pro", value: premiumUsers, icon: CheckCircle, color: "text-cyan-400" },
-                { label: "Free Tier", value: freeUsers, icon: UserIcon, color: "text-slate-400" },
+                { label: "Total Registrations", value: totalUsers, icon: Users, color: "text-slate-900" },
+                { label: "Pro Max Tier", value: promaxUsers, icon: Sparkles, color: "text-[#0d6e5a]" },
+                { label: "Premium Pro", value: premiumUsers, icon: CheckCircle, color: "text-teal-600" },
+                { label: "Free Tier", value: freeUsers, icon: UserIcon, color: "text-slate-600" },
               ].map((kpi, idx) => {
                 const Icon = kpi.icon;
                 return (
-                  <Card key={idx} className="bg-[#0e0f21]/40 border border-white/5 rounded-2xl relative overflow-hidden">
+                  <Card key={idx} className="bg-white border border-slate-200 rounded-2xl relative overflow-hidden shadow-sm">
                     <CardContent className="p-5 flex items-center justify-between">
                       <div className="space-y-1">
                         <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">{kpi.label}</span>
                         <span className={`text-2xl font-black ${kpi.color}`}>{kpi.value}</span>
                       </div>
-                      <div className="h-10 w-10 rounded-xl bg-white/3 flex items-center justify-center">
+                      <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center">
                         <Icon className={`h-5 w-5 ${kpi.color}`} />
                       </div>
                     </CardContent>
@@ -525,10 +525,10 @@ export default function UnifiedAdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               {/* Subscription distribution cards */}
-              <Card className="bg-[#0e0f21]/30 border border-white/5 rounded-2xl">
+              <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm">
                 <CardContent className="p-6 space-y-6">
                   <div>
-                    <h3 className="text-sm font-bold text-white">Subscription distribution</h3>
+                    <h3 className="text-sm font-bold text-slate-900">Subscription distribution</h3>
                     <p className="text-[10px] text-slate-500 mt-0.5">Ratio of active users per pricing level plan.</p>
                   </div>
 
@@ -536,15 +536,15 @@ export default function UnifiedAdminDashboard() {
                     {/* Pro Max */}
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs font-bold">
-                        <span className="text-indigo-400 flex items-center gap-1.5">
+                        <span className="text-[#0d6e5a] flex items-center gap-1.5">
                           <Sparkles className="h-3.5 w-3.5" />
                           Pro Max Tier
                         </span>
-                        <span>{promaxUsers} users ({totalUsers > 0 ? Math.round((promaxUsers / totalUsers) * 100) : 0}%)</span>
+                        <span className="text-slate-700">{promaxUsers} users ({totalUsers > 0 ? Math.round((promaxUsers / totalUsers) * 100) : 0}%)</span>
                       </div>
-                      <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden border border-white/5">
+                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                         <div 
-                          className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full" 
+                          className="h-full bg-[#0d6e5a] rounded-full" 
                           style={{ width: `${totalUsers > 0 ? (promaxUsers / totalUsers) * 100 : 0}%` }}
                         />
                       </div>
@@ -553,15 +553,15 @@ export default function UnifiedAdminDashboard() {
                     {/* Premium Pro */}
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs font-bold">
-                        <span className="text-cyan-400 flex items-center gap-1.5">
+                        <span className="text-teal-700 flex items-center gap-1.5">
                           <CheckCircle className="h-3.5 w-3.5" />
                           Premium Pro Plan
                         </span>
-                        <span>{premiumUsers} users ({totalUsers > 0 ? Math.round((premiumUsers / totalUsers) * 100) : 0}%)</span>
+                        <span className="text-slate-700">{premiumUsers} users ({totalUsers > 0 ? Math.round((premiumUsers / totalUsers) * 100) : 0}%)</span>
                       </div>
-                      <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden border border-white/5">
+                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                         <div 
-                          className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full" 
+                          className="h-full bg-teal-600 rounded-full" 
                           style={{ width: `${totalUsers > 0 ? (premiumUsers / totalUsers) * 100 : 0}%` }}
                         />
                       </div>
@@ -570,15 +570,15 @@ export default function UnifiedAdminDashboard() {
                     {/* Free Tier */}
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs font-bold">
-                        <span className="text-slate-400 flex items-center gap-1.5">
+                        <span className="text-slate-600 flex items-center gap-1.5">
                           <UserIcon className="h-3.5 w-3.5" />
                           Free Career Tier
                         </span>
-                        <span>{freeUsers} users ({totalUsers > 0 ? Math.round((freeUsers / totalUsers) * 100) : 0}%)</span>
+                        <span className="text-slate-700">{freeUsers} users ({totalUsers > 0 ? Math.round((freeUsers / totalUsers) * 100) : 0}%)</span>
                       </div>
-                      <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden border border-white/5">
+                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                         <div 
-                          className="h-full bg-slate-700 rounded-full" 
+                          className="h-full bg-slate-400 rounded-full" 
                           style={{ width: `${totalUsers > 0 ? (freeUsers / totalUsers) * 100 : 0}%` }}
                         />
                       </div>
@@ -588,34 +588,34 @@ export default function UnifiedAdminDashboard() {
               </Card>
 
               {/* Platform performance usage analytics */}
-              <Card className="bg-[#0e0f21]/30 border border-white/5 rounded-2xl">
+              <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm">
                 <CardContent className="p-6 space-y-6">
                   <div>
-                    <h3 className="text-sm font-bold text-white">Platform Load &amp; Activity</h3>
+                    <h3 className="text-sm font-bold text-slate-900">Platform Load &amp; Activity</h3>
                     <p className="text-[10px] text-slate-500 mt-0.5">Key resume optimize operation and credits metrics.</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-[#08091a] border border-white/5 p-4 rounded-xl space-y-1">
+                    <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-1">
                       <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Total Resume Scans</span>
-                      <span className="text-lg font-black text-white">{analytics.totalOptimizations} scans</span>
+                      <span className="text-lg font-black text-slate-900">{analytics.totalOptimizations} scans</span>
                     </div>
 
-                    <div className="bg-[#08091a] border border-white/5 p-4 rounded-xl space-y-1">
+                    <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-1">
                       <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Support Tickets Logged</span>
-                      <span className="text-lg font-black text-white">{analytics.totalTickets} tickets</span>
+                      <span className="text-lg font-black text-slate-900">{analytics.totalTickets} tickets</span>
                     </div>
 
-                    <div className="bg-[#08091a] border border-white/5 p-4 rounded-xl space-y-1">
+                    <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-1">
                       <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Total Paid Credits active</span>
-                      <span className="text-lg font-black text-white">
+                      <span className="text-lg font-black text-slate-900">
                         {users.reduce((acc, u) => acc + (u.paidCredits > 9999 ? 0 : u.paidCredits), 0)} credits
                       </span>
                     </div>
 
-                    <div className="bg-[#08091a] border border-white/5 p-4 rounded-xl space-y-1">
+                    <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-1">
                       <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Avg. Free Credits used</span>
-                      <span className="text-lg font-black text-white">
+                      <span className="text-lg font-black text-slate-900">
                         {totalUsers > 0 ? (users.reduce((acc, u) => acc + u.freeUsed, 0) / totalUsers).toFixed(1) : "0.0"} scans
                       </span>
                     </div>
@@ -625,12 +625,12 @@ export default function UnifiedAdminDashboard() {
 
             </div>
 
-            {/* Interactive User Billing Controls Panel (No raw tables) */}
-            <Card className="bg-[#0e0f21]/30 border border-white/5 rounded-2xl">
+            {/* Interactive User Billing Controls Panel */}
+            <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm">
               <CardContent className="p-6 space-y-4">
                 <div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <Search className="h-4 w-4 text-violet-400" />
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Search className="h-4 w-4 text-[#0d6e5a]" />
                     Billing &amp; Subscription Modifier
                   </h3>
                   <p className="text-[10px] text-slate-500 mt-0.5">Search a registered user by email or name to modify credit levels or plan tiers.</p>
@@ -639,12 +639,12 @@ export default function UnifiedAdminDashboard() {
                 {/* Filter / Search input */}
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                   <div className="relative w-full">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input
                       placeholder="Type email address or profile name to manage..."
                       value={userSearch}
                       onChange={(e) => setUserSearch(e.target.value)}
-                      className="h-10 pl-10 border-white/5 bg-[#08091a] text-slate-200 placeholder:text-slate-600 rounded-xl text-xs w-full"
+                      className="h-10 pl-10 border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 rounded-xl text-xs w-full focus:bg-white focus:border-[#0d6e5a]"
                     />
                   </div>
                 </div>
@@ -652,72 +652,72 @@ export default function UnifiedAdminDashboard() {
                 {/* Lookup output cards */}
                 {usersLoading ? (
                   <div className="flex flex-col items-center justify-center py-10 gap-2">
-                    <Loader2 className="h-6 w-6 text-violet-500 animate-spin" />
+                    <Loader2 className="h-6 w-6 text-[#0d6e5a] animate-spin" />
                     <p className="text-[10px] text-slate-500 font-semibold">Running lookups...</p>
                   </div>
                 ) : userSearch.trim() === "" ? (
-                  <div className="text-center py-12 border border-dashed border-white/5 bg-[#08091a]/20 rounded-xl select-none">
-                    <UserIcon className="h-8 w-8 text-slate-700 mx-auto mb-2" />
-                    <p className="text-xs text-slate-500 font-bold">Billing Lookup Panel</p>
-                    <p className="text-[10px] text-slate-600 mt-0.5">Enter a user name or email address above to inspect and modify plan tiers.</p>
+                  <div className="text-center py-12 border border-dashed border-slate-200 bg-slate-50/60 rounded-xl select-none">
+                    <UserIcon className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                    <p className="text-xs text-slate-700 font-bold">Billing Lookup Panel</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Enter a user name or email address above to inspect and modify plan tiers.</p>
                   </div>
                 ) : filteredUsers.length === 0 ? (
-                  <div className="text-center py-12 border border-dashed border-white/5 bg-[#08091a]/20 rounded-xl select-none">
-                    <AlertCircle className="h-8 w-8 text-slate-700 mx-auto mb-2" />
-                    <p className="text-xs text-slate-500 font-semibold">No registered users matched "{userSearch}"</p>
+                  <div className="text-center py-12 border border-dashed border-slate-200 bg-slate-50/60 rounded-xl select-none">
+                    <AlertCircle className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                    <p className="text-xs text-slate-600 font-semibold">No registered users matched "{userSearch}"</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredUsers.map((u) => {
                       const isOwnerUser = u.plan === "owner";
                       return (
-                        <div key={u.id} className="bg-[#08091a] border border-white/5 rounded-xl p-4 space-y-4 hover:border-white/10 transition-colors">
+                        <div key={u.id} className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4 hover:border-slate-300 transition-colors shadow-sm">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
-                              <span className="font-extrabold text-white text-xs block truncate">{u.name || "Anonymous User"}</span>
+                              <span className="font-extrabold text-slate-900 text-xs block truncate">{u.name || "Anonymous User"}</span>
                               <span className="text-[10px] text-slate-500 font-semibold block truncate mt-0.5">{u.email}</span>
                             </div>
                             {u.plan === "owner" ? (
-                              <Badge className="bg-violet-500/10 border-violet-500/20 text-violet-400 font-bold text-[8px] uppercase tracking-wide shrink-0">Owner</Badge>
+                              <Badge className="bg-teal-50 border-teal-200 text-[#0d6e5a] font-bold text-[8px] uppercase tracking-wide shrink-0">Owner</Badge>
                             ) : u.plan === "promax" ? (
-                              <Badge className="bg-indigo-500/10 border-indigo-500/20 text-indigo-400 font-bold text-[8px] uppercase tracking-wide shrink-0">Pro Max</Badge>
+                              <Badge className="bg-emerald-50 border-emerald-200 text-emerald-700 font-bold text-[8px] uppercase tracking-wide shrink-0">Pro Max</Badge>
                             ) : u.plan === "premium" ? (
-                              <Badge className="bg-cyan-500/10 border-cyan-500/20 text-cyan-400 font-bold text-[8px] uppercase tracking-wide shrink-0">Premium Pro</Badge>
+                              <Badge className="bg-teal-50 border-teal-200 text-teal-700 font-bold text-[8px] uppercase tracking-wide shrink-0">Premium Pro</Badge>
                             ) : (
-                              <Badge className="bg-slate-500/10 border-slate-500/20 text-slate-400 font-bold text-[8px] uppercase tracking-wide shrink-0">Free Tier</Badge>
+                              <Badge className="bg-slate-100 border-slate-200 text-slate-600 font-bold text-[8px] uppercase tracking-wide shrink-0">Free Tier</Badge>
                             )}
                           </div>
 
-                          <div className="border-t border-white/5 pt-3 space-y-2 text-[10px] font-semibold text-slate-400">
+                          <div className="border-t border-slate-200 pt-3 space-y-2 text-[10px] font-semibold text-slate-500">
                             <div className="flex justify-between">
                               <span>Registered:</span>
-                              <span className="text-white">
+                              <span className="text-slate-800">
                                 {new Date(u.createdAt).toLocaleDateString()}
                               </span>
                             </div>
                             <div className="flex justify-between">
                               <span>Free scans:</span>
-                              <span className="text-white">{u.freeUsed} used</span>
+                              <span className="text-slate-800">{u.freeUsed} used</span>
                             </div>
                             <div className="flex justify-between">
                               <span>Paid balance:</span>
-                              <span className="text-white">{u.paidCredits > 9999 ? "Unlimited" : `${u.paidCredits} Paid`}</span>
+                              <span className="text-slate-800">{u.paidCredits > 9999 ? "Unlimited" : `${u.paidCredits} Paid`}</span>
                             </div>
                           </div>
 
-                          <div className="border-t border-white/5 pt-3 flex items-center justify-between">
+                          <div className="border-t border-slate-200 pt-3 flex items-center justify-between">
                             <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Modify Plan</span>
                             {isOwnerUser ? (
-                              <span className="text-[9px] text-slate-600 font-bold uppercase">Immutable Owner</span>
+                              <span className="text-[9px] text-slate-500 font-bold uppercase">Immutable Owner</span>
                             ) : (
                               <div className="flex items-center gap-1.5">
                                 {updatingPlanId === u.id ? (
-                                  <Loader2 className="h-3 w-3 text-violet-500 animate-spin mr-1" />
+                                  <Loader2 className="h-3 w-3 text-[#0d6e5a] animate-spin mr-1" />
                                 ) : (
                                   <select
                                     value={u.plan}
                                     onChange={(e) => handleUpdateUserPlan(u.id, e.target.value as any)}
-                                    className="bg-[#0d0e22] text-slate-300 border border-white/10 rounded-lg px-2 py-0.5 text-[9px] font-bold focus:outline-none focus:border-violet-500 cursor-pointer"
+                                    className="bg-white text-slate-800 border border-slate-200 rounded-lg px-2 py-0.5 text-[9px] font-bold focus:outline-none focus:border-[#0d6e5a] cursor-pointer"
                                   >
                                     <option value="free">Free Tier</option>
                                     <option value="premium">Premium Pro</option>
@@ -743,16 +743,16 @@ export default function UnifiedAdminDashboard() {
           <div className="space-y-6">
             {ticketsLoading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-3">
-                <Loader2 className="h-8 w-8 text-violet-500 animate-spin" />
+                <Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin" />
                 <p className="text-xs text-slate-500 font-semibold">Loading tickets list...</p>
               </div>
             ) : tickets.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-2xl p-20 text-center border border-dashed border-white/5 bg-[#0e0f21]/20 max-w-xl mx-auto w-full select-none">
-                <div className="h-14 w-14 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mb-4">
-                  <Inbox className="h-6 w-6 text-violet-400" />
+              <div className="flex flex-col items-center justify-center rounded-2xl p-20 text-center border border-dashed border-slate-200 bg-white shadow-sm max-w-xl mx-auto w-full select-none">
+                <div className="h-14 w-14 rounded-2xl bg-teal-50 border border-teal-200/60 flex items-center justify-center mb-4">
+                  <Inbox className="h-6 w-6 text-[#0d6e5a]" />
                 </div>
-                <h3 className="text-sm font-bold text-white mb-1">No Tickets Logged</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <h3 className="text-sm font-bold text-slate-900 mb-1">No Tickets Logged</h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
                   Help queries posted by users from the support chatbot will load here.
                 </p>
               </div>
@@ -763,15 +763,15 @@ export default function UnifiedAdminDashboard() {
                 <div className="lg:col-span-5 flex flex-col gap-4">
                   
                   {/* Filter Sub-Tabs */}
-                  <div className="flex bg-[#0d0e22] border border-white/5 p-1 rounded-xl gap-1 select-none">
+                  <div className="flex bg-white border border-slate-200 p-1 rounded-xl gap-1 select-none shadow-sm">
                     {(["all", "pending", "replied"] as const).map((tab) => (
                       <button
                         key={tab}
                         onClick={() => setTicketFilter(tab)}
                         className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all ${
                           ticketFilter === tab
-                            ? "bg-violet-600 text-white shadow-md"
-                            : "text-slate-400 hover:text-white"
+                            ? "bg-[#0d6e5a] text-white shadow-sm"
+                            : "text-slate-600 hover:text-slate-900"
                         }`}
                       >
                         {tab}
@@ -788,10 +788,10 @@ export default function UnifiedAdminDashboard() {
                         <button
                           key={ticket.id}
                           onClick={() => { setSelectedTicket(ticket); setReplyText(""); }}
-                          className={`w-full text-left p-4 rounded-xl border transition-all duration-300 relative overflow-hidden ${
+                          className={`w-full text-left p-4 rounded-xl border transition-all duration-200 relative overflow-hidden ${
                             isActive
-                              ? "bg-violet-950/10 border-violet-500/35"
-                              : "bg-[#0d0e22]/50 border-white/5 hover:border-white/10"
+                              ? "bg-teal-50/70 border-[#0d6e5a] shadow-sm"
+                              : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
                           }`}
                         >
                           <div className="flex items-center justify-between gap-2">
@@ -800,18 +800,18 @@ export default function UnifiedAdminDashboard() {
                             </span>
                             <Badge className={`text-[8px] font-bold uppercase tracking-wider py-0.5 px-2 ${
                               hasReplied 
-                                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
-                                : "bg-yellow-500/10 border-yellow-500/20 text-yellow-400"
+                                ? "bg-emerald-50 border-emerald-200 text-emerald-700" 
+                                : "bg-amber-50 border-amber-200 text-amber-700"
                             }`}>
                               {ticket.status}
                             </Badge>
                           </div>
                           
-                          <p className="text-xs text-slate-300 font-semibold mt-2.5 line-clamp-2 leading-relaxed">
+                          <p className="text-xs text-slate-800 font-semibold mt-2.5 line-clamp-2 leading-relaxed">
                             {ticket.message}
                           </p>
 
-                          <div className="flex items-center gap-1.5 text-[9px] text-slate-500 mt-3 font-semibold">
+                          <div className="flex items-center gap-1.5 text-[9px] text-slate-400 mt-3 font-semibold">
                             <Clock className="h-3 w-3" />
                             {new Date(ticket.createdAt).toLocaleDateString()} &bull; {new Date(ticket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </div>
@@ -824,15 +824,15 @@ export default function UnifiedAdminDashboard() {
                 {/* Right ticket reader and replier column */}
                 <div className="lg:col-span-7">
                   {selectedTicket ? (
-                    <div className="bg-[#0d0e22]/30 border border-white/5 rounded-2xl p-6 space-y-6 flex flex-col h-full justify-between">
+                    <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 flex flex-col h-full justify-between shadow-sm">
                       <div className="space-y-6">
                         
                         {/* Header details info */}
-                        <div className="flex items-start justify-between border-b border-white/5 pb-4 gap-4">
+                        <div className="flex items-start justify-between border-b border-slate-200 pb-4 gap-4">
                           <div>
                             <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block">Client Email</span>
-                            <h3 className="text-sm font-extrabold text-white mt-0.5">{selectedTicket.userEmail}</h3>
-                            <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-1.5 font-bold">
+                            <h3 className="text-sm font-extrabold text-slate-900 mt-0.5">{selectedTicket.userEmail}</h3>
+                            <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-1.5 font-bold">
                               <span>Tier: {selectedTicket.userPlan.toUpperCase()}</span>
                               <span>&bull;</span>
                               <span>Credits: {selectedTicket.userCredits}</span>
@@ -842,7 +842,7 @@ export default function UnifiedAdminDashboard() {
                             onClick={handleDeleteTicket}
                             variant="destructive"
                             size="sm"
-                            className="h-8 text-[10px] font-bold rounded-lg px-3 bg-red-650 hover:bg-red-500"
+                            className="h-8 text-[10px] font-bold rounded-lg px-3 bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white border border-rose-200 transition-colors"
                           >
                             Delete Ticket
                           </Button>
@@ -851,7 +851,7 @@ export default function UnifiedAdminDashboard() {
                         {/* Message details */}
                         <div className="space-y-2">
                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block">User Query / Message</span>
-                          <div className="bg-[#050614] border border-white/5 p-4 rounded-xl text-xs text-slate-200 leading-relaxed font-medium">
+                          <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-xs text-slate-800 leading-relaxed font-medium">
                             {selectedTicket.message}
                           </div>
                         </div>
@@ -862,12 +862,12 @@ export default function UnifiedAdminDashboard() {
                             <div className="flex items-center justify-between text-[10px] text-slate-500 font-black uppercase tracking-widest">
                               <span>Submitted Reply</span>
                               {selectedTicket.repliedAt && (
-                                <span className="font-semibold text-slate-600">
+                                <span className="font-semibold text-slate-400">
                                   {new Date(selectedTicket.repliedAt).toLocaleDateString()} at {new Date(selectedTicket.repliedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                               )}
                             </div>
-                            <div className="bg-[#050614] border border-emerald-500/10 p-4 rounded-xl text-xs text-slate-300 leading-relaxed font-medium">
+                            <div className="bg-emerald-50/60 border border-emerald-200 p-4 rounded-xl text-xs text-emerald-900 leading-relaxed font-medium">
                               {selectedTicket.reply}
                             </div>
                           </div>
@@ -876,7 +876,7 @@ export default function UnifiedAdminDashboard() {
                       </div>
 
                       {/* Reply form text editor */}
-                      <form onSubmit={handleReplySubmit} className="space-y-3 pt-6 border-t border-white/5">
+                      <form onSubmit={handleReplySubmit} className="space-y-3 pt-6 border-t border-slate-200">
                         <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block">
                           {selectedTicket.reply ? "Update Answer / Reply" : "Compose Answer"}
                         </span>
@@ -884,12 +884,12 @@ export default function UnifiedAdminDashboard() {
                           placeholder="Type your response to the user message..."
                           value={replyText}
                           onChange={(e) => setReplyText(e.target.value)}
-                          className="min-h-[100px] text-xs border-white/5 bg-[#050614] text-white placeholder:text-slate-700 rounded-xl focus:border-violet-500/50"
+                          className="min-h-[100px] text-xs border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 rounded-xl focus:bg-white focus:border-[#0d6e5a]"
                         />
                         <Button
                           type="submit"
                           disabled={submittingReply || !replyText.trim()}
-                          className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-1.5"
+                          className="w-full bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-colors"
                         >
                           {submittingReply ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -902,7 +902,7 @@ export default function UnifiedAdminDashboard() {
 
                     </div>
                   ) : (
-                    <div className="h-full flex items-center justify-center border border-dashed border-white/5 rounded-2xl p-10 text-center select-none text-slate-500 text-xs italic">
+                    <div className="h-full flex items-center justify-center border border-dashed border-slate-200 rounded-2xl p-10 text-center select-none text-slate-400 text-xs italic bg-white shadow-sm">
                       Select a support ticket from the sidebar to compose a reply.
                     </div>
                   )}
@@ -918,12 +918,12 @@ export default function UnifiedAdminDashboard() {
           <div className="space-y-4 animate-in fade-in duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-black text-white">Feedback Inbox</h2>
-                <p className="text-[10px] text-slate-400 mt-0.5">Messages auto-delete after 24 hours. {feedbackMessages.length} message{feedbackMessages.length !== 1 ? "s" : ""} remaining.</p>
+                <h2 className="text-sm font-black text-slate-900">Feedback Inbox</h2>
+                <p className="text-[10px] text-slate-500 mt-0.5">Messages auto-delete after 24 hours. {feedbackMessages.length} message{feedbackMessages.length !== 1 ? "s" : ""} remaining.</p>
               </div>
               <button
                 onClick={loadFeedbackData}
-                className="text-[10px] font-bold text-violet-400 hover:text-violet-300 border border-violet-500/20 px-3 py-1.5 rounded-lg transition-colors"
+                className="text-[10px] font-bold text-[#0d6e5a] hover:text-[#094d3f] border border-teal-200 hover:bg-teal-50 px-3 py-1.5 rounded-lg transition-colors"
               >
                 Refresh
               </button>
@@ -931,22 +931,22 @@ export default function UnifiedAdminDashboard() {
 
             {feedbackLoading ? (
               <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-6 w-6 animate-spin text-violet-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-[#0d6e5a]" />
               </div>
             ) : feedbackMessages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-white/8 rounded-2xl">
-                <Inbox className="h-10 w-10 text-slate-600 mb-3" />
-                <p className="text-sm font-bold text-slate-400">No feedback messages yet</p>
-                <p className="text-xs text-slate-600 mt-1">When users submit feedback, it will appear here.</p>
+              <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-slate-200 bg-white rounded-2xl shadow-sm">
+                <Inbox className="h-10 w-10 text-slate-400 mb-3" />
+                <p className="text-sm font-bold text-slate-700">No feedback messages yet</p>
+                <p className="text-xs text-slate-500 mt-1">When users submit feedback, it will appear here.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {feedbackMessages.map((fb) => {
                   const typeColors: Record<string, string> = {
-                    bug: "bg-red-500/10 border-red-500/20 text-red-400",
-                    feature: "bg-amber-500/10 border-amber-500/20 text-amber-400",
-                    improvement: "bg-yellow-500/10 border-yellow-500/20 text-yellow-400",
-                    general: "bg-blue-500/10 border-blue-500/20 text-blue-400",
+                    bug: "bg-rose-50 border-rose-200 text-rose-700",
+                    feature: "bg-amber-50 border-amber-200 text-amber-700",
+                    improvement: "bg-yellow-50 border-yellow-200 text-yellow-700",
+                    general: "bg-sky-50 border-sky-200 text-sky-700",
                   };
                   const typeLabel: Record<string, string> = {
                     bug: "🐛 Bug",
@@ -963,12 +963,12 @@ export default function UnifiedAdminDashboard() {
                   return (
                     <div
                       key={fb.id}
-                      className="bg-[#0d0e22] border border-white/8 rounded-2xl p-4 space-y-3 hover:border-white/15 transition-all"
+                      className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 hover:border-slate-300 transition-all shadow-sm"
                     >
                       {/* Header row */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-0.5">
-                          <p className="text-xs font-bold text-white">{fb.name || "Anonymous"}</p>
+                          <p className="text-xs font-bold text-slate-900">{fb.name || "Anonymous"}</p>
                           <p className="text-[10px] text-slate-500 font-mono">{fb.email || "—"}</p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
@@ -978,7 +978,7 @@ export default function UnifiedAdminDashboard() {
                           <button
                             onClick={() => handleDeleteFeedback(fb.id)}
                             disabled={deletingFeedbackId === fb.id}
-                            className="h-6 w-6 flex items-center justify-center rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                            className="h-6 w-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                             title="Delete feedback"
                           >
                             {deletingFeedbackId === fb.id ? (
@@ -991,16 +991,16 @@ export default function UnifiedAdminDashboard() {
                       </div>
 
                       {/* Message */}
-                      <p className="text-xs text-slate-300 leading-relaxed line-clamp-4">
+                      <p className="text-xs text-slate-700 leading-relaxed line-clamp-4 font-medium">
                         {fb.message}
                       </p>
 
                       {/* Footer */}
-                      <div className="flex items-center justify-between pt-1 border-t border-white/5">
-                        <span className="text-[9px] text-slate-600 font-mono">
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                        <span className="text-[9px] text-slate-400 font-mono">
                           {sentAt.toLocaleDateString()} {sentAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </span>
-                        <span className="text-[9px] text-amber-500/70 font-semibold">
+                        <span className="text-[9px] text-amber-600 font-semibold">
                           Expires in {hoursLeft}h
                         </span>
                       </div>

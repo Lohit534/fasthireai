@@ -62,14 +62,14 @@ export default function FeedbackToast({ isOpen, onClose, userEmail }: FeedbackTo
         toast.custom(
           (t) => (
             <div
-              className={`flex items-start gap-3 bg-[#0d1117] border border-emerald-500/30 shadow-2xl shadow-emerald-900/20 rounded-2xl px-5 py-4 max-w-sm transition-all ${
+              className={`flex items-start gap-3 bg-white border border-slate-200 shadow-xl rounded-2xl px-5 py-4 max-w-sm transition-all ${
                 t.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
               }`}
             >
-              <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-[#0d6e5a] shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-bold text-white">Feedback received!</p>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-sm font-bold text-slate-900">Feedback received!</p>
+                <p className="text-xs text-slate-500 mt-0.5">
                   Thanks — we read every message and prioritise based on what you share.
                 </p>
               </div>
@@ -90,32 +90,32 @@ export default function FeedbackToast({ isOpen, onClose, userEmail }: FeedbackTo
 
   return (
     <>
-      {/* Dark backdrop blur centered */}
+      {/* Light backdrop blur centered */}
       <div
-        className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+        className="fixed inset-0 z-[90] bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={onClose}
       />
 
       {/* Middle-centered modal wrapper */}
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
         <div
-          className="w-full max-w-md bg-[#0c0d1e] border border-white/10 rounded-2xl shadow-2xl shadow-black/80 animate-in zoom-in-95 fade-in duration-200 select-none pointer-events-auto"
+          className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl animate-in zoom-in-95 fade-in duration-200 select-none pointer-events-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* ── Header ── */}
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/5">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-lg bg-violet-600/20 border border-violet-500/20 flex items-center justify-center">
-                <MessageSquare className="h-4 w-4 text-violet-400" />
+              <div className="h-8 w-8 rounded-lg bg-teal-50 border border-teal-200/60 flex items-center justify-center">
+                <MessageSquare className="h-4 w-4 text-[#0d6e5a]" />
               </div>
               <div>
-                <p className="text-sm font-black text-white leading-none">Share Feedback</p>
+                <p className="text-sm font-black text-slate-900 leading-none">Share Feedback</p>
                 <p className="text-[10px] text-slate-500 mt-0.5">Goes directly to our product team</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="h-7 w-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/8 transition-colors cursor-pointer"
+              className="h-7 w-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
               aria-label="Close feedback"
             >
               <X className="h-4 w-4" />
@@ -133,8 +133,8 @@ export default function FeedbackToast({ isOpen, onClose, userEmail }: FeedbackTo
                   onClick={() => setType(opt.id)}
                   className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
                     type === opt.id
-                      ? "bg-violet-600/25 border-violet-500/60 text-white shadow-sm"
-                      : "bg-[#070814] border-white/8 text-slate-400 hover:border-white/20 hover:text-slate-200"
+                      ? "bg-[#0d6e5a] border-[#0d6e5a] text-white shadow-sm"
+                      : "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900"
                   }`}
                 >
                   {opt.icon}
@@ -149,14 +149,14 @@ export default function FeedbackToast({ isOpen, onClose, userEmail }: FeedbackTo
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder={PLACEHOLDERS[type]}
-              className="w-full bg-[#070814] border border-white/8 text-white text-xs rounded-xl px-3.5 py-3 focus:outline-none focus:border-violet-500/60 resize-none placeholder:text-slate-600 leading-relaxed"
+              className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs rounded-xl px-3.5 py-3 focus:outline-none focus:border-[#0d6e5a] focus:bg-white resize-none placeholder:text-slate-400 leading-relaxed transition-colors"
             />
 
             {/* Send button */}
             <button
               onClick={handleSend}
               disabled={!message.trim() || sending || sent}
-              className="w-full h-10 flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-violet-600/20 cursor-pointer"
+              className="w-full h-10 flex items-center justify-center gap-2 bg-[#0d6e5a] hover:bg-[#094d3f] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition-all shadow-md cursor-pointer"
             >
               {sending ? (
                 <span className="flex items-center gap-1.5">

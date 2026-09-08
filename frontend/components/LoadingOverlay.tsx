@@ -23,32 +23,31 @@ export default function LoadingOverlay() {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/85 backdrop-blur-sm select-none p-6">
-      <div className="w-full max-w-md bg-[#0b0c20] border border-white/10 rounded-2xl p-8 text-center space-y-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm select-none p-6">
+      <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-8 text-center space-y-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         
         {/* Spinner & Glow */}
         <div className="relative flex items-center justify-center mx-auto">
-          <div className="absolute inset-0 h-16 w-16 bg-violet-600/20 rounded-full blur-xl animate-pulse" />
-          <div className="relative h-12 w-12 rounded-full border border-violet-500/20 bg-[#0e0f2b] flex items-center justify-center text-violet-400">
+          <div className="relative h-12 w-12 rounded-full border border-teal-200 bg-teal-50 flex items-center justify-center text-[#0d6e5a] shadow-sm">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
         </div>
 
         {/* Messaging */}
         <div className="space-y-2">
-          <h3 className="text-sm font-black text-white tracking-wider uppercase">Optimizing Resume</h3>
-          <p className="text-xs font-semibold text-violet-400 h-5 transition-all duration-300">
+          <h3 className="text-sm font-black text-slate-900 tracking-wider uppercase">Optimizing Resume</h3>
+          <p className="text-xs font-semibold text-[#0d6e5a] h-5 transition-all duration-300">
             {messages[msgIndex]}
           </p>
         </div>
 
         {/* Indeterminate Progress Bar */}
         <div className="space-y-1.5 pt-2">
-          <div className="h-1.5 w-full bg-slate-900 border border-white/5 rounded-full overflow-hidden relative">
+          <div className="h-2 w-full bg-slate-100 border border-slate-200 rounded-full overflow-hidden relative">
             {/* Animated bar simulating loading */}
-            <div className="h-full bg-gradient-to-r from-violet-500 to-cyan-500 rounded-full w-1/3 animate-loading-pulse absolute left-0 top-0" />
+            <div className="h-full bg-[#0d6e5a] rounded-full w-1/3 animate-loading-pulse absolute left-0 top-0" />
           </div>
-          <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-widest">Please do not refresh or close this tab</span>
+          <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-widest">Please do not refresh or close this tab</span>
         </div>
 
       </div>

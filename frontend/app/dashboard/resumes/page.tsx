@@ -1087,9 +1087,9 @@ export default function ResumesPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#060713]">
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
         <div className="text-center space-y-2">
-          <Loader2 className="h-8 w-8 text-violet-600 animate-spin mx-auto" />
+          <Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin mx-auto" />
           <p className="text-xs text-slate-500 font-semibold">Loading Resumes...</p>
         </div>
       </div>
@@ -1100,7 +1100,7 @@ export default function ResumesPage() {
   const maxLimit = activePlan === "free" ? 2 : activePlan === "premium" ? 20 : activePlan === "promax" ? 40 : 40;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#060713] text-slate-100 font-sans select-text">
+    <div className="flex flex-col min-h-screen bg-[#f8fafc] text-slate-900 font-sans select-text">
       
       {/* Dynamic View: LIST VIEW OR EDITOR VIEW */}
       {!editingResume ? (
@@ -1114,10 +1114,10 @@ export default function ResumesPage() {
               {/* Header Details */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 select-none">
+                  <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2 select-none">
                     My Resumes
                   </h1>
-                  <p className="text-xs text-slate-400 font-semibold">
+                  <p className="text-xs text-slate-500 font-semibold">
                     {resumes.length} / {maxLimit} resumes
                   </p>
                 </div>
@@ -1125,7 +1125,7 @@ export default function ResumesPage() {
                 <Button
                   onClick={handleCreateNewResume}
                   disabled={actionLoading === "create" || resumes.length >= maxLimit}
-                  className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-9 text-xs rounded-full px-5 flex items-center gap-1.5 shadow-lg shadow-violet-600/10"
+                  className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold h-9 text-xs rounded-full px-5 flex items-center gap-1.5 shadow-sm transition-colors"
                 >
                   {actionLoading === "create" ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1139,21 +1139,21 @@ export default function ResumesPage() {
               {/* Grid display options */}
               {loading ? (
                 <div className="flex justify-center py-20">
-                  <Loader2 className="h-8 w-8 text-violet-600 animate-spin" />
+                  <Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin" />
                 </div>
               ) : resumes.length === 0 ? (
                 
                 /* Empty state listing card options */
-                <div className="flex flex-col items-center justify-center border border-dashed border-white/5 rounded-2xl p-12 text-center bg-[#0e0f21]/40 min-h-[380px]">
-                  <FileText className="h-10 w-10 text-violet-500 mb-4 animate-pulse" />
-                  <h3 className="font-extrabold text-white text-lg">No Resumes Found</h3>
-                  <p className="text-xs text-slate-400 max-w-xs mt-1.5 leading-relaxed font-medium">
+                <div className="flex flex-col items-center justify-center border border-dashed border-slate-300 rounded-2xl p-12 text-center bg-white min-h-[380px] shadow-sm">
+                  <FileText className="h-10 w-10 text-[#0d6e5a] mb-4 animate-pulse" />
+                  <h3 className="font-extrabold text-slate-900 text-lg">No Resumes Found</h3>
+                  <p className="text-xs text-slate-500 max-w-xs mt-1.5 leading-relaxed font-medium">
                     Create your first resume structure to build customized applications.
                   </p>
                   <div className="mt-6">
                     <Button 
                       onClick={handleCreateNewResume}
-                      className="bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-full"
+                      className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-semibold rounded-full"
                     >
                       Get Started
                     </Button>
@@ -1173,32 +1173,32 @@ export default function ResumesPage() {
                     return (
                       <Card
                         key={resume.id}
-                        className="group relative border-white/5 bg-[#0e0f21]/50 hover:bg-[#12132d]/40 hover:border-violet-500/40 cursor-pointer overflow-hidden transition-all duration-300 rounded-2xl shadow-xl flex flex-col justify-between"
+                        className="group relative border border-slate-200 bg-white hover:border-[#0d6e5a]/40 hover:shadow-md cursor-pointer overflow-hidden transition-all duration-200 rounded-2xl shadow-sm flex flex-col justify-between"
                       >
                         <CardContent className="p-5 flex flex-col justify-between h-full min-h-[160px] space-y-4">
                           
                           <div className="flex justify-between items-start gap-4">
                             <div className="space-y-1">
-                              <h3 className="font-bold text-base text-white truncate max-w-[150px]">
+                              <h3 className="font-bold text-base text-slate-900 truncate max-w-[150px]">
                                 {resume.jobTitle || "Untitled Resume"}
                               </h3>
-                              <p className="text-[10px] text-slate-500 font-semibold select-none">
+                              <p className="text-[10px] text-slate-400 font-semibold select-none">
                                 Edited {formatDate(resume.createdAt)}
                               </p>
                             </div>
                             
                             {/* Circular completeness badge */}
-                            <div className="relative h-9 w-9 rounded-full bg-slate-950 flex items-center justify-center border border-white/10 text-[9px] font-black text-violet-400 select-none">
+                            <div className="relative h-9 w-9 rounded-full bg-slate-50 flex items-center justify-center border border-slate-200 text-[10px] font-black text-[#0d6e5a] select-none">
                               {completionScore}%
                             </div>
                           </div>
 
                           {/* Card controls footer (Image 1) */}
-                          <div className="flex gap-2 items-center pt-2 border-t border-white/5">
+                          <div className="flex gap-2 items-center pt-2 border-t border-slate-100">
                             <Button
                               onClick={() => handleOpenEditor(resume)}
                               variant="ghost"
-                              className="flex-1 bg-[#161730]/40 border border-slate-700/50 hover:border-slate-500 hover:bg-slate-800 text-slate-300 hover:text-white rounded-full h-8 text-[11px] font-bold gap-1.5"
+                              className="flex-1 bg-slate-50 hover:bg-[#0d6e5a] text-slate-700 hover:text-white border border-slate-200 rounded-full h-8 text-[11px] font-bold gap-1.5 transition-colors"
                             >
                               <Edit3 className="h-3.5 w-3.5" />
                               Edit
@@ -1207,7 +1207,7 @@ export default function ResumesPage() {
                               onClick={(e) => handleDeleteResume(e, resume.id)}
                               disabled={isDeleting}
                               variant="ghost"
-                              className="h-8 w-8 p-0 rounded-full hover:bg-red-500/10 text-slate-500 hover:text-red-400 border border-white/5"
+                              className="h-8 w-8 p-0 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-500 border border-slate-200"
                               title="Remove resume"
                             >
                               {isDeleting ? (
@@ -1227,10 +1227,10 @@ export default function ResumesPage() {
                   {resumes.length < maxLimit && (
                     <div
                       onClick={handleCreateNewResume}
-                      className="border border-dashed border-white/10 bg-[#0e0f21]/20 hover:bg-[#12132d]/20 hover:border-violet-500/40 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 min-h-[160px] select-none"
+                      className="border border-dashed border-slate-300 bg-white hover:bg-slate-50 hover:border-[#0d6e5a] rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 min-h-[160px] select-none shadow-sm"
                     >
-                      <Plus className="h-7 w-7 text-slate-500 group-hover:text-white mb-2" />
-                      <span className="font-bold text-xs text-slate-400">New Resume</span>
+                      <Plus className="h-7 w-7 text-slate-400 group-hover:text-[#0d6e5a] mb-2" />
+                      <span className="font-bold text-xs text-slate-600">New Resume</span>
                     </div>
                   )}
 
@@ -1243,10 +1243,10 @@ export default function ResumesPage() {
       ) : (
 
         /* RESUME BUILDER SPLIT-SCREEN EDITOR PAGE (Image 2) */
-        <div className="flex flex-col h-screen overflow-hidden bg-[#060713]">
+        <div className="flex flex-col h-screen overflow-hidden bg-[#f8fafc]">
           
           {/* Header Row */}
-          <header className="border-b border-white/5 bg-[#060713]/80 backdrop-blur-md px-6 py-3 flex items-center justify-between z-10 shrink-0">
+          <header className="border-b border-slate-200 bg-white px-6 py-3 flex items-center justify-between z-10 shrink-0">
             <div className="flex items-center gap-4">
               <Button
                 onClick={() => {
@@ -1254,13 +1254,13 @@ export default function ResumesPage() {
                   setEditorData(null);
                 }}
                 variant="ghost"
-                className="text-slate-400 hover:text-white flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-white/5 bg-transparent"
+                className="text-slate-600 hover:text-slate-900 flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Resumes
               </Button>
 
-              <div className="flex items-center gap-1.5 border-l border-white/10 pl-4">
+              <div className="flex items-center gap-1.5 border-l border-slate-200 pl-4">
                 {isTitleEditing ? (
                   <div className="flex items-center gap-1.5">
                     <Input
@@ -1269,16 +1269,16 @@ export default function ResumesPage() {
                       onBlur={handleSaveTitle}
                       onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
                       autoFocus
-                      className="h-7 w-48 text-xs border-white/10 bg-[#070814] text-white rounded px-2"
+                      className="h-7 w-48 text-xs border-slate-200 bg-white text-slate-900 rounded px-2 focus:border-[#0d6e5a]"
                     />
-                    <Button onClick={handleSaveTitle} size="sm" className="h-7 bg-violet-600 text-white text-[10px] rounded px-2.5">Save</Button>
+                    <Button onClick={handleSaveTitle} size="sm" className="h-7 bg-[#0d6e5a] hover:bg-[#094d3f] text-white text-[10px] rounded px-2.5">Save</Button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 select-text">
-                    <span className="font-extrabold text-sm text-white">{editingResume.jobTitle || "Untitled Resume"}</span>
+                    <span className="font-extrabold text-sm text-slate-900">{editingResume.jobTitle || "Untitled Resume"}</span>
                     <button 
                       onClick={() => setIsTitleEditing(true)}
-                      className="text-slate-500 hover:text-slate-300"
+                      className="text-slate-400 hover:text-slate-600"
                     >
                       <Edit3 className="h-3.5 w-3.5" />
                     </button>
@@ -1288,7 +1288,7 @@ export default function ResumesPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
+              <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
                 <Check className="h-3.5 w-3.5" />
                 <span>Auto-saved</span>
               </div>
@@ -1299,21 +1299,21 @@ export default function ResumesPage() {
           <div className="flex-1 flex overflow-hidden w-full items-stretch">
             
             {/* Left Column: Editor fields scrollable inputs */}
-            <div className="w-1/2 overflow-y-auto border-r border-white/5 px-6 py-6 space-y-4">
+            <div className="w-1/2 overflow-y-auto border-r border-slate-200 px-6 py-6 space-y-4 bg-[#f8fafc]">
               
               {editorData && (
                 <>
                   {/* Accordion 1: Personal info */}
-                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                  <div className="border border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm">
                     <button
                       onClick={() => toggleCollapsible("personal")}
-                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                      className="w-full flex items-center justify-between p-4 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800 uppercase tracking-wider"
                     >
                       <span className="flex items-center gap-2">
-                        <UserIcon className="h-4 w-4 text-violet-500" />
+                        <UserIcon className="h-4 w-4 text-[#0d6e5a]" />
                         Personal Info
                       </span>
-                      {collapsibles.personal ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {collapsibles.personal ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
                     </button>
 
                     {collapsibles.personal && (
@@ -1324,7 +1324,7 @@ export default function ResumesPage() {
                             placeholder="e.g. Alexis Carter"
                             value={editorData.name}
                             onChange={(e) => handlePersonalInfoChange("name", e.target.value)}
-                            className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500"
+                            className="h-9 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a]"
                           />
                         </div>
                         <div className="space-y-1">
@@ -1333,7 +1333,7 @@ export default function ResumesPage() {
                             placeholder="e.g. alexis@mail.com"
                             value={editorData.email}
                             onChange={(e) => handlePersonalInfoChange("email", e.target.value)}
-                            className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500"
+                            className="h-9 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a]"
                           />
                         </div>
                         <div className="space-y-1">
@@ -1342,7 +1342,7 @@ export default function ResumesPage() {
                             placeholder="e.g. +1 (555) 000-0000"
                             value={editorData.phone}
                             onChange={(e) => handlePersonalInfoChange("phone", e.target.value)}
-                            className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500"
+                            className="h-9 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a]"
                           />
                         </div>
                         <div className="space-y-1">
@@ -1351,7 +1351,7 @@ export default function ResumesPage() {
                             placeholder="e.g. Seattle, WA"
                             value={editorData.location}
                             onChange={(e) => handlePersonalInfoChange("location", e.target.value)}
-                            className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500"
+                            className="h-9 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a]"
                           />
                         </div>
                         <div className="space-y-1">
@@ -1360,7 +1360,7 @@ export default function ResumesPage() {
                             placeholder="e.g. linkedin.com/in/alexis"
                             value={editorData.linkedin}
                             onChange={(e) => handlePersonalInfoChange("linkedin", e.target.value)}
-                            className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500"
+                            className="h-9 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a]"
                           />
                         </div>
                         <div className="space-y-1">
@@ -1369,7 +1369,7 @@ export default function ResumesPage() {
                             placeholder="e.g. alexisdev.io"
                             value={editorData.website}
                             onChange={(e) => handlePersonalInfoChange("website", e.target.value)}
-                            className="h-9 border-white/5 bg-[#070814] text-white focus:border-violet-500"
+                            className="h-9 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a]"
                           />
                         </div>
                       </div>
@@ -1377,16 +1377,16 @@ export default function ResumesPage() {
                   </div>
 
                   {/* Accordion 2: Professional Summary */}
-                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                  <div className="border border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm">
                     <button
                       onClick={() => toggleCollapsible("summary")}
-                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                      className="w-full flex items-center justify-between p-4 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800 uppercase tracking-wider"
                     >
                       <span className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-violet-500" />
+                        <FileText className="h-4 w-4 text-[#0d6e5a]" />
                         Professional Summary
                       </span>
-                      {collapsibles.summary ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {collapsibles.summary ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
                     </button>
 
                     {collapsibles.summary && (
@@ -1397,10 +1397,10 @@ export default function ResumesPage() {
                             type="button"
                             onClick={handleImproveSummary}
                             disabled={actionLoading === "improve-summary"}
-                            className="bg-violet-950/40 border border-violet-500/20 text-violet-400 hover:text-white hover:bg-violet-900 h-7 text-[10px] font-bold px-3 gap-1 rounded-full"
+                            className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white h-7 text-[10px] font-bold px-3 gap-1 rounded-full shadow-sm transition-colors"
                           >
                             {actionLoading === "improve-summary" ? (
-                              <Loader2 className="h-3 w-3 animate-spin text-violet-400" />
+                              <Loader2 className="h-3 w-3 animate-spin text-white" />
                             ) : (
                               <Sparkles className="h-3 w-3" />
                             )}
@@ -1412,32 +1412,32 @@ export default function ResumesPage() {
                           value={editorData.summary}
                           onChange={(e) => handleSummaryChange(e.target.value)}
                           rows={4}
-                          className="w-full p-2.5 border border-white/5 bg-[#070814] text-white rounded-lg focus:border-violet-500 outline-none focus:ring-1 focus:ring-violet-500 font-sans text-xs resize-none"
+                          className="w-full p-2.5 border border-slate-200 bg-white text-slate-900 rounded-lg focus:border-[#0d6e5a] outline-none focus:ring-1 focus:ring-[#0d6e5a] font-sans text-xs resize-none"
                         />
                       </div>
                     )}
                   </div>
 
                   {/* Accordion 3: Technical Skills Details */}
-                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                  <div className="border border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm">
                     <button
                       onClick={() => toggleCollapsible("skills")}
-                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                      className="w-full flex items-center justify-between p-4 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800 uppercase tracking-wider"
                     >
                       <span className="flex items-center gap-2">
-                        <Wrench className="h-4 w-4 text-violet-500" />
+                        <Wrench className="h-4 w-4 text-[#0d6e5a]" />
                         Technical Skills
                       </span>
-                      {collapsibles.skills ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {collapsibles.skills ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
                     </button>
 
                     {collapsibles.skills && (
                       <div className="p-4 space-y-4 select-none">
                         {editorData.skills.map((group) => (
-                          <div key={group.id} className="border border-white/5 bg-[#070814]/30 rounded-lg p-3 space-y-3 relative">
+                          <div key={group.id} className="border border-slate-200 bg-slate-50/50 rounded-lg p-3 space-y-3 relative">
                             <button
                               onClick={() => removeSkillGroup(group.id)}
-                              className="absolute top-2 right-2 text-slate-500 hover:text-red-400"
+                              className="absolute top-2 right-2 text-slate-400 hover:text-red-500"
                               title="Delete Group"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -1450,7 +1450,7 @@ export default function ResumesPage() {
                                   placeholder="e.g. Languages"
                                   value={group.category}
                                   onChange={(e) => handleSkillGroupChange(group.id, "category", e.target.value)}
-                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  className="h-8 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs"
                                 />
                               </div>
                               <div className="space-y-1">
@@ -1459,7 +1459,7 @@ export default function ResumesPage() {
                                   placeholder="e.g. React, Node.js"
                                   value={group.list.join(", ")}
                                   onChange={(e) => handleSkillGroupChange(group.id, "list", e.target.value)}
-                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  className="h-8 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs"
                                 />
                               </div>
                             </div>
@@ -1468,7 +1468,7 @@ export default function ResumesPage() {
 
                         <Button
                           onClick={addSkillGroup}
-                          className="w-full bg-[#12132d]/40 border border-white/5 text-slate-300 hover:text-white h-8 text-[11px] font-bold rounded-lg"
+                          className="w-full bg-white border border-slate-200 text-slate-700 hover:text-[#0d6e5a] hover:border-[#0d6e5a] h-8 text-[11px] font-bold rounded-lg transition-colors"
                         >
                           + Add Skill Group
                         </Button>
@@ -1477,25 +1477,25 @@ export default function ResumesPage() {
                   </div>
 
                   {/* Accordion 4: Experience / Internship Cards */}
-                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                  <div className="border border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm">
                     <button
                       onClick={() => toggleCollapsible("experience")}
-                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                      className="w-full flex items-center justify-between p-4 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800 uppercase tracking-wider"
                     >
                       <span className="flex items-center gap-2">
-                        <Briefcase className="h-4 w-4 text-violet-500" />
+                        <Briefcase className="h-4 w-4 text-[#0d6e5a]" />
                         Experience / Internship
                       </span>
-                      {collapsibles.experience ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {collapsibles.experience ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
                     </button>
 
                     {collapsibles.experience && (
                       <div className="p-4 space-y-4 select-none">
                         {editorData.experience.map((exp) => (
-                          <div key={exp.id} className="border border-white/5 bg-[#070814]/30 rounded-lg p-3 space-y-3 relative">
+                          <div key={exp.id} className="border border-slate-200 bg-slate-50/50 rounded-lg p-3 space-y-3 relative">
                             <button
                               onClick={() => removeExperienceItem(exp.id)}
-                              className="absolute top-2 right-2 text-slate-500 hover:text-red-400"
+                              className="absolute top-2 right-2 text-slate-400 hover:text-red-500"
                               title="Delete Item"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -1507,7 +1507,7 @@ export default function ResumesPage() {
                                 <Input
                                   value={exp.company}
                                   onChange={(e) => handleExpChange(exp.id, "company", e.target.value)}
-                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  className="h-8 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs"
                                 />
                               </div>
                               <div className="space-y-1">
@@ -1515,7 +1515,7 @@ export default function ResumesPage() {
                                 <Input
                                   value={exp.title}
                                   onChange={(e) => handleExpChange(exp.id, "title", e.target.value)}
-                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  className="h-8 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs"
                                 />
                               </div>
                             </div>
@@ -1525,7 +1525,7 @@ export default function ResumesPage() {
                               <Input
                                 value={exp.date}
                                 onChange={(e) => handleExpChange(exp.id, "date", e.target.value)}
-                                className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                className="h-8 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs"
                               />
                             </div>
 
@@ -1534,11 +1534,11 @@ export default function ResumesPage() {
                               <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Description Bullets</label>
                               {exp.bullets.map((bullet, idx) => (
                                 <div key={idx} className="flex gap-2 items-start">
-                                  <span className="text-slate-500 text-xs select-none mt-2">•</span>
+                                  <span className="text-slate-400 text-xs select-none mt-2">•</span>
                                   <textarea
                                     value={bullet}
                                     onChange={(e) => handleExpBulletChange(exp.id, idx, e.target.value)}
-                                    className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs resize-none overflow-hidden"
+                                    className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs resize-none overflow-hidden"
                                     placeholder="Add detail bullet..."
                                     rows={1}
                                     onInput={(e) => {
@@ -1549,7 +1549,7 @@ export default function ResumesPage() {
                                   />
                                   <button
                                     onClick={() => removeExpBullet(exp.id, idx)}
-                                    className="text-slate-600 hover:text-red-400 p-1 mt-1"
+                                    className="text-slate-400 hover:text-red-500 p-1 mt-1"
                                   >
                                     <Trash2 className="h-3 w-3" />
                                   </button>
@@ -1558,7 +1558,7 @@ export default function ResumesPage() {
                               <Button
                                 type="button"
                                 onClick={() => addExpBullet(exp.id)}
-                                className="bg-transparent border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3"
+                                className="bg-white border border-slate-200 text-slate-600 hover:text-slate-900 h-7 text-[10px] rounded-lg px-3"
                               >
                                 + Add Bullet
                               </Button>
@@ -1568,7 +1568,7 @@ export default function ResumesPage() {
 
                         <Button
                           onClick={addExperienceItem}
-                          className="w-full bg-[#12132d]/40 border border-white/5 text-slate-300 hover:text-white h-8 text-[11px] font-bold rounded-lg"
+                          className="w-full bg-white border border-slate-200 text-slate-700 hover:text-[#0d6e5a] hover:border-[#0d6e5a] h-8 text-[11px] font-bold rounded-lg transition-colors"
                         >
                           + Add Experience
                         </Button>
@@ -1577,25 +1577,25 @@ export default function ResumesPage() {
                   </div>
 
                   {/* Accordion 5: Projects Info */}
-                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                  <div className="border border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm">
                     <button
                       onClick={() => toggleCollapsible("projects")}
-                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                      className="w-full flex items-center justify-between p-4 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800 uppercase tracking-wider"
                     >
                       <span className="flex items-center gap-2">
-                        <FolderGit className="h-4 w-4 text-violet-500" />
+                        <FolderGit className="h-4 w-4 text-[#0d6e5a]" />
                         Projects
                       </span>
-                      {collapsibles.projects ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {collapsibles.projects ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
                     </button>
 
                     {collapsibles.projects && (
                       <div className="p-4 space-y-4 select-none">
                         {editorData.projects.map((proj) => (
-                          <div key={proj.id} className="border border-white/5 bg-[#070814]/30 rounded-lg p-3 space-y-3 relative">
+                          <div key={proj.id} className="border border-slate-200 bg-slate-50/50 rounded-lg p-3 space-y-3 relative">
                             <button
                               onClick={() => removeProjectItem(proj.id)}
-                              className="absolute top-2 right-2 text-slate-500 hover:text-red-400"
+                              className="absolute top-2 right-2 text-slate-400 hover:text-red-500"
                               title="Delete Item"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -1607,7 +1607,7 @@ export default function ResumesPage() {
                                 <Input
                                   value={proj.name}
                                   onChange={(e) => handleProjChange(proj.id, "name", e.target.value)}
-                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  className="h-8 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs"
                                 />
                               </div>
                               <div className="space-y-1">
@@ -1615,7 +1615,7 @@ export default function ResumesPage() {
                                 <Input
                                   value={proj.techStack}
                                   onChange={(e) => handleProjChange(proj.id, "techStack", e.target.value)}
-                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  className="h-8 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs"
                                   placeholder="e.g. React, Node.js, PostgreSQL"
                                 />
                               </div>
@@ -1627,7 +1627,7 @@ export default function ResumesPage() {
                                 <Input
                                   value={proj.link}
                                   onChange={(e) => handleProjChange(proj.id, "link", e.target.value)}
-                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  className="h-8 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs"
                                   placeholder="e.g. github.com/username/project"
                                 />
                               </div>
@@ -1636,7 +1636,7 @@ export default function ResumesPage() {
                                 <Input
                                   value={proj.date}
                                   onChange={(e) => handleProjChange(proj.id, "date", e.target.value)}
-                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  className="h-8 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs"
                                   placeholder="e.g. Jan 2024"
                                 />
                               </div>
@@ -1647,11 +1647,11 @@ export default function ResumesPage() {
                               <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Description Bullets</label>
                               {proj.bullets.map((bullet, idx) => (
                                 <div key={idx} className="flex gap-2 items-start">
-                                  <span className="text-slate-500 text-xs select-none mt-2">•</span>
+                                  <span className="text-slate-400 text-xs select-none mt-2">•</span>
                                   <textarea
                                     value={bullet}
                                     onChange={(e) => handleProjBulletChange(proj.id, idx, e.target.value)}
-                                    className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs resize-none overflow-hidden"
+                                    className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs resize-none overflow-hidden"
                                     placeholder="Add project bullet..."
                                     rows={1}
                                     onInput={(e) => {
@@ -1662,7 +1662,7 @@ export default function ResumesPage() {
                                   />
                                   <button
                                     onClick={() => removeProjBullet(proj.id, idx)}
-                                    className="text-slate-600 hover:text-red-400 p-1 mt-1"
+                                    className="text-slate-400 hover:text-red-500 p-1 mt-1"
                                   >
                                     <Trash2 className="h-3 w-3" />
                                   </button>
@@ -1671,7 +1671,7 @@ export default function ResumesPage() {
                               <Button
                                 type="button"
                                 onClick={() => addProjBullet(proj.id)}
-                                className="bg-[#12132d]/40 border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3"
+                                className="bg-white border border-slate-200 text-slate-600 hover:text-slate-900 h-7 text-[10px] rounded-lg px-3"
                               >
                                 + Add Bullet
                               </Button>
@@ -1681,7 +1681,7 @@ export default function ResumesPage() {
 
                         <Button
                           onClick={addProjectItem}
-                          className="w-full bg-[#12132d]/40 border border-white/5 text-slate-300 hover:text-white h-8 text-[11px] font-bold rounded-lg"
+                          className="w-full bg-white border border-slate-200 text-slate-700 hover:text-[#0d6e5a] hover:border-[#0d6e5a] h-8 text-[11px] font-bold rounded-lg transition-colors"
                         >
                           + Add Project
                         </Button>
@@ -1690,25 +1690,25 @@ export default function ResumesPage() {
                   </div>
 
                   {/* Accordion 6: Education Details */}
-                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                  <div className="border border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm">
                     <button
                       onClick={() => toggleCollapsible("education")}
-                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                      className="w-full flex items-center justify-between p-4 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800 uppercase tracking-wider"
                     >
                       <span className="flex items-center gap-2">
-                        <BookOpen className="h-4 w-4 text-violet-500" />
+                        <BookOpen className="h-4 w-4 text-[#0d6e5a]" />
                         Education
                       </span>
-                      {collapsibles.education ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {collapsibles.education ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
                     </button>
 
                     {collapsibles.education && (
                       <div className="p-4 space-y-4 select-none">
                         {editorData.education.map((edu) => (
-                          <div key={edu.id} className="border border-white/5 bg-[#070814]/30 rounded-lg p-3 space-y-3 relative">
+                          <div key={edu.id} className="border border-slate-200 bg-slate-50/50 rounded-lg p-3 space-y-3 relative">
                             <button
                               onClick={() => removeEducationItem(edu.id)}
-                              className="absolute top-2 right-2 text-slate-500 hover:text-red-400"
+                              className="absolute top-2 right-2 text-slate-400 hover:text-red-500"
                               title="Delete Item"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -1720,7 +1720,7 @@ export default function ResumesPage() {
                                 <Input
                                   value={edu.school}
                                   onChange={(e) => handleEduChange(edu.id, "school", e.target.value)}
-                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  className="h-8 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs"
                                 />
                               </div>
                               <div className="space-y-1">
@@ -1728,7 +1728,7 @@ export default function ResumesPage() {
                                 <Input
                                   value={edu.degree}
                                   onChange={(e) => handleEduChange(edu.id, "degree", e.target.value)}
-                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  className="h-8 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs"
                                 />
                               </div>
                             </div>
@@ -1739,7 +1739,7 @@ export default function ResumesPage() {
                                 <Input
                                   value={edu.field}
                                   onChange={(e) => handleEduChange(edu.id, "field", e.target.value)}
-                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  className="h-8 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs"
                                 />
                               </div>
                               <div className="space-y-1">
@@ -1747,7 +1747,7 @@ export default function ResumesPage() {
                                 <Input
                                   value={edu.date}
                                   onChange={(e) => handleEduChange(edu.id, "date", e.target.value)}
-                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  className="h-8 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs"
                                 />
                               </div>
                             </div>
@@ -1758,7 +1758,7 @@ export default function ResumesPage() {
                                 <Input
                                   value={edu.gpa || ""}
                                   onChange={(e) => handleEduChange(edu.id, "gpa", e.target.value)}
-                                  className="h-8 border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs"
+                                  className="h-8 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs"
                                   placeholder="e.g. 9.8/10 or 3.9/4.0"
                                 />
                               </div>
@@ -1768,7 +1768,7 @@ export default function ResumesPage() {
 
                         <Button
                           onClick={addEducationItem}
-                          className="w-full bg-[#12132d]/40 border border-white/5 text-slate-300 hover:text-white h-8 text-[11px] font-bold rounded-lg"
+                          className="w-full bg-white border border-slate-200 text-slate-700 hover:text-[#0d6e5a] hover:border-[#0d6e5a] h-8 text-[11px] font-bold rounded-lg transition-colors"
                         >
                           + Add Education
                         </Button>
@@ -1777,16 +1777,16 @@ export default function ResumesPage() {
                   </div>
 
                   {/* Accordion 7: Certifications / Achievements */}
-                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                  <div className="border border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm">
                     <button
                       onClick={() => toggleCollapsible("certifications")}
-                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                      className="w-full flex items-center justify-between p-4 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800 uppercase tracking-wider"
                     >
                       <span className="flex items-center gap-2">
-                        <Award className="h-4 w-4 text-violet-500" />
+                        <Award className="h-4 w-4 text-[#0d6e5a]" />
                         Certifications / Achievements
                       </span>
-                      {collapsibles.certifications ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {collapsibles.certifications ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
                     </button>
 
                     {collapsibles.certifications && (
@@ -1796,11 +1796,11 @@ export default function ResumesPage() {
                           <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Certifications Bullets</label>
                           {editorData.certifications.map((cert, idx) => (
                             <div key={idx} className="flex gap-2 items-start">
-                              <span className="text-slate-500 text-xs select-none mt-2">•</span>
+                              <span className="text-slate-400 text-xs select-none mt-2">•</span>
                               <textarea
                                 value={cert}
                                 onChange={(e) => handleCertificationItemChange(idx, e.target.value)}
-                                className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs resize-none overflow-hidden"
+                                className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs resize-none overflow-hidden"
                                 placeholder="e.g. AWS Certified Solutions Architect"
                                 rows={1}
                                 onInput={(e) => {
@@ -1811,7 +1811,7 @@ export default function ResumesPage() {
                               />
                               <button
                                 onClick={() => removeCertificationItem(idx)}
-                                className="text-slate-600 hover:text-red-400 p-1 mt-1"
+                                className="text-slate-400 hover:text-red-500 p-1 mt-1"
                               >
                                 <Trash2 className="h-3 w-3" />
                               </button>
@@ -1820,22 +1820,22 @@ export default function ResumesPage() {
                           <Button
                             type="button"
                             onClick={addCertificationItem}
-                            className="bg-[#12132d]/40 border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3 animate-none"
+                            className="bg-white border border-slate-200 text-slate-600 hover:text-slate-900 h-7 text-[10px] rounded-lg px-3"
                           >
                             + Add Certification
                           </Button>
                         </div>
 
                         {/* Achievements Block */}
-                        <div className="space-y-3 pt-3 border-t border-white/5">
+                        <div className="space-y-3 pt-3 border-t border-slate-200">
                           <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Achievements Bullets</label>
                           {editorData.achievements.map((ach, idx) => (
                             <div key={idx} className="flex gap-2 items-start">
-                              <span className="text-slate-500 text-xs select-none mt-2">•</span>
+                              <span className="text-slate-400 text-xs select-none mt-2">•</span>
                               <textarea
                                 value={ach}
                                 onChange={(e) => handleAchievementItemChange(idx, e.target.value)}
-                                className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs resize-none overflow-hidden"
+                                className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs resize-none overflow-hidden"
                                 placeholder="e.g. Solved 300+ DSA problems on LeetCode"
                                 rows={1}
                                 onInput={(e) => {
@@ -1846,7 +1846,7 @@ export default function ResumesPage() {
                               />
                               <button
                                 onClick={() => removeAchievementItem(idx)}
-                                className="text-slate-600 hover:text-red-400 p-1 mt-1"
+                                className="text-slate-400 hover:text-red-500 p-1 mt-1"
                               >
                                 <Trash2 className="h-3 w-3" />
                               </button>
@@ -1855,7 +1855,7 @@ export default function ResumesPage() {
                           <Button
                             type="button"
                             onClick={addAchievementItem}
-                            className="bg-[#12132d]/40 border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3"
+                            className="bg-white border border-slate-200 text-slate-600 hover:text-slate-900 h-7 text-[10px] rounded-lg px-3"
                           >
                             + Add Achievement
                           </Button>
@@ -1865,16 +1865,16 @@ export default function ResumesPage() {
                   </div>
 
                   {/* Accordion 8: Languages */}
-                  <div className="border border-white/5 bg-[#0e0f21]/30 rounded-xl overflow-hidden">
+                  <div className="border border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm">
                     <button
                       onClick={() => toggleCollapsible("languages")}
-                      className="w-full flex items-center justify-between p-4 bg-[#0e0f21]/40 border-b border-white/5 text-xs font-bold text-white uppercase tracking-wider"
+                      className="w-full flex items-center justify-between p-4 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800 uppercase tracking-wider"
                     >
                       <span className="flex items-center gap-2">
-                        <Languages className="h-4 w-4 text-violet-500" />
+                        <Languages className="h-4 w-4 text-[#0d6e5a]" />
                         Languages
                       </span>
-                      {collapsibles.languages ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {collapsibles.languages ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
                     </button>
 
                     {collapsibles.languages && (
@@ -1882,11 +1882,11 @@ export default function ResumesPage() {
                         <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Languages Bullets</label>
                         {editorData.languages.map((lang, idx) => (
                           <div key={idx} className="flex gap-2 items-start">
-                            <span className="text-slate-500 text-xs select-none mt-2">•</span>
+                            <span className="text-slate-400 text-xs select-none mt-2">•</span>
                             <textarea
                               value={lang}
                               onChange={(e) => handleLanguageItemChange(idx, e.target.value)}
-                              className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-white/5 bg-[#070814] text-white focus:border-violet-500 text-xs resize-none overflow-hidden"
+                              className="w-full min-h-[38px] py-2 px-3 rounded-lg border border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] text-xs resize-none overflow-hidden"
                               placeholder="e.g. English"
                               rows={1}
                               onInput={(e) => {
@@ -1897,7 +1897,7 @@ export default function ResumesPage() {
                             />
                             <button
                               onClick={() => removeLanguageItem(idx)}
-                              className="text-slate-600 hover:text-red-400 p-1 mt-1"
+                              className="text-slate-400 hover:text-red-500 p-1 mt-1"
                             >
                               <Trash2 className="h-3 w-3" />
                             </button>
@@ -1906,7 +1906,7 @@ export default function ResumesPage() {
                         <Button
                           type="button"
                           onClick={addLanguageItem}
-                          className="bg-[#12132d]/40 border border-white/5 text-slate-400 hover:text-white h-7 text-[10px] rounded-lg px-3"
+                          className="bg-white border border-slate-200 text-slate-600 hover:text-slate-900 h-7 text-[10px] rounded-lg px-3"
                         >
                           + Add Language
                         </Button>
@@ -1918,12 +1918,12 @@ export default function ResumesPage() {
 
               {/* Bottom promo promotion banner with only Upgrade word linkable in gold */}
               {activePlan !== "team" && activePlan !== "promax" && (
-                <div className="p-3.5 border border-white/5 bg-[#0c0d1b] rounded-xl flex items-center justify-center gap-2 text-center text-slate-400 text-[11px] select-none font-medium">
-                  <Sparkles className="h-4 w-4 text-slate-500 shrink-0" />
+                <div className="p-3.5 border border-amber-200 bg-amber-50 rounded-xl flex items-center justify-center gap-2 text-center text-amber-900 text-[11px] select-none font-medium shadow-sm">
+                  <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
                   <span>
                     <Link
                       href="/dashboard/pricing"
-                      className="text-amber-400 font-extrabold hover:text-amber-300 underline underline-offset-2 transition-colors cursor-pointer"
+                      className="text-amber-800 font-extrabold hover:text-amber-900 underline underline-offset-2 transition-colors cursor-pointer"
                     >
                       Upgrade
                     </Link>{" "}
@@ -1935,7 +1935,7 @@ export default function ResumesPage() {
             </div>
 
             {/* Right Column: Live Professional Preview sheet matching HTML design (Image 2) */}
-            <div className="w-1/2 bg-[#0a0b16] overflow-y-auto px-10 py-10 flex justify-center">
+            <div className="w-1/2 bg-slate-100 overflow-y-auto px-10 py-10 flex justify-center">
               
               {editorData && (
                 <div 

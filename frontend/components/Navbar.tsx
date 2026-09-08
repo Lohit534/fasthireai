@@ -167,7 +167,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
 
   return (
     <>
-      <nav className="border-b border-white/12 bg-[#111318]/90 text-[#e2e2e8] sticky top-0 z-50 backdrop-blur-xl">
+      <nav className="border-b border-slate-200 bg-white text-slate-800 sticky top-0 z-50 backdrop-blur-sm shadow-sm">
         <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           
@@ -175,7 +175,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
           <div className="flex items-center gap-7">
             <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2.5 group select-none">
               <img src="/logo.png" alt="FastHire Logo" className="h-6 w-6 rounded-lg object-cover group-hover:scale-105 transition-transform" />
-              <span className="font-heading font-extrabold text-lg tracking-tight bg-gradient-to-r from-[#c2c1ff] via-[#5E5CE6] to-[#0A84FF] bg-clip-text text-transparent">
+              <span className="font-heading font-extrabold text-lg tracking-tight text-slate-900">
                 FastHire AI
               </span>
             </Link>
@@ -191,13 +191,13 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                       href={link.href}
                       className={`relative flex items-center h-full px-3 text-sm font-semibold transition-colors select-none ${
                         isActive 
-                          ? "text-white font-semibold" 
-                          : "text-slate-400 hover:text-white"
+                          ? "text-slate-900 font-bold" 
+                          : "text-slate-500 hover:text-slate-900"
                       }`}
                     >
                       {link.label}
                       {isActive && (
-                        <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-[#5E5CE6] rounded-full" />
+                        <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-[#0d6e5a] rounded-full" />
                       )}
                     </Link>
                   );
@@ -215,7 +215,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                 {/* Refer & Earn Button */}
                 <button
                   onClick={() => setIsReferralOpen(true)}
-                  className="hidden sm:flex items-center gap-1.5 h-8 px-3 text-xs font-bold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-400 transition-all"
+                  className="hidden sm:flex items-center gap-1.5 h-8 px-3 text-xs font-bold rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 transition-all"
                 >
                   <Gift className="h-3.5 w-3.5" />
                   <span>Refer & Earn</span>
@@ -234,21 +234,21 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center gap-1.5 p-1 rounded-full hover:bg-white/5 transition-colors focus:outline-none"
+                    className="flex items-center gap-1.5 p-1 rounded-full hover:bg-slate-100 transition-colors focus:outline-none"
                   >
-                    <div className="h-7 w-7 rounded-full bg-violet-600 border border-violet-500/30 flex items-center justify-center text-white font-black text-xs select-none">
+                    <div className="h-7 w-7 rounded-full bg-[#0d6e5a] border border-[#0d6e5a]/20 flex items-center justify-center text-white font-black text-xs select-none">
                       {user.email ? user.email.charAt(0).toUpperCase() : "U"}
                     </div>
-                    <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                    <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
                   </button>
 
                   {/* PROFILE DROPDOWN MENU DRAWER (Image 4) */}
                   {isDropdownOpen && (
-                    <div className="absolute right-0 mt-2.5 w-[240px] bg-[#0c0d1b] border border-white/10 rounded-2xl shadow-2xl p-2.5 space-y-1.5 select-none animate-in fade-in slide-in-from-top-1 duration-150">
+                    <div className="absolute right-0 mt-2.5 w-[240px] bg-white border border-slate-200 rounded-xl shadow-lg p-2.5 space-y-1.5 select-none animate-in fade-in slide-in-from-top-1 duration-150">
                       
                       {/* User title/credits summary */}
-                       <div className="px-2.5 py-2 border-b border-white/5">
-                        <div className="text-sm font-bold text-white truncate max-w-full">
+                       <div className="px-2.5 py-2 border-b border-slate-100">
+                        <div className="text-sm font-bold text-slate-900 truncate max-w-full">
                           {user.email}
                         </div>
                         <div className="text-xs text-slate-500 font-semibold mt-0.5 uppercase tracking-wider">
@@ -261,7 +261,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                         <Link 
                           href="/dashboard" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
                         >
                           <Compass className="h-4 w-4 text-slate-400" />
                           Optimize Resume
@@ -269,7 +269,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                         <Link 
                           href="/dashboard/resumes" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
                         >
                           <FileText className="h-4 w-4 text-slate-400" />
                           My Resumes
@@ -277,7 +277,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                         <Link 
                           href="/dashboard/job-tracker" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
                         >
                           <Briefcase className="h-4 w-4 text-slate-400" />
                           Job Tracker
@@ -286,7 +286,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                           <Link 
                             href="/dashboard/pricing" 
                             onClick={() => setIsDropdownOpen(false)}
-                            className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                            className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
                           >
                             <Sparkles className="h-4 w-4 text-slate-400" />
                             Pro Max Plan
@@ -295,7 +295,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                         <Link 
                           href="/dashboard/pricing" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
                         >
                           <DollarSign className="h-4 w-4 text-slate-400" />
                           Pricing
@@ -303,7 +303,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                         <Link 
                           href="/dashboard/billing" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
                         >
                           <CreditCard className="h-4 w-4 text-slate-400" />
                           Billing &amp; Usage
@@ -311,7 +311,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                       </div>
 
                       {/* Divider */}
-                      <div className="border-t border-white/5" />
+                      <div className="border-t border-slate-100" />
 
                       {/* Secondary list */}
                       <div className="space-y-0.5">
@@ -320,7 +320,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                             setIsDropdownOpen(false);
                             window.dispatchEvent(new CustomEvent("open-support-chatbot", { detail: { mode: "help-center" } }));
                           }}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors text-left cursor-pointer"
                         >
                           <HelpCircle className="h-4 w-4 text-slate-400" />
                           Help &amp; Support
@@ -330,7 +330,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                             setIsDropdownOpen(false);
                             setIsFeedbackOpen(true);
                           }}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors text-left cursor-pointer"
                         >
                           <MessageSquare className="h-4 w-4 text-slate-400" />
                           Feedback
@@ -338,7 +338,7 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                         <Link
                           href="/privacy"
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors cursor-pointer"
                         >
                           <Lock className="h-4 w-4 text-slate-400" />
                           Data Preferences
@@ -346,12 +346,12 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                       </div>
 
                       {/* Divider */}
-                      <div className="border-t border-white/5" />
+                      <div className="border-t border-slate-100" />
 
                       {/* Exit door sign out */}
                       <button
                         onClick={handleSignOut}
-                        className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors text-left"
+                        className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-bold text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors text-left"
                       >
                         <LogOut className="h-4 w-4" />
                         Sign out
@@ -363,11 +363,11 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
               </>
             ) : (
               <div className="flex items-center gap-3 select-none">
-                <Link href="/dashboard/pricing" className="text-xs font-bold text-slate-400 hover:text-white transition-colors">
+                <Link href="/dashboard/pricing" className="text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors">
                   Pricing
                 </Link>
                 <Link href="/auth/login">
-                  <Button size="sm" className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold h-8 text-[11px] rounded-full px-5 shadow-lg shadow-violet-600/10">
+                  <Button size="sm" className="bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-bold h-8 text-[11px] rounded-lg px-5 shadow-sm">
                     Get Started Free
                   </Button>
                 </Link>

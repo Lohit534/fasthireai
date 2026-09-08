@@ -67,7 +67,7 @@ export default function JobDescriptionInput({ value, onChange, disabled }: JobDe
       {/* URL Fetch Row */}
       <div className="space-y-1.5">
         <label className="text-[10px] font-bold uppercase text-slate-500 tracking-widest flex items-center gap-1.5">
-          <Link2 className="h-3 w-3" />
+          <Link2 className="h-3 w-3 text-[#0d6e5a]" />
           Fetch from Job URL
         </label>
         <div className="flex gap-2">
@@ -78,31 +78,31 @@ export default function JobDescriptionInput({ value, onChange, disabled }: JobDe
             onChange={(e) => setUrl(e.target.value)}
             disabled={disabled || fetching}
             onKeyDown={(e) => e.key === "Enter" && handleFetchUrl()}
-            className="h-9 text-xs border-white/12 bg-[#0A0C10] text-[#e2e2e8] placeholder:text-slate-500 focus:border-[#5E5CE6] rounded-lg flex-1 font-sans"
+            className="h-9 text-xs border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-[#0d6e5a] focus:bg-white rounded-xl flex-1 font-sans shadow-sm"
           />
           <button
             type="button"
             onClick={handleFetchUrl}
             disabled={disabled || fetching || !url.trim()}
-            className="btn-secondary-glass h-9 px-3.5 text-xs font-semibold rounded-lg shrink-0"
+            className="h-9 px-3.5 text-xs font-semibold rounded-xl shrink-0 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 shadow-sm transition-colors cursor-pointer"
           >
             {fetching ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-[#0d6e5a]" />
             ) : fetchSuccess ? (
-              <Check className="h-3.5 w-3.5 text-[#30D158]" />
+              <Check className="h-3.5 w-3.5 text-emerald-600" />
             ) : (
               "Fetch"
             )}
           </button>
         </div>
         {fetchError && (
-          <p className="text-[10px] font-mono text-[#FF453A] flex items-center gap-1">
+          <p className="text-[10px] font-mono text-rose-600 flex items-center gap-1">
             <AlertTriangle className="h-3 w-3 shrink-0" />
             {fetchError}
           </p>
         )}
         {fetchSuccess && (
-          <p className="text-[10px] font-mono text-[#30D158] flex items-center gap-1">
+          <p className="text-[10px] font-mono text-emerald-600 flex items-center gap-1">
             <Check className="h-3 w-3 shrink-0" />
             Job description fetched successfully!
           </p>
@@ -111,9 +111,9 @@ export default function JobDescriptionInput({ value, onChange, disabled }: JobDe
 
       {/* Divider */}
       <div className="relative flex items-center gap-2">
-        <div className="flex-1 border-t border-white/12" />
-        <span className="text-[9px] font-mono font-medium uppercase text-slate-500 tracking-widest">or paste below</span>
-        <div className="flex-1 border-t border-white/12" />
+        <div className="flex-1 border-t border-slate-200" />
+        <span className="text-[9px] font-mono font-semibold uppercase text-slate-400 tracking-widest">or paste below</span>
+        <div className="flex-1 border-t border-slate-200" />
       </div>
 
       {/* Textarea */}
@@ -123,20 +123,20 @@ export default function JobDescriptionInput({ value, onChange, disabled }: JobDe
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          className={`flex-1 min-h-[280px] h-full overflow-y-auto font-sans text-sm leading-relaxed bg-[#0A0C10] text-[#e2e2e8] placeholder:text-slate-500 rounded-lg resize-y p-3.5 pr-4 ${
+          className={`flex-1 min-h-[280px] h-full overflow-y-auto font-sans text-sm leading-relaxed bg-slate-50 text-slate-900 placeholder:text-slate-400 rounded-xl resize-y p-3.5 pr-4 transition-colors ${
             isOverLimit
-              ? "border-[#FF453A] focus:border-[#FF453A]"
-              : "border border-white/12 focus:border-[#5E5CE6] focus:ring-1 focus:ring-[#5E5CE6]"
+              ? "border-rose-400 focus:border-rose-500"
+              : "border border-slate-200 focus:border-[#0d6e5a] focus:bg-white focus:ring-1 focus:ring-[#0d6e5a]"
           }`}
         />
-        <div className="absolute bottom-3 right-3 bg-[#161B22] border border-white/12 font-mono text-[10px] text-slate-400 px-2 py-0.5 rounded-full select-none">
+        <div className="absolute bottom-3 right-3 bg-white border border-slate-200 font-mono text-[10px] text-slate-600 px-2 py-0.5 rounded-full select-none shadow-sm">
           {wordCount} words
         </div>
       </div>
 
       {isOverLimit && (
-        <div className="flex items-center gap-2 p-3 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
+        <div className="flex items-center gap-2 p-3 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
           <span>
             Warning: {charCount} characters — exceeds 5000 char limit and may be truncated.
           </span>

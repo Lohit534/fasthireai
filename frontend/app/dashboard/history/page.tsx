@@ -234,40 +234,40 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
       {/* Detail view header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="h-9 w-9 rounded-xl border border-white/5 bg-[#0f1022] hover:bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+            className="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-colors shadow-sm"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-violet-400 bg-violet-400/10 px-2.5 py-0.5 rounded-full">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#0d6e5a] bg-[#0d6e5a]/10 px-2.5 py-0.5 rounded-full">
                 Scanned History Detail
               </span>
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400 bg-emerald-400/10 px-2.5 py-0.5 rounded-full">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
                 Active plan: {userPlan === "owner" ? "Unlimited Free (Owner)" : userPlan.toUpperCase()}
               </span>
             </div>
-            <h1 className="text-xl font-black text-white mt-1.5">{resume.jobTitle || "Resume Optimization"}</h1>
+            <h1 className="text-xl font-black text-slate-900 mt-1.5">{resume.jobTitle || "Resume Optimization"}</h1>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           {/* ATS Score display */}
-          <div className="bg-[#00e699]/5 border border-[#00e699]/20 text-[#00e699] font-bold px-4 py-2 rounded-full text-xs flex items-center gap-2 select-none shadow-sm">
+          <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold px-4 py-2 rounded-full text-xs flex items-center gap-2 select-none shadow-sm">
             <span>ATS Score:</span>
             <span className="font-extrabold">{resume.scoreBefore}</span>
-            <ArrowRight className="h-3 w-3" />
+            <ArrowRight className="h-3 w-3 text-emerald-600" />
             <span className="font-black text-sm">{resume.scoreAfter}</span>
-            <span className="bg-[#00e699]/15 text-[#00e699] text-[9px] px-1.5 py-0.5 rounded font-black">+{delta}</span>
+            <span className="bg-emerald-200/60 text-emerald-900 text-[9px] px-1.5 py-0.5 rounded font-black">+{delta}</span>
           </div>
           
           <button
             onClick={onDelete}
-            className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 hover:text-red-700 transition-colors"
           >
             <X className="h-3.5 w-3.5" />
             Delete
@@ -276,13 +276,13 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
       </div>
 
       {/* Top Banner Message */}
-      <div className="bg-gradient-to-r from-violet-650/15 via-[#0e0f21] to-transparent border border-violet-500/10 rounded-2xl p-4 flex items-center gap-3 select-none">
-        <div className="h-9 w-9 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0">
-          <Sparkle className="h-4.5 w-4.5 text-violet-400" />
+      <div className="bg-teal-50/60 border border-teal-200/70 rounded-2xl p-4 flex items-center gap-3 select-none">
+        <div className="h-9 w-9 rounded-xl bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center shrink-0">
+          <Sparkle className="h-4.5 w-4.5 text-[#0d6e5a]" />
         </div>
         <div>
-          <h4 className="text-xs font-bold text-white">Your optimized resume is ready! More features coming soon.</h4>
-          <p className="text-[10px] text-slate-400 mt-0.5">Use the widgets below to generate custom cover letters and skills Roadmaps.</p>
+          <h4 className="text-xs font-bold text-slate-900">Your optimized resume is ready! More features coming soon.</h4>
+          <p className="text-[10px] text-slate-500 mt-0.5">Use the widgets below to generate custom cover letters and skills Roadmaps.</p>
         </div>
       </div>
 
@@ -290,33 +290,33 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         
         {/* Column 1: Your Optimized Resume */}
-        <div className="bg-[#0b0d1b]/90 border border-white/10 rounded-2xl p-5.5 shadow-xl flex flex-col justify-between h-full relative space-y-4 hover:border-white/20 transition-all">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5.5 shadow-sm flex flex-col justify-between h-full relative space-y-4 hover:border-slate-300 transition-all">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-violet-400" />
+            <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-[#0d6e5a]" />
               Your Optimized Resume
             </h3>
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all text-slate-300 hover:text-white border border-white/10 bg-[#121428] hover:bg-white/10"
+              className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all text-slate-700 hover:text-slate-900 border border-slate-200 bg-slate-50 hover:bg-slate-100"
             >
-              {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3 text-slate-400" />}
+              {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3 text-slate-400" />}
               {copied ? "Copied!" : "Copy"}
             </button>
           </div>
 
           {/* Times New Roman document container */}
           <div
-            className="w-full bg-white text-slate-900 border border-slate-200 rounded-xl p-5 shadow-2xl overflow-y-auto flex-1 min-h-[460px] max-h-[490px] font-serif select-text relative"
+            className="w-full bg-white text-slate-900 border border-slate-200 rounded-xl p-5 shadow-inner overflow-y-auto flex-1 min-h-[460px] max-h-[490px] font-serif select-text relative"
             style={{ fontFamily: "'Times New Roman', Times, serif" }}
           >
             {/* Watermark for free plan downloads */}
             {isLocked && (
-              <div className="absolute inset-0 bg-white/20 backdrop-blur-[2px] pointer-events-none flex flex-col items-center justify-center select-none p-6 text-center">
-                <div className="bg-[#0c0d1b] border border-white/10 p-4 rounded-xl shadow-2xl text-white max-w-[240px] pointer-events-auto">
-                  <Lock className="h-6 w-6 text-violet-500 mx-auto mb-2" />
-                  <h5 className="text-xs font-bold">Document Preview</h5>
-                  <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">Upgrade to a paid plan to unlock PDF and Word export downloads.</p>
+              <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] pointer-events-none flex flex-col items-center justify-center select-none p-6 text-center">
+                <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-lg text-slate-900 max-w-[240px] pointer-events-auto">
+                  <Lock className="h-6 w-6 text-[#0d6e5a] mx-auto mb-2" />
+                  <h5 className="text-xs font-bold text-slate-900">Document Preview</h5>
+                  <p className="text-[9px] text-slate-500 mt-1 leading-relaxed">Upgrade to a paid plan to unlock PDF and Word export downloads.</p>
                 </div>
               </div>
             )}
@@ -360,7 +360,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
           <div className="space-y-3 pt-1">
             {isLocked ? (
               <Link href="/dashboard/pricing" className="w-full block">
-                <Button className="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs h-11 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-violet-600/15">
+                <Button className="w-full bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-11 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-colors">
                   <Lock className="h-4 w-4" />
                   Unlock PDF &amp; DOCX Download
                 </Button>
@@ -370,7 +370,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                 <Button
                   onClick={() => downloadFile("pdf")}
                   disabled={pdfLoading}
-                  className="bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-violet-600/20"
+                  className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-colors"
                 >
                   {pdfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-4 w-4" />}
                   Download PDF
@@ -379,7 +379,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                   onClick={() => downloadFile("docx")}
                   disabled={docxLoading}
                   variant="outline"
-                  className="border-white/10 text-slate-200 hover:bg-white/10 font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-1.5 bg-[#121428]"
+                  className="border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-1.5 bg-white"
                 >
                   {docxLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-4 w-4" />}
                   Download DOCX
@@ -387,14 +387,14 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
               </div>
             )}
 
-            <div className="border-t border-white/8 pt-3 text-center">
+            <div className="border-t border-slate-100 pt-3 text-center">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Share your result 🚀</span>
               <div className="flex justify-center gap-3">
                 <a
                   href={linkedinShareUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-white/10 bg-[#121428] hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
+                  className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-colors"
                 >
                   <Share2 className="h-3 w-3 text-slate-400" />
                   LinkedIn
@@ -403,7 +403,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                   href={whatsappShareUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-white/10 bg-[#121428] hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
+                  className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-colors"
                 >
                   <Share2 className="h-3 w-3 text-slate-400" />
                   WhatsApp
@@ -414,47 +414,47 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
         </div>
 
         {/* Column 2: What Changed */}
-        <div className="bg-[#0b0d1b]/90 border border-white/10 rounded-2xl p-5.5 shadow-xl flex flex-col justify-between h-full relative space-y-4 hover:border-white/20 transition-all">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5.5 shadow-sm flex flex-col justify-between h-full relative space-y-4 hover:border-slate-300 transition-all">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-sky-400" />
+              <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-[#0d6e5a]" />
                 What Changed
               </h3>
-              <span className="text-[9px] font-mono font-bold bg-white/5 text-slate-300 border border-white/10 px-2 py-0.5 rounded-full">
+              <span className="text-[9px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full">
                 AI Optimization
               </span>
             </div>
 
             {/* Metrics row */}
             <div className="grid grid-cols-3 gap-2.5">
-              <div className="bg-[#121428] border border-white/5 rounded-xl p-3 text-center">
-                <span className="text-lg font-black text-emerald-400">{keywords.length}</span>
-                <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider mt-1">Keywords Added</span>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                <span className="text-lg font-black text-emerald-600">{keywords.length}</span>
+                <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider mt-1">Keywords Added</span>
               </div>
-              <div className="bg-[#121428] border border-white/5 rounded-xl p-3 text-center">
-                <span className="text-lg font-black text-violet-400">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                <span className="text-lg font-black text-[#0d6e5a]">
                   {rewrittenBullets}
                 </span>
-                <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider mt-1">Bullets Rewritten</span>
+                <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider mt-1">Bullets Rewritten</span>
               </div>
-              <div className="bg-[#121428] border border-white/5 rounded-xl p-3 text-center">
-                <span className="text-lg font-black text-sky-400">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                <span className="text-lg font-black text-teal-600">
                   {Math.min(100, Math.round(resume.scoreAfter * 0.95))}%
                 </span>
-                <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider mt-1">Skills Matched</span>
+                <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider mt-1">Skills Matched</span>
               </div>
             </div>
 
             {/* Keywords Injected Section */}
             <div className="space-y-2">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">ATS Keywords Injected</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">ATS Keywords Injected</span>
               <div className="flex flex-wrap gap-1.5 max-h-[90px] overflow-y-auto">
                 {keywords.length > 0 ? (
                   keywords.map((kw, i) => (
                     <span
                       key={i}
-                      className="text-[10px] font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-md"
+                      className="text-[10px] font-semibold bg-emerald-50 border border-emerald-200 text-emerald-700 px-2 py-0.5 rounded-md"
                     >
                       + {kw}
                     </span>
@@ -467,12 +467,12 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
 
             {/* Existing keywords */}
             <div className="space-y-2">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Keywords Already Present</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Keywords Already Present</span>
               <div className="flex flex-wrap gap-1.5 max-h-[90px] overflow-y-auto">
                 {existingKeywords.map((kw, i) => (
                   <span
                     key={i}
-                    className="text-[10px] font-semibold bg-sky-500/10 border border-sky-500/20 text-sky-300 px-2 py-0.5 rounded-md"
+                    className="text-[10px] font-semibold bg-slate-100 border border-slate-200 text-slate-700 px-2 py-0.5 rounded-md"
                   >
                     ✓ {kw}
                   </span>
@@ -482,58 +482,58 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
 
             {/* AI changes bullet points */}
             <div className="space-y-2">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">AI Optimization Suggestions</span>
-              <ul className="space-y-2 text-[10px] text-slate-300 font-medium leading-relaxed">
-                <li className="flex items-start gap-2 bg-white/[0.02] border border-white/5 rounded-lg p-2.5">
-                  <span className="text-sky-400 font-bold">&bull;</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">AI Optimization Suggestions</span>
+              <ul className="space-y-2 text-[10px] text-slate-600 font-medium leading-relaxed">
+                <li className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg p-2.5">
+                  <span className="text-[#0d6e5a] font-bold">&bull;</span>
                   <span>Expanded action verbs (e.g. replaced "worked on" with "spearheaded", "developed" with "architected").</span>
                 </li>
-                <li className="flex items-start gap-2 bg-white/[0.02] border border-white/5 rounded-lg p-2.5">
-                  <span className="text-sky-400 font-bold">&bull;</span>
+                <li className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg p-2.5">
+                  <span className="text-[#0d6e5a] font-bold">&bull;</span>
                   <span>Integrated {keywords.length} critical skills extracted from the target job description organically.</span>
                 </li>
-                <li className="flex items-start gap-2 bg-white/[0.02] border border-white/5 rounded-lg p-2.5">
-                  <span className="text-sky-400 font-bold">&bull;</span>
+                <li className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg p-2.5">
+                  <span className="text-[#0d6e5a] font-bold">&bull;</span>
                   <span>Enforced single-column layout, line breaks, and density rules for 100% parser accuracy.</span>
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3 text-center">
-            <span className="text-[10px] text-slate-400 font-medium">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+            <span className="text-[10px] text-slate-500 font-medium">
               ✨ All keywords integrated naturally with zero keyword stuffing.
             </span>
           </div>
         </div>
 
         {/* Column 3: ATS Score Breakdown */}
-        <div className="bg-[#0b0d1b]/90 border border-white/10 rounded-2xl p-5.5 shadow-xl flex flex-col justify-between h-full relative space-y-4 hover:border-white/20 transition-all">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5.5 shadow-sm flex flex-col justify-between h-full relative space-y-4 hover:border-slate-300 transition-all">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 ATS Score Breakdown
               </h3>
-              <span className="text-[9px] font-mono font-bold bg-white/5 text-slate-300 border border-white/10 px-2 py-0.5 rounded-full">
+              <span className="text-[9px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full">
                 Industry Standard
               </span>
             </div>
 
             {/* Score comparison visualizer */}
-            <div className="flex items-center justify-around gap-4 bg-[#121428] border border-white/5 rounded-xl p-4">
+            <div className="flex items-center justify-around gap-4 bg-slate-50 border border-slate-200 rounded-xl p-4">
               <CircleGauge value={resume.scoreBefore} label="Before" size={80} />
               <div className="flex flex-col items-center gap-1 shrink-0">
-                <div className="h-8 w-8 rounded-full bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400">
+                <div className="h-8 w-8 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
                   <ArrowRight className="h-4 w-4" />
                 </div>
-                <span className="text-[10px] font-black text-emerald-400">+{delta} pts</span>
+                <span className="text-[10px] font-black text-emerald-700">+{delta} pts</span>
               </div>
               <CircleGauge value={resume.scoreAfter} label="After" size={80} />
             </div>
 
             {/* Description Rubric */}
-            <p className="text-[10px] text-slate-400 leading-relaxed font-medium bg-white/[0.02] p-2.5 rounded-lg border border-white/5 text-center">
+            <p className="text-[10px] text-slate-500 leading-relaxed font-medium bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-center">
               Standard ATS Rubric Score &bull; Industry: Tech &bull; Multi-factor weighted match.
             </p>
 
@@ -545,28 +545,28 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                 { label: "Title Alignment", before: 40, after: 80, gain: "+40%" },
                 { label: "Experience Match", before: 50, after: 85, gain: "+35%" }
               ].map((item, idx) => (
-                <div key={idx} className="bg-[#121428] border border-white/5 rounded-xl p-3 space-y-2">
+                <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
                   <div className="flex items-center justify-between text-xs font-semibold">
-                    <span className="text-white font-bold text-[11px]">{item.label}</span>
+                    <span className="text-slate-800 font-bold text-[11px]">{item.label}</span>
                     <div className="flex items-center gap-1.5 font-mono text-[11px]">
-                      <span className="text-slate-400">{item.before}%</span>
-                      <span className="text-slate-500">&rarr;</span>
-                      <span className="text-emerald-400 font-bold">{item.after}%</span>
-                      <span className="text-[9px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded font-bold ml-1">
+                      <span className="text-slate-500">{item.before}%</span>
+                      <span className="text-slate-400">&rarr;</span>
+                      <span className="text-emerald-600 font-bold">{item.after}%</span>
+                      <span className="text-[9px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-bold ml-1">
                         {item.gain}
                       </span>
                     </div>
                   </div>
 
                   {/* Visual dual progress bar */}
-                  <div className="h-2 bg-slate-900 rounded-full overflow-hidden flex p-0.5 border border-white/5">
+                  <div className="h-2 bg-slate-200 rounded-full overflow-hidden flex p-0.5 border border-slate-200">
                     <div
-                      className="h-full bg-slate-600 rounded-l-full"
+                      className="h-full bg-slate-400 rounded-l-full"
                       style={{ width: `${item.before}%` }}
                       title={`Baseline: ${item.before}%`}
                     />
                     <div
-                      className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-500 rounded-r-full"
+                      className="h-full bg-[#0d6e5a] rounded-r-full"
                       style={{ width: `${item.after - item.before}%` }}
                       title={`Improvement: +${item.after - item.before}%`}
                     />
@@ -577,9 +577,10 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
           </div>
 
           {/* Feedback Box */}
-          <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3 flex items-start gap-2.5">
-            <MessageSquare className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" />
-            <p className="text-[10px] text-slate-400 leading-relaxed">
+          {/* Feedback Box */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-start gap-2.5">
+            <MessageSquare className="h-4 w-4 text-[#0d6e5a] shrink-0 mt-0.5" />
+            <p className="text-[10px] text-slate-500 leading-relaxed">
               Have feedback on this match? We read every suggestion to continually improve scoring precision.
             </p>
           </div>
@@ -590,36 +591,36 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
       {/* BOTTOM ACCORDIONS */}
       <div className="space-y-3">
         {/* Accordion 1: Skills Learning Roadmap (PRO) */}
-        <div className="border border-white/5 bg-[#0e0f21]/40 rounded-2xl overflow-hidden transition-all duration-300">
+        <div className="border border-slate-200 bg-white rounded-2xl overflow-hidden shadow-sm transition-all duration-300">
           <button
             onClick={() => setShowRoadmapAccordion(!showRoadmapAccordion)}
-            className="w-full flex items-center justify-between p-4 text-left hover:bg-white/2 transition-all"
+            className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-50 transition-all"
           >
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-xl bg-violet-650/10 border border-violet-500/20 flex items-center justify-center text-violet-400">
+              <div className="h-8 w-8 rounded-xl bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center text-[#0d6e5a]">
                 <GraduationCap className="h-4.5 w-4.5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                   Skills Learning Roadmap
                   {userPlan === "free" && (
-                    <span className="bg-violet-600 border border-violet-500 text-[8px] text-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider">PRO</span>
+                    <span className="bg-[#0d6e5a] text-[8px] text-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider">PRO</span>
                   )}
                 </span>
                 <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Select up to 3 skills to build a complete 90-day learning roadmap</p>
               </div>
             </div>
-            <ChevronRight className={`h-4.5 w-4.5 text-slate-500 transition-transform ${showRoadmapAccordion ? "rotate-90" : ""}`} />
+            <ChevronRight className={`h-4.5 w-4.5 text-slate-400 transition-transform ${showRoadmapAccordion ? "rotate-90" : ""}`} />
           </button>
 
           {showRoadmapAccordion && (
-            <div className="px-5 pb-5 pt-3 border-t border-white/5 bg-[#070814]/30 space-y-4">
+            <div className="px-5 pb-5 pt-3 border-t border-slate-200 bg-slate-50 space-y-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider block">
+                  <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider block">
                     Choose up to 3 target skills:
                   </span>
-                  <span className="text-[10px] font-mono font-bold text-violet-400 bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-mono font-bold text-[#0d6e5a] bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full">
                     {selectedRoadmapSkills.length}/3 Selected
                   </span>
                 </div>
@@ -635,8 +636,8 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                           onClick={() => toggleRoadmapSkill(skill)}
                           className={`text-[11px] font-semibold px-3 py-1.5 rounded-xl transition-all border flex items-center gap-1.5 ${
                             isSelected
-                              ? "bg-violet-600 border-violet-500 text-white font-bold shadow-md shadow-violet-600/20"
-                              : "bg-[#0f1022] border-white/10 text-slate-300 hover:text-white hover:border-white/20"
+                              ? "bg-[#0d6e5a] border-[#0d6e5a] text-white font-bold shadow-sm"
+                              : "bg-white border-slate-200 text-slate-700 hover:text-slate-900 hover:border-slate-300"
                           }`}
                         >
                           {isSelected && <Check className="h-3 w-3 text-white" />}
@@ -654,8 +655,8 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                           onClick={() => toggleRoadmapSkill(skill)}
                           className={`text-[11px] font-semibold px-3 py-1.5 rounded-xl transition-all border flex items-center gap-1.5 ${
                             isSelected
-                              ? "bg-violet-600 border-violet-500 text-white font-bold shadow-md shadow-violet-600/20"
-                              : "bg-[#0f1022] border-white/10 text-slate-300 hover:text-white hover:border-white/20"
+                              ? "bg-[#0d6e5a] border-[#0d6e5a] text-white font-bold shadow-sm"
+                              : "bg-white border-slate-200 text-slate-700 hover:text-slate-900 hover:border-slate-300"
                           }`}
                         >
                           {isSelected && <Check className="h-3 w-3 text-white" />}
@@ -667,7 +668,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                 </div>
 
                 <div className="pt-2 flex items-center justify-between gap-3">
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[10px] text-slate-500">
                     {selectedRoadmapSkills.length === 0 
                       ? "Click 1 to 3 skills above to build your roadmap." 
                       : `Selected: ${selectedRoadmapSkills.join(", ")}`}
@@ -675,7 +676,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                   <Button
                     onClick={handleGenerateRoadmap}
                     disabled={selectedRoadmapSkills.length === 0 || roadmapLoading}
-                    className="bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs h-9 px-4 rounded-xl shadow-md disabled:opacity-50"
+                    className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-9 px-4 rounded-xl shadow-sm disabled:opacity-50 transition-colors"
                   >
                     {roadmapLoading ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
@@ -688,20 +689,20 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
               </div>
 
               {roadmapLoading && (
-                <div className="flex items-center gap-2 text-[10px] text-slate-400 py-6 justify-center bg-[#070814]/40 border border-white/5 rounded-xl">
-                  <Loader2 className="h-4 w-4 animate-spin text-violet-400" />
+                <div className="flex items-center gap-2 text-[10px] text-slate-500 py-6 justify-center bg-white border border-slate-200 rounded-xl">
+                  <Loader2 className="h-4 w-4 animate-spin text-[#0d6e5a]" />
                   <span>Synthesizing tailored 90-day mastery curriculum for {selectedRoadmapSkills.join(", ")}...</span>
                 </div>
               )}
 
               {roadmapContent && (
-                <div className="bg-[#070814]/50 border border-white/5 p-4 rounded-xl text-xs text-slate-300 leading-relaxed space-y-2 select-text font-sans">
+                <div className="bg-white border border-slate-200 p-4 rounded-xl text-xs text-slate-800 leading-relaxed space-y-2 select-text font-sans shadow-sm">
                   <pre className="whitespace-pre-wrap font-sans select-text">{roadmapContent}</pre>
                 </div>
               )}
 
               {!roadmapLoading && !roadmapContent && (
-                <div className="text-center py-6 text-[10px] text-slate-500 italic bg-[#070814]/20 border border-dashed border-white/5 rounded-xl select-none">
+                <div className="text-center py-6 text-[10px] text-slate-500 italic bg-white border border-dashed border-slate-200 rounded-xl select-none">
                   Select a skill above to generate learning roadmap.
                 </div>
               )}
@@ -710,50 +711,50 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
         </div>
 
         {/* Accordion 2: Cover Letter Generator */}
-        <div className="border border-white/5 bg-[#0e0f21]/40 rounded-2xl overflow-hidden transition-all duration-300">
+        <div className="border border-slate-200 bg-white rounded-2xl overflow-hidden shadow-sm transition-all duration-300">
           <button
             onClick={() => setShowCoverLetterAccordion(!showCoverLetterAccordion)}
-            className="w-full flex items-center justify-between p-4 text-left hover:bg-white/2 transition-all"
+            className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-50 transition-all"
           >
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <div className="h-8 w-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
                 <FileText className="h-4.5 w-4.5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                   Cover Letter Generator
                 </span>
                 <p className="text-[10px] text-slate-500 mt-0.5 font-medium">1 free cover letter available</p>
               </div>
             </div>
-            <ChevronRight className={`h-4.5 w-4.5 text-slate-500 transition-transform ${showCoverLetterAccordion ? "rotate-90" : ""}`} />
+            <ChevronRight className={`h-4.5 w-4.5 text-slate-400 transition-transform ${showCoverLetterAccordion ? "rotate-90" : ""}`} />
           </button>
 
           {showCoverLetterAccordion && (
-            <div className="px-5 pb-5 pt-3 border-t border-white/5 bg-[#070814]/30 space-y-4">
-              <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
+            <div className="px-5 pb-5 pt-3 border-t border-slate-200 bg-slate-50 space-y-4">
+              <p className="text-[10px] text-slate-600 leading-relaxed font-semibold">
                 Generate a tailored cover letter using your optimized resume and the job description details.
               </p>
 
               {!coverLetterGenerated && !generatingLetter && (
                 <Button
                   onClick={handleGenerateCoverLetter}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] h-9 px-4 rounded-lg"
+                  className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-[10px] h-9 px-4 rounded-lg shadow-sm transition-colors"
                 >
                   Generate Cover Letter
                 </Button>
               )}
 
               {generatingLetter && (
-                <div className="flex items-center gap-2 text-[10px] text-slate-400 py-4 justify-center bg-[#070814]/40 border border-white/5 rounded-xl">
-                  <Loader2 className="h-4 w-4 animate-spin text-emerald-400" />
+                <div className="flex items-center gap-2 text-[10px] text-slate-500 py-4 justify-center bg-white border border-slate-200 rounded-xl">
+                  <Loader2 className="h-4 w-4 animate-spin text-[#0d6e5a]" />
                   <span>Drafting tailored cover letter...</span>
                 </div>
               )}
 
               {coverLetterGenerated && (
                 <div className="space-y-3 select-text">
-                  <div className="bg-[#070814]/50 border border-white/5 p-4 rounded-xl text-xs text-slate-300 leading-relaxed space-y-2 select-text font-serif">
+                  <div className="bg-white border border-slate-200 p-4 rounded-xl text-xs text-slate-800 leading-relaxed space-y-2 select-text font-serif shadow-sm">
                     <pre className="whitespace-pre-wrap font-serif select-text">{coverLetterGenerated}</pre>
                   </div>
                   <Button
@@ -761,7 +762,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                       navigator.clipboard.writeText(coverLetterGenerated);
                       toast.success("Cover letter copied to clipboard!");
                     }}
-                    className="bg-[#0f1022] border border-white/5 text-slate-300 hover:text-white hover:bg-white/5 text-[10px] h-8 rounded-lg"
+                    className="bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 text-[10px] h-8 rounded-lg shadow-sm"
                   >
                     Copy Cover Letter
                   </Button>
@@ -790,25 +791,19 @@ function HistoryRow({
   const afterColor = scoreColor(resume.scoreAfter).text;
 
   return (
-    <div className="group w-full rounded-xl py-2.5 px-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all duration-300 relative overflow-hidden bg-[#0e0f21]/40 border border-white/5 hover:border-violet-500/30">
-      {/* Glow on hover */}
-      <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-        style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.03) 0%, transparent 65%)" }}
-      />
-
+    <div className="group w-full rounded-xl py-3 px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all duration-200 relative overflow-hidden bg-white border border-slate-200 hover:border-[#0d6e5a]/40 shadow-sm hover:shadow">
       {/* Clickable left area */}
       <button onClick={onClick} className="flex items-center gap-3 min-w-0 flex-1 text-left">
         {/* Score comparison pill */}
-        <div className="shrink-0 flex items-center gap-1.5 bg-[#070814]/60 border border-white/5 px-2.5 py-1 rounded-full select-none text-[10px] font-bold">
+        <div className="shrink-0 flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full select-none text-[10px] font-bold">
           <span style={{ color: beforeColor }}>{resume.scoreBefore}</span>
-          <ArrowRight className="h-3 w-3 text-slate-500" />
+          <ArrowRight className="h-3 w-3 text-slate-400" />
           <span style={{ color: afterColor }}>{resume.scoreAfter}</span>
         </div>
 
         {/* Title and metadata info */}
         <div className="min-w-0">
-          <h3 className="text-xs font-bold text-white truncate group-hover:text-violet-300 transition-colors">
+          <h3 className="text-xs font-bold text-slate-900 truncate group-hover:text-[#0d6e5a] transition-colors">
             {resume.jobTitle || "Resume Optimization"}
           </h3>
           <div className="flex items-center gap-2 text-[9px] text-slate-500 mt-0.5 font-semibold">
@@ -824,17 +819,17 @@ function HistoryRow({
 
       {/* Right: delta pill + delete button */}
       <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">
-        <span className="text-[9px] font-black bg-emerald-500/10 border border-emerald-500/20 text-[#22c55e] px-1.5 py-0.5 rounded-full">
+        <span className="text-[9px] font-black bg-emerald-50 border border-emerald-200 text-emerald-700 px-1.5 py-0.5 rounded-full">
           +{delta}
         </span>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
           title="Delete this optimization"
-          className="h-6 w-6 flex items-center justify-center rounded-md bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
+          className="h-6 w-6 flex items-center justify-center rounded-md bg-red-50 border border-red-200 text-red-500 hover:bg-red-100 transition-colors opacity-0 group-hover:opacity-100"
         >
           <X className="h-3 w-3" />
         </button>
-        <ChevronRight className="h-3.5 w-3.5 text-slate-600 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+        <ChevronRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-[#0d6e5a] group-hover:translate-x-0.5 transition-all shrink-0" />
       </div>
     </div>
   );
@@ -947,9 +942,9 @@ export default function HistoryPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#060713]">
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
         <div className="text-center space-y-2">
-          <Loader2 className="h-8 w-8 text-violet-600 animate-spin mx-auto" />
+          <Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin mx-auto" />
           <p className="text-xs text-slate-500 font-semibold">Verifying session...</p>
         </div>
       </div>
@@ -957,7 +952,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen text-slate-100 bg-[#060713]">
+    <div className="flex flex-col min-h-screen text-slate-900 bg-[#f8fafc]">
       <Navbar />
 
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 py-10 select-text">
@@ -977,12 +972,12 @@ export default function HistoryPage() {
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2.5">
-                    <div className="h-8 w-8 rounded-xl bg-violet-500/10 border border-violet-500/25 flex items-center justify-center text-violet-400">
+                    <div className="h-8 w-8 rounded-xl bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center text-[#0d6e5a]">
                       <History className="h-4.5 w-4.5" />
                     </div>
-                    <h1 className="text-xl font-black text-white tracking-tight">Resume History</h1>
+                    <h1 className="text-xl font-black text-slate-900 tracking-tight">Resume History</h1>
                   </div>
-                  <p className="text-xs text-slate-400 mt-1 ml-10">
+                  <p className="text-xs text-slate-500 mt-1 ml-10">
                     {resumes.length > 0
                       ? `${resumes.length} optimization${resumes.length !== 1 ? "s" : ""} — click any row to view details`
                       : "Your resume optimizations will appear here"}
@@ -990,7 +985,7 @@ export default function HistoryPage() {
                 </div>
 
                 <Link href="/dashboard">
-                  <Button className="h-9 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-violet-600/15">
+                  <Button className="h-9 px-4 bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs rounded-xl shadow-sm transition-colors">
                     <Plus className="h-4 w-4 mr-1.5" />
                     New Resume
                   </Button>
@@ -1000,20 +995,20 @@ export default function HistoryPage() {
               {/* Content list */}
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-24 gap-3">
-                  <Loader2 className="h-8 w-8 text-violet-500 animate-spin" />
+                  <Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin" />
                   <p className="text-xs text-slate-500 font-semibold">Loading history...</p>
                 </div>
               ) : resumes.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl p-16 text-center border border-dashed border-white/5 bg-[#0e0f21]/20">
-                  <div className="h-14 w-14 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mb-4">
-                    <AlertCircle className="h-6 w-6 text-violet-400" />
+                <div className="flex flex-col items-center justify-center rounded-2xl p-16 text-center border border-dashed border-slate-300 bg-white shadow-sm">
+                  <div className="h-14 w-14 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center mb-4">
+                    <AlertCircle className="h-6 w-6 text-[#0d6e5a]" />
                   </div>
-                  <h3 className="text-sm font-bold text-white mb-1">No optimizations yet</h3>
-                  <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+                  <h3 className="text-sm font-bold text-slate-900 mb-1">No optimizations yet</h3>
+                  <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
                     Upload your resume and a job description to run your first AI-powered optimization.
                   </p>
                   <Link href="/dashboard" className="mt-5">
-                    <Button className="font-bold text-xs bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl px-4 py-2">
+                    <Button className="font-bold text-xs bg-[#0d6e5a] hover:bg-[#094d3f] text-white rounded-xl px-4 py-2 shadow-sm transition-colors">
                       <Plus className="h-4 w-4 mr-1.5" />
                       Start Optimizing
                     </Button>
@@ -1037,7 +1032,7 @@ export default function HistoryPage() {
                       <button
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
-                        className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg border border-white/8 bg-[#0e0f21]/60 text-slate-400 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                        className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
                       >
                         <ArrowLeft className="h-3.5 w-3.5" /> Prev
                       </button>
@@ -1049,8 +1044,8 @@ export default function HistoryPage() {
                             onClick={() => setCurrentPage(i + 1)}
                             className={`h-7 w-7 rounded-lg text-xs font-bold transition-all ${
                               currentPage === i + 1
-                                ? "bg-violet-600 text-white"
-                                : "bg-[#0e0f21]/60 border border-white/8 text-slate-400 hover:text-white"
+                                ? "bg-[#0d6e5a] text-white shadow-sm"
+                                : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
                             }`}
                           >
                             {i + 1}
@@ -1061,7 +1056,7 @@ export default function HistoryPage() {
                       <button
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
-                        className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg border border-white/8 bg-[#0e0f21]/60 text-slate-400 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                        className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
                       >
                         Next <ChevronRight className="h-3.5 w-3.5" />
                       </button>
@@ -1080,24 +1075,24 @@ export default function HistoryPage() {
 
       {/* CENTERED DELETE CONFIRMATION POPUP MODAL */}
       {deleteTarget && (
-        <div className="fixed inset-0 bg-[#060713]/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-[#0d0e1f] border border-red-500/20 p-6 rounded-2xl space-y-4 shadow-2xl shadow-red-950/20 animate-in fade-in zoom-in-95 duration-150 select-none">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-white border border-slate-200 p-6 rounded-2xl space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150 select-none">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shrink-0">
+              <div className="h-10 w-10 rounded-full bg-red-50 border border-red-200 flex items-center justify-center text-red-500 shrink-0">
                 <Trash2 className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-extrabold text-white text-sm">Delete Optimization Record</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Are you sure you want to delete this optimization history record?</p>
+                <h3 className="font-extrabold text-slate-900 text-sm">Delete Optimization Record</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Are you sure you want to delete this optimization history record?</p>
               </div>
             </div>
 
-            <div className="bg-[#070814] p-3 rounded-xl border border-white/5 text-xs text-slate-300">
-              <span className="font-bold text-white block truncate">{deleteTarget.jobTitle || "Resume Optimization"}</span>
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-700">
+              <span className="font-bold text-slate-900 block truncate">{deleteTarget.jobTitle || "Resume Optimization"}</span>
               <span className="text-[10px] text-slate-500">{formatDate(deleteTarget.createdAt)}</span>
             </div>
 
-            <p className="text-[11px] text-red-400/90 font-medium">
+            <p className="text-[11px] text-red-600 font-medium">
               This action cannot be undone and will permanently remove this record from your history.
             </p>
 
@@ -1106,7 +1101,7 @@ export default function HistoryPage() {
                 type="button"
                 variant="ghost"
                 onClick={() => setDeleteTarget(null)}
-                className="text-slate-400 hover:text-white text-xs font-semibold px-4 h-9 rounded-xl hover:bg-white/5"
+                className="text-slate-600 hover:text-slate-900 text-xs font-semibold px-4 h-9 rounded-xl border border-slate-200 hover:bg-slate-50"
               >
                 Cancel
               </Button>
@@ -1116,7 +1111,7 @@ export default function HistoryPage() {
                   handleDelete(deleteTarget);
                   setDeleteTarget(null);
                 }}
-                className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 h-9 rounded-xl shadow-lg shadow-red-600/20"
+                className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 h-9 rounded-xl shadow-sm transition-colors"
               >
                 Delete
               </Button>

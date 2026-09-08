@@ -458,12 +458,12 @@ export default function DashboardPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#040d1a]">
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
         <div className="text-center space-y-3">
           <div className="relative mx-auto h-12 w-12">
             <div className="absolute inset-0 rounded-full border-2 border-cyan-500/20" />
-            <div className="absolute inset-0 rounded-full border-t-2 border-cyan-400 animate-spin" />
-            <Zap className="absolute inset-0 m-auto h-5 w-5 text-cyan-400" />
+            <div className="absolute inset-0 rounded-full border-t-2 border-[#0d6e5a] animate-spin" />
+            <Zap className="absolute inset-0 m-auto h-5 w-5 text-[#0d6e5a]" />
           </div>
           <p className="text-xs text-slate-500 font-semibold tracking-wide">Authenticating...</p>
         </div>
@@ -477,7 +477,7 @@ export default function DashboardPage() {
   const delta = afterScore && beforeScore ? afterScore.overall - beforeScore.overall : 0;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#111318] text-[#e2e2e8] font-sans">
+    <div className="flex flex-col min-h-screen bg-[#f8fafc] text-[#0f172a] font-sans">
       {/* Missing Details Modal — shown before optimization if resume has gaps */}
       {showMissingModal && missingFields.length > 0 && (
         <MissingDetailsModal
@@ -487,11 +487,11 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* Ambient background glows */}
+      {/* Ambient background - subtle light pattern */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/3 w-[700px] h-[500px] bg-[#5E5CE6]/6 rounded-full blur-[150px]" />
-        <div className="absolute top-1/3 right-0 w-[500px] h-[500px] bg-[#0A84FF]/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 left-0 w-[600px] h-[400px] bg-[#BF5AF2]/5 rounded-full blur-[120px]" />
+        <div className="absolute top-0 left-1/3 w-[700px] h-[500px] bg-[#0d6e5a]/3 rounded-full blur-[150px]" />
+        <div className="absolute top-1/3 right-0 w-[500px] h-[500px] bg-[#0f766e]/3 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[400px] bg-slate-200/50 rounded-full blur-[120px]" />
       </div>
 
       <Navbar refreshKey={refreshKey} />
@@ -500,28 +500,28 @@ export default function DashboardPage() {
 
         {/* ── LOADING OVERLAY ─────────────────────────────────────── */}
         {optimizing && (
-          <div className="fixed inset-0 bg-[#0a0b14] z-50 flex flex-col items-center justify-center p-6 select-none animate-in fade-in duration-300">
+          <div className="fixed inset-0 bg-white/95 z-50 flex flex-col items-center justify-center p-6 select-none animate-in fade-in duration-300">
             <div className="max-w-[480px] w-full text-center space-y-6">
               <div className="relative mx-auto h-16 w-16">
-                <div className="absolute inset-0 rounded-full border-4 border-violet-500/10" />
-                <div className="absolute inset-0 rounded-full border-t-4 border-violet-500 animate-spin" />
-                <Sparkles className="absolute inset-0 m-auto h-6 w-6 text-violet-400 animate-pulse" />
+                <div className="absolute inset-0 rounded-full border-4 border-[#0d6e5a]/10" />
+                <div className="absolute inset-0 rounded-full border-t-4 border-[#0d6e5a] animate-spin" />
+                <Sparkles className="absolute inset-0 m-auto h-6 w-6 text-[#0d6e5a] animate-pulse" />
               </div>
 
               <div className="space-y-2">
-                <h3 className="font-extrabold text-white text-lg tracking-tight">Improving Your Resume</h3>
-                <p className="text-xs text-slate-400 font-medium">Running advanced AI optimizations to upgrade metrics &amp; structure...</p>
+                <h3 className="font-extrabold text-slate-900 text-lg tracking-tight">Improving Your Resume</h3>
+                <p className="text-xs text-slate-500 font-medium">Running advanced AI optimizations to upgrade metrics &amp; structure...</p>
               </div>
 
               <div className="space-y-2">
-                <Progress value={progress} className="h-1.5 bg-slate-950 [&>div]:bg-gradient-to-r [&>div]:from-violet-500 [&>div]:to-indigo-500 rounded-full border border-white/5" />
-                <div className="flex justify-between text-[10px] font-bold text-violet-400">
+                <Progress value={progress} className="h-1.5 bg-slate-100 [&>div]:bg-gradient-to-r [&>div]:from-[#0d6e5a] [&>div]:to-[#0f766e] rounded-full border border-slate-200" />
+                <div className="flex justify-between text-[10px] font-bold text-[#0d6e5a]">
                   <span className="uppercase tracking-wider">{loadingMessage}</span>
                   <span>{progress}%</span>
                 </div>
               </div>
 
-              <div className="bg-[#0b0c1e] border border-white/5 rounded-2xl p-4 space-y-3.5 text-left max-w-md mx-auto">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3.5 text-left max-w-md mx-auto">
                 {[
                   { label: "Analyze keywords & semantic patterns", minPrg: 10 },
                   { label: "Run AI rewrite engine to upgrade weak bullets", minPrg: 35 },
@@ -534,19 +534,19 @@ export default function DashboardPage() {
                     <div key={idx} className="flex items-center gap-3 transition-opacity duration-300">
                       <div className={`h-5 w-5 rounded-full flex items-center justify-center border text-[10px] font-bold shrink-0 ${
                         isDone 
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-600" 
                           : isActive 
-                          ? "bg-violet-500/10 border-violet-500/35 text-violet-400 animate-pulse" 
-                          : "bg-slate-900 border-white/5 text-slate-600"
+                          ? "bg-[#0d6e5a]/10 border-[#0d6e5a]/30 text-[#0d6e5a] animate-pulse" 
+                          : "bg-slate-100 border-slate-200 text-slate-400"
                       }`}>
                         {isDone ? "✓" : idx + 1}
                       </div>
                       <span className={`text-[11px] font-semibold ${
                         isDone 
-                          ? "text-slate-300 line-through decoration-slate-600" 
+                          ? "text-slate-400 line-through decoration-slate-300" 
                           : isActive 
-                          ? "text-white font-extrabold" 
-                          : "text-slate-500"
+                          ? "text-slate-900 font-extrabold" 
+                          : "text-slate-400"
                       }`}>
                         {step.label}
                       </span>
@@ -567,14 +567,14 @@ export default function DashboardPage() {
                 setBeforeScore(null);
                 setAfterScore(null);
               }}
-              className="flex items-center text-xs font-bold text-slate-400 hover:text-cyan-400 transition-colors"
+              className="flex items-center text-xs font-bold text-slate-500 hover:text-[#0d6e5a] transition-colors"
             >
               <ArrowLeft className="h-4 w-4 mr-1.5" />
               Back to Editor
             </button>
             <div className="flex gap-2">
               <Link href="/dashboard/history">
-                <Button size="sm" variant="outline" className="border-white/5 text-slate-300 hover:bg-white/5 text-xs font-bold h-8 rounded-full">
+                <Button size="sm" variant="outline" className="border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold h-8 rounded-lg">
                   <History className="h-3.5 w-3.5 mr-1.5" />
                   View History
                 </Button>
@@ -583,7 +583,7 @@ export default function DashboardPage() {
                 size="sm"
                 variant="outline"
                 onClick={handleReset}
-                className="border-white/5 text-slate-300 hover:bg-white/5 text-xs font-bold h-8 rounded-full"
+                className="border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold h-8 rounded-lg"
               >
                 <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
                 Reset
@@ -593,14 +593,14 @@ export default function DashboardPage() {
         ) : (
           /* Header Title Block */
           <div className="text-center space-y-3 mb-10 select-none">
-            <h1 className="text-3xl md:text-4.5xl font-black text-white tracking-tight leading-none">
-              Improve Your Resume <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent">for Any Job</span>
+            <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-none">
+              Improve Your Resume <span className="bg-gradient-to-r from-[#0d6e5a] via-[#0f766e] to-[#134e4a] bg-clip-text text-transparent">for Any Job</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto font-medium leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto font-medium leading-relaxed">
               Paste your resume and the job you want. We improve it to match &mdash; automatically. Get 2 free resumes per month.
             </p>
             <div>
-              <Badge className="bg-cyan-500/5 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/5 px-3 py-1 text-[10px] rounded-full font-bold select-none">
+              <Badge className="bg-[#0d6e5a]/8 border border-[#0d6e5a]/20 text-[#0d6e5a] hover:bg-[#0d6e5a]/8 px-3 py-1 text-[10px] rounded-full font-bold select-none">
                 +1 extra resume for each referral
               </Badge>
             </div>
@@ -614,14 +614,14 @@ export default function DashboardPage() {
           <div ref={resultsRef} className="space-y-6">
             {/* Top Tracker Banner Message */}
             {!trackerAdded && (
-              <div className="bg-gradient-to-r from-cyan-950/20 via-[#0a0f1d] to-transparent border border-cyan-500/10 rounded-2xl p-4 flex items-center justify-between gap-4 select-none">
+              <div className="bg-gradient-to-r from-[#0d6e5a]/5 via-white to-transparent border border-[#0d6e5a]/10 rounded-xl p-4 flex items-center justify-between gap-4 select-none">
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0">
-                    <Briefcase className="h-4.5 w-4.5 text-cyan-400" />
+                  <div className="h-9 w-9 rounded-xl bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center shrink-0">
+                    <Briefcase className="h-4 w-4 text-[#0d6e5a]" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white">Add to your tracker?</h4>
-                    <p className="text-[10px] text-slate-400 mt-0.5">
+                    <h4 className="text-xs font-bold text-slate-900">Add to your tracker?</h4>
+                    <p className="text-[10px] text-slate-500 mt-0.5">
                       <strong>{optimizeResult.company || "General Application"}</strong> &mdash; {optimizeResult.jobTitle || "Optimized Resume"}
                     </p>
                   </div>
@@ -629,13 +629,13 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-2 shrink-0">
                   <Button
                     onClick={handleAddToTracker}
-                    className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-[10px] h-8 rounded-lg px-4"
+                    className="bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-bold text-[10px] h-8 rounded-lg px-4"
                   >
                     Yes, add it
                   </Button>
                   <button
                     onClick={() => setTrackerAdded(true)}
-                    className="p-1 text-slate-500 hover:text-white rounded transition-colors"
+                    className="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -644,23 +644,23 @@ export default function DashboardPage() {
             )}
 
             {/* Overall Score Banner */}
-            <div className="bg-[#10111f] border border-white/7 p-7 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
+            <div className="bg-white border border-slate-200 p-6 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 select-none shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                  <TrendingUp className="h-5 w-5 text-emerald-400" />
+                <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-emerald-600" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-white tracking-tight">
+                  <h2 className="text-lg font-black text-slate-900 tracking-tight">
                     ATS Optimization Complete
                   </h2>
-                  <p className="text-xs text-slate-400 font-medium">Your resume has been optimized with target keywords and metrics.</p>
+                  <p className="text-xs text-slate-500 font-medium">Your resume has been optimized with target keywords and metrics.</p>
                 </div>
               </div>
               
               <Button
                 variant="outline"
                 onClick={handleReset}
-                className="border-white/5 text-slate-300 hover:bg-white/5 font-bold text-xs h-9 rounded-xl px-5 bg-transparent"
+                className="border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs h-9 rounded-lg px-5 bg-transparent"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Optimize Another Resume
@@ -674,25 +674,25 @@ export default function DashboardPage() {
               <ScrollFadeIn direction="left" className="lg:col-span-5 space-y-6">
                 
                 {/* Score circular gauges (like in History DetailView) */}
-                <Card className="border-white/7 bg-[#10111f]/60 shadow-xl rounded-2xl overflow-hidden">
-                  <CardContent className="p-7 space-y-6">
-                    <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2 select-none">
+                <Card className="border-slate-200 bg-white shadow-sm rounded-xl overflow-hidden">
+                  <CardContent className="p-6 space-y-5">
+                    <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-2 select-none">
                       <span className="h-2 w-2 rounded-full bg-emerald-500" />
                       ATS Match Score Comparison
                     </h3>
 
-                    <div className="flex items-center justify-around gap-4 bg-[#070814]/40 border border-white/5 rounded-2xl p-5">
+                    <div className="flex items-center justify-around gap-4 bg-slate-50 border border-slate-100 rounded-xl p-5">
                       <CircleGauge value={beforeScore?.overall || 0} label="Original" size={80} />
                       <div className="flex flex-col items-center gap-1 shrink-0 select-none">
-                        <div className="h-8 w-8 rounded-full bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400">
+                        <div className="h-8 w-8 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
                           <ArrowRight className="h-4 w-4 animate-pulse" />
                         </div>
-                        <span className="text-[10px] font-black text-emerald-400">+{delta} pts</span>
+                        <span className="text-[10px] font-black text-emerald-600">+{delta} pts</span>
                       </div>
                       <CircleGauge value={afterScore?.overall || 0} label="Optimized" size={80} />
                     </div>
 
-                    <p className="text-[10px] text-slate-500 leading-relaxed font-semibold bg-white/2 p-2.5 rounded-lg border border-white/5 text-center select-none">
+                    <p className="text-[10px] text-slate-500 leading-relaxed font-semibold bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-center select-none">
                       Industry Standard ATS Scorer Rubric. Overlap analysis shows your keyword matching has been successfully enhanced.
                     </p>
                   </CardContent>
@@ -700,7 +700,7 @@ export default function DashboardPage() {
 
                 {/* Keywords Badges */}
                 {afterScore && (
-                  <div className="bg-[#0e0f21]/50 border border-white/5 rounded-2xl p-5 shadow-xl select-none">
+                  <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm select-none">
                     <KeywordBadges
                       added={optimizeResult?.keywordsAdded || []}
                       missing={afterScore.missingKeywords}
@@ -727,14 +727,14 @@ export default function DashboardPage() {
 
             {/* BELOW PDF PREVIEW: Full-width AI Optimization Summary & Tools Box */}
             {optimizeResult?.summary && (
-              <Card className="border-white/7 bg-[#10111f]/60 shadow-xl rounded-2xl overflow-hidden mb-6 w-full select-none">
-                <CardContent className="p-7 space-y-4">
+              <Card className="border-slate-200 bg-white shadow-sm rounded-xl overflow-hidden mb-6 w-full select-none">
+                <CardContent className="p-6 space-y-4">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-4.5 w-4.5 text-violet-400" />
-                    <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">AI Optimization Summary</h3>
+                    <Sparkles className="h-4 w-4 text-[#0d6e5a]" />
+                    <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">AI Optimization Summary</h3>
                   </div>
-                  <div className="bg-[#070814]/40 border border-white/5 p-5 rounded-xl">
-                    <p className="text-xs text-slate-300 leading-relaxed font-semibold">
+                  <div className="bg-slate-50 border border-slate-100 p-5 rounded-xl">
+                    <p className="text-xs text-slate-600 leading-relaxed font-semibold">
                       {optimizeResult.summary}
                     </p>
                   </div>
@@ -745,47 +745,47 @@ export default function DashboardPage() {
             {/* Full-width Tools Accordions: Skills Learning Roadmap & Cover Letter */}
             <div className="space-y-4 select-none mb-6 w-full">
               {/* Accordion 1: Skills Learning Roadmap (PRO: 3, PRO MAX: 9) */}
-              <div className="border border-white/5 bg-[#071525]/40 rounded-2xl overflow-hidden transition-all duration-300">
+              <div className="border border-slate-200 bg-white rounded-xl overflow-hidden transition-all duration-300 shadow-sm">
                 <button
                   onClick={() => setShowRoadmapAccordion(!showRoadmapAccordion)}
-                  className="w-full flex items-center justify-between p-4.5 text-left hover:bg-white/2 transition-all"
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-50 transition-all"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-xl bg-cyan-600/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-                      <GraduationCap className="h-4.5 w-4.5" />
+                    <div className="h-8 w-8 rounded-xl bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center text-[#0d6e5a]">
+                      <GraduationCap className="h-4 w-4" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="text-xs font-bold text-white">Skills Learning Roadmap</h4>
+                        <h4 className="text-xs font-bold text-slate-900">Skills Learning Roadmap</h4>
                         {userPlan === "free" && (
-                          <Badge className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold border-cyan-500/20">PRO</Badge>
+                          <Badge className="bg-[#0d6e5a]/10 hover:bg-[#0d6e5a]/20 text-[#0d6e5a] text-[8px] font-bold border-[#0d6e5a]/20">PRO</Badge>
                         )}
                       </div>
                       <p className="text-[10px] text-slate-500 mt-0.5">Select up to 3 skills to generate a comprehensive 90-day learning roadmap.</p>
                     </div>
                   </div>
-                  <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${showRoadmapAccordion ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${showRoadmapAccordion ? "rotate-180" : ""}`} />
                 </button>
 
                 {showRoadmapAccordion && (
-                  <div className="p-5 border-t border-white/5 bg-[#050e18]/40 space-y-4">
+                  <div className="p-5 border-t border-slate-100 bg-slate-50 space-y-4">
                     {userPlan === "free" && !(user?.email && isOwnerEmail(user.email)) ? (
                       <div className="text-center py-6 max-w-md mx-auto space-y-3">
-                        <Lock className="h-8 w-8 text-cyan-400 mx-auto" />
-                        <h5 className="text-xs font-bold text-white">Pro Access Required</h5>
+                        <Lock className="h-8 w-8 text-[#0d6e5a] mx-auto" />
+                        <h5 className="text-xs font-bold text-slate-900">Pro Access Required</h5>
                         <p className="text-[10px] text-slate-500 leading-relaxed">Upgrade to our premium plan to unlock step-by-step custom learning roadmaps for target keywords.</p>
                         <Link href="/dashboard/pricing" className="inline-block pt-1">
-                          <Button className="h-8 text-[10px] font-bold bg-cyan-600 hover:bg-cyan-500">Upgrade to Pro</Button>
+                          <Button className="h-8 text-[10px] font-bold bg-[#0d6e5a] hover:bg-[#0a5a49] text-white">Upgrade to Pro</Button>
                         </Link>
                       </div>
                     ) : (
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                               Choose up to 3 target skills:
                             </span>
-                            <span className="text-[10px] font-mono font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-mono font-bold text-[#0d6e5a] bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 px-2 py-0.5 rounded-full">
                               {selectedRoadmapSkills.length}/3 Selected
                             </span>
                           </div>
@@ -807,13 +807,13 @@ export default function DashboardPage() {
                                     key={skill}
                                     type="button"
                                     onClick={() => toggleRoadmapSkill(skill)}
-                                    className={`text-[10px] font-semibold py-1.5 px-3 rounded-xl border transition-all flex items-center gap-1.5 ${
+                                    className={`text-[10px] font-semibold py-1.5 px-3 rounded-lg border transition-all flex items-center gap-1.5 ${
                                       isSelected
-                                        ? "bg-cyan-500/20 border-cyan-500 text-cyan-300 font-bold shadow-sm"
-                                        : "bg-[#0b1c30] border-white/5 text-slate-400 hover:text-white hover:border-white/20"
+                                        ? "bg-[#0d6e5a]/10 border-[#0d6e5a] text-[#0d6e5a] font-bold shadow-sm"
+                                        : "bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300"
                                     }`}
                                   >
-                                    {isSelected && <span className="text-cyan-300 font-bold">✓</span>}
+                                    {isSelected && <span className="text-[#0d6e5a] font-bold">✓</span>}
                                     {skill}
                                   </button>
                                 );
@@ -822,7 +822,7 @@ export default function DashboardPage() {
                           </div>
 
                           <div className="pt-2 flex items-center justify-between gap-3">
-                            <span className="text-[10px] text-slate-400">
+                            <span className="text-[10px] text-slate-500">
                               {selectedRoadmapSkills.length === 0 
                                 ? "Click 1 to 3 skills above to build your roadmap." 
                                 : `Selected: ${selectedRoadmapSkills.join(", ")}`}
@@ -830,7 +830,7 @@ export default function DashboardPage() {
                             <Button
                               onClick={handleGenerateRoadmap}
                               disabled={selectedRoadmapSkills.length === 0 || roadmapLoading}
-                              className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs h-9 px-4 rounded-xl shadow-md disabled:opacity-50"
+                              className="bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm disabled:opacity-50"
                             >
                               {roadmapLoading ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
@@ -843,14 +843,14 @@ export default function DashboardPage() {
                         </div>
 
                         {roadmapLoading && (
-                          <div className="flex items-center gap-2 text-[10px] text-slate-400 py-6 justify-center bg-[#050e18] border border-white/5 rounded-xl">
-                            <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+                          <div className="flex items-center gap-2 text-[10px] text-slate-500 py-6 justify-center bg-white border border-slate-200 rounded-xl">
+                            <Loader2 className="h-4 w-4 animate-spin text-[#0d6e5a]" />
                             <span>Synthesizing tailored 90-day mastery curriculum for {selectedRoadmapSkills.join(", ")}...</span>
                           </div>
                         )}
 
                         {roadmapContent && (
-                          <div className="bg-[#050e18] border border-white/5 p-4 rounded-xl text-xs text-slate-300 leading-relaxed space-y-2 select-text font-sans">
+                          <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-xs text-slate-700 leading-relaxed space-y-2 select-text font-sans">
                             <pre className="whitespace-pre-wrap font-sans select-text">{roadmapContent}</pre>
                           </div>
                         )}
@@ -861,47 +861,47 @@ export default function DashboardPage() {
               </div>
 
               {/* Accordion 2: Cover Letter Generator (Free: 1, Pro: 5, Pro Max: 15) */}
-              <div className="border border-white/5 bg-[#071525]/40 rounded-2xl overflow-hidden transition-all duration-300">
+              <div className="border border-slate-200 bg-white rounded-xl overflow-hidden transition-all duration-300 shadow-sm">
                 <button
                   onClick={() => setShowCoverLetterAccordion(!showCoverLetterAccordion)}
-                  className="w-full flex items-center justify-between p-4.5 text-left hover:bg-white/2 transition-all"
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-50 transition-all"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-xl bg-cyan-600/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-                      <FileText className="h-4.5 w-4.5" />
+                    <div className="h-8 w-8 rounded-xl bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center text-[#0d6e5a]">
+                      <FileText className="h-4 w-4" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="text-xs font-bold text-white">Tailored Cover Letter Generator</h4>
+                        <h4 className="text-xs font-bold text-slate-900">Tailored Cover Letter Generator</h4>
                       </div>
                       <p className="text-[10px] text-slate-500 mt-0.5">Generate a customized cover letter mapped to target job description (Free: 1, Pro: 5, Pro Max: 15).</p>
                     </div>
                   </div>
-                  <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${showCoverLetterAccordion ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${showCoverLetterAccordion ? "rotate-180" : ""}`} />
                 </button>
 
                 {showCoverLetterAccordion && (
-                  <div className="p-5 border-t border-white/5 bg-[#050e18]/40 space-y-4">
+                  <div className="p-5 border-t border-slate-100 bg-slate-50 space-y-4">
                     <div className="space-y-4">
                       {!coverLetterGenerated && !generatingLetter && (
                         <Button
                           onClick={handleGenerateCoverLetter}
-                          className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs h-9 rounded-lg"
+                          className="bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-bold text-xs h-9 rounded-lg"
                         >
                           Generate Cover Letter
                         </Button>
                       )}
 
                       {generatingLetter && (
-                        <div className="flex items-center gap-2 text-[10px] text-slate-400 py-4 justify-center bg-[#050e18] border border-white/5 rounded-xl">
-                          <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+                        <div className="flex items-center gap-2 text-[10px] text-slate-500 py-4 justify-center bg-white border border-slate-200 rounded-xl">
+                          <Loader2 className="h-4 w-4 animate-spin text-[#0d6e5a]" />
                           <span>Drafting tailored cover letter...</span>
                         </div>
                       )}
 
                       {coverLetterGenerated && (
                         <div className="space-y-3 select-text">
-                          <div className="bg-[#050e18] border border-white/5 p-4 rounded-xl text-xs text-slate-300 leading-relaxed space-y-2 select-text font-serif">
+                          <div className="bg-white border border-slate-200 p-4 rounded-xl text-xs text-slate-700 leading-relaxed space-y-2 select-text font-serif">
                             <pre className="whitespace-pre-wrap font-serif select-text">{coverLetterGenerated}</pre>
                           </div>
                           <Button
@@ -909,7 +909,7 @@ export default function DashboardPage() {
                               navigator.clipboard.writeText(coverLetterGenerated);
                               toast.success("Cover letter copied to clipboard!");
                             }}
-                            className="bg-[#0b1c30] border border-white/5 text-slate-300 hover:text-white hover:bg-white/5 text-[10px] h-8 rounded-lg"
+                            className="bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-200 text-[10px] h-8 rounded-lg"
                           >
                             Copy Cover Letter
                           </Button>
@@ -922,21 +922,21 @@ export default function DashboardPage() {
             </div>
 
             {/* Interactive Bullet Point Reviewer / Improver (Below Columns) */}
-            <Card className="border-white/7 bg-[#10111f]/60 shadow-xl rounded-2xl overflow-hidden mt-6">
-              <CardContent className="p-7 space-y-4 text-slate-100">
+            <Card className="border-slate-200 bg-white shadow-sm rounded-xl overflow-hidden mt-6">
+              <CardContent className="p-6 space-y-4 text-slate-800">
                 <div className="flex items-center justify-between select-none">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-violet-400" />
-                    <h3 className="text-sm font-extrabold text-white">Interactive Bullet Point Improver</h3>
+                    <Sparkles className="h-5 w-5 text-[#0d6e5a]" />
+                    <h3 className="text-sm font-extrabold text-slate-900">Interactive Bullet Point Improver</h3>
                   </div>
-                  <Badge className="bg-violet-500/10 border-violet-500/20 text-violet-400 text-[10px] font-bold select-none px-2 py-0.5">
+                  <Badge className="bg-[#0d6e5a]/10 border-[#0d6e5a]/20 text-[#0d6e5a] text-[10px] font-bold select-none px-2 py-0.5">
                     Pro Feature
                   </Badge>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed font-semibold select-none">
+                <p className="text-xs text-slate-500 leading-relaxed font-semibold select-none">
                   Scan and optimize individual bullet points on your original resume text. We identify missing action verbs and metrics.
                 </p>
-                <div className="bg-[#070814]/40 border border-white/5 p-4 rounded-xl">
+                <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl">
                   <BulletImprover
                     resumeText={optimizeResult.optimizedText}
                     jobDescription={jobDescription}
@@ -968,31 +968,31 @@ export default function DashboardPage() {
 
               {/* Resume Column (Panel + Use Saved Resume Button below) */}
               <div className="flex flex-col space-y-3">
-                <div className="group flex-1 flex flex-col bg-[#161B22] border border-white/12 hover:border-[#5E5CE6]/40 rounded-2xl p-6 space-y-4 transition-colors duration-200">
+                <div className="group flex-1 flex flex-col bg-white border border-slate-200 hover:border-[#0d6e5a]/30 rounded-xl p-6 space-y-4 transition-colors duration-200 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-lg bg-[#5E5CE6]/15 border border-[#5E5CE6]/25 flex items-center justify-center">
-                        <FileText className="h-4.5 w-4.5 text-[#c2c1ff]" />
+                      <div className="h-9 w-9 rounded-lg bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center">
+                        <FileText className="h-4 w-4 text-[#0d6e5a]" />
                       </div>
                       <div>
-                        <h3 className="font-heading font-bold text-white text-base">Your Resume</h3>
+                        <h3 className="font-heading font-bold text-slate-900 text-base">Your Resume</h3>
                         <p className="text-xs text-slate-400 font-normal">Paste text or upload PDF</p>
                       </div>
                     </div>
-                    <span className="text-xs font-mono font-medium text-[#c2c1ff] bg-[#5E5CE6]/10 border border-[#5E5CE6]/25 px-2.5 py-0.5 rounded-full">Step 1</span>
+                    <span className="text-xs font-mono font-medium text-[#0d6e5a] bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 px-2.5 py-0.5 rounded-full">Step 1</span>
                   </div>
                   <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
                 </div>
 
-                {/* Use Saved Resume button (Compact text-fitting width) */}
+                {/* Use Saved Resume button */}
                 <div className="flex justify-start">
                   <button
                     type="button"
                     onClick={() => setIsSavedResumesOpen(true)}
                     disabled={optimizing}
-                    className="bg-[#161B22] border border-violet-500/30 hover:border-violet-500/60 hover:bg-violet-500/10 py-2 px-4 text-xs font-bold rounded-xl inline-flex items-center gap-2 text-violet-300 hover:text-white transition-all shadow-md"
+                    className="bg-white border border-slate-200 hover:border-[#0d6e5a]/40 hover:bg-[#0d6e5a]/5 py-2 px-4 text-xs font-bold rounded-lg inline-flex items-center gap-2 text-slate-600 hover:text-[#0d6e5a] transition-all shadow-sm"
                   >
-                    <FolderOpen className="h-4 w-4 text-violet-400" />
+                    <FolderOpen className="h-4 w-4 text-slate-400" />
                     Use Saved Resume
                   </button>
                 </div>
@@ -1000,70 +1000,70 @@ export default function DashboardPage() {
 
               {/* Job Description Column */}
               <div className="flex flex-col space-y-3">
-                <div className="group flex-1 flex flex-col bg-[#161B22] border border-white/12 hover:border-[#5E5CE6]/40 rounded-2xl p-6 space-y-4 transition-colors duration-200">
+                <div className="group flex-1 flex flex-col bg-white border border-slate-200 hover:border-[#0d6e5a]/30 rounded-xl p-6 space-y-4 transition-colors duration-200 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-lg bg-[#5E5CE6]/15 border border-[#5E5CE6]/25 flex items-center justify-center">
-                        <Target className="h-4.5 w-4.5 text-[#c2c1ff]" />
+                      <div className="h-9 w-9 rounded-lg bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center">
+                        <Target className="h-4 w-4 text-[#0d6e5a]" />
                       </div>
                       <div>
-                        <h3 className="font-heading font-bold text-white text-base">Job Description</h3>
+                        <h3 className="font-heading font-bold text-slate-900 text-base">Job Description</h3>
                         <p className="text-xs text-slate-400 font-normal">Paste the job post description</p>
                       </div>
                     </div>
-                    <span className="text-xs font-mono font-medium text-[#c2c1ff] bg-[#5E5CE6]/10 border border-[#5E5CE6]/25 px-2.5 py-0.5 rounded-full">Step 2</span>
+                    <span className="text-xs font-mono font-medium text-[#0d6e5a] bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 px-2.5 py-0.5 rounded-full">Step 2</span>
                   </div>
                   <JobDescriptionInput value={jobDescription} onChange={setJobDescription} disabled={optimizing} />
                 </div>
-                {/* Spacer matching button height to keep both column layouts perfectly aligned */}
+                {/* Spacer matching button height */}
                 <div className="h-[42px] hidden md:block" />
               </div>
 
             </div>
 
             {/* Custom optimization instructions card */}
-            <div className="bg-[#161B22] border border-white/12 rounded-2xl p-6 space-y-4">
+            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4 shadow-sm">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-[#c2c1ff]" />
-                <h4 className="font-heading font-bold text-sm text-white">Custom Guidance <span className="text-slate-400 font-normal">(Optional)</span></h4>
+                <Sparkles className="h-4 w-4 text-[#0d6e5a]" />
+                <h4 className="font-heading font-bold text-sm text-slate-900">Custom Guidance <span className="text-slate-400 font-normal">(Optional)</span></h4>
               </div>
               <input
                 type="text"
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
                 placeholder="e.g. 'Emphasize engineering scale' or 'Keep it concise' or 'Focus on leadership'"
-                className="w-full h-10 bg-[#0A0C10] text-[#e2e2e8] border border-white/12 focus:border-[#5E5CE6] focus:ring-1 focus:ring-[#5E5CE6] rounded-lg px-3.5 text-xs font-normal focus:outline-none"
+                className="w-full h-10 bg-slate-50 text-slate-900 border border-slate-200 focus:border-[#0d6e5a] focus:ring-1 focus:ring-[#0d6e5a]/30 rounded-lg px-3.5 text-xs font-normal focus:outline-none"
               />
             </div>
 
             {/* Resume Length card */}
-            <div className="bg-[#161B22] border border-white/12 rounded-2xl p-6 space-y-4">
+            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4 shadow-sm">
               <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-[#c2c1ff]" />
-                <h4 className="font-heading font-bold text-sm text-white">Resume Length</h4>
+                <FileText className="h-4 w-4 text-[#0d6e5a]" />
+                <h4 className="font-heading font-bold text-sm text-slate-900">Resume Length</h4>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
                   { value: "Auto-detect", label: "Auto-detect", sub: "Let AI decide" },
                   { value: "1 Page",      label: "1 Page",       sub: "Fresher / under 5 yrs" },
-                  { value: "2 Pages",     label: "2 Pages",      sub: "5–10+ yrs experience" },
+                  { value: "2 Pages",     label: "2 Pages",      sub: "5-10+ yrs experience" },
                   { value: "Academic CV", label: "Academic CV",  sub: "PhD / research / academia" },
                 ].map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
                     onClick={() => setLengthOption(opt.value)}
-                    className={`flex flex-col items-start gap-1.5 rounded-xl p-3.5 border text-left transition-all duration-200 ${
+                    className={`flex flex-col items-start gap-1.5 rounded-lg p-3.5 border text-left transition-all duration-200 ${
                       lengthOption === opt.value
-                        ? "bg-[#5E5CE6]/15 border-[#5E5CE6]/50 shadow-md shadow-[#5E5CE6]/10"
-                        : "bg-[#0A0C10] border-white/8 hover:border-white/20 hover:bg-white/3"
+                        ? "bg-[#0d6e5a]/8 border-[#0d6e5a]/40 shadow-sm"
+                        : "bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-slate-100"
                     }`}
                   >
                     <div>
                       <span className={`text-xs font-bold block ${
-                        lengthOption === opt.value ? "text-[#c2c1ff]" : "text-slate-200"
+                        lengthOption === opt.value ? "text-[#0d6e5a]" : "text-slate-700"
                       }`}>{opt.label}</span>
-                      <span className="text-[10px] text-slate-500 font-normal leading-tight block mt-1">{opt.sub}</span>
+                      <span className="text-[10px] text-slate-400 font-normal leading-tight block mt-1">{opt.sub}</span>
                     </div>
                   </button>
                 ))}

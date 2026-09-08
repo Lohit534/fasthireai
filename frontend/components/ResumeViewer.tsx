@@ -165,19 +165,19 @@ export default function ResumeViewer({
   };
 
   return (
-    <div className="bg-[#0b0c1e] border border-white/5 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-full">
+    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col h-full">
       {/* Top Header Panel */}
-      <div className="bg-[#0f112a] px-5 py-4 border-b border-white/5 flex flex-wrap gap-4 items-center justify-between">
+      <div className="bg-slate-50 px-5 py-4 border-b border-slate-200 flex flex-wrap gap-4 items-center justify-between">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4.5 w-4.5 text-violet-400" />
-          <h3 className="font-extrabold text-white text-sm">Optimized Resume Preview</h3>
+          <Sparkles className="h-4 w-4 text-[#0d6e5a]" />
+          <h3 className="font-extrabold text-slate-900 text-sm">Optimized Resume Preview</h3>
         </div>
 
         {/* Action Downloads / Copy */}
         <div className="flex items-center gap-2">
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl transition-all text-slate-400 hover:text-white border border-white/5 bg-[#0b1c30] h-9"
+            className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-lg transition-all text-slate-600 hover:text-slate-900 border border-slate-200 bg-white h-9"
           >
             {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
             {copied ? "Copied!" : "Copy"}
@@ -186,7 +186,7 @@ export default function ResumeViewer({
           <Button
             onClick={handleDownloadPDF}
             disabled={pdfLoading}
-            className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs h-9 rounded-xl flex items-center justify-center gap-1.5 px-4"
+            className="bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-bold text-xs h-9 rounded-lg flex items-center justify-center gap-1.5 px-4"
           >
             {pdfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-4 w-4" />}
             Download PDF
@@ -196,7 +196,7 @@ export default function ResumeViewer({
             onClick={handleDownloadDOCX}
             disabled={docxLoading}
             variant="outline"
-            className="border-white/10 text-slate-300 hover:bg-white/5 font-bold text-xs h-9 rounded-xl flex items-center justify-center gap-1.5 px-4 bg-transparent"
+            className="border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs h-9 rounded-lg flex items-center justify-center gap-1.5 px-4 bg-transparent"
           >
             {docxLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-4 w-4" />}
             Download DOCX
@@ -205,7 +205,7 @@ export default function ResumeViewer({
       </div>
 
       {/* Workspace Display Area */}
-      <div className="flex-1 p-6 overflow-y-auto max-h-[650px] bg-[#070814] select-text">
+      <div className="flex-1 p-6 overflow-y-auto max-h-[650px] bg-slate-50 select-text">
         {/* Render visual styling matching the LaTeX-style PDF engine output */}
         <div className="w-full max-w-4xl mx-auto bg-white text-slate-900 border border-slate-200 rounded-xl p-8 shadow-2xl font-serif select-text relative leading-normal">
           {blocks.map((block, idx) => {

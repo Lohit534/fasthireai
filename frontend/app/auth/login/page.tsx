@@ -72,17 +72,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#0a0b14] text-slate-100 font-sans selection:bg-violet-500/30">
+    <div className="min-h-screen flex bg-[#f8fafc] text-slate-900 font-sans">
       
       {/* LEFT PANE: Branding Showroom (Desktop Only) */}
-      <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 bg-slate-950/60 border-r border-white/5 relative overflow-hidden">
-        {/* Glow */}
-        <div className="absolute top-1/4 left-1/4 h-[300px] w-[300px] rounded-full bg-violet-600/10 blur-[100px] -z-10" />
+      <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 bg-[#0d6e5a] relative overflow-hidden">
+        {/* Subtle pattern */}
+        <div className="absolute top-1/4 left-1/4 h-[300px] w-[300px] rounded-full bg-white/5 blur-[100px] -z-10" />
 
         {/* Logo */}
         <div className="flex items-center gap-2 select-none">
-          <Briefcase className="h-6 w-6 text-violet-500" />
-          <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
+          <Briefcase className="h-6 w-6 text-white" />
+          <span className="font-extrabold text-xl tracking-tight text-white">
             FastHire
           </span>
         </div>
@@ -92,56 +92,56 @@ export default function LoginPage() {
           <h2 className="text-4xl font-black tracking-tight leading-tight text-white">
             Land more interviews starting today.
           </h2>
-          <p className="text-sm text-slate-400 font-medium leading-relaxed">
+          <p className="text-sm text-green-100 font-medium leading-relaxed">
             Tailored, ATS-optimised resumes in under 30 seconds — 2 free every month.
           </p>
 
-          <div className="space-y-4 pt-4 font-semibold text-xs text-slate-300">
+          <div className="space-y-4 pt-4 font-semibold text-xs text-green-50">
             <div className="flex items-center gap-3">
-              <span className="h-5 w-5 bg-violet-950/50 border border-violet-800/30 text-violet-400 rounded-md flex items-center justify-center shrink-0">
+              <span className="h-5 w-5 bg-white/15 border border-white/20 text-white rounded-md flex items-center justify-center shrink-0">
                 <Check className="h-3 w-3" />
               </span>
               <span>ATS keyword matching for every job</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="h-5 w-5 bg-violet-950/50 border border-violet-800/30 text-violet-400 rounded-md flex items-center justify-center shrink-0">
+              <span className="h-5 w-5 bg-white/15 border border-white/20 text-white rounded-md flex items-center justify-center shrink-0">
                 <Check className="h-3 w-3" />
               </span>
               <span>Stronger bullet points, real impact</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="h-5 w-5 bg-violet-950/50 border border-violet-800/30 text-violet-400 rounded-md flex items-center justify-center shrink-0">
+              <span className="h-5 w-5 bg-white/15 border border-white/20 text-white rounded-md flex items-center justify-center shrink-0">
                 <Check className="h-3 w-3" />
               </span>
-              <span>Before & after ATS score tracking</span>
+              <span>Before &amp; after ATS score tracking</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="h-5 w-5 bg-violet-950/50 border border-violet-800/30 text-violet-400 rounded-md flex items-center justify-center shrink-0">
+              <span className="h-5 w-5 bg-white/15 border border-white/20 text-white rounded-md flex items-center justify-center shrink-0">
                 <Check className="h-3 w-3" />
               </span>
-              <span>PDF & DOCX export, ready to send</span>
+              <span>PDF &amp; DOCX export, ready to send</span>
             </div>
           </div>
         </div>
 
         {/* ATS Scorecard */}
-        <div className="diamond-gleam max-w-[340px] bg-[#10111f] border border-white/8 p-5 rounded-2xl space-y-4">
+        <div className="max-w-[340px] bg-white/10 border border-white/20 p-5 rounded-xl space-y-4">
           <div className="flex justify-between items-center">
-            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">ATS Score</span>
-            <span className="text-xs text-violet-400 font-bold">+57 pts after FastHire</span>
+            <span className="text-[10px] text-green-100 font-bold uppercase tracking-wider">ATS Score</span>
+            <span className="text-xs text-green-200 font-bold">+57 pts after FastHire</span>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex-1 bg-red-500/10 border border-red-500/20 text-red-400 p-3 text-center rounded-xl">
+            <div className="flex-1 bg-red-500/20 border border-red-300/30 text-red-100 p-3 text-center rounded-xl">
               <div className="text-2xl font-black">34</div>
-              <div className="text-[10px] uppercase font-bold text-slate-500 mt-0.5">Before</div>
+              <div className="text-[10px] uppercase font-bold text-green-100 mt-0.5">Before</div>
             </div>
-            <span className="text-slate-600 font-black text-lg">→</span>
-            <div className="flex-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-3 text-center rounded-xl">
+            <span className="text-white/60 font-black text-lg">&rarr;</span>
+            <div className="flex-1 bg-green-500/20 border border-green-300/30 text-white p-3 text-center rounded-xl">
               <div className="text-2xl font-black">91</div>
-              <div className="text-[10px] uppercase font-bold text-slate-500 mt-0.5">After</div>
+              <div className="text-[10px] uppercase font-bold text-green-100 mt-0.5">After</div>
             </div>
           </div>
-          <div className="h-2 w-full rounded-full overflow-hidden bg-[#1c1d30]">
+          <div className="h-2 w-full rounded-full overflow-hidden bg-white/10">
             <div className="h-full w-[91%] rounded-full" style={{ background: 'linear-gradient(90deg, #ef4444 0%, #eab308 50%, #22c55e 100%)' }} />
           </div>
         </div>
@@ -152,13 +152,13 @@ export default function LoginPage() {
         
         {/* Top bar */}
         <div className="flex justify-between items-center lg:justify-end">
-          <Link href="/" className="lg:hidden flex items-center gap-1.5 font-bold text-xs text-slate-400 hover:text-white">
-            <Briefcase className="h-4 w-4 text-violet-500" />
+          <Link href="/" className="lg:hidden flex items-center gap-1.5 font-bold text-xs text-slate-500 hover:text-slate-900">
+            <Briefcase className="h-4 w-4 text-[#0d6e5a]" />
             <span>FastHire</span>
           </Link>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             Don&apos;t have an account?{" "}
-            <Link href="/auth/signup" className="font-bold text-violet-400 hover:underline">
+            <Link href="/auth/signup" className="font-bold text-[#0d6e5a] hover:underline">
               Create an account
             </Link>
           </p>
@@ -167,14 +167,14 @@ export default function LoginPage() {
         {/* Center welcome card */}
         <div className="w-full max-w-[390px] mx-auto my-auto space-y-6">
           <div className="space-y-1">
-            <h1 className="text-2.5xl font-black tracking-tight text-white">Welcome back</h1>
-            <p className="text-xs text-slate-400 font-semibold">Sign in to start improving your resume</p>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900">Welcome back</h1>
+            <p className="text-xs text-slate-500 font-semibold">Sign in to start improving your resume</p>
           </div>
 
           {/* Alert Error Box */}
           {error && (
-            <div className="flex items-start gap-2 p-3 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <AlertCircle className="h-4 w-4 shrink-0 text-red-400 mt-0.5" />
+            <div className="flex items-start gap-2 p-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg">
+              <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
@@ -184,7 +184,7 @@ export default function LoginPage() {
             type="button"
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full bg-[#161726]/80 hover:bg-[#1f2038] border border-white/10 text-white font-bold h-11 flex items-center justify-center gap-2.5 rounded-xl shadow-lg shadow-black/20"
+            className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold h-11 flex items-center justify-center gap-2.5 rounded-xl shadow-sm"
           >
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
               <g transform="matrix(1, 0, 0, 1, 0, 0)">
@@ -198,7 +198,7 @@ export default function LoginPage() {
           </Button>
 
           {/* Under Google Details checklist */}
-          <div className="space-y-2 pt-2 border-t border-white/5 text-[11px] font-semibold text-slate-400">
+          <div className="space-y-2 pt-2 border-t border-slate-100 text-[11px] font-semibold text-slate-500">
             <div className="flex items-center gap-2">
               <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
               <span>ATS keyword matching for any job</span>
@@ -220,10 +220,10 @@ export default function LoginPage() {
           {/* Separator / Or sign in with email */}
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/5"></div>
+              <div className="w-full border-t border-slate-200"></div>
             </div>
             <div className="relative flex justify-center text-[10px]">
-              <span className="bg-[#060713] px-2.5 text-slate-500 font-bold uppercase tracking-wider">Or email login</span>
+              <span className="bg-[#f8fafc] px-2.5 text-slate-400 font-bold uppercase tracking-wider">Or email login</span>
             </div>
           </div>
 
@@ -232,7 +232,7 @@ export default function LoginPage() {
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
+                <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
                 <Input
                   type="email"
                   placeholder="name@example.com"
@@ -240,7 +240,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
-                  className="pl-11 h-10 border-white/5 bg-[#0b0c1b] text-white focus:border-violet-500 focus:ring-violet-500 rounded-xl"
+                  className="pl-11 h-10 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] focus:ring-[#0d6e5a] rounded-xl"
                 />
               </div>
             </div>
@@ -248,7 +248,7 @@ export default function LoginPage() {
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Password</label>
               <div className="relative">
-                <KeyRound className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
+                <KeyRound className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
                 <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
@@ -256,12 +256,12 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
-                  className="pl-11 pr-11 h-10 border-white/5 bg-[#0b0c1b] text-white focus:border-violet-500 focus:ring-violet-500 rounded-xl"
+                  className="pl-11 pr-11 h-10 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] focus:ring-[#0d6e5a] rounded-xl"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -272,7 +272,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold h-10 rounded-xl shadow-lg shadow-violet-600/15"
+              className="w-full bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-bold h-10 rounded-xl shadow-sm"
             >
               {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : "Sign In"}
             </Button>

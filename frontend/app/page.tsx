@@ -68,21 +68,21 @@ function LandingFAQ() {
         return (
           <div
             key={idx}
-            className="border border-white/8 bg-[#161B22]/60 rounded-xl overflow-hidden transition-all duration-300"
+            className="border border-slate-200 bg-slate-50 rounded-xl overflow-hidden transition-all duration-200"
           >
             <button
               onClick={() => setOpenIdx(isOpen ? null : idx)}
-              className="w-full flex items-center justify-between p-4 text-left font-semibold text-sm text-white hover:text-[#c2c1ff] transition-colors"
+              className="w-full flex items-center justify-between p-4 text-left font-semibold text-sm text-slate-900 hover:text-[#0d6e5a] transition-colors"
             >
               <span>{faq.q}</span>
               {isOpen ? (
-                <ChevronUp className="h-4 w-4 text-slate-400 shrink-0 ml-2" />
+                <ChevronUp className="h-4 w-4 text-slate-500 shrink-0 ml-2" />
               ) : (
                 <ChevronDown className="h-4 w-4 text-slate-400 shrink-0 ml-2" />
               )}
             </button>
             {isOpen && (
-              <div className="px-4 pb-4 text-sm text-slate-400 font-normal leading-relaxed border-t border-white/5 pt-3">
+              <div className="px-4 pb-4 text-sm text-slate-600 font-normal leading-relaxed border-t border-slate-200 pt-3">
                 {faq.a}
               </div>
             )}
@@ -225,14 +225,7 @@ Requirements:
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#111318] text-[#e2e2e8] antialiased font-sans">
-
-      {/* Atmospheric depth background glows */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="absolute top-0 right-1/4 w-[700px] h-[500px] bg-[#5E5CE6]/8 rounded-full blur-[140px]" />
-        <div className="absolute top-1/2 left-0 w-[600px] h-[500px] bg-[#0A84FF]/6 rounded-full blur-[140px]" />
-        <div className="absolute bottom-0 right-0 w-[500px] h-[400px] bg-[#BF5AF2]/5 rounded-full blur-[120px]" />
-      </div>
+    <div className="flex flex-col min-h-screen bg-[#f8fafc] text-slate-900 antialiased font-sans">
 
       <Navbar />
 
@@ -244,57 +237,57 @@ Requirements:
             {/* LEFT: Copy + CTAs */}
             <div className="lg:col-span-6 space-y-7 animate-fade-in-up">
 
-              {/* Status pill (JetBrains Mono Label) */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#5E5CE6]/10 border border-[#5E5CE6]/25 text-[#c2c1ff] font-mono text-xs font-medium tracking-wide">
-                <span className="h-2 w-2 rounded-full bg-[#30D158] animate-pulse shrink-0" />
-                2 Free Optimizations — No Credit Card
+              {/* Status pill */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-50 border border-teal-200/80 text-[#0d6e5a] font-mono text-xs font-semibold tracking-wide shadow-sm">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                2 Free Optimizations — No Credit Card Required
               </div>
 
-              {/* Display Hero Headline (Plus Jakarta Sans, 72px / 40px, -0.03em) */}
-              <h1 className="font-heading text-4xl sm:text-5xl lg:text-[60px] font-extrabold tracking-[-0.03em] leading-[1.08] text-white">
+              {/* Display Hero Headline */}
+              <h1 className="font-heading text-4xl sm:text-5xl lg:text-[60px] font-extrabold tracking-[-0.03em] leading-[1.08] text-slate-900">
                 Stop Getting{" "}
-                <span className="bg-gradient-to-r from-[#64D2FF] via-[#0A84FF] to-[#5E5CE6] bg-clip-text text-transparent">
+                <span className="text-rose-600">
                   Rejected.
                 </span>
                 <br />
                 Start Getting{" "}
-                <span className="bg-gradient-to-r from-[#c2c1ff] via-[#5E5CE6] to-[#BF5AF2] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#0d6e5a] to-teal-700 bg-clip-text text-transparent">
                   Interviews.
                 </span>
               </h1>
 
               {/* Description */}
-              <p className="text-base sm:text-lg text-slate-300 max-w-xl leading-relaxed font-normal">
+              <p className="text-base sm:text-lg text-slate-600 max-w-xl leading-relaxed font-normal">
                 Paste your resume + job description. Our AI rewrites, keyword-matches, and ATS-scores
                 your resume in under 30 seconds — completely free to start.
               </p>
 
-              {/* CTA Buttons (Precision 8px radii) */}
+              {/* CTA Buttons */}
               <div className="flex flex-wrap items-center gap-4 pt-1">
                 <Link href="/auth/signup">
-                  <button className="btn-primary-gradient px-7 py-3.5 text-sm font-semibold flex items-center gap-2 rounded-lg shadow-lg">
+                  <button className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white px-7 py-3.5 text-sm font-bold flex items-center gap-2 rounded-xl shadow-sm transition-colors cursor-pointer">
                     <span>Get Started Free</span>
                     <ArrowRight className="h-4 w-4" />
                   </button>
                 </Link>
                 <button
                   onClick={handleTrySample}
-                  className="btn-secondary-glass px-7 py-3.5 text-sm font-semibold rounded-lg flex items-center gap-1.5"
+                  className="border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 px-7 py-3.5 text-sm font-semibold rounded-xl flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
                 >
                   Try Sample Resume →
                 </button>
               </div>
 
               {/* Trust row */}
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-[#c7c4d7] font-medium font-mono pt-1">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-500 font-medium font-mono pt-1">
                 <span className="flex items-center gap-1.5">
-                  <Shield className="h-3.5 w-3.5 text-[#5E5CE6]" /> No data sold
+                  <Shield className="h-3.5 w-3.5 text-[#0d6e5a]" /> No data sold
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Zap className="h-3.5 w-3.5 text-[#5E5CE6]" /> Results in ~20s
+                  <Zap className="h-3.5 w-3.5 text-[#0d6e5a]" /> Results in ~20s
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-[#30D158]" /> Free to start
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Free to start
                 </span>
               </div>
             </div>
@@ -304,80 +297,86 @@ Requirements:
               <div className="relative w-full max-w-[480px]">
 
                 {/* Floating badge top-right */}
-                <div className="absolute -top-3.5 right-4 z-10 flex items-center gap-2.5 bg-[#1e2024]/95 border border-white/12 px-3.5 py-2 rounded-xl shadow-2xl backdrop-blur-md">
-                  <div className="h-7 w-7 rounded-lg bg-[#5E5CE6]/20 border border-[#5E5CE6]/30 flex items-center justify-center shrink-0">
-                    <Sparkles className="h-3.5 w-3.5 text-[#c2c1ff]" />
+                <div className="absolute -top-3.5 right-4 z-10 flex items-center gap-2.5 bg-white/95 border border-slate-200 px-3.5 py-2 rounded-xl shadow-md backdrop-blur-md">
+                  <div className="h-7 w-7 rounded-lg bg-teal-50 border border-teal-200/60 flex items-center justify-center shrink-0">
+                    <Sparkles className="h-3.5 w-3.5 text-[#0d6e5a]" />
                   </div>
                   <div>
-                    <div className="text-[10px] text-slate-400 font-mono font-medium uppercase tracking-wider leading-none">
+                    <div className="text-[10px] text-slate-500 font-mono font-medium uppercase tracking-wider leading-none">
                       Real-Time Rewrite
                     </div>
-                    <div className="text-xs font-semibold text-white mt-0.5">
+                    <div className="text-xs font-bold text-slate-900 mt-0.5">
                       Optimizing Bullets...
                     </div>
                   </div>
                 </div>
 
-                {/* Main ATS score card (Level 1 surface #161B22 + glass-stroke) */}
-                <div className="diamond-gleam relative bg-[#161B22] border border-white/12 rounded-2xl p-7 shadow-2xl overflow-hidden">
+                {/* Main ATS score card */}
+                <div className="relative bg-white border border-slate-200 rounded-2xl p-7 shadow-lg overflow-hidden">
 
-                  {/* Radial emerald glow on right side */}
+                  {/* Radial subtle emerald glow on right side */}
                   <div
-                    className="absolute right-0 top-1/2 -translate-y-1/2 w-[220px] h-[220px] rounded-full pointer-events-none"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 w-[220px] h-[220px] rounded-full pointer-events-none opacity-40"
                     style={{
-                      background: "radial-gradient(ellipse at center, rgba(48,209,88,0.15) 0%, transparent 70%)",
+                      background: "radial-gradient(ellipse at center, rgba(13,110,90,0.15) 0%, transparent 70%)",
                     }}
                   />
 
                   {/* Header row */}
                   <div className="flex items-start justify-between mb-5 relative z-10">
                     <div>
-                      <div className="text-xs text-slate-400 font-mono font-medium mb-2 uppercase tracking-wider">
+                      <div className="text-xs text-slate-500 font-mono font-medium mb-2 uppercase tracking-wider">
                         Current ATS Score
                       </div>
-                      <div className="text-4xl font-extrabold text-[#FF453A] font-heading leading-none">
+                      <div className="text-4xl font-extrabold text-rose-600 font-heading leading-none">
                         <AnimatedCounter from={0} to={34} duration={800} suffix="%" />
                       </div>
-                      <div className="flex items-center gap-1.5 mt-2 text-xs text-[#FF453A] font-medium">
+                      <div className="flex items-center gap-1.5 mt-2 text-xs text-rose-600 font-medium">
                         <span>✕</span> Missing 14 keywords
                       </div>
                     </div>
-                    <div className="text-4xl font-extrabold text-[#30D158] font-heading leading-none mt-1">
-                      <AnimatedCounter from={34} to={91} duration={1600} suffix="%" />
+                    <div>
+                      <div className="text-xs text-slate-500 font-mono font-medium mb-2 uppercase tracking-wider text-right">
+                        Target Score
+                      </div>
+                      <div className="text-4xl font-extrabold text-emerald-600 font-heading leading-none text-right">
+                        <AnimatedCounter from={34} to={91} duration={1600} suffix="%" />
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-700 font-medium justify-end">
+                        <span>✓</span> Ready for Recruiters
+                      </div>
                     </div>
                   </div>
 
-                  {/* Animated progress bar: Red → Yellow → Emerald */}
-                  <div className="h-2.5 w-full rounded-full overflow-hidden bg-[#1e2024] mb-5 relative z-10">
+                  {/* Animated progress bar: Red → Yellow → Teal/Emerald */}
+                  <div className="h-2.5 w-full rounded-full overflow-hidden bg-slate-100 mb-5 relative z-10 border border-slate-200">
                     <div
                       className="h-full rounded-full"
                       style={{
                         width: barReady ? "91%" : "34%",
                         transition: "width 1.6s cubic-bezier(0.22, 1, 0.36, 1)",
-                        background: "linear-gradient(90deg, #FF453A 0%, #FFD60A 50%, #30D158 100%)",
+                        background: "linear-gradient(90deg, #f43f5e 0%, #eab308 50%, #0d6e5a 100%)",
                       }}
                     />
                   </div>
 
                   {/* Bottom tiles */}
                   <div className="grid grid-cols-2 gap-3 relative z-10">
-                    <div className="bg-[#1a1c20] border border-white/8 rounded-xl p-3.5">
-                      <div className="text-[10px] text-slate-400 font-mono font-medium uppercase tracking-wider mb-1">
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+                      <div className="text-[10px] text-slate-500 font-mono font-medium uppercase tracking-wider mb-1">
                         Keywords
                       </div>
-                      <div className="text-xs font-semibold text-[#30D158]">Full Coverage</div>
+                      <div className="text-xs font-bold text-emerald-700">Full Coverage</div>
                     </div>
-                    <div className="bg-[#1a1c20] border border-white/8 rounded-xl p-3.5">
-                      <div className="text-[10px] text-slate-400 font-mono font-medium uppercase tracking-wider mb-1">
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+                      <div className="text-[10px] text-slate-500 font-mono font-medium uppercase tracking-wider mb-1">
                         Format
                       </div>
-                      <div className="text-xs font-semibold text-[#64D2FF]">ATS-Ready ✓</div>
+                      <div className="text-xs font-bold text-[#0d6e5a]">ATS-Ready ✓</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Ambient backlight */}
-                <div className="absolute inset-0 -z-10 rounded-2xl bg-[#5E5CE6]/10 blur-2xl scale-90 translate-y-3" />
               </div>
             </div>
 
@@ -386,16 +385,16 @@ Requirements:
       </section>
 
       {/* ── SCORE LIFT SECTION ──────────────────────────────────── */}
-      <ScrollFadeIn className="py-16 md:py-20 border-t border-white/12 bg-[#0c0e12]/60">
+      <ScrollFadeIn className="py-16 md:py-20 border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center space-y-3">
-            <span className="text-xs font-mono font-medium uppercase tracking-widest text-[#c2c1ff]">
+            <span className="text-xs font-mono font-semibold uppercase tracking-widest text-[#0d6e5a]">
               Real Results
             </span>
-            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               Watch Your ATS Score Climb
             </h2>
-            <p className="text-slate-400 text-sm max-w-md mx-auto font-normal leading-relaxed">
+            <p className="text-slate-600 text-sm max-w-md mx-auto font-normal leading-relaxed">
               Every optimization is scored before and after so you can see exactly how much better your resume performs.
             </p>
           </div>
@@ -409,18 +408,18 @@ Requirements:
               <div className="hidden md:block">
                 <CircleGauge value={34} label="Before" size={110} />
               </div>
-              <p className="text-xs text-slate-400 font-mono font-medium">14 keywords missing</p>
+              <p className="text-xs text-slate-500 font-mono font-medium">14 keywords missing</p>
             </div>
 
-            {/* AI Engine connector — horizontal on md+, vertical on mobile */}
+            {/* AI Engine connector */}
             <div className="flex flex-col items-center gap-2 shrink-0">
-              <div className="h-px w-10 md:w-20 bg-gradient-to-r from-[#FF453A]/40 to-[#5E5CE6]/40 md:block hidden" />
-              <div className="h-6 w-px bg-gradient-to-b from-[#FF453A]/40 to-[#5E5CE6]/40 md:hidden block" />
-              <span className="text-xs font-mono font-semibold text-[#c2c1ff] bg-[#5E5CE6]/15 border border-[#5E5CE6]/30 px-3 py-1 rounded-full whitespace-nowrap">
+              <div className="h-px w-10 md:w-20 bg-slate-200 md:block hidden" />
+              <div className="h-6 w-px bg-slate-200 md:hidden block" />
+              <span className="text-xs font-mono font-semibold text-[#0d6e5a] bg-teal-50 border border-teal-200/80 px-3 py-1 rounded-full whitespace-nowrap shadow-sm">
                 ⚡ AI Engine
               </span>
-              <div className="h-px w-10 md:w-20 bg-gradient-to-r from-[#5E5CE6]/40 to-[#30D158]/40 md:block hidden" />
-              <div className="h-6 w-px bg-gradient-to-b from-[#5E5CE6]/40 to-[#30D158]/40 md:hidden block" />
+              <div className="h-px w-10 md:w-20 bg-slate-200 md:block hidden" />
+              <div className="h-6 w-px bg-slate-200 md:hidden block" />
             </div>
 
             {/* After gauge */}
@@ -431,20 +430,20 @@ Requirements:
               <div className="hidden md:block">
                 <CircleGauge value={91} label="After" size={110} />
               </div>
-              <p className="text-xs text-slate-400 font-mono font-medium">ATS-ready ✓</p>
+              <p className="text-xs text-emerald-700 font-mono font-bold">ATS-ready ✓</p>
             </div>
           </div>
         </div>
       </ScrollFadeIn>
 
       {/* ── FEATURES GRID ────────────────────────────────────────── */}
-      <ScrollFadeIn className="py-16 md:py-20 border-t border-white/12">
+      <ScrollFadeIn className="py-16 md:py-20 border-t border-slate-200 bg-[#f8fafc]">
         <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 space-y-10">
           <div className="text-center space-y-3">
-            <span className="text-xs font-mono font-medium uppercase tracking-widest text-[#c2c1ff]">
+            <span className="text-xs font-mono font-semibold uppercase tracking-widest text-[#0d6e5a]">
               Why FastHire AI
             </span>
-            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               Built for Candidate Precision &amp; Speed
             </h2>
           </div>
@@ -474,14 +473,14 @@ Requirements:
             ].map(({ icon: Icon, title, desc }) => (
               <div
                 key={title}
-                className="glass-card p-6 rounded-2xl space-y-3 hover:border-white/20 transition-all duration-200"
+                className="bg-white border border-slate-200 p-6 rounded-2xl space-y-3 shadow-sm hover:border-slate-300 hover:shadow-md transition-all duration-200"
               >
-                <div className="h-9 w-9 rounded-lg bg-[#5E5CE6]/15 border border-[#5E5CE6]/25 flex items-center justify-center">
-                  <Icon className="h-4.5 w-4.5 text-[#c2c1ff]" />
+                <div className="h-9 w-9 rounded-lg bg-teal-50 border border-teal-200/60 flex items-center justify-center text-[#0d6e5a]">
+                  <Icon className="h-4.5 w-4.5" />
                 </div>
                 <div className="space-y-1.5">
-                  <h3 className="font-heading font-bold text-white text-base">{title}</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed font-normal">{desc}</p>
+                  <h3 className="font-heading font-bold text-slate-900 text-base">{title}</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed font-normal">{desc}</p>
                 </div>
               </div>
             ))}
@@ -490,40 +489,36 @@ Requirements:
       </ScrollFadeIn>
 
       {/* ── STATS SECTION ────────────────────────────────────── */}
-      <ScrollFadeIn className="py-16 md:py-20 border-t border-white/12 bg-[#0c0e12]/80">
+      <ScrollFadeIn className="py-16 md:py-20 border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 space-y-3">
-            <span className="text-xs font-mono font-medium uppercase tracking-widest text-[#c2c1ff]">
+            <span className="text-xs font-mono font-semibold uppercase tracking-widest text-[#0d6e5a]">
               By The Numbers
             </span>
-            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               Trusted by Job Seekers Worldwide
             </h2>
-            <p className="text-slate-400 text-sm max-w-md mx-auto">
+            <p className="text-slate-600 text-sm max-w-md mx-auto">
               Thousands of candidates have already landed interviews using FastHire AI.
             </p>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              { value: 1000, suffix: "+", label: "Users Optimized",  color: "#c2c1ff", sub: "Active job seekers" },
-              { value: 94,   suffix: "%", label: "Success Rate",     color: "#30D158", sub: "Got more callbacks" },
-              { value: 57,   suffix: "+", label: "Avg. Score Lift",  color: "#64D2FF", sub: "ATS points gained" },
-              { value: 800,  suffix: "+", label: "Positive Reviews", color: "#FFD60A", sub: "5-star feedbacks" },
+              { value: 1000, suffix: "+", label: "Users Optimized",  color: "#0d6e5a", sub: "Active job seekers" },
+              { value: 94,   suffix: "%", label: "Success Rate",     color: "#059669", sub: "Got more callbacks" },
+              { value: 57,   suffix: "+", label: "Avg. Score Lift",  color: "#0284c7", sub: "ATS points gained" },
+              { value: 800,  suffix: "+", label: "Positive Reviews", color: "#d97706", sub: "5-star feedbacks" },
             ].map(({ value, suffix, label, color, sub }) => (
               <div
                 key={label}
-                className="relative overflow-hidden bg-[#161B22] border border-white/8 rounded-2xl p-6 text-center group hover:border-white/20 transition-all duration-300 hover:scale-[1.02]"
+                className="relative overflow-hidden bg-slate-50 border border-slate-200 rounded-2xl p-6 text-center shadow-sm hover:border-slate-300 transition-all duration-300 hover:scale-[1.02]"
               >
-                <div
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  style={{ background: `radial-gradient(ellipse at top, ${color}12 0%, transparent 70%)` }}
-                />
                 <div className="relative z-10 space-y-1">
                   <div className="text-4xl sm:text-5xl font-black tracking-tight" style={{ color }}>
                     <AnimatedCounter from={0} to={value} duration={1800} suffix={suffix} />
                   </div>
-                  <div className="text-sm font-bold text-white mt-2">{label}</div>
+                  <div className="text-sm font-bold text-slate-900 mt-2">{label}</div>
                   <div className="text-[11px] text-slate-500 font-medium">{sub}</div>
                 </div>
               </div>
@@ -533,16 +528,16 @@ Requirements:
       </ScrollFadeIn>
 
       {/* ── TOP COMPANIES MARQUEE ─────────────────────────────── */}
-      <ScrollFadeIn className="py-14 border-t border-white/12">
+      <ScrollFadeIn className="py-14 border-t border-slate-200 bg-[#f8fafc]">
         <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10 space-y-2">
-            <span className="text-xs font-mono font-medium uppercase tracking-widest text-[#c2c1ff]">
+            <span className="text-xs font-mono font-semibold uppercase tracking-widest text-[#0d6e5a]">
               Top Companies
             </span>
-            <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               Resumes Shortlisted At
             </h2>
-            <p className="text-slate-400 text-sm max-w-md mx-auto">
+            <p className="text-slate-600 text-sm max-w-md mx-auto">
               Our users have been shortlisted and hired at these industry-leading companies.
             </p>
           </div>
@@ -550,8 +545,8 @@ Requirements:
           {/* Infinite scroll marquee */}
           <div className="relative overflow-hidden">
             {/* Left / right fade masks */}
-            <div className="absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(to right, #111318, transparent)" }} />
-            <div className="absolute right-0 top-0 bottom-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(to left, #111318, transparent)" }} />
+            <div className="absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(to right, #f8fafc, transparent)" }} />
+            <div className="absolute right-0 top-0 bottom-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(to left, #f8fafc, transparent)" }} />
 
             <div className="flex animate-marquee gap-8 whitespace-nowrap">
               {[
@@ -566,9 +561,9 @@ Requirements:
               ]).map((company, i) => (
                 <div
                   key={i}
-                  className="inline-flex items-center px-6 py-3 rounded-xl bg-[#161B22] border border-white/8 text-slate-300 font-semibold text-sm hover:border-violet-500/30 hover:text-white transition-all duration-200 shrink-0"
+                  className="inline-flex items-center px-6 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold text-sm hover:border-[#0d6e5a]/40 hover:text-slate-900 transition-all duration-200 shrink-0 shadow-sm"
                 >
-                  <span className="h-2 w-2 rounded-full bg-violet-500/60 mr-2 shrink-0" />
+                  <span className="h-2 w-2 rounded-full bg-[#0d6e5a] mr-2 shrink-0" />
                   {company}
                 </div>
               ))}
@@ -578,13 +573,13 @@ Requirements:
       </ScrollFadeIn>
 
       {/* ── USER TESTIMONIALS ─────────────────────────────────── */}
-      <ScrollFadeIn className="py-16 md:py-20 border-t border-white/12 bg-[#0c0e12]/60">
+      <ScrollFadeIn className="py-16 md:py-20 border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 space-y-3">
-            <span className="text-xs font-mono font-medium uppercase tracking-widest text-[#c2c1ff]">
+            <span className="text-xs font-mono font-semibold uppercase tracking-widest text-[#0d6e5a]">
               Real Feedback
             </span>
-            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               What Job Seekers Are Saying
             </h2>
           </div>
@@ -600,21 +595,21 @@ Requirements:
             ].map(({ name, role, country, rating, text }, i) => (
               <div
                 key={i}
-                className="relative bg-[#161B22] border border-white/8 rounded-2xl p-6 space-y-4 hover:border-violet-500/25 hover:scale-[1.01] transition-all duration-300"
+                className="relative bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4 hover:border-slate-300 shadow-sm hover:shadow-md transition-all duration-300"
               >
                 <div className="flex items-center gap-1">
                   {Array.from({ length: rating }).map((_, j) => (
-                    <span key={j} className="text-[#FFD60A] text-sm">★</span>
+                    <span key={j} className="text-amber-500 text-sm">★</span>
                   ))}
                 </div>
-                <p className="text-sm text-slate-300 leading-relaxed font-normal">"{text}"</p>
-                <div className="flex items-center gap-3 pt-2 border-t border-white/5">
-                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-violet-600 to-indigo-500 flex items-center justify-center text-white font-black text-sm shrink-0">
+                <p className="text-sm text-slate-700 leading-relaxed font-normal">"{text}"</p>
+                <div className="flex items-center gap-3 pt-2 border-t border-slate-200">
+                  <div className="h-9 w-9 rounded-full bg-[#0d6e5a] flex items-center justify-center text-white font-black text-sm shrink-0">
                     {name[0]}
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-white">{name}</div>
-                    <div className="text-[11px] text-slate-400">{role} &bull; {country}</div>
+                    <div className="text-xs font-bold text-slate-900">{name}</div>
+                    <div className="text-[11px] text-slate-500">{role} &bull; {country}</div>
                   </div>
                 </div>
               </div>
@@ -624,24 +619,24 @@ Requirements:
       </ScrollFadeIn>
 
       {/* ── COUNTRIES MARQUEE ─────────────────────────────────── */}
-      <ScrollFadeIn className="py-14 border-t border-white/12">
+      <ScrollFadeIn className="py-14 border-t border-slate-200 bg-[#f8fafc]">
         <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10 space-y-2">
-            <span className="text-xs font-mono font-medium uppercase tracking-widest text-[#c2c1ff]">
+            <span className="text-xs font-mono font-semibold uppercase tracking-widest text-[#0d6e5a]">
               Global Reach
             </span>
-            <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               Used Across the World
             </h2>
-            <p className="text-slate-400 text-sm max-w-md mx-auto">
+            <p className="text-slate-600 text-sm max-w-md mx-auto">
               Job seekers from over 30 countries use FastHire AI to land interviews faster.
             </p>
           </div>
 
           {/* Reverse-direction marquee for countries */}
           <div className="relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(to right, #111318, transparent)" }} />
-            <div className="absolute right-0 top-0 bottom-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(to left, #111318, transparent)" }} />
+            <div className="absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(to right, #f8fafc, transparent)" }} />
+            <div className="absolute right-0 top-0 bottom-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(to left, #f8fafc, transparent)" }} />
 
             <div className="flex animate-marquee-reverse gap-6 whitespace-nowrap">
               {[
@@ -674,7 +669,7 @@ Requirements:
               ]).map(({ flag, name }, i) => (
                 <div
                   key={i}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#161B22] border border-white/8 text-slate-300 font-medium text-sm hover:border-emerald-500/30 hover:text-white transition-all shrink-0"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-slate-200 text-slate-700 font-medium text-sm hover:border-[#0d6e5a]/40 hover:text-slate-900 transition-all shrink-0 shadow-sm"
                 >
                   <span className="text-base">{flag}</span>
                   <span>{name}</span>
@@ -686,16 +681,16 @@ Requirements:
       </ScrollFadeIn>
 
       {/* ── FAQ SECTION ───────────────────────────────────────── */}
-      <ScrollFadeIn className="py-16 md:py-20 border-t border-white/12 bg-[#0c0e12]/60">
+      <ScrollFadeIn className="py-16 md:py-20 border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 space-y-3">
-            <span className="text-xs font-mono font-medium uppercase tracking-widest text-[#c2c1ff]">
+            <span className="text-xs font-mono font-semibold uppercase tracking-widest text-[#0d6e5a]">
               FAQ
             </span>
-            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               Frequently Asked Questions
             </h2>
-            <p className="text-slate-400 text-sm max-w-md mx-auto">
+            <p className="text-slate-600 text-sm max-w-md mx-auto">
               Everything you need to know about FastHire AI.
             </p>
           </div>
@@ -705,32 +700,32 @@ Requirements:
       </ScrollFadeIn>
 
       {/* ── FINAL CTA ─────────────────────────────────────────────── */}
-      <ScrollFadeIn className="py-16 md:py-20 border-t border-white/12 bg-[#0c0e12]/60">
+      <ScrollFadeIn className="py-16 md:py-20 border-t border-slate-200 bg-[#f8fafc]">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#5E5CE6]/10 border border-[#5E5CE6]/25 text-[#c2c1ff] text-xs font-mono font-medium">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-teal-50 border border-teal-200/80 text-[#0d6e5a] text-xs font-mono font-semibold">
             <Sparkles className="h-3.5 w-3.5" />
             Free Forever Tier
           </div>
-          <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             Ready to Land More{" "}
-            <span className="bg-gradient-to-r from-[#c2c1ff] via-[#5E5CE6] to-[#0A84FF] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#0d6e5a] to-teal-700 bg-clip-text text-transparent">
               Interviews?
             </span>
           </h2>
-          <p className="text-slate-300 text-sm max-w-md mx-auto leading-relaxed">
+          <p className="text-slate-600 text-sm max-w-md mx-auto leading-relaxed">
             2 free resume optimizations every month. No credit card required.
           </p>
           <div className="flex flex-wrap justify-center gap-4 pt-2">
             <Link href="/auth/signup">
-              <button className="btn-primary-gradient px-8 py-3.5 text-sm font-semibold flex items-center gap-2 rounded-lg shadow-lg">
+              <button className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white px-8 py-3.5 text-sm font-bold flex items-center gap-2 rounded-xl shadow-sm transition-colors cursor-pointer">
                 <span>Start For Free →</span>
               </button>
             </Link>
             <button
               onClick={() => setIsDemoModalOpen(true)}
-              className="btn-secondary-glass px-8 py-3.5 text-sm font-semibold rounded-lg flex items-center gap-2 hover:bg-white/10 transition-all"
+              className="border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 px-8 py-3.5 text-sm font-semibold rounded-xl flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
             >
-              <Play className="h-4 w-4 text-violet-400 fill-violet-400" />
+              <Play className="h-4 w-4 text-[#0d6e5a] fill-[#0d6e5a]" />
               <span>See a Demo</span>
             </button>
           </div>

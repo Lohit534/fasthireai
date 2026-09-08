@@ -50,17 +50,17 @@ export function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps) {
     >
       {/* Modal Container */}
       <div 
-        className="relative w-full max-w-4xl bg-[#0a0c14] border border-white/15 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+        className="relative w-full max-w-4xl bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/10 bg-[#121420]">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-white">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-violet-600/20 border border-violet-500/30 text-violet-400">
+            <div className="p-2 rounded-xl bg-teal-50 border border-teal-200 text-[#0d6e5a]">
               <Film className="h-4 w-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 FastHire AI Product Demo 🎬
               </h3>
             </div>
@@ -68,7 +68,7 @@ export function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps) {
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
             title="Close modal"
           >
             <X className="h-5 w-5" />
@@ -76,10 +76,10 @@ export function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps) {
         </div>
 
         {/* Content Body - Strictly 16:9 Aspect Ratio Container */}
-        <div className="w-full bg-black flex items-center justify-center relative aspect-[16/9] overflow-hidden">
+        <div className="w-full bg-slate-950 flex items-center justify-center relative aspect-[16/9] overflow-hidden">
           {loading ? (
             <div className="flex flex-col items-center justify-center gap-3 text-slate-400">
-              <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
+              <Loader2 className="h-8 w-8 animate-spin text-[#0d6e5a]" />
               <p className="text-xs font-medium">Loading video...</p>
             </div>
           ) : videoUrl && !videoError ? (
@@ -94,12 +94,12 @@ export function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps) {
             />
           ) : (
             <div className="p-8 text-center max-w-md mx-auto space-y-3 text-slate-400">
-              <div className="w-12 h-12 rounded-full bg-violet-600/10 border border-violet-500/20 text-violet-400 flex items-center justify-center mx-auto">
-                <Play className="h-6 w-6 fill-violet-400" />
+              <div className="w-12 h-12 rounded-full bg-teal-900/30 border border-teal-700/30 text-teal-400 flex items-center justify-center mx-auto">
+                <Play className="h-6 w-6 fill-teal-400" />
               </div>
               <h4 className="text-base font-bold text-white">Demo Video Coming Soon</h4>
               <p className="text-xs text-slate-400">
-                Place your demo video file in <code className="text-violet-300 bg-violet-950/60 px-1.5 py-0.5 rounded font-mono text-[11px]">public/uploads/demo.mp4</code>.
+                Place your demo video file in <code className="text-teal-300 bg-teal-950/60 px-1.5 py-0.5 rounded font-mono text-[11px]">public/uploads/demo.mp4</code>.
               </p>
             </div>
           )}
