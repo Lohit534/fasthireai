@@ -117,6 +117,156 @@ export function serializeResumeJSONToText(json: ResumeJSON): string {
   return lines.join("\n").trim();
 }
 
+// ─── POST-OPTIMIZATION FORMAT VALIDATOR ─────────────────────────────────────
+/**
+ * Runs after AI output — repairs common format issues that escape the prompt:
+ *  - Ensures NAME line is uppercase
+ *  - Ensures contact line uses | separator
+ *  - Strips bullet points from PROFESSIONAL SUMMARY section
+ *  - Ensures each Technical Skills category is on ONE single line
+ *  - Ensures LANGUAGES section has bullet per item
+ *  - Removes literal \\n escape sequences (model sometimes outputs these)
+ *  - Removes any leftover Markdown / LaTeX
+ */
+export function validateAndRepairResumeFormat(text: string): string {
+  if (!text) return text;
+  let result = text;
+
+  // 1. Remove literal \n escape sequences the model occasionally emits
+  result = result.replace(/\\n/g, '\n');
+  result = result.replace(/\\t/g, ' ');
+
+  // 2. Strip all Markdown and LaTeX remnants
+  result = result
+    .replace(/\\[a-zA-Z]+\{([^}]*)\}/g, '$1')
+    .replace(/\\[a-zA-Z]+/g, '')
+    .replace(/[{}]/g, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/_{2}([^_]+)_{2}/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+
+  // 3. Rejoin broken compound tech terms
+  const COMPOUND_REPAIRS: [RegExp, string][] = [
+    [/My\s*\n+\s*SQL/gi, 'MySQL'],
+    [/Type\s*\n+\s*Script/gi, 'TypeScript'],
+    [/Java\s*\n+\s*Script/gi, 'JavaScript'],
+    [/Post\s*\n+\s*gre\s*SQL/gi, 'PostgreSQL'],
+    [/Spring\s*\n+\s*Boot/gi, 'Spring Boot'],
+    [/Power\s*\n+\s*BI/gi, 'Power BI'],
+    [/Node\s*\n+\s*js/gi, 'Node.js'],
+    [/React\s*\n+\s*js/gi, 'React.js'],
+    [/Next\s*\n+\s*js/gi, 'Next.js'],
+    [/Mon\s*\n+\s*go\s*DB/gi, 'MongoDB'],
+    [/Kube\s*\n+\s*rnetes/gi, 'Kubernetes'],
+    [/Ten\s*\n+\s*sor\s*Flow/gi, 'TensorFlow'],
+    [/CI\s*\n+\s*CD/gi, 'CI/CD'],
+    [/De\s*\n+\s*vOps/gi, 'DevOps'],
+  ];
+  for (const [pat, rep] of COMPOUND_REPAIRS) result = result.replace(pat, rep);
+
+  // 4. Rejoin broken category headers (e.g. "Languages\n: Python" -> "Programming Languages: Python")
+  result = result.replace(/^([A-Za-z &\/]+)\s*\n+\s*:\s*/gm, '$1: ');
+  result = result.replace(/^Languages\s*\n+:\s*/gim, 'Programming Languages: ');
+  result = result.replace(
+    /^Languages:\s*(Python|Java|C\b|C\+\+|C#|JavaScript|TypeScript|Go|Ruby|PHP|Swift|Kotlin|Rust|R\b|SQL|HTML)/gim,
+    'Programming Languages: $1'
+  );
+
+  // 5. Rejoin hyphen-broken words across line breaks
+  result = result.replace(/(\b[A-Za-z]+)-\s*\r?\n+\s*([A-Za-z]+\b)/g, '$1$2');
+
+  // 6. Rejoin lower-case sentence continuations split across lines
+  result = result.replace(/([a-z,])\r?\n([a-z])/g, '$1 $2');
+
+  // 7. Normalize bullet characters to •
+  result = result.replace(/^[\s]*[-–—·○►▪✓→]\s*/gm, '• ');
+
+  // 8. Ensure double newlines before known section headers
+  const SECTION_HEADERS = [
+    'PROFESSIONAL SUMMARY', 'SUMMARY', 'OBJECTIVE',
+    'TECHNICAL SKILLS', 'SKILLS', 'CORE SKILLS', 'KEY SKILLS',
+    'PROFESSIONAL EXPERIENCE', 'WORK EXPERIENCE', 'EXPERIENCE', 'EMPLOYMENT HISTORY', 'INTERNSHIPS?',
+    'PROJECTS', 'PERSONAL PROJECTS',
+    'EDUCATION', 'ACADEMIC BACKGROUND',
+    'CERTIFICATIONS?', 'ACHIEVEMENTS?', 'AWARDS?',
+    'LANGUAGES',
+  ];
+  for (const sec of SECTION_HEADERS) {
+    const reg = new RegExp(`(^|\\n)\\s*(${sec})\\b`, 'gi');
+    result = result.replace(reg, '\n\n$2\n');
+  }
+
+  // 9. Strip bullet points from PROFESSIONAL SUMMARY (must be pure prose)
+  const summaryReg = /(?:^|\n)(PROFESSIONAL SUMMARY|SUMMARY|OBJECTIVE)\n([\s\S]*?)(?=\n[A-Z][A-Z\s]{3,}\n|\n*$)/i;
+  const summaryMatch = result.match(summaryReg);
+  if (summaryMatch) {
+    const cleanSummary = summaryMatch[2]
+      .split('\n')
+      .map((line) => line.replace(/^[•\-*–—\s]+/, '').trim())
+      .filter(Boolean)
+      .join(' ')
+      .replace(/(\b[A-Za-z]+)-\s+([A-Za-z]+\b)/g, '$1$2');
+    if (cleanSummary) {
+      result = result.replace(
+        summaryMatch[0],
+        `\n${summaryMatch[1].toUpperCase()}\n${cleanSummary}\n`
+      );
+    }
+  }
+
+  // 10. Consolidate multi-line skill categories onto single lines
+  const skillsReg = /(?:^|\n)(TECHNICAL SKILLS|SKILLS|CORE SKILLS|KEY SKILLS)\n([\s\S]*?)(?=\n[A-Z][A-Z\s]{3,}\n|\n*$)/i;
+  const skillsMatch = result.match(skillsReg);
+  if (skillsMatch) {
+    const rawSkills = skillsMatch[2];
+    const skillLines: string[] = [];
+    const rawLines = rawSkills.split('\n').map((l) => l.trim()).filter(Boolean);
+    for (const l of rawLines) {
+      if (l.includes(':')) {
+        skillLines.push(l);
+      } else if (skillLines.length > 0) {
+        const last = skillLines[skillLines.length - 1];
+        skillLines[skillLines.length - 1] = last + (last.endsWith(',') ? ' ' : ', ') + l;
+      } else {
+        skillLines.push(`Technical Skills: ${l}`);
+      }
+    }
+    result = result.replace(
+      skillsMatch[0],
+      `\n${skillsMatch[1].toUpperCase()}\n${skillLines.join('\n')}\n`
+    );
+  }
+
+  // 11. Ensure LANGUAGES section has one bullet per item
+  const langReg = /(?:^|\n)(LANGUAGES)\n([\s\S]*?)(?=\n[A-Z][A-Z\s]{3,}\n|\n*$)/i;
+  const langMatch = result.match(langReg);
+  if (langMatch) {
+    const rawLang = langMatch[2].trim();
+    if (rawLang) {
+      const items = rawLang
+        .split(/[\n,–—|•]+/)
+        .map((s) => s.trim())
+        .filter((s) => s && !s.toUpperCase().startsWith('LANGUAGE'));
+      if (items.length > 0) {
+        result = result.replace(
+          langMatch[0],
+          `\nLANGUAGES\n${items.map((l) => `• ${l}`).join('\n')}\n`
+        );
+      }
+    }
+  }
+
+  // 12. Clean up excess blank lines and trailing whitespace
+  result = result
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+
+  return result;
+}
+
 export function sanitizeResumeText(text: string): string {
   if (!text) return "";
 
@@ -331,8 +481,10 @@ function parseAIResponse(raw: string, fallbackText: string): AIResult {
 
   // Schema A: Flat "resume" string schema
   if (typeof parsed?.resume === "string" && parsed.resume.trim().length > 30) {
+    const sanitized = sanitizeResumeText(parsed.resume);
+    const validated = validateAndRepairResumeFormat(sanitized);
     return {
-      resume: sanitizeResumeText(parsed.resume),
+      resume: validated,
       resumeJSON: null,
       keywordsAdded: Array.isArray(parsed.keywordsAdded) ? parsed.keywordsAdded : [],
       changesCount: typeof parsed.changesCount === "number" ? parsed.changesCount : (parsed.keywordsAdded?.length || 0),
@@ -346,8 +498,10 @@ function parseAIResponse(raw: string, fallbackText: string): AIResult {
   if (parsed?.header?.name) {
     const json = parsed as ResumeJSON;
     const plainText = serializeResumeJSONToText(json);
+    const sanitized = sanitizeResumeText(plainText);
+    const validated = validateAndRepairResumeFormat(sanitized);
     return {
-      resume: sanitizeResumeText(plainText),
+      resume: validated,
       resumeJSON: json,
       keywordsAdded: Array.isArray(json.keywordsAdded) ? json.keywordsAdded : [],
       changesCount: typeof json.changesCount === "number" ? json.changesCount : (json.keywordsAdded?.length || 0),
@@ -484,7 +638,8 @@ async function callGroqRaw(prompt: string): Promise<string> {
         body: JSON.stringify({
           model: modelName,
           messages: [{ role: "user", content: prompt }],
-          temperature: 0.25,
+          temperature: 0.20,
+          max_tokens: 8000,
           response_format: { type: "json_object" },
         }),
       });

@@ -1,11 +1,11 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { logger } from "../logger";
 
-// Active supported Gemini models in priority order
+// Active supported Gemini models in priority order (best quality first)
 const GEMINI_MODELS = [
-  "gemini-1.5-flash",
   "gemini-2.0-flash",
   "gemini-1.5-pro",
+  "gemini-1.5-flash",
   "gemini-1.5-flash-8b",
 ];
 
@@ -22,12 +22,30 @@ function extractJSON(text: string): any {
   try {
     return JSON.parse(cleaned);
   } catch (_e) {
-    // Try to find the first '{' and last '}'
     const start = cleaned.indexOf("{");
     const end = cleaned.lastIndexOf("}");
     if (start !== -1 && end !== -1 && end > start) {
       const jsonSub = cleaned.substring(start, end + 1);
-      return JSON.parse(jsonSub);
+      try {
+        return JSON.parse(jsonSub);
+      } catch (_e2) {}
+
+      // Repair unescaped newlines inside the "resume" field
+      try {
+        const repaired = jsonSub.replace(
+          /"resume"\s*:\s*"([\s\S]*?)"\s*,\s*"(?:keywordsAdded|bulletsRewritten|changesCount|summary)/i,
+          (match, resumeVal) => {
+            const escapedVal = resumeVal
+              .replace(/\\/g, "\\\\")
+              .replace(/"/g, '\\"')
+              .replace(/\r?\n/g, "\\n")
+              .replace(/\t/g, "\\t");
+            const afterKey = match.split('", "')[1] || "keywordsAdded";
+            return `"resume": "${escapedVal}", "${afterKey}`;
+          }
+        );
+        return JSON.parse(repaired);
+      } catch (_e3) {}
     }
     throw new Error("Unable to parse JSON from AI response.");
   }
@@ -50,20 +68,21 @@ export async function callGemini(prompt: string, rawText = ""): Promise<object> 
   let lastError: any = null;
 
   for (const modelName of GEMINI_MODELS) {
-    // 1. Try official SDK
+    // 1. Try official SDK first
     try {
       logger.info(`[gemini] Attempting generation with SDK model: ${modelName}`);
       const model = genAI.getGenerativeModel({
         model: modelName,
         generationConfig: {
-          temperature: 0.25,
-          maxOutputTokens: 4000,
+          temperature: 0.20,       // Lower = more deterministic, format-faithful
+          maxOutputTokens: 8192,   // Raised from 4000 → handles long resumes without truncation
+          responseMimeType: "application/json", // Force JSON-only output where supported
         },
       });
 
       const result = await model.generateContent(prompt);
       const responseText = result.response.text();
-      if (responseText) {
+      if (responseText && responseText.trim().length > 50) {
         const parsed = extractJSON(responseText);
         logger.info(`[gemini] Successfully generated optimization via ${modelName} (SDK)`);
         return parsed;
@@ -73,7 +92,7 @@ export async function callGemini(prompt: string, rawText = ""): Promise<object> 
       logger.warn(`[gemini] SDK attempt failed for ${modelName}:`, sdkError?.message);
     }
 
-    // 2. Try direct REST fallback for the same model
+    // 2. Direct REST fallback for the same model
     try {
       logger.info(`[gemini] Attempting generation with Direct REST endpoint: ${modelName}`);
       const restRes = await fetch(
@@ -84,8 +103,8 @@ export async function callGemini(prompt: string, rawText = ""): Promise<object> 
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
-              temperature: 0.25,
-              maxOutputTokens: 4000,
+              temperature: 0.20,
+              maxOutputTokens: 8192,
             },
           }),
         }
@@ -94,7 +113,7 @@ export async function callGemini(prompt: string, rawText = ""): Promise<object> 
       if (restRes.ok) {
         const restJson = await restRes.json();
         const candidateText = restJson.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (candidateText) {
+        if (candidateText && candidateText.trim().length > 50) {
           const parsed = extractJSON(candidateText);
           logger.info(`[gemini] Successfully generated optimization via ${modelName} (REST)`);
           return parsed;
