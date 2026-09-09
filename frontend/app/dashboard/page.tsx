@@ -193,10 +193,14 @@ export default function DashboardPage() {
         apiHeaders["Authorization"] = `Bearer ${accessToken}`;
       }
 
+      const dataTrainingConsent = typeof window !== "undefined"
+        ? localStorage.getItem("fastHire_ai_data_training") !== "false"
+        : true;
+
       const response = await fetch("/api/optimize", {
         method: "POST",
         headers: apiHeaders,
-        body: JSON.stringify({ resumeText: targetResumeText, jobDescription, instructions, lengthOption }),
+        body: JSON.stringify({ resumeText: targetResumeText, jobDescription, instructions, lengthOption, dataTrainingConsent }),
       });
 
       if (!response.ok) {

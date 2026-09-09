@@ -7,6 +7,7 @@ import { callAI } from "@/lib/ai/router";
 import { scoreResume } from "@/lib/ats/scorer";
 import { generateUUID } from "@/lib/utils";
 import { isOwnerEmail, FREE_CREDITS_PER_MONTH, PRO_CREDITS_PER_MONTH } from "@/types";
+import { buildTrainingSample } from "@/lib/anonymizer";
 import fs from "fs";
 import path from "path";
 
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Parse and validate body
-    const { resumeText, jobDescription, instructions, lengthOption, jobTitle, company } = await request.json();
+    const { resumeText, jobDescription, instructions, lengthOption, jobTitle, company, dataTrainingConsent } = await request.json();
 
     if (!resumeText || resumeText.length < MIN_RESUME_CHARS) {
       return NextResponse.json(
@@ -394,6 +395,59 @@ export async function POST(request: NextRequest) {
       } catch (creditErr: any) {
         logger.error("[optimize] Failed to increment credit usage in DB:", creditErr.message);
       }
+    }
+
+    // ── TRAINING DATA COLLECTION (anonymised, consent-gated) ───────────────────
+    // Only runs if user explicitly opted in via Data Preferences.
+    // dataTrainingConsent comes from the frontend (localStorage mirror) AND
+    // we double-check the server-side preference row for maximum security.
+    try {
+      let serverConsentEnabled = true; // default: opt-in
+      const { data: prefRow } = await (admin as any)
+        .from("DataPreferences")
+        .select("dataTrainingEnabled")
+        .eq("userId", activeUserId)
+        .maybeSingle();
+      if (prefRow) {
+        serverConsentEnabled = prefRow.dataTrainingEnabled;
+      }
+
+      // Honour the STRICTER of client hint vs server row
+      const consentGranted = (dataTrainingConsent !== false) && serverConsentEnabled;
+
+      if (consentGranted) {
+        const sample = buildTrainingSample({
+          jobTitle: finalJobTitle,
+          jobDescription,
+          resumeText,
+          keywordsInjected: mergedKeywordsAdded,
+          keywordsMissing: scoreAfter.missingKeywords || [],
+          scoreBefore: scoreBefore.overall,
+          scoreAfter: scoreAfter.overall,
+        });
+
+        await (admin as any)
+          .from("TrainingSample")
+          .insert({
+            id: generateUUID(),
+            // No userId stored — fully anonymous
+            jobTitle: sample.jobTitle,
+            keywordsFromJD: sample.keywordsFromJD,
+            keywordsInjected: sample.keywordsInjected,
+            keywordsMissing: sample.keywordsMissing,
+            scoreBefore: sample.scoreBefore,
+            scoreAfter: sample.scoreAfter,
+            jdSnippet: sample.jdSnippet,
+            resumeSnippet: sample.resumeSnippet,
+            createdAt: now.toISOString(),
+          });
+        logger.info(`[optimize] Training sample stored (anonymised) for jobTitle=${finalJobTitle}`);
+      } else {
+        logger.info(`[optimize] Training data skipped — user opted out. dataTrainingConsent=${dataTrainingConsent}, serverConsent=${serverConsentEnabled}`);
+      }
+    } catch (trainErr: any) {
+      // Non-fatal — training data collection must never block the response
+      logger.warn("[optimize] Training sample insert failed (non-fatal):", trainErr?.message);
     }
 
     return NextResponse.json({
