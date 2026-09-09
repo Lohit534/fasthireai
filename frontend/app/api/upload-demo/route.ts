@@ -41,9 +41,14 @@ export async function GET() {
       });
     }
 
+    // Default to configured Google Drive demo video if no local file is uploaded
+    const driveUrl = process.env.DEMO_VIDEO_URL || "https://drive.google.com/file/d/1IPCP1rurvnhKIjNKErkb3Kn1GWTmZz-q/preview";
+
     return NextResponse.json({
-      exists: false,
-      videoUrl: null,
+      exists: true,
+      videoUrl: driveUrl,
+      videoName: "FastHire AI Demo Video (Google Drive)",
+      isEmbed: true,
       allVideos: [],
     });
   } catch (error: any) {

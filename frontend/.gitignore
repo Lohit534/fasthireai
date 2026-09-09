@@ -41,3 +41,10 @@ yarn-error.log*
 next-env.d.ts
 
 /lib/generated/prisma
+
+# Large video assets (use Google Drive embed / CDN instead of git)
+/public/uploads/*.mp4
+/public/uploads/*.webm
+/public/uploads/*.mov
+/public/uploads/*.mkv
+/public/uploads/*.avi

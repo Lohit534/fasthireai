@@ -1,11 +1,44 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { X, Film, Loader2, Play } from "lucide-react";
 
 interface DemoVideoModalProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+const DEFAULT_DEMO_URL = "https://drive.google.com/file/d/1IPCP1rurvnhKIjNKErkb3Kn1GWTmZz-q/preview";
+
+function parseVideoSource(rawUrl: string | null): { isEmbed: boolean; url: string } {
+  if (!rawUrl) return { isEmbed: false, url: "" };
+
+  const trimmed = rawUrl.trim();
+
+  // Google Drive link (view, share, or preview)
+  const driveMatch = trimmed.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (driveMatch) {
+    return {
+      isEmbed: true,
+      url: `https://drive.google.com/file/d/${driveMatch[1]}/preview`,
+    };
+  }
+
+  // YouTube link
+  const ytMatch = trimmed.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+  if (ytMatch) {
+    return {
+      isEmbed: true,
+      url: `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&rel=0`,
+    };
+  }
+
+  // Generic embed URL
+  if (trimmed.includes("/preview") || trimmed.includes("/embed/")) {
+    return { isEmbed: true, url: trimmed };
+  }
+
+  return { isEmbed: false, url: trimmed };
 }
 
 export function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps) {
@@ -24,12 +57,14 @@ export function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps) {
         if (data.exists && data.videoUrl) {
           setVideoUrl(data.videoUrl);
         } else {
-          setVideoUrl(null);
+          setVideoUrl(DEFAULT_DEMO_URL);
         }
+      } else {
+        setVideoUrl(DEFAULT_DEMO_URL);
       }
     } catch (err) {
       console.error("Failed to load demo video state:", err);
-      setVideoUrl(null);
+      setVideoUrl(DEFAULT_DEMO_URL);
     } finally {
       setLoading(false);
     }
@@ -40,6 +75,8 @@ export function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps) {
       fetchVideoStatus();
     }
   }, [isOpen]);
+
+  const videoSource = useMemo(() => parseVideoSource(videoUrl), [videoUrl]);
 
   if (!isOpen) return null;
 
@@ -80,12 +117,20 @@ export function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps) {
           {loading ? (
             <div className="flex flex-col items-center justify-center gap-3 text-slate-400">
               <Loader2 className="h-8 w-8 animate-spin text-[#0d6e5a]" />
-              <p className="text-xs font-medium">Loading video...</p>
+              <p className="text-xs font-medium">Loading demo video...</p>
             </div>
-          ) : videoUrl && !videoError ? (
+          ) : videoSource.isEmbed && videoSource.url ? (
+            <iframe
+              src={videoSource.url}
+              className="w-full h-full border-0"
+              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+              allowFullScreen
+              title="FastHire AI Product Demo"
+            />
+          ) : videoSource.url && !videoError ? (
             <video
               ref={videoRef}
-              src={videoUrl}
+              src={videoSource.url}
               controls
               autoPlay
               playsInline
@@ -99,7 +144,7 @@ export function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps) {
               </div>
               <h4 className="text-base font-bold text-white">Demo Video Coming Soon</h4>
               <p className="text-xs text-slate-400">
-                Place your demo video file in <code className="text-teal-300 bg-teal-950/60 px-1.5 py-0.5 rounded font-mono text-[11px]">public/uploads/demo.mp4</code>.
+                Place your demo video file in <code className="text-teal-300 bg-teal-950/60 px-1.5 py-0.5 rounded font-mono text-[11px]">public/uploads/demo.mp4</code> or configure a video link.
               </p>
             </div>
           )}
