@@ -628,9 +628,9 @@ export default function DashboardPage() {
           <div ref={resultsRef} className="space-y-6">
             {/* Top Tracker Banner Message */}
             {!trackerAdded && (
-              <div className="bg-gradient-to-r from-[#0d6e5a]/5 via-white to-transparent border border-[#0d6e5a]/10 rounded-xl p-4 flex items-center justify-between gap-4 select-none">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-xl bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center shrink-0">
+              <div className="bg-gradient-to-r from-[#0d6e5a]/5 via-white to-transparent border border-[#0d6e5a]/10 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 select-none">
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                  <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center shrink-0">
                     <Briefcase className="h-4 w-4 text-[#0d6e5a]" />
                   </div>
                   <div>
@@ -640,7 +640,7 @@ export default function DashboardPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                   <Button
                     onClick={handleAddToTracker}
                     className="bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-bold text-[10px] h-8 rounded-lg px-4"
@@ -658,23 +658,23 @@ export default function DashboardPage() {
             )}
 
             {/* Overall Score Banner */}
-            <div className="bg-white border border-slate-200 p-6 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 select-none shadow-sm">
+            <div className="bg-white border border-slate-200 p-4 sm:p-6 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 select-none shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center">
-                  <TrendingUp className="h-5 w-5 text-emerald-600" />
+                <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
+                  <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-slate-900 tracking-tight">
+                  <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
                     ATS Optimization Complete
                   </h2>
-                  <p className="text-xs text-slate-500 font-medium">Your resume has been optimized with target keywords and metrics.</p>
+                  <p className="text-[11px] sm:text-xs text-slate-500 font-medium">Your resume has been optimized with target keywords and metrics.</p>
                 </div>
               </div>
               
               <Button
                 variant="outline"
                 onClick={handleReset}
-                className="border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs h-9 rounded-lg px-5 bg-transparent"
+                className="w-full sm:w-auto border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs h-9 rounded-lg px-4 sm:px-5 bg-transparent justify-center"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Optimize Another Resume
@@ -682,31 +682,31 @@ export default function DashboardPage() {
             </div>
 
             {/* Top Row: Edit & review workspace split (Score gauges & PDF Preview) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start mb-6">
               
               {/* Left Column: ATS Score circle gauges and keywords */}
-              <ScrollFadeIn direction="left" className="lg:col-span-5 space-y-6">
+              <ScrollFadeIn direction="left" className="lg:col-span-5 space-y-4 sm:space-y-6">
                 
                 {/* Score circular gauges (like in History DetailView) */}
                 <Card className="border-slate-200 bg-white shadow-sm rounded-xl overflow-hidden">
-                  <CardContent className="p-6 space-y-5">
+                  <CardContent className="p-3.5 sm:p-6 space-y-4 sm:space-y-5">
                     <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-2 select-none">
                       <span className="h-2 w-2 rounded-full bg-emerald-500" />
                       ATS Match Score Comparison
                     </h3>
 
-                    <div className="flex items-center justify-around gap-4 bg-slate-50 border border-slate-100 rounded-xl p-5">
-                      <CircleGauge value={beforeScore?.overall || 0} label="Original" size={80} />
+                    <div className="flex items-center justify-around gap-2 sm:gap-4 bg-slate-50 border border-slate-100 rounded-xl p-3 sm:p-5">
+                      <CircleGauge value={beforeScore?.overall || 0} label="Original" size={76} />
                       <div className="flex flex-col items-center gap-1 shrink-0 select-none">
-                        <div className="h-8 w-8 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
-                          <ArrowRight className="h-4 w-4 animate-pulse" />
+                        <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+                          <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-pulse" />
                         </div>
-                        <span className="text-[10px] font-black text-emerald-600">+{delta} pts</span>
+                        <span className="text-[9px] sm:text-[10px] font-black text-emerald-600">+{delta} pts</span>
                       </div>
-                      <CircleGauge value={afterScore?.overall || 0} label="Optimized" size={80} />
+                      <CircleGauge value={afterScore?.overall || 0} label="Optimized" size={76} />
                     </div>
 
-                    <p className="text-[10px] text-slate-500 leading-relaxed font-semibold bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-center select-none">
+                    <p className="text-[10px] text-slate-500 leading-relaxed font-semibold bg-slate-50 p-2 sm:p-2.5 rounded-lg border border-slate-100 text-center select-none">
                       Industry Standard ATS Scorer Rubric. Overlap analysis shows your keyword matching has been successfully enhanced.
                     </p>
                   </CardContent>
@@ -714,7 +714,7 @@ export default function DashboardPage() {
 
                 {/* Keywords Badges */}
                 {afterScore && (
-                  <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm select-none">
+                  <div className="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-5 shadow-sm select-none">
                     <KeywordBadges
                       added={optimizeResult?.keywordsAdded || []}
                       missing={afterScore.missingKeywords}
@@ -742,12 +742,12 @@ export default function DashboardPage() {
             {/* BELOW PDF PREVIEW: Full-width AI Optimization Summary & Tools Box */}
             {optimizeResult?.summary && (
               <Card className="border-slate-200 bg-white shadow-sm rounded-xl overflow-hidden mb-6 w-full select-none">
-                <CardContent className="p-6 space-y-4">
+                <CardContent className="p-4 sm:p-6 space-y-3 sm:space-y-4">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-[#0d6e5a]" />
                     <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">AI Optimization Summary</h3>
                   </div>
-                  <div className="bg-slate-50 border border-slate-100 p-5 rounded-xl">
+                  <div className="bg-slate-50 border border-slate-100 p-3.5 sm:p-5 rounded-xl">
                     <p className="text-xs text-slate-600 leading-relaxed font-semibold">
                       {optimizeResult.summary}
                     </p>
@@ -835,7 +835,7 @@ export default function DashboardPage() {
                             })()}
                           </div>
 
-                          <div className="pt-2 flex items-center justify-between gap-3">
+                          <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
                             <span className="text-[10px] text-slate-500">
                               {selectedRoadmapSkills.length === 0 
                                 ? "Click 1 to 3 skills above to build your roadmap." 
@@ -844,7 +844,7 @@ export default function DashboardPage() {
                             <Button
                               onClick={handleGenerateRoadmap}
                               disabled={selectedRoadmapSkills.length === 0 || roadmapLoading}
-                              className="bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm disabled:opacity-50"
+                              className="w-full sm:w-auto bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm disabled:opacity-50 justify-center"
                             >
                               {roadmapLoading ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />

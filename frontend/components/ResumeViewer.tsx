@@ -167,47 +167,47 @@ export default function ResumeViewer({
   return (
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col h-full">
       {/* Top Header Panel */}
-      <div className="bg-slate-50 px-5 py-4 border-b border-slate-200 flex flex-wrap gap-4 items-center justify-between">
+      <div className="bg-slate-50 px-3 sm:px-5 py-3 sm:py-4 border-b border-slate-200 flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center justify-between">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[#0d6e5a]" />
-          <h3 className="font-extrabold text-slate-900 text-sm">Optimized Resume Preview</h3>
+          <Sparkles className="h-4 w-4 text-[#0d6e5a] shrink-0" />
+          <h3 className="font-extrabold text-slate-900 text-xs sm:text-sm">Optimized Resume Preview</h3>
         </div>
 
         {/* Action Downloads / Copy */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-lg transition-all text-slate-600 hover:text-slate-900 border border-slate-200 bg-white h-9"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-1.5 sm:py-2 rounded-lg transition-all text-slate-600 hover:text-slate-900 border border-slate-200 bg-white h-8 sm:h-9"
           >
             {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? "Copied!" : "Copy"}
+            <span>{copied ? "Copied!" : "Copy"}</span>
           </button>
 
           <Button
             onClick={handleDownloadPDF}
             disabled={pdfLoading}
-            className="bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-bold text-xs h-9 rounded-lg flex items-center justify-center gap-1.5 px-4"
+            className="flex-1 sm:flex-initial bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-bold text-xs h-8 sm:h-9 rounded-lg flex items-center justify-center gap-1.5 px-3 sm:px-4"
           >
-            {pdfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-4 w-4" />}
-            Download PDF
+            {pdfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+            <span>PDF</span>
           </Button>
 
           <Button
             onClick={handleDownloadDOCX}
             disabled={docxLoading}
             variant="outline"
-            className="border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs h-9 rounded-lg flex items-center justify-center gap-1.5 px-4 bg-transparent"
+            className="flex-1 sm:flex-initial border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs h-8 sm:h-9 rounded-lg flex items-center justify-center gap-1.5 px-3 sm:px-4 bg-transparent"
           >
-            {docxLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-4 w-4" />}
-            Download DOCX
+            {docxLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+            <span>DOCX</span>
           </Button>
         </div>
       </div>
 
       {/* Workspace Display Area */}
-      <div className="flex-1 p-6 overflow-y-auto max-h-[650px] bg-slate-50 select-text">
+      <div className="flex-1 p-2 sm:p-4 md:p-6 overflow-y-auto max-h-[650px] bg-slate-50 select-text">
         {/* Render visual styling matching the LaTeX-style PDF engine output */}
-        <div className="w-full max-w-4xl mx-auto bg-white text-slate-900 border border-slate-200 rounded-xl p-8 shadow-2xl font-serif select-text relative leading-normal">
+        <div className="w-full max-w-4xl mx-auto bg-white text-slate-900 border border-slate-200 rounded-lg sm:rounded-xl p-3.5 sm:p-6 md:p-8 shadow-md sm:shadow-2xl font-serif select-text relative leading-normal">
           {blocks.map((block, idx) => {
             switch (block.type) {
               case "name":
@@ -260,30 +260,30 @@ export default function ResumeViewer({
               }
               case "skillLine":
                 return (
-                  <div key={idx} className="flex text-[10.5px] mb-1.5 leading-normal select-text font-serif">
-                    <span className="font-bold text-black w-[190px] shrink-0">{block.label}:</span>
+                  <div key={idx} className="flex flex-col sm:flex-row text-[10px] sm:text-[10.5px] mb-1.5 leading-normal select-text font-serif">
+                    <span className="font-bold text-black sm:w-[180px] shrink-0">{block.label}:</span>
                     <span className="text-slate-800 flex-1" style={{ hyphens: "none" }}>{renderHighlightedText(block.value)}</span>
                   </div>
                 );
               case "project":
                 return (
                   <div key={idx} className="mb-2">
-                    <div className="flex justify-between text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
-                      <div className="flex items-center gap-1.5">
+                    <div className="flex flex-col sm:flex-row sm:justify-between text-[10px] sm:text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span>{block.name}</span>
                         {block.projectUrl && (
-                          <a href={block.projectUrl} target="_blank" rel="noopener noreferrer" className="text-[9.5px] text-blue-600 underline font-normal">
+                          <a href={block.projectUrl} target="_blank" rel="noopener noreferrer" className="text-[9px] sm:text-[9.5px] text-blue-600 underline font-normal break-all">
                             {getReadableLinkLabel(block.projectUrl, block.name)}
                           </a>
                         )}
                       </div>
                       {block.tech && (
-                        <span className="font-normal italic text-slate-600">{renderHighlightedText(block.tech)}</span>
+                        <span className="font-normal italic text-slate-600 text-[9.5px] sm:text-[10px]">{renderHighlightedText(block.tech)}</span>
                       )}
                     </div>
                     {block.bullets.map((bullet, bIdx) => (
-                      <div key={bIdx} className="flex items-start text-[10px] mb-0.5 pl-3 leading-normal select-text font-serif">
-                        <span className="w-3 shrink-0 select-none text-black font-serif">•</span>
+                      <div key={bIdx} className="flex items-start text-[9.5px] sm:text-[10px] mb-0.5 pl-2 sm:pl-3 leading-normal select-text font-serif">
+                        <span className="w-2.5 sm:w-3 shrink-0 select-none text-black font-serif">•</span>
                         <span className="flex-1 text-slate-800 font-serif">{renderHighlightedText(bullet)}</span>
                       </div>
                     ))}
@@ -293,16 +293,16 @@ export default function ResumeViewer({
               case "job":
                 return (
                   <div key={idx} className="mb-2">
-                    <div className="flex justify-between text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
-                      <span>{renderHighlightedText(block.title)}</span>
-                      <span className="font-normal text-slate-700">{renderHighlightedText(block.dates)}</span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between text-[10px] sm:text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
+                      <span className="flex-1">{renderHighlightedText(block.title)}</span>
+                      <span className="font-normal text-slate-700 shrink-0 text-[9.5px] sm:text-[10px]">{renderHighlightedText(block.dates)}</span>
                     </div>
-                    <div className="text-[10px] italic text-slate-700 mb-1 leading-normal select-text font-serif">
+                    <div className="text-[9.5px] sm:text-[10px] italic text-slate-700 mb-1 leading-normal select-text font-serif">
                       {renderHighlightedText(block.company)}
                     </div>
                     {block.bullets.map((bullet, bIdx) => (
-                      <div key={bIdx} className="flex items-start text-[10px] mb-0.5 pl-3 leading-normal select-text font-serif">
-                        <span className="w-3 shrink-0 select-none text-black font-serif">•</span>
+                      <div key={bIdx} className="flex items-start text-[9.5px] sm:text-[10px] mb-0.5 pl-2 sm:pl-3 leading-normal select-text font-serif">
+                        <span className="w-2.5 sm:w-3 shrink-0 select-none text-black font-serif">•</span>
                         <span className="flex-1 text-slate-800 font-serif">{renderHighlightedText(bullet)}</span>
                       </div>
                     ))}
@@ -311,11 +311,11 @@ export default function ResumeViewer({
               case "education":
                 return (
                   <div key={idx} className="mb-2">
-                    <div className="flex justify-between text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
+                    <div className="flex flex-col sm:flex-row sm:justify-between text-[10px] sm:text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
                       <span>{renderHighlightedText(block.degree)}</span>
-                      <span className="font-normal text-slate-700">{renderHighlightedText(block.dates)}</span>
+                      <span className="font-normal text-slate-700 text-[9.5px] sm:text-[10px]">{renderHighlightedText(block.dates)}</span>
                     </div>
-                    <div className="flex justify-between text-[10px] text-slate-800 leading-normal select-text font-serif">
+                    <div className="flex justify-between text-[9.5px] sm:text-[10px] text-slate-800 leading-normal select-text font-serif">
                       <span>{renderHighlightedText(block.school)}</span>
                       <span>{renderHighlightedText(block.gpa)}</span>
                     </div>

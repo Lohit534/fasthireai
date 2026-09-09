@@ -84,6 +84,7 @@ export default function ResumesPage() {
   const [tempTitle, setTempTitle] = useState("");
   const [isTitleEditing, setIsTitleEditing] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [mobileTab, setMobileTab] = useState<"fields" | "preview">("fields");
 
   // Accordion collapsibles state in left column of Editor
   const [collapsibles, setCollapsibles] = useState({
@@ -1246,21 +1247,21 @@ export default function ResumesPage() {
         <div className="flex flex-col h-screen overflow-hidden bg-[#f8fafc]">
           
           {/* Header Row */}
-          <header className="border-b border-slate-200 bg-white px-6 py-3 flex items-center justify-between z-10 shrink-0">
-            <div className="flex items-center gap-4">
+          <header className="border-b border-slate-200 bg-white px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between z-10 shrink-0">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
               <Button
                 onClick={() => {
                   setEditingResume(null);
                   setEditorData(null);
                 }}
                 variant="ghost"
-                className="text-slate-600 hover:text-slate-900 flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
+                className="text-slate-600 hover:text-slate-900 flex items-center gap-1 sm:gap-1.5 h-8 px-2 sm:px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors shrink-0 text-xs"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Resumes
+                <span className="hidden xs:inline">Resumes</span>
               </Button>
 
-              <div className="flex items-center gap-1.5 border-l border-slate-200 pl-4">
+              <div className="flex items-center gap-1.5 border-l border-slate-200 pl-2 sm:pl-4 min-w-0">
                 {isTitleEditing ? (
                   <div className="flex items-center gap-1.5">
                     <Input
@@ -1269,16 +1270,16 @@ export default function ResumesPage() {
                       onBlur={handleSaveTitle}
                       onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
                       autoFocus
-                      className="h-7 w-48 text-xs border-slate-200 bg-white text-slate-900 rounded px-2 focus:border-[#0d6e5a]"
+                      className="h-7 w-32 sm:w-48 text-xs border-slate-200 bg-white text-slate-900 rounded px-2 focus:border-[#0d6e5a]"
                     />
-                    <Button onClick={handleSaveTitle} size="sm" className="h-7 bg-[#0d6e5a] hover:bg-[#094d3f] text-white text-[10px] rounded px-2.5">Save</Button>
+                    <Button onClick={handleSaveTitle} size="sm" className="h-7 bg-[#0d6e5a] hover:bg-[#094d3f] text-white text-[10px] rounded px-2">Save</Button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 select-text">
-                    <span className="font-extrabold text-sm text-slate-900">{editingResume.jobTitle || "Untitled Resume"}</span>
+                  <div className="flex items-center gap-1.5 min-w-0 select-text">
+                    <span className="font-extrabold text-xs sm:text-sm text-slate-900 truncate max-w-[120px] xs:max-w-[180px] sm:max-w-xs">{editingResume.jobTitle || "Untitled Resume"}</span>
                     <button 
                       onClick={() => setIsTitleEditing(true)}
-                      className="text-slate-400 hover:text-slate-600"
+                      className="text-slate-400 hover:text-slate-600 shrink-0"
                     >
                       <Edit3 className="h-3.5 w-3.5" />
                     </button>
@@ -1287,19 +1288,49 @@ export default function ResumesPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-                <Check className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2 sm:px-3 py-1 rounded-full">
+                <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                 <span>Auto-saved</span>
               </div>
             </div>
           </header>
 
+          {/* Mobile Tab Switcher (Visible only on mobile/tablet < lg) */}
+          <div className="lg:hidden flex items-center justify-center px-3 py-2 bg-white border-b border-slate-200 shrink-0 shadow-sm">
+            <div className="grid grid-cols-2 bg-slate-100 p-1 rounded-xl w-full max-w-sm border border-slate-200 gap-1">
+              <button
+                type="button"
+                onClick={() => setMobileTab("fields")}
+                className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  mobileTab === "fields"
+                    ? "bg-white text-[#0d6e5a] shadow-sm font-black border border-slate-200/80"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                <Edit3 className="h-3.5 w-3.5" />
+                Edit Form Fields
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileTab("preview")}
+                className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  mobileTab === "preview"
+                    ? "bg-white text-[#0d6e5a] shadow-sm font-black border border-slate-200/80"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                <FileText className="h-3.5 w-3.5" />
+                Live Preview
+              </button>
+            </div>
+          </div>
+
           {/* Split Columns Layout */}
           <div className="flex-1 flex overflow-hidden w-full items-stretch">
             
             {/* Left Column: Editor fields scrollable inputs */}
-            <div className="w-1/2 overflow-y-auto border-r border-slate-200 px-6 py-6 space-y-4 bg-[#f8fafc]">
+            <div className={`w-full lg:w-1/2 overflow-y-auto border-r border-slate-200 px-3 py-4 sm:px-6 sm:py-6 space-y-4 bg-[#f8fafc] ${mobileTab === "fields" ? "block" : "hidden lg:block"}`}>
               
               {editorData && (
                 <>
@@ -1317,7 +1348,7 @@ export default function ResumesPage() {
                     </button>
 
                     {collapsibles.personal && (
-                      <div className="p-4 grid grid-cols-2 gap-4 text-xs font-semibold select-none">
+                      <div className="p-3.5 sm:p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs font-semibold select-none">
                         <div className="space-y-1">
                           <label className="text-[10px] text-slate-500 uppercase tracking-wide">Full Name</label>
                           <Input
@@ -1443,7 +1474,7 @@ export default function ResumesPage() {
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
 
-                            <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                               <div className="space-y-1">
                                 <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Category</label>
                                 <Input
@@ -1501,7 +1532,7 @@ export default function ResumesPage() {
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
 
-                            <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                               <div className="space-y-1">
                                 <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Company</label>
                                 <Input
@@ -1601,7 +1632,7 @@ export default function ResumesPage() {
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
 
-                            <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                               <div className="space-y-1">
                                 <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Project Name</label>
                                 <Input
@@ -1621,7 +1652,7 @@ export default function ResumesPage() {
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                               <div className="space-y-1">
                                 <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Link (Optional)</label>
                                 <Input
@@ -1714,7 +1745,7 @@ export default function ResumesPage() {
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
 
-                            <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                               <div className="space-y-1">
                                 <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Institution</label>
                                 <Input
@@ -1733,7 +1764,7 @@ export default function ResumesPage() {
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                               <div className="space-y-1">
                                 <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Field of Study</label>
                                 <Input
@@ -1752,7 +1783,7 @@ export default function ResumesPage() {
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                               <div className="space-y-1">
                                 <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">CGPA / GPA (Optional)</label>
                                 <Input
@@ -1935,21 +1966,21 @@ export default function ResumesPage() {
             </div>
 
             {/* Right Column: Live Professional Preview sheet matching HTML design (Image 2) */}
-            <div className="w-1/2 bg-slate-100 overflow-y-auto px-10 py-10 flex justify-center">
+            <div className={`w-full lg:w-1/2 bg-slate-100 overflow-y-auto px-2 py-4 sm:px-6 sm:py-8 md:px-8 md:py-10 flex justify-center ${mobileTab === "preview" ? "flex" : "hidden lg:flex"}`}>
               
               {editorData && (
                 <div 
-                  className="w-full max-w-[800px] min-h-[1056px] bg-white text-black p-[25mm] shadow-2xl flex flex-col font-serif select-text border border-slate-300"
+                  className="w-full max-w-[800px] min-h-[600px] sm:min-h-[850px] lg:min-h-[1056px] bg-white text-black p-4 sm:p-8 md:p-12 lg:p-[20mm] shadow-xl sm:shadow-2xl flex flex-col font-serif select-text border border-slate-300 rounded-lg sm:rounded-none"
                   style={{ fontFamily: "'Times New Roman', Times, serif" }}
                 >
                   
                   {/* Name center header */}
-                  <h1 className="text-2xl font-bold uppercase text-center tracking-wide leading-tight">
+                  <h1 className="text-xl sm:text-2xl font-bold uppercase text-center tracking-wide leading-tight">
                     {editorData.name || "Jane Smith"}
                   </h1>
 
                   {/* Contact parts centered */}
-                  <div className="text-[10px] text-slate-700 text-center mt-1 mb-4 font-normal flex flex-wrap justify-center gap-1.5 leading-normal">
+                  <div className="text-[9px] sm:text-[10px] text-slate-700 text-center mt-1 mb-4 font-normal flex flex-wrap justify-center gap-1 sm:gap-1.5 leading-normal">
                     {[editorData.email, editorData.phone, editorData.location, editorData.linkedin, editorData.website]
                       .filter(Boolean)
                       .map((val, idx, arr) => (
