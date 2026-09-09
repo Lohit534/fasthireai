@@ -109,7 +109,7 @@ User Question: ${question}`;
     // 4. Secondary direct Gemini call if callAIText failed
     const geminiKey = process.env.GEMINI_API_KEY || "";
     if (geminiKey) {
-      const GEMINI_MODELS = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"];
+      const GEMINI_MODELS = ["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"];
       for (const modelName of GEMINI_MODELS) {
         try {
           const response = await fetch(
@@ -119,7 +119,7 @@ User Question: ${question}`;
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 contents: [{ parts: [{ text: systemPrompt }] }],
-                generationConfig: { temperature: 0.7, maxOutputTokens: 400 }
+                generationConfig: { temperature: 0.4, maxOutputTokens: 600 }
               })
             }
           );
