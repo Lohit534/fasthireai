@@ -228,7 +228,41 @@ Rules:
 
 User Question: ${trimmedQuestion}`;
 
-    // 2. Direct Ultra-Fast Gemini Call (1s latency)
+    // 2. Try Primary Groq LPU (0.4s response) if GROQ_API_KEY is present
+    const groqKey = process.env.GROQ_API_KEY || "";
+    if (groqKey) {
+      try {
+        const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${groqKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [{ role: "user", content: systemPrompt }],
+            temperature: 0.2,
+            max_tokens: 350
+          }),
+          signal: AbortSignal.timeout(3000)
+        });
+
+        if (groqRes.ok) {
+          const json = await groqRes.json();
+          const content = json.choices?.[0]?.message?.content;
+          if (content && content.trim().length > 5) {
+            return NextResponse.json({
+              answer: cleanAsterisks(content.trim()),
+              engine: "Groq AI (Llama 3.3)"
+            });
+          }
+        }
+      } catch (_groqErr) {
+        // Groq failed or timed out — seamlessly falls through to Gemini below
+      }
+    }
+
+    // 3. High-Speed Gemini Fallback / Primary (1.0s response)
     const geminiKey = process.env.GEMINI_API_KEY || "";
     if (geminiKey) {
       const { GoogleGenerativeAI } = await import("@google/generative-ai");
@@ -255,7 +289,7 @@ User Question: ${trimmedQuestion}`;
           if (responseText && responseText.trim().length > 5) {
             return NextResponse.json({
               answer: cleanAsterisks(responseText.trim()),
-              engine: "FastHire AI"
+              engine: "Gemini AI"
             });
           }
         } catch (e: any) {
