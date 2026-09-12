@@ -395,8 +395,14 @@ export default function PricingPage() {
               };
               localStorage.setItem(`fastHire_mockCredits_${userId}`, JSON.stringify(creditsObject));
 
-              toast.success(`🎉 Payment verified! Welcome to FastHire ${selectedPlan.name}.`);
+              toast.success(`🎉 Payment verified! Welcome to FastHire ${selectedPlan.name}. Redirecting to dashboard...`);
               setIsCheckoutOpen(false);
+
+              // Smoothly redirect to dashboard with fresh unlocked state
+              setTimeout(() => {
+                router.push("/dashboard");
+                router.refresh();
+              }, 1200);
             } catch (err: any) {
               toast.error(err.message || "Payment processed but verification failed. Contact support.");
             } finally {
