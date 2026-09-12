@@ -600,7 +600,7 @@ export async function callAIText(prompt: string): Promise<string> {
 
   // Fallback to Gemini
   if (process.env.GEMINI_API_KEY) {
-    const GEMINI_MODELS = ["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
+    const GEMINI_MODELS = ["gemini-3.6-flash", "gemini-3.7-flash", "gemini-2.5-flash", "gemini-2.0-flash"];
     const { GoogleGenerativeAI } = await import("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 

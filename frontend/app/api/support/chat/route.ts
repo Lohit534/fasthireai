@@ -243,7 +243,7 @@ User Question: ${trimmedQuestion}`;
     // 3. Direct Gemini call fallback if callAIText encountered an issue
     const geminiKey = process.env.GEMINI_API_KEY || "";
     if (geminiKey) {
-      const GEMINI_MODELS = ["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"];
+      const GEMINI_MODELS = ["gemini-3.6-flash", "gemini-3.7-flash", "gemini-2.5-flash", "gemini-2.0-flash"];
       for (const modelName of GEMINI_MODELS) {
         try {
           const response = await fetch(
