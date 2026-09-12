@@ -68,11 +68,6 @@ function cleanAsterisks(text: string): string {
 
 const FAQS: FAQItem[] = [
   {
-    id: "security-safety",
-    question: "Is this website safe and trustworthy for payments?",
-    answer: "Yes, 100%! FastHire AI uses 256-bit SSL encryption and processes all payments through Razorpay, an RBI-regulated, PCI-DSS Level 1 compliant gateway. We never store your card numbers or UPI PINs, and all purchases are strictly one-time safe transactions with no recurring auto-debits."
-  },
-  {
     id: "plan-status-free",
     question: "If I haven't purchased a plan, does it always show Free?",
     answer: "Yes! If you have not purchased a plan, your account strictly stays on the Free Plan with your monthly free credits. You can view all 3 plans on the Pricing page to compare features, but you will never be charged or switched to a paid plan without your explicit checkout."
@@ -755,9 +750,9 @@ export default function SupportChatbot() {
               {/* Suggested Quick Prompt Chips */}
               <div className="px-3.5 py-2 border-t border-slate-200 bg-slate-50 flex items-center gap-1.5 overflow-x-auto select-none no-scrollbar">
                 {[
-                  "Is this website safe?",
-                  "Explain pricing plans",
                   "How to get 90+ ATS score?",
+                  "How to tailor for any JD?",
+                  "Explain pricing plans",
                   "How do credits work?"
                 ].map((chip, idx) => (
                   <button

@@ -469,7 +469,7 @@ export default function BillingPage() {
             <div className="bg-white border border-slate-200 rounded-2xl p-4.5 flex items-center justify-between gap-3 shadow-sm">
               <div className="space-y-0.5">
                 <h4 className="text-xs font-bold text-slate-900">Need Billing Help?</h4>
-                <p className="text-[10px] text-slate-500">Questions about payments, refunds, or custom invoices?</p>
+                <p className="text-[10px] text-slate-500">Questions about payments, plans, or custom invoices?</p>
               </div>
               <button
                 onClick={() => {

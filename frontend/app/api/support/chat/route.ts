@@ -52,8 +52,8 @@ function getSmartContextualAnswer(question: string): string {
       "• 256-Bit SSL Encryption: All web traffic and resumes are encrypted in transit and at rest.\n" +
       "• RBI-Regulated Payments: All transactions are processed through Razorpay, a certified PCI-DSS Level 1 compliant gateway.\n" +
       "• Zero Payment Storage: We never store your UPI PINs, credit/debit card numbers, or banking credentials.\n" +
-      "• Safe One-Time Charges: Payments are strictly one-time. There are no hidden recurring auto-debits without your explicit consent.\n" +
-      "• 7-Day Refund Guarantee: If you face any issues, our support team provides prompt assistance or a full refund."
+      "• Safe One-Time Charges: Payments are strictly one-time with no unexpected recurring auto-debits.\n" +
+      "• Strict Non-Refundable Policy: As stated on our Pricing page, all purchases and plan switches are final and strictly non-refundable."
     );
   }
 
@@ -142,21 +142,29 @@ function getSmartContextualAnswer(question: string): string {
   }
 
   // Refunds & Support
-  if (q.includes("contact") || q.includes("admin") || q.includes("refund") || q.includes("help") || q.includes("ticket") || q.includes("human")) {
+  if (q.includes("refund") || q.includes("money back") || q.includes("cancel") || q.includes("return")) {
     return cleanAsterisks(
-      "Need human help or a refund?\n\n" +
+      "FastHire AI Refund Policy:\n\n" +
+      "• As clearly stated on our Pricing page, all payments, plan upgrades, and plan switches are strictly non-refundable under any circumstances.\n" +
+      "• Because digital optimization credits and AI features are activated immediately upon purchase, payments cannot be refunded or reversed.\n" +
+      "• If you experience any technical issues with your credits, our team is ready to assist you promptly via an Admin Support Ticket."
+    );
+  }
+
+  if (q.includes("contact") || q.includes("admin") || q.includes("help") || q.includes("ticket") || q.includes("human") || q.includes("support")) {
+    return cleanAsterisks(
+      "Need human help or support?\n\n" +
       "• Create a ticket directly in this widget under Admin Support Ticket.\n" +
-      "• We respond within 1-2 business days, and replies appear right here.\n" +
-      "• We offer a 7-day money-back guarantee for any unsatisfied orders."
+      "• Our administrative team responds directly within 1-2 business days, and replies appear right here in your widget."
     );
   }
 
   return cleanAsterisks(
     "FastHire AI helps you create ATS-optimized resumes tailored to any job description, track your job applications, and boost interview callbacks.\n\n" +
     "You can ask me about:\n" +
-    "• Website security, trust, and payment safety\n" +
-    "• Free, Premium Pro, and Pro Max pricing plans\n" +
     "• How to achieve a 90+ ATS score\n" +
+    "• How to tailor your resume for any Job Description\n" +
+    "• Free, Premium Pro, and Pro Max plans\n" +
     "• GST invoices, PDF/DOCX downloads, and the Job Tracker"
   );
 }
@@ -201,14 +209,15 @@ export async function POST(request: NextRequest) {
     const systemPrompt = `You are the official FastHire AI Assistant — a helpful, trustworthy, and knowledgeable guide for the FastHire AI platform.
 
 Key Platform Information:
-1. Safety & Trust: 256-bit SSL encryption. All payments processed by Razorpay (RBI-authorized, PCI-DSS Level 1 compliant). FastHire never stores card details or UPI PINs. Strictly one-time safe payments with no auto-debit. 7-day refund guarantee.
-2. Pricing Plans:
+1. Safety & Trust: 256-bit SSL encryption. All payments processed by Razorpay (RBI-authorized, PCI-DSS Level 1 compliant). FastHire never stores card details or UPI PINs. Strictly one-time safe payments with no auto-debit.
+2. Strict Non-Refundable Policy: As explicitly stated on the Pricing page, all purchases, plan upgrades, and plan switches are final and strictly non-refundable under any circumstances once processed because digital credits and AI features are delivered immediately. If a user has an issue with their credits, advise them to create an Admin Support Ticket.
+3. Pricing Plans:
    - Free Plan: Free monthly credits, standard ATS analysis, 1 resume template. If a user has not bought a plan, they stay on Free.
    - Premium Pro (₹99/mo or ₹999/yr): 20 credits/mo, full keyword gap report, all templates, PDF and DOCX downloads.
    - Pro Max (₹199/mo or ₹1999/yr): Unlimited credits, AI bullet point rewriter, priority ATS processing, 24/7 AI Assistant, official GST tax invoices.
-3. Plan Switching: If a user has not paid, their account strictly shows Free. They cannot switch to paid perks without checkout.
-4. ATS Scoring: Scans resume against Job Description (JD), measures semantic match, keyword presence, quantifiable impact, and formatting to help users reach 90+ ATS score.
-5. Other Features: Integrated Job Application Tracker (Wishlist, Applied, Interview, Offer), Career Roadmap generator, official 5% GST invoices with HSN codes.
+4. Plan Switching: If a user has not paid, their account strictly shows Free. They cannot switch to paid perks without checkout.
+5. ATS Scoring: Scans resume against Job Description (JD), measures semantic match, keyword presence, quantifiable impact, and formatting to help users reach 90+ ATS score.
+6. Other Features: Integrated Job Application Tracker (Wishlist, Applied, Interview, Offer), Career Roadmap generator, official 5% GST invoices with HSN codes.
 
 CRITICAL FORMATTING RULE:
 - NEVER use asterisks (*) or double asterisks (**) anywhere in your response.
@@ -275,7 +284,7 @@ User Question: ${trimmedQuestion}`;
   } catch (error: any) {
     logger.error("[support-chat] Unhandled error:", error?.message);
     return NextResponse.json({ 
-      answer: cleanAsterisks("I am ready to help! You can ask about website security, ATS resume scoring, tailoring for job descriptions, pricing plans, or career roadmaps.") 
+      answer: cleanAsterisks("I am ready to help! You can ask about ATS resume scoring, tailoring for job descriptions, pricing plans, or career roadmaps.") 
     });
   }
 }
