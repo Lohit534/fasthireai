@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Check,
+  CheckCircle2,
+  ArrowRight,
   Sparkles,
   Loader2,
   CreditCard,
@@ -166,6 +168,15 @@ export default function PricingPage() {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  // Payment Success Details Modal State
+  const [successDetails, setSuccessDetails] = useState<{
+    planName: string;
+    planId: string;
+    amount: number;
+    cycle: string;
+    paymentId: string;
+  } | null>(null);
 
   // FAQ open/close index state
   const [openFAQIndex, setOpenFAQIndex] = useState<number | null>(null);
@@ -395,14 +406,17 @@ export default function PricingPage() {
               };
               localStorage.setItem(`fastHire_mockCredits_${userId}`, JSON.stringify(creditsObject));
 
-              toast.success(`🎉 Payment verified! Welcome to FastHire ${selectedPlan.name}. Redirecting to dashboard...`);
               setIsCheckoutOpen(false);
 
-              // Smoothly redirect to dashboard with fresh unlocked state
-              setTimeout(() => {
-                router.push("/dashboard");
-                router.refresh();
-              }, 1200);
+              // Set rich success confirmation details
+              const calculatedAmount = selectedPlan.id === "premium" ? (billingCycle === "monthly" ? 104 : 174) : (billingCycle === "monthly" ? 209 : 349);
+              setSuccessDetails({
+                planName: selectedPlan.name,
+                planId: selectedPlan.id,
+                amount: calculatedAmount,
+                cycle: billingCycle === "monthly" ? "30 Days Access (Monthly)" : "365 Days Access (Yearly)",
+                paymentId: response.razorpay_payment_id || "pay_verified",
+              });
             } catch (err: any) {
               toast.error(err.message || "Payment processed but verification failed. Contact support.");
             } finally {
@@ -452,8 +466,16 @@ export default function PricingPage() {
           };
           localStorage.setItem(`fastHire_mockCredits_${userId}`, JSON.stringify(creditsObject));
 
-          toast.success(`Payment processed successfully via simulated Razorpay Gateway!`);
           setIsCheckoutOpen(false);
+
+          const calculatedAmount = selectedPlan.id === "premium" ? (billingCycle === "monthly" ? 104 : 174) : (billingCycle === "monthly" ? 209 : 349);
+          setSuccessDetails({
+            planName: selectedPlan.name,
+            planId: selectedPlan.id,
+            amount: calculatedAmount,
+            cycle: billingCycle === "monthly" ? "30 Days Access (Monthly)" : "365 Days Access (Yearly)",
+            paymentId: "pay_simulated_" + Date.now().toString().slice(-8),
+          });
         } catch (err: any) {
           toast.error("Failed to update credits in sandbox.");
         } finally {
@@ -814,6 +836,100 @@ export default function PricingPage() {
           onClose={() => setIsInvoiceOpen(false)}
           invoice={invoiceData}
         />
+      )}
+
+      {/* RICH PAYMENT SUCCESS CONFIRMATION MODAL */}
+      {successDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Top header accent */}
+            <div className="bg-gradient-to-r from-[#0d6e5a] to-emerald-600 p-6 text-white text-center">
+              <div className="w-14 h-14 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center mx-auto mb-3 shadow-inner">
+                <CheckCircle2 className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-xl font-black tracking-tight">Payment Successful!</h3>
+              <p className="text-xs text-emerald-100 font-medium mt-1">
+                Your account is upgraded to FastHire {successDetails.planName}
+              </p>
+            </div>
+
+            <div className="p-5 sm:p-6 space-y-4">
+              {/* Order Summary Receipt Box */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 text-xs">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500 font-medium">Plan Purchased:</span>
+                  <span className="font-bold text-slate-900">{successDetails.planName}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500 font-medium">Amount Paid:</span>
+                  <span className="font-black text-[#0d6e5a] text-sm">₹{successDetails.amount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500 font-medium">Access Duration:</span>
+                  <span className="font-bold text-slate-700">{successDetails.cycle}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500 font-medium">Renewal Mode:</span>
+                  <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[10px]">
+                    Safe One-Time &bull; No Auto-Debits
+                  </span>
+                </div>
+                <div className="flex justify-between items-center border-t border-slate-200/80 pt-2 text-[11px]">
+                  <span className="text-slate-400">Payment ID:</span>
+                  <span className="font-mono text-slate-600 truncate max-w-[170px]">{successDetails.paymentId}</span>
+                </div>
+              </div>
+
+              {/* What is Unlocked Box */}
+              <div className="space-y-1.5">
+                <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Features Unlocked Right Now:</h4>
+                <div className="grid grid-cols-1 gap-1.5 text-xs text-slate-700">
+                  <div className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>{successDetails.planId === "premium" ? "15 AI Optimizations per month" : "Unlimited AI Resume Optimizations"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>{successDetails.planId === "premium" ? "5 PDF/DOCX downloads" : "30 Pro ATS-Formatted PDF Downloads"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>AI Bullet Point Improver &amp; Learning Roadmaps</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>Tailored Cover Letter Generator</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                <Button
+                  onClick={() => {
+                    setSuccessDetails(null);
+                    router.push("/dashboard");
+                    router.refresh();
+                  }}
+                  className="flex-1 bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-1.5 shadow-sm"
+                >
+                  <span>Go to Dashboard</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  onClick={() => {
+                    setSuccessDetails(null);
+                    router.push("/dashboard/billing");
+                  }}
+                  variant="outline"
+                  className="border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs h-10 rounded-xl"
+                >
+                  View Invoices
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>
