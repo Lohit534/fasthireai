@@ -169,15 +169,20 @@ function getSmartContextualAnswer(question: string): string {
   );
 }
 
+export const runtime = "nodejs";
+export const maxDuration = 15;
+
+const FAST_MODELS = [
+  "gemini-flash-lite-latest",
+  "gemini-3.1-flash-lite",
+  "gemini-flash-latest",
+  "gemini-3.6-flash"
+];
+
 export async function POST(request: NextRequest) {
   try {
-    // 1. Verify User Authentication
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
     const body = await request.json().catch(() => ({}));
     const question = body.question;
-    const userPlan = body.userPlan || "free";
 
     if (!question || typeof question !== "string" || !question.trim()) {
       return NextResponse.json({ error: "Question is required." }, { status: 400 });
@@ -185,49 +190,81 @@ export async function POST(request: NextRequest) {
 
     const trimmedQuestion = question.trim();
 
-    // Check user tier for personalization (all authenticated users can chat)
-    const isOwner = user ? isOwnerEmail(user.email) : false;
-    let isProMax = isOwner || userPlan === "promax" || userPlan === "team";
+    // 1. Check for Instant Known Answer (0ms latency) for high-frequency platform queries
+    const instantAnswer = getSmartContextualAnswer(trimmedQuestion);
+    // If the question explicitly targeted a core keyword, return immediately for instant UX
+    const qLower = trimmedQuestion.toLowerCase();
+    const isDirectPlatformTopic = 
+      qLower.includes("refund") || 
+      qLower.includes("money back") || 
+      qLower.includes("pricing") || 
+      qLower.includes("plan") || 
+      qLower.includes("promax") || 
+      qLower.includes("pro max") || 
+      qLower.includes("unlimited") || 
+      qLower.includes("gst") || 
+      qLower.includes("invoice") || 
+      qLower.includes("download") || 
+      qLower.includes("switch") || 
+      qLower.includes("only shows free") || 
+      qLower.includes("job tracker") || 
+      qLower.includes("roadmap");
 
-    if (!isProMax && user) {
-      try {
-        const admin = getAdminClient() as any;
-        const { data: creditRow } = await admin
-          .from("Credit")
-          .select("paidCredits")
-          .eq("userId", user.id)
-          .maybeSingle();
-
-        if (creditRow && (creditRow.paidCredits >= 99999 || creditRow.paidCredits > 200)) {
-          isProMax = true;
-        }
-      } catch (err) {
-        logger.warn("[support-chat] Fallback check for user credits.");
-      }
+    if (isDirectPlatformTopic && instantAnswer) {
+      return NextResponse.json({
+        answer: cleanAsterisks(instantAnswer),
+        engine: "FastHire Instant Knowledge"
+      });
     }
 
-    const systemPrompt = `You are the official FastHire AI Assistant — a helpful, trustworthy, and knowledgeable guide for the FastHire AI platform.
-
-Key Platform Information:
-1. Safety & Trust: 256-bit SSL encryption. All payments processed by Razorpay (RBI-authorized, PCI-DSS Level 1 compliant). FastHire never stores card details or UPI PINs. Strictly one-time safe payments with no auto-debit.
-2. Strict Non-Refundable Policy: As explicitly stated on the Pricing page, all purchases, plan upgrades, and plan switches are final and strictly non-refundable under any circumstances once processed because digital credits and AI features are delivered immediately. If a user has an issue with their credits, advise them to create an Admin Support Ticket.
-3. Pricing Plans:
-   - Free Plan: Free monthly credits, standard ATS analysis, 1 resume template. If a user has not bought a plan, they stay on Free.
-   - Premium Pro (₹99/mo or ₹999/yr): 20 credits/mo, full keyword gap report, all templates, PDF and DOCX downloads.
-   - Pro Max (₹199/mo or ₹1999/yr): Unlimited credits, AI bullet point rewriter, priority ATS processing, 24/7 AI Assistant, official GST tax invoices.
-4. Plan Switching: If a user has not paid, their account strictly shows Free. They cannot switch to paid perks without checkout.
-5. ATS Scoring: Scans resume against Job Description (JD), measures semantic match, keyword presence, quantifiable impact, and formatting to help users reach 90+ ATS score.
-6. Other Features: Integrated Job Application Tracker (Wishlist, Applied, Interview, Offer), Career Roadmap generator, official 5% GST invoices with HSN codes.
-
-CRITICAL FORMATTING RULE:
-- NEVER use asterisks (*) or double asterisks (**) anywhere in your response.
-- Do NOT use markdown bold (**word**) or italics (*word*).
-- Use standard bullet points (•) for lists.
-- Write in clean, professional, concise plain text with clear line breaks.
+    const systemPrompt = `You are the official FastHire AI Assistant.
+Rules:
+1. FastHire is an ATS Resume Optimizer and Career platform.
+2. Plans: Free Tier (free credits), Premium Pro (₹99/mo, 20 credits), Pro Max (₹199/mo, unlimited credits).
+3. Refund Policy: All payments are strictly non-refundable as stated on the Pricing page.
+4. ATS scoring: Scans resume against Job Description, checks skills, quantifiable metrics, and formatting to reach 90+ score.
+5. Provide a helpful, concise answer (2-4 sentences or clean bullet points).
+6. CRITICAL: Never use asterisks (*) or double asterisks (**). Do not use markdown bold or italics. Use • for bullets.
 
 User Question: ${trimmedQuestion}`;
 
-    // 2. Try primary AI text router (Groq multi-model + Gemini fallback)
+    // 2. Direct Ultra-Fast Gemini Call (1s latency)
+    const geminiKey = process.env.GEMINI_API_KEY || "";
+    if (geminiKey) {
+      const { GoogleGenerativeAI } = await import("@google/generative-ai");
+      const genAI = new GoogleGenerativeAI(geminiKey);
+
+      for (const modelName of FAST_MODELS) {
+        try {
+          const model = genAI.getGenerativeModel({
+            model: modelName,
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 350
+            }
+          });
+
+          // Timeout promise to guarantee rapid response
+          const genPromise = model.generateContent(systemPrompt);
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout")), 4000)
+          );
+
+          const result: any = await Promise.race([genPromise, timeoutPromise]);
+          const responseText = result.response.text();
+          if (responseText && responseText.trim().length > 5) {
+            return NextResponse.json({
+              answer: cleanAsterisks(responseText.trim()),
+              engine: "FastHire AI"
+            });
+          }
+        } catch (e: any) {
+          // Model failed or timed out, try next fast model
+        }
+      }
+    }
+
+    // 3. Fallback to CallAIText Router
     try {
       const aiResponse = await callAIText(systemPrompt);
       if (aiResponse && aiResponse.trim().length > 10) {
@@ -236,53 +273,16 @@ User Question: ${trimmedQuestion}`;
           engine: "FastHire AI"
         });
       }
-    } catch (aiErr: any) {
-      logger.warn("[support-chat] AI text router fallback:", aiErr?.message);
-    }
+    } catch (_aiErr) {}
 
-    // 3. Direct Gemini call fallback if callAIText encountered an issue
-    const geminiKey = process.env.GEMINI_API_KEY || "";
-    if (geminiKey) {
-      const GEMINI_MODELS = ["gemini-3.6-flash", "gemini-3.7-flash", "gemini-2.5-flash", "gemini-2.0-flash"];
-      for (const modelName of GEMINI_MODELS) {
-        try {
-          const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: systemPrompt }] }],
-                generationConfig: { temperature: 0.3, maxOutputTokens: 600 }
-              })
-            }
-          );
-
-          if (response.ok) {
-            const json = await response.json();
-            const answer = json.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (answer && answer.trim().length > 10) {
-              return NextResponse.json({
-                answer: cleanAsterisks(answer.trim()),
-                engine: "Gemini AI"
-              });
-            }
-          }
-        } catch {
-          // continue to next model or fallback
-        }
-      }
-    }
-
-    // 4. Smart contextual fallback if APIs are offline or rate-limited
-    const smartFallback = getSmartContextualAnswer(trimmedQuestion);
+    // 4. Instant Knowledge Engine Fallback
     return NextResponse.json({
-      answer: cleanAsterisks(smartFallback),
+      answer: cleanAsterisks(instantAnswer),
       engine: "FastHire Knowledge Engine"
     });
 
   } catch (error: any) {
-    logger.error("[support-chat] Unhandled error:", error?.message);
+    logger.error("[support-chat] Error:", error?.message);
     return NextResponse.json({ 
       answer: cleanAsterisks("I am ready to help! You can ask about ATS resume scoring, tailoring for job descriptions, pricing plans, or career roadmaps.") 
     });
