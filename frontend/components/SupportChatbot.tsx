@@ -52,7 +52,31 @@ interface FAQItem {
   answer: string;
 }
 
+/**
+ * Remove all asterisks and format cleanly
+ */
+function cleanAsterisks(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/(^|\n)\s*[\*\-]\s+/g, "$1• ")
+    .replace(/\*/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 const FAQS: FAQItem[] = [
+  {
+    id: "security-safety",
+    question: "Is this website safe and trustworthy for payments?",
+    answer: "Yes, 100%! FastHire AI uses 256-bit SSL encryption and processes all payments through Razorpay, an RBI-regulated, PCI-DSS Level 1 compliant gateway. We never store your card numbers or UPI PINs, and all purchases are strictly one-time safe transactions with no recurring auto-debits."
+  },
+  {
+    id: "plan-status-free",
+    question: "If I haven't purchased a plan, does it always show Free?",
+    answer: "Yes! If you have not purchased a plan, your account strictly stays on the Free Plan with your monthly free credits. You can view all 3 plans on the Pricing page to compare features, but you will never be charged or switched to a paid plan without your explicit checkout."
+  },
   {
     id: "payment-visibility",
     question: "Why is my payment not visible on the dashboard?",
@@ -61,12 +85,12 @@ const FAQS: FAQItem[] = [
   {
     id: "credits-reset",
     question: "When do my monthly optimization credits reset?",
-    answer: "Your credits refresh automatically every 30 days on your monthly billing cycle date. Free plan users get 2 optimizations per month, Pro gets 20, and Pro Max members get unlimited optimizations."
+    answer: "Your credits refresh automatically every 30 days on your monthly cycle. Free plan users get free monthly credits, Pro gets 20, and Pro Max members get unlimited optimizations."
   },
   {
     id: "ats-scoring",
     question: "How does FastHire ATS scoring & keyword optimization work?",
-    answer: "FastHire AI analyzes your resume against target job description keywords, technical requirements, and industry-standard ATS rubrics, highlighting exact keyword gaps and upgrading weak bullet points."
+    answer: "FastHire AI analyzes your resume against target job description keywords, technical requirements, and industry-standard ATS rubrics, highlighting exact keyword gaps and upgrading weak bullet points to help you reach a 90+ score."
   },
   {
     id: "gst-invoices",
@@ -239,7 +263,7 @@ export default function SupportChatbot() {
           ...newHistory,
           {
             sender: "ai",
-            text: data.answer || "I am here to assist with any questions about FastHire AI!",
+            text: cleanAsterisks(data.answer) || "I am here to assist with any questions about FastHire AI!",
             timestamp: new Date()
           }
         ]);
@@ -501,11 +525,11 @@ export default function SupportChatbot() {
                           AI Chat
                         </h4>
                         <Badge className="bg-emerald-50 border border-emerald-200 text-[#0d6e5a] text-[8px] font-bold uppercase tracking-wider px-1.5 py-0 rounded select-none">
-                          PRO MAX
+                          24/7 ONLINE
                         </Badge>
                       </div>
                       <p className="text-[10px] text-slate-500 mt-0.5 font-medium">
-                        Instant AI Assistant &bull; 24/7 Support
+                        Instant AI Assistant &bull; Ask anything about FastHire
                       </p>
                     </div>
                   </div>
@@ -707,7 +731,7 @@ export default function SupportChatbot() {
                         ? "bg-[#0d6e5a] text-white rounded-br-none"
                         : "bg-white border border-slate-200 text-slate-800 rounded-bl-none"
                     }`}>
-                      {msg.text}
+                      <div className="whitespace-pre-wrap">{cleanAsterisks(msg.text)}</div>
                       <span className={`block text-[8px] font-semibold text-right mt-1.5 ${
                         msg.sender === "user" ? "text-white/80" : "text-slate-400"
                       }`}>
@@ -731,9 +755,10 @@ export default function SupportChatbot() {
               {/* Suggested Quick Prompt Chips */}
               <div className="px-3.5 py-2 border-t border-slate-200 bg-slate-50 flex items-center gap-1.5 overflow-x-auto select-none no-scrollbar">
                 {[
+                  "Is this website safe?",
+                  "Explain pricing plans",
                   "How to get 90+ ATS score?",
-                  "Explain Pro Max features",
-                  "How to tailor for any JD?"
+                  "How do credits work?"
                 ].map((chip, idx) => (
                   <button
                     key={idx}
