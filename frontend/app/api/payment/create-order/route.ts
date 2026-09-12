@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid plan or billing cycle." }, { status: 400 });
     }
 
-    const keyId     = process.env.RAZORPAY_KEY_ID;
+    const keyId     = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
     if (!keyId || !keySecret) {
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
       orderId: order.id,
       amount: order.amount,
       currency: order.currency,
-      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      keyId: keyId,
     });
   } catch (error: any) {
     logger.error("[payment/create-order] Unhandled error:", error?.message);
