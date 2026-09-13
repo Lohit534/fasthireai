@@ -17,18 +17,48 @@ const PROXIES = [
   (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
 ];
 
-function stripHtml(html: string): string {
-  return html
-    // Remove style/script blocks entirely
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
-    .replace(/<noscript[^>]*>[\s\S]*?<\/noscript>/gi, " ")
-    // Replace block-level tags with newlines for structure
-    .replace(/<\/(p|div|li|h1|h2|h3|h4|h5|h6|tr|br|section|article|header|footer)[^>]*>/gi, "\n")
-    .replace(/<br\s*\/?>/gi, "\n")
-    // Remove all remaining HTML tags
-    .replace(/<[^>]+>/g, " ")
-    // Decode common HTML entities
+import * as cheerio from "cheerio";
+
+function extractJobDescription(html: string): string {
+  if (!html) return "";
+  
+  const $ = cheerio.load(html);
+
+  // Remove elements that are definitively NOT part of the job description
+  $('script, style, noscript, nav, header, footer, aside, iframe, svg, button, form, input, meta, link').remove();
+  
+  // Try to find the specific job description container using common classes/IDs
+  let content = "";
+  const selectors = [
+    '#job-description',
+    '.job-description',
+    '.show-more-less-html__markup', // LinkedIn
+    '.jobsearch-JobComponent-description', // Indeed
+    '#jobDetailsSection',
+    '.job-details',
+    'article',
+    'main',
+    '.description',
+    '[data-automation="jobDescription"]'
+  ];
+
+  for (const selector of selectors) {
+    const el = $(selector);
+    if (el.length > 0) {
+      content = el.text();
+      // If we got a decent chunk of text, stop looking
+      if (content.length > 200) break;
+    }
+  }
+
+  // Fallback: If no specific container was found, just take the body text
+  if (content.length < 200) {
+    content = $('body').text() || $.text();
+  }
+
+  // Aggressive whitespace and newline trimming (prevent spaces)
+  return content
+    // Decode common HTML entities (cheerio does most of this, but just in case)
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
@@ -38,9 +68,14 @@ function stripHtml(html: string): string {
     .replace(/&bull;/g, "•")
     .replace(/&#\d+;/g, " ")
     .replace(/&[a-z]+;/gi, " ")
-    // Collapse excess whitespace
-    .replace(/[ \t]{2,}/g, " ")
-    .replace(/\n{3,}/g, "\n\n")
+    // Replace multiple newlines/tabs with a single newline
+    .replace(/[\r\n\t]+/g, "\n")
+    // Replace multiple spaces with a single space
+    .replace(/[ ]{2,}/g, " ")
+    // Remove space at the beginning of a line
+    .replace(/^\s+/gm, "")
+    // Remove blank lines completely
+    .replace(/\n{2,}/g, "\n\n")
     .trim();
 }
 
@@ -70,7 +105,7 @@ export async function POST(request: NextRequest) {
         const contentType = directRes.headers.get("content-type") || "";
         if (contentType.includes("text/html") || contentType.includes("text/plain")) {
           const html = await directRes.text();
-          const text = stripHtml(html).slice(0, 8000);
+          const text = extractJobDescription(html).slice(0, 8000);
           if (text.length >= 100) {
             logger.info(`[fetch-jd] Direct fetch succeeded: ${text.length} chars`);
             return NextResponse.json({ text, source: "direct" });
@@ -94,7 +129,7 @@ export async function POST(request: NextRequest) {
           const html: string = json?.contents || json?.data || "";
 
           if (html && html.length > 200) {
-            const text = stripHtml(html).slice(0, 8000);
+            const text = extractJobDescription(html).slice(0, 8000);
             if (text.length >= 100) {
               logger.info(`[fetch-jd] Proxy fetch succeeded: ${text.length} chars`);
               return NextResponse.json({ text, source: "proxy" });

@@ -137,8 +137,9 @@ export function buildOptimizationPrompt(
     "- Weave remaining keywords naturally into existing bullet rewrites\n" +
     "- Match EXACT casing from the JD (e.g., React.js not ReactJS)\n" +
     "- Rewrite the Professional Summary to include 5+ top JD keywords\n\n" +
-    "TASK 2 -- BULLET REWRITING (every single bullet):\n" +
+    "TASK 2 -- BULLET REWRITING (Experience and Projects ONLY):\n" +
     "Formula: [Strong Verb] + [What] + [Tool/Method] + [Quantified Result]\n\n" +
+    "CRITICAL: Apply this formula ONLY to Professional Experience and Projects sections. NEVER apply this to Languages, Education, or Certifications. Leave those sections purely factual and unchanged.\n\n" +
     "Examples:\n" +
     "\"Worked on backend\" -> \"Engineered RESTful APIs with Node.js and Express, reducing p95 latency by 42%\"\n" +
     "\"Did data analysis\" -> \"Analyzed 500K+ user records using Python and Pandas, improving churn prediction accuracy by 23%\"\n" +
