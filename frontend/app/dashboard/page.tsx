@@ -982,7 +982,7 @@ export default function DashboardPage() {
 
               {/* Resume Column (Panel + Use Saved Resume Button below) */}
               <div className="flex flex-col space-y-3">
-                <div className="group flex-1 flex flex-col bg-white border border-slate-200 hover:border-[#0d6e5a]/30 rounded-xl p-6 space-y-4 transition-colors duration-200 shadow-sm">
+                <div className="group flex-1 flex flex-col bg-white border border-slate-300 hover:border-[#0d6e5a]/50 rounded-xl p-6 space-y-4 transition-colors duration-200 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded-lg bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center">
@@ -1014,7 +1014,7 @@ export default function DashboardPage() {
 
               {/* Job Description Column */}
               <div className="flex flex-col space-y-3">
-                <div className="group flex-1 flex flex-col bg-white border border-slate-200 hover:border-[#0d6e5a]/30 rounded-xl p-6 space-y-4 transition-colors duration-200 shadow-sm">
+                <div className="group flex-1 flex flex-col bg-white border border-slate-300 hover:border-[#0d6e5a]/50 rounded-xl p-6 space-y-4 transition-colors duration-200 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded-lg bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center">
@@ -1036,7 +1036,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Custom optimization instructions card */}
-            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4 shadow-sm">
+            <div className="bg-white border border-slate-300 rounded-xl p-6 space-y-4 shadow-sm">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-[#0d6e5a]" />
                 <h4 className="font-heading font-bold text-sm text-slate-900">Custom Guidance <span className="text-slate-400 font-normal">(Optional)</span></h4>
@@ -1051,7 +1051,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Resume Length card */}
-            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4 shadow-sm">
+            <div className="bg-white border border-slate-300 rounded-xl p-6 space-y-4 shadow-sm">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-[#0d6e5a]" />
                 <h4 className="font-heading font-bold text-sm text-slate-900">Resume Length</h4>

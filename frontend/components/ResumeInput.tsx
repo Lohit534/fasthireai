@@ -106,7 +106,7 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
           className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200 ${
             isDragActive
               ? "border-[#0d6e5a] bg-[#0d6e5a]/5 shadow-sm"
-              : "border-slate-300 bg-white hover:border-[#0d6e5a]/40 hover:bg-slate-50"
+              : "border-slate-400 bg-white hover:border-[#0d6e5a]/60 hover:bg-slate-50"
           }`}
         >
           <input {...getInputProps()} />
@@ -129,7 +129,7 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
 
       {/* File Details Tag */}
       {fileName && !loading && (
-        <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200">
+        <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-300">
           <div className="flex items-center gap-2 text-sm text-slate-700 min-w-0">
             <FileText className="h-4 w-4 text-[#0d6e5a] shrink-0" />
             <span className="truncate font-medium">{fileName}</span>
@@ -160,7 +160,7 @@ export default function ResumeInput({ value, onChange, disabled }: ResumeInputPr
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled || loading}
-          className="flex-1 min-h-[280px] h-full overflow-y-auto font-mono text-sm leading-relaxed border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:border-[#0d6e5a] focus:ring-1 focus:ring-[#0d6e5a]/30 rounded-lg resize-y p-3.5 pr-4"
+          className="flex-1 min-h-[280px] h-full overflow-y-auto font-mono text-sm leading-relaxed border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-[#0d6e5a] focus:ring-1 focus:ring-[#0d6e5a]/30 rounded-lg resize-y p-3.5 pr-4"
         />
         <div className="absolute bottom-3 right-3 bg-white border border-slate-200 font-mono text-[10px] text-slate-400 px-2 py-0.5 rounded-full select-none">
           {wordCount} words

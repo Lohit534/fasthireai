@@ -78,13 +78,13 @@ export default function JobDescriptionInput({ value, onChange, disabled }: JobDe
             onChange={(e) => setUrl(e.target.value)}
             disabled={disabled || fetching}
             onKeyDown={(e) => e.key === "Enter" && handleFetchUrl()}
-            className="h-9 text-xs border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-[#0d6e5a] focus:bg-white rounded-xl flex-1 font-sans shadow-sm"
+            className="h-9 text-xs border-slate-300 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-[#0d6e5a] focus:bg-white rounded-xl flex-1 font-sans shadow-sm"
           />
           <button
             type="button"
             onClick={handleFetchUrl}
             disabled={disabled || fetching || !url.trim()}
-            className="h-9 px-3.5 text-xs font-semibold rounded-xl shrink-0 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 shadow-sm transition-colors cursor-pointer"
+            className="h-9 px-3.5 text-xs font-semibold rounded-xl shrink-0 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 shadow-sm transition-colors cursor-pointer"
           >
             {fetching ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin text-[#0d6e5a]" />
@@ -126,7 +126,7 @@ export default function JobDescriptionInput({ value, onChange, disabled }: JobDe
           className={`flex-1 min-h-[280px] h-full overflow-y-auto font-sans text-sm leading-relaxed bg-slate-50 text-slate-900 placeholder:text-slate-400 rounded-xl resize-y p-3.5 pr-4 transition-colors ${
             isOverLimit
               ? "border-rose-400 focus:border-rose-500"
-              : "border border-slate-200 focus:border-[#0d6e5a] focus:bg-white focus:ring-1 focus:ring-[#0d6e5a]"
+              : "border border-slate-300 focus:border-[#0d6e5a] focus:bg-white focus:ring-1 focus:ring-[#0d6e5a]"
           }`}
         />
         <div className="absolute bottom-3 right-3 bg-white border border-slate-200 font-mono text-[10px] text-slate-600 px-2 py-0.5 rounded-full select-none shadow-sm">
