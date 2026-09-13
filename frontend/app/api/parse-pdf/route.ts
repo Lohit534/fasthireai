@@ -77,29 +77,100 @@ export async function POST(request: NextRequest) {
     logger.info(`[parse-pdf] Extracting exact text from: ${file.name} (${file.size} bytes)`);
 
     if (fileType === "pdf") {
-      // Stage 1: Try custom page renderer with Y-coordinate sorting
+      // Stage 1: pdfjs-dist (Mozilla PDF.js) — handles modern PDFs with embedded fonts (Canva, Adobe, etc.)
       try {
-        const pdfParse = require("pdf-parse");
-        const result = await pdfParse(buffer, { pagerender: customPageRender });
-        extractedText = result?.text || "";
-        logger.info(`[parse-pdf] Stage 1 (Y-render) extracted ${extractedText.length} chars`);
-      } catch (pdfErr: any) {
-        logger.warn("[parse-pdf] Stage 1 failed:", pdfErr?.message);
+        const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs").catch(() => null)
+          || await import("pdfjs-dist").catch(() => null);
+
+        if (pdfjsLib) {
+          // Disable worker in Node.js environment
+          (pdfjsLib as any).GlobalWorkerOptions = (pdfjsLib as any).GlobalWorkerOptions || {};
+          (pdfjsLib as any).GlobalWorkerOptions.workerSrc = "";
+
+          const loadingTask = (pdfjsLib as any).getDocument({
+            data: new Uint8Array(buffer),
+            useWorkerFetch: false,
+            isEvalSupported: false,
+            useSystemFonts: true,
+            disableRange: true,
+            disableStream: true,
+          });
+
+          const pdfDoc = await loadingTask.promise;
+          const numPages = pdfDoc.numPages;
+          const pageTexts: string[] = [];
+
+          for (let i = 1; i <= numPages; i++) {
+            try {
+              const page = await pdfDoc.getPage(i);
+              const content = await page.getTextContent({ includeMarkedContent: false } as any);
+              const items = content.items as any[];
+
+              // Sort by Y (top to bottom), then X (left to right)
+              items.sort((a: any, b: any) => {
+                const yA = a.transform ? a.transform[5] : 0;
+                const yB = b.transform ? b.transform[5] : 0;
+                const yDiff = yB - yA;
+                if (Math.abs(yDiff) > 4) return yDiff;
+                return (a.transform?.[4] || 0) - (b.transform?.[4] || 0);
+              });
+
+              let lastY = -1;
+              let pageText = "";
+              for (const item of items) {
+                const str = item.str || "";
+                if (!str.trim()) continue;
+                const y = item.transform ? Math.round(item.transform[5]) : 0;
+                if (lastY !== -1 && Math.abs(y - lastY) > 4) {
+                  pageText += "\n";
+                } else if (pageText && !pageText.endsWith("\n") && !pageText.endsWith(" ")) {
+                  pageText += " ";
+                }
+                pageText += str;
+                lastY = y;
+              }
+              if (pageText.trim()) pageTexts.push(pageText.trim());
+            } catch (_pageErr) {}
+          }
+
+          const pdfjsText = pageTexts.join("\n\n");
+          if (pdfjsText.trim().length > 50) {
+            extractedText = pdfjsText;
+            logger.info(`[parse-pdf] Stage 1 (pdfjs-dist) extracted ${extractedText.length} chars from ${numPages} pages`);
+          }
+        }
+      } catch (pdfjsErr: any) {
+        logger.warn("[parse-pdf] Stage 1 (pdfjs-dist) failed:", pdfjsErr?.message);
       }
 
-      // Stage 2: Try standard pdf-parse default extraction
+      // Stage 2: Try pdf-parse with custom Y-coordinate renderer as fallback
+      if (!extractedText || extractedText.trim().length < 50) {
+        try {
+          const pdfParse = require("pdf-parse");
+          const result = await pdfParse(buffer, { pagerender: customPageRender });
+          const parsed = result?.text || "";
+          if (parsed.trim().length > extractedText.trim().length) {
+            extractedText = parsed;
+            logger.info(`[parse-pdf] Stage 2 (pdf-parse Y-render) extracted ${extractedText.length} chars`);
+          }
+        } catch (pdfErr: any) {
+          logger.warn("[parse-pdf] Stage 2 failed:", pdfErr?.message);
+        }
+      }
+
+      // Stage 3: Standard pdf-parse default extraction
       if (!extractedText || extractedText.trim().length < 50) {
         try {
           const pdfParse = require("pdf-parse");
           const result = await pdfParse(buffer);
           if (result?.text && result.text.trim().length > extractedText.trim().length) {
             extractedText = result.text;
-            logger.info(`[parse-pdf] Stage 2 (Standard) extracted ${extractedText.length} chars`);
+            logger.info(`[parse-pdf] Stage 3 (pdf-parse default) extracted ${extractedText.length} chars`);
           }
         } catch (_e) {}
       }
 
-      // Stage 3: FlateDecode stream decompressor for Canva/Figma PDFs
+      // Stage 4: FlateDecode stream decompressor for Canva/Figma PDFs
       if (!extractedText || extractedText.trim().length < 50) {
         try {
           const contentStr = buffer.toString("binary");
@@ -127,7 +198,7 @@ export async function POST(request: NextRequest) {
             const streamText = streamParts.join("\n");
             if (streamText.length > extractedText.length) {
               extractedText = streamText;
-              logger.info(`[parse-pdf] Stage 3 (Decompressor) extracted ${extractedText.length} chars`);
+              logger.info(`[parse-pdf] Stage 4 (Decompressor) extracted ${extractedText.length} chars`);
             }
           }
         } catch (_e) {}

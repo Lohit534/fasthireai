@@ -30,29 +30,25 @@ export default function JobDescriptionInput({ value, onChange, disabled }: JobDe
     setFetchSuccess(false);
 
     try {
-      // Use a CORS-safe text-extraction proxy via allorigins.win
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url.trim())}`;
-      const res = await fetch(proxyUrl);
-      if (!res.ok) throw new Error("Failed to fetch the page. Check the URL.");
+      // Server-side fetch — bypasses CORS and works for most job boards
+      const res = await fetch("/api/fetch-jd", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: url.trim() }),
+      });
 
-      const json = await res.json();
-      const html: string = json.contents || "";
+      const data = await res.json().catch(() => ({}));
 
-      // Strip HTML tags and decode entities
-      const tmp = document.createElement("div");
-      tmp.innerHTML = html
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-        .replace(/<[^>]+>/g, " ");
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Could not extract text from this URL. Please paste the job description manually.");
+      }
 
-      const text = (tmp.textContent || tmp.innerText || "")
-        .replace(/\s{3,}/g, "\n\n")
-        .trim()
-        .slice(0, 6000);
+      const text = (data.text || "").trim();
+      if (!text || text.length < 80) {
+        throw new Error("Not enough text found at this URL. Please paste the job description manually.");
+      }
 
-      if (!text || text.length < 100) throw new Error("Could not extract enough text from this URL. Try pasting the JD manually.");
-
-      onChange(text);
+      onChange(text.slice(0, 6000));
       setFetchSuccess(true);
       setTimeout(() => setFetchSuccess(false), 3000);
     } catch (err: any) {
