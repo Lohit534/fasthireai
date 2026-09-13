@@ -78,11 +78,49 @@ export async function GET(request: NextRequest) {
       .select("id", { count: "exact", head: true })
       .eq("jobTitle", "SUPPORT_TICKET");
 
+    // ── Real revenue from PaymentLog ──────────────────────────────────────────
+    // Only real Razorpay payments (isFreeGrant = false)
+    const { data: paymentLogs, error: paymentErr } = await admin
+      .from("PaymentLog")
+      .select("*")
+      .eq("isFreeGrant", false)
+      .order("createdAt", { ascending: false })
+      .limit(50);
+
+    let totalRevenue = 0;
+    let paidCount = 0;
+    const recentPayments: any[] = [];
+
+    if (!paymentErr && paymentLogs) {
+      // Sum all real payments
+      totalRevenue = paymentLogs.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+      // Count unique paying users
+      const uniquePayers = new Set(paymentLogs.map((p: any) => p.userId));
+      paidCount = uniquePayers.size;
+      // Last 20 for display
+      recentPayments.push(
+        ...paymentLogs.slice(0, 20).map((p: any) => ({
+          id: p.razorpayPaymentId,
+          email: p.email,
+          planId: p.planId,
+          billingCycle: p.billingCycle,
+          amount: p.amount,
+          createdAt: p.createdAt,
+        }))
+      );
+    } else if (paymentErr) {
+      // PaymentLog table may not exist yet — gracefully return zeros
+      logger.warn("[admin/users] PaymentLog query failed (table may not exist yet):", paymentErr.message);
+    }
+
     return NextResponse.json({
       users: merged,
       analytics: {
         totalOptimizations: totalOptimizations || 0,
         totalTickets: totalTickets || 0,
+        totalRevenue,
+        paidCount,
+        recentPayments,
       }
     });
   } catch (error: any) {
@@ -90,6 +128,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
 
 export async function POST(request: NextRequest) {
   try {

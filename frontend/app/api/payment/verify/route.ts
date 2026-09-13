@@ -16,6 +16,18 @@ const PLAN_CREDITS: Record<string, number> = {
   promax:  999999,
 };
 
+// Plan → INR amount mapping (monthly)
+const PLAN_AMOUNT_MONTHLY: Record<string, number> = {
+  premium: 99,
+  promax:  199,
+};
+
+// Plan → INR amount mapping (yearly)
+const PLAN_AMOUNT_YEARLY: Record<string, number> = {
+  premium: 999,
+  promax:  1999,
+};
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = createClient();
@@ -73,7 +85,8 @@ export async function POST(request: NextRequest) {
     // ── 3. Upsert credits directly ─────────────────────────────────────────────
     const paidCredits = PLAN_CREDITS[planId] ?? 0;
     const now = new Date();
-    const days = billingCycle === "yearly" ? 365 : 30;
+    const cycle = billingCycle || "monthly";
+    const days = cycle === "yearly" ? 365 : 30;
     const expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
 
     // Fetch existing credit row to avoid not-null primary key constraint failures
@@ -89,7 +102,7 @@ export async function POST(request: NextRequest) {
         .from("Credit")
         .update({
           paidCredits: paidCredits,
-          billingCycle: billingCycle || "monthly",
+          billingCycle: cycle,
           expiresAt: expiresAt.toISOString(),
           resetAt: now.toISOString(),
         })
@@ -103,7 +116,7 @@ export async function POST(request: NextRequest) {
           userId: activeUserId,
           freeUsed: 0,
           paidCredits: paidCredits,
-          billingCycle: billingCycle || "monthly",
+          billingCycle: cycle,
           expiresAt: expiresAt.toISOString(),
           resetAt: now.toISOString(),
         });
@@ -118,12 +131,40 @@ export async function POST(request: NextRequest) {
 
     logger.info(`[payment/verify] Credits upgraded: userId=${activeUserId} plan=${planId} credits=${paidCredits}`);
 
+    // ── 4. Record payment in PaymentLog for admin revenue tracking ─────────────
+    const amount = cycle === "yearly"
+      ? (PLAN_AMOUNT_YEARLY[planId] ?? 0)
+      : (PLAN_AMOUNT_MONTHLY[planId] ?? 0);
+
+    const { error: logErr } = await admin
+      .from("PaymentLog")
+      .insert({
+        id: razorpay_payment_id,
+        userId: activeUserId,
+        email: (user.email || "").toLowerCase().trim(),
+        planId,
+        billingCycle: cycle,
+        amount,
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        isFreeGrant: false,
+        createdAt: now.toISOString(),
+      });
+
+    if (logErr) {
+      // Non-fatal — credits are already saved, just log the warning
+      logger.warn("[payment/verify] PaymentLog insert failed (non-fatal):", logErr.message);
+    } else {
+      logger.info(`[payment/verify] PaymentLog recorded: ₹${amount} from ${user.email} (${planId} ${cycle})`);
+    }
+
     return NextResponse.json({
       success: true,
       planId,
-      billingCycle: billingCycle || "monthly",
+      billingCycle: cycle,
       paymentId: razorpay_payment_id,
       paidCredits,
+      amount,
     });
   } catch (error: any) {
     logger.error("[payment/verify] Unhandled error:", error?.message);

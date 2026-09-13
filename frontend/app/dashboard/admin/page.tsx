@@ -69,7 +69,7 @@ export default function UnifiedAdminDashboard() {
 
   // Users Tab States
   const [users, setUsers] = useState<UserRecord[]>([]);
-  const [analytics, setAnalytics] = useState<any>({ totalOptimizations: 0, totalTickets: 0 });
+  const [analytics, setAnalytics] = useState<any>({ totalOptimizations: 0, totalTickets: 0, totalRevenue: 0, paidCount: 0, recentPayments: [] });
   const [usersLoading, setUsersLoading] = useState(true);
   const [userSearch, setUserSearch] = useState("");
   const [planFilter, setPlanFilter] = useState<"all" | "owner" | "promax" | "premium" | "free">("all");
@@ -436,61 +436,61 @@ export default function UnifiedAdminDashboard() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 
-                {/* Revenue Card */}
+                {/* Real Collected Revenue Card */}
                 <Card className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-[#0d6e5a]/30 transition-all shadow-sm">
                   <CardContent className="p-5 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-600">Projected MRR</span>
+                      <span className="text-xs font-bold text-slate-600">Total Collected</span>
                       <div className="h-8 w-8 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0d6e5a]">
                         <TrendingUp className="h-4 w-4" />
                       </div>
                     </div>
                     <div>
                       <div className="text-2xl font-black text-slate-900">
-                        ₹{(premiumUsers * 99 + promaxUsers * 199).toLocaleString()}
+                        ₹{(analytics.totalRevenue || 0).toLocaleString()}
                       </div>
                       <p className="text-xs text-slate-500 font-medium mt-1">
-                        From {premiumUsers + promaxUsers} active paid subscriptions
+                        Real Razorpay payments only
                       </p>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Received Collections Card */}
+                {/* Paying Customers Card */}
                 <Card className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-[#0d6e5a]/30 transition-all shadow-sm">
                   <CardContent className="p-5 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-600">Total Collections</span>
+                      <span className="text-xs font-bold text-slate-600">Paying Customers</span>
                       <div className="h-8 w-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 font-black text-sm">
                         ₹
                       </div>
                     </div>
                     <div>
                       <div className="text-2xl font-black text-slate-900">
-                        ₹{(premiumUsers * 99 + promaxUsers * 199).toLocaleString()}
+                        {analytics.paidCount || 0}
                       </div>
                       <p className="text-xs text-slate-500 font-medium mt-1">
-                        Collected securely via Razorpay
+                        Unique users who paid via Razorpay
                       </p>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Operational Cost Card */}
+                {/* Free Grant Users Card */}
                 <Card className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-slate-300 transition-all shadow-sm">
                   <CardContent className="p-5 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-600">Operating Costs</span>
+                      <span className="text-xs font-bold text-slate-600">Free Grant Members</span>
                       <div className="h-8 w-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600">
                         <TrendingDown className="h-4 w-4" />
                       </div>
                     </div>
                     <div>
                       <div className="text-2xl font-black text-slate-900">
-                        ₹0
+                        {Math.max(0, (promaxUsers + premiumUsers) - (analytics.paidCount || 0))}
                       </div>
                       <p className="text-xs text-slate-500 font-medium mt-1">
-                        API &amp; hosting overhead
+                        Admin-granted (₹0 revenue)
                       </p>
                     </div>
                   </CardContent>
@@ -507,7 +507,7 @@ export default function UnifiedAdminDashboard() {
                     </div>
                     <div>
                       <div className="text-2xl font-black text-[#0d6e5a]">
-                        ₹{(premiumUsers * 99 + promaxUsers * 199).toLocaleString()}
+                        ₹{(analytics.totalRevenue || 0).toLocaleString()}
                       </div>
                       <p className="text-xs text-teal-700 font-medium mt-1">
                         100% margin on software
@@ -544,6 +544,69 @@ export default function UnifiedAdminDashboard() {
                 );
               })}
             </div>
+
+            {/* Recent Payments Table */}
+            <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                      <Wallet className="h-4 w-4 text-[#0d6e5a]" />
+                      Recent Payments
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">Real Razorpay transactions only. Admin-granted free plans are excluded.</p>
+                  </div>
+                  <span className="text-xs font-bold text-[#0d6e5a] bg-teal-50 border border-teal-200 px-3 py-1 rounded-full">
+                    ₹{(analytics.totalRevenue || 0).toLocaleString()} total
+                  </span>
+                </div>
+
+                {(!analytics.recentPayments || analytics.recentPayments.length === 0) ? (
+                  <div className="text-center py-10 border border-dashed border-slate-200 bg-slate-50/60 rounded-2xl select-none">
+                    <Wallet className="h-7 w-7 text-slate-300 mx-auto mb-2" />
+                    <p className="text-sm text-slate-700 font-bold">No payments recorded yet</p>
+                    <p className="text-xs text-slate-500 mt-0.5">New Razorpay payments will appear here automatically.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-100">
+                          <th className="text-left text-[10px] text-slate-500 font-bold uppercase tracking-wider pb-2 pr-4">Customer</th>
+                          <th className="text-left text-[10px] text-slate-500 font-bold uppercase tracking-wider pb-2 pr-4">Plan</th>
+                          <th className="text-left text-[10px] text-slate-500 font-bold uppercase tracking-wider pb-2 pr-4">Cycle</th>
+                          <th className="text-right text-[10px] text-slate-500 font-bold uppercase tracking-wider pb-2 pr-4">Amount</th>
+                          <th className="text-right text-[10px] text-slate-500 font-bold uppercase tracking-wider pb-2">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {analytics.recentPayments.map((p: any, idx: number) => (
+                          <tr key={p.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-2.5 pr-4 font-medium text-slate-800 truncate max-w-[180px]">{p.email}</td>
+                            <td className="py-2.5 pr-4">
+                              {p.planId === "promax" ? (
+                                <span className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-[9px] uppercase tracking-wide px-2 py-0.5 rounded-full">
+                                  <Sparkles className="h-2.5 w-2.5" /> Pro Max
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 bg-teal-50 border border-teal-200 text-teal-700 font-bold text-[9px] uppercase tracking-wide px-2 py-0.5 rounded-full">
+                                  <CheckCircle className="h-2.5 w-2.5" /> Premium
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2.5 pr-4 text-slate-500 capitalize">{p.billingCycle}</td>
+                            <td className="py-2.5 pr-4 text-right font-black text-[#0d6e5a]">₹{p.amount}</td>
+                            <td className="py-2.5 text-right text-slate-500">
+                              {new Date(p.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Dashboard Analytics Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
