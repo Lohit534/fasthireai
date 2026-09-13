@@ -2,7 +2,11 @@
  * GET /api/history
  *
  * Fetches the resume optimization history for the authenticated user.
- * Supports both Server Cookie Auth and Authorization Bearer Token header.
+ * Plan-gated:
+ *   - Free       → no history (locked, shows upgrade prompt)
+ *   - Premium Pro → last 20 optimizations within 2 months
+ *   - Pro Max    → unlimited within 4 months
+ *   - Owner      → unlimited, no date restriction
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -44,6 +48,41 @@ export async function GET(request: NextRequest) {
     }
 
     const admin = getAdminClient() as any;
+
+    // ── Determine plan tier ────────────────────────────────────────────────────
+    let planTier = "free";
+    try {
+      const { data: creditRow } = await admin
+        .from("Credit")
+        .select("paidCredits")
+        .eq("userId", user.id)
+        .maybeSingle();
+
+      if (isOwnerEmail(user.email)) {
+        planTier = "owner";
+      } else if (creditRow?.paidCredits > 900000) {
+        planTier = "promax";
+      } else if (creditRow?.paidCredits > 0) {
+        planTier = "premium";
+      }
+    } catch (_e) {}
+
+    // ── Free users: no history access ─────────────────────────────────────────
+    if (planTier === "free") {
+      return NextResponse.json({
+        records: [],
+        planTier: "free",
+        locked: true,
+      });
+    }
+
+    // ── Set retention window based on plan ────────────────────────────────────
+    // premium: 2 months, promax/owner: 4 months
+    const retentionMonths = (planTier === "premium") ? 2 : 4;
+    const cutoffDate = new Date();
+    cutoffDate.setMonth(cutoffDate.getMonth() - retentionMonths);
+    // Owner: no cutoff restriction
+    const isOwner = planTier === "owner";
 
     // Resolve User table ID by email
     let activeUserId = user.id;
@@ -104,10 +143,12 @@ export async function GET(request: NextRequest) {
       } catch (_e) {}
     }
 
-    // JS-side filter: exclude system records only
+    // JS-side filter: exclude system records AND apply retention window
     dbData = dbData.filter((r: any) => {
       if (r.jobTitle && SYSTEM_TITLES.includes(r.jobTitle)) return false;
-      return true; // Return all user optimization records
+      // Retention: only show records within the allowed date window (owners skip this)
+      if (!isOwner && r.createdAt && new Date(r.createdAt) < cutoffDate) return false;
+      return true;
     });
 
     // 2. Fetch from local JSON fallback (local dev fallback)
@@ -118,7 +159,8 @@ export async function GET(request: NextRequest) {
         const allResumes = JSON.parse(fileContent || "[]");
         localData = allResumes.filter((r: any) =>
           userIds.includes(r.userId) &&
-          !SYSTEM_TITLES.includes(r.jobTitle)
+          !SYSTEM_TITLES.includes(r.jobTitle) &&
+          (isOwner || !r.createdAt || new Date(r.createdAt) >= cutoffDate)
         );
       }
     } catch (_e) {}
@@ -129,19 +171,28 @@ export async function GET(request: NextRequest) {
       if (!combined.some((d) => d.id === r.id)) combined.push(r);
     }
 
-    // 4. Sort by createdAt descending (newest optimizations after July 27 appear at top)
+    // 4. Sort by createdAt descending (newest first)
     combined.sort(
       (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     );
 
+    // 5. Apply record limit for Premium Pro (last 20), unlimited for Pro Max/Owner
+    const limited = (planTier === "premium") ? combined.slice(0, 20) : combined;
+
     logger.info(
-      `[history] Returning ${combined.length} history records for user ${user.email}`
+      `[history] Returning ${limited.length} records for ${user.email} (plan: ${planTier}, retention: ${isOwner ? "unlimited" : retentionMonths + "mo"})`
     );
 
-    return NextResponse.json(combined);
+    return NextResponse.json({
+      records: limited,
+      planTier,
+      locked: false,
+      totalAvailable: combined.length,
+      retentionMonths: isOwner ? null : retentionMonths,
+    });
   } catch (error: any) {
     logger.error("[history] GET Unhandled error:", error?.message);
-    return NextResponse.json([]);
+    return NextResponse.json({ records: [], planTier: "free", locked: true });
   }
 }
 

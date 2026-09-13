@@ -844,6 +844,8 @@ export default function HistoryPage() {
   const [selected, setSelected] = useState<ResumeRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ResumeRecord | null>(null);
   const [userPlan, setUserPlan] = useState<string>("free");
+  const [historyLocked, setHistoryLocked] = useState(false);
+  const [retentionInfo, setRetentionInfo] = useState<{ months: number | null; limit: number | null } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
 
@@ -876,19 +878,36 @@ export default function HistoryPage() {
         let dbData: any[] = [];
         try {
           const historyRes = await fetch("/api/history", { headers });
-          const responseData = await historyRes.json().catch(() => []);
-          if (Array.isArray(responseData)) {
-            dbData = responseData;
-          } else if (historyRes.status === 401) {
+          const responseData = await historyRes.json().catch(() => ({}));
+
+          if (historyRes.status === 401) {
             toast.error("Session expired. Please sign in again.");
             router.push("/auth/login");
             return;
+          }
+
+          // New response format: { records, planTier, locked, retentionMonths }
+          if (responseData && typeof responseData === "object" && "records" in responseData) {
+            if (responseData.locked) {
+              setHistoryLocked(true);
+            } else {
+              dbData = Array.isArray(responseData.records) ? responseData.records : [];
+              const planFromApi = responseData.planTier || "free";
+              setUserPlan(planFromApi);
+              setRetentionInfo({
+                months: responseData.retentionMonths ?? null,
+                limit: planFromApi === "premium" ? 20 : null,
+              });
+            }
+          } else if (Array.isArray(responseData)) {
+            // Legacy array format fallback
+            dbData = responseData;
           }
         } catch (_fetchErr) {
           // Network error — silent
         }
 
-        // Fetch plan/credits details
+        // Fetch plan/credits details (only if historyLocked wasn't set by API)
         try {
           const creditsRes = await fetch("/api/credits");
           if (creditsRes.ok) {
@@ -901,6 +920,7 @@ export default function HistoryPage() {
               setUserPlan("premium");
             } else {
               setUserPlan("free");
+              setHistoryLocked(true);
             }
           }
         } catch (creditsErr) {
@@ -997,6 +1017,43 @@ export default function HistoryPage() {
                 <div className="flex flex-col items-center justify-center py-24 gap-3">
                   <Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin" />
                   <p className="text-xs text-slate-500 font-semibold">Loading history...</p>
+                </div>
+              ) : historyLocked ? (
+                /* ── FREE PLAN UPGRADE WALL ── */
+                <div className="flex flex-col items-center justify-center rounded-2xl p-12 text-center border border-dashed border-slate-300 bg-white shadow-sm space-y-5">
+                  <div className="h-14 w-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center">
+                    <Lock className="h-6 w-6 text-amber-600" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <h3 className="text-base font-black text-slate-900">History is a Paid Feature</h3>
+                    <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
+                      Upgrade to access your full optimization history, ATS score timeline, and resume analytics.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md text-left">
+                    <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-teal-600 shrink-0" />
+                        <span className="text-xs font-black text-teal-800">Premium Pro — ₹99/mo</span>
+                      </div>
+                      <p className="text-[10px] text-teal-700 leading-relaxed pl-6">Last 20 optimizations • 2-month retention</p>
+                    </div>
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <span className="text-xs font-black text-emerald-800">Pro Max — ₹199/mo</span>
+                      </div>
+                      <p className="text-[10px] text-emerald-700 leading-relaxed pl-6">Unlimited history • 4-month retention</p>
+                    </div>
+                  </div>
+
+                  <Link href="/dashboard/pricing">
+                    <Button className="h-10 px-6 bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs rounded-xl shadow-sm transition-colors">
+                      <Sparkles className="h-4 w-4 mr-1.5" />
+                      Upgrade to Unlock History
+                    </Button>
+                  </Link>
                 </div>
               ) : resumes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-2xl p-16 text-center border border-dashed border-slate-300 bg-white shadow-sm">
