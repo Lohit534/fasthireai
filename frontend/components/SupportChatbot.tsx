@@ -371,7 +371,7 @@ export default function SupportChatbot() {
   );
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 font-sans">
+    <div className={`fixed z-50 font-sans ${isOpen ? "inset-0 flex items-center justify-center bg-black/40 sm:bg-transparent sm:block sm:inset-auto sm:bottom-6 sm:right-6 pointer-events-auto sm:pointer-events-none" : "bottom-6 right-6"}`}>
       
       {/* Floating Toggle Button */}
       {!isOpen && (
@@ -380,7 +380,7 @@ export default function SupportChatbot() {
             setIsOpen(true);
             setView("help-center");
           }}
-          className="h-14 w-14 rounded-full bg-white hover:bg-slate-50 text-[#0d6e5a] shadow-xl flex items-center justify-center border border-slate-200 hover:scale-105 active:scale-95 transition-all duration-300 select-none cursor-pointer"
+          className="hidden sm:flex h-14 w-14 rounded-full bg-white hover:bg-slate-50 text-[#0d6e5a] shadow-xl items-center justify-center border border-slate-200 hover:scale-105 active:scale-95 transition-all duration-300 select-none cursor-pointer pointer-events-auto"
           title="Open Help Center"
         >
           <HeadphonesIcon className="h-6 w-6 text-[#0d6e5a]" />
@@ -389,7 +389,7 @@ export default function SupportChatbot() {
 
       {/* Main Container Widget */}
       {isOpen && (
-        <Card className="w-80 sm:w-[380px] h-[540px] bg-white border-slate-200 shadow-2xl rounded-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <Card className="w-[90vw] sm:w-[380px] h-[80vh] sm:h-[540px] max-h-[800px] bg-white border-slate-200 shadow-2xl rounded-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 sm:slide-in-from-bottom-5 duration-200 relative pointer-events-auto">
           
           {/* ============================================================ */}
           {/* VIEW 1: HELP CENTER                                           */}

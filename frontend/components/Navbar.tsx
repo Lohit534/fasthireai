@@ -388,19 +388,19 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
       {/* Mobile Bottom Navigation Bar */}
       {user && (
         <div className="sm:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-slate-200 flex items-center justify-around px-2 py-3 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
-          <Link href="/dashboard" className={`flex flex-col items-center gap-1 transition-colors ${pathname === '/dashboard' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
-            <PenLine className="h-5 w-5" />
+          <Link href="/dashboard" className={`flex flex-col items-center gap-1 transition-colors ${pathname === '/dashboard' ? 'text-[#0d6e5a]' : 'text-slate-400 hover:text-slate-600'}`}>
+            <Sparkles className="h-5 w-5" />
             <span className="text-[10px] font-bold">Optimize</span>
           </Link>
-          <Link href="/dashboard/resumes" className={`flex flex-col items-center gap-1 transition-colors ${pathname === '/dashboard/resumes' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+          <Link href="/dashboard/resumes" className={`flex flex-col items-center gap-1 transition-colors ${pathname === '/dashboard/resumes' ? 'text-[#0d6e5a]' : 'text-slate-400 hover:text-slate-600'}`}>
             <FileText className="h-5 w-5" />
             <span className="text-[10px] font-bold">Resumes</span>
           </Link>
-          <Link href="/dashboard/job-tracker" className={`flex flex-col items-center gap-1 transition-colors ${pathname === '/dashboard/job-tracker' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+          <Link href="/dashboard/job-tracker" className={`flex flex-col items-center gap-1 transition-colors ${pathname === '/dashboard/job-tracker' ? 'text-[#0d6e5a]' : 'text-slate-400 hover:text-slate-600'}`}>
             <Briefcase className="h-5 w-5" />
             <span className="text-[10px] font-bold">Tracker</span>
           </Link>
-          <Link href="/dashboard/history" className={`flex flex-col items-center gap-1 transition-colors ${pathname === '/dashboard/history' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+          <Link href="/dashboard/history" className={`flex flex-col items-center gap-1 transition-colors ${pathname === '/dashboard/history' ? 'text-[#0d6e5a]' : 'text-slate-400 hover:text-slate-600'}`}>
             <History className="h-5 w-5" />
             <span className="text-[10px] font-bold">History</span>
           </Link>

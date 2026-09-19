@@ -326,8 +326,8 @@ IMPORTANT RULES FOR YOU:
 
     // 4. Generic Fallback
     return NextResponse.json({
-      answer: "I am having trouble connecting to my knowledge base right now, but you can always ask me about ATS resume scoring, pricing plans, or career roadmaps!",
-      engine: "FastHire Fallback Engine"
+      answer: getSmartContextualAnswer(trimmedQuestion),
+      engine: "FastHire Contextual Engine"
     });
 
   } catch (error: any) {
