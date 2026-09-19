@@ -300,6 +300,10 @@ export default function SupportChatbot() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           question: userMsg,
+          messages: aiHistory.map(m => ({
+            role: m.sender === 'user' ? 'user' : 'assistant',
+            content: m.text
+          })),
           userPlan: activePlan.toLowerCase().includes("promax") ? "promax" : activePlan.toLowerCase().includes("premium") ? "premium" : "free"
         })
       });

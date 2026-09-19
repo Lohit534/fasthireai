@@ -46,6 +46,7 @@ import Link from "next/link";
 import CircleGauge from "@/components/CircleGauge";
 import ScrollFadeIn from "@/components/ScrollFadeIn";
 import { UseSavedResumeModal } from "@/components/UseSavedResumeModal";
+import PlaceholderFiller, { ResumePlaceholder } from "@/components/PlaceholderFiller";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -77,6 +78,9 @@ export default function DashboardPage() {
   const [trackerAdded, setTrackerAdded] = useState(false);
   const [bulletImprovementsCount, setBulletImprovementsCount] = useState(0);
   const [currentResumeId, setCurrentResumeId] = useState<string | null>(null);
+  // Placeholder filler state
+  const [showPlaceholderFiller, setShowPlaceholderFiller] = useState(false);
+  const [pendingPlaceholders, setPendingPlaceholders] = useState<ResumePlaceholder[]>([]);
 
   // Roadmap & Cover letter generator states
   const [selectedRoadmapSkills, setSelectedRoadmapSkills] = useState<string[]>([]);
@@ -227,6 +231,12 @@ export default function DashboardPage() {
 
       const data = await response.json();
       setOptimizeResult(data);
+
+      // Show placeholder filler if AI detected missing details
+      if (data.hasPlaceholders && Array.isArray(data.placeholders) && data.placeholders.length > 0) {
+        setPendingPlaceholders(data.placeholders);
+        setShowPlaceholderFiller(true);
+      }
 
       const beforeRes = await fetch("/api/score", {
         method: "POST",
@@ -734,6 +744,26 @@ export default function DashboardPage() {
           
           /* RESULTS WORKSPACE ROW */
           <div ref={resultsRef} className="space-y-6">
+            {/* Placeholder Filler — shown when AI detects missing details */}
+            {showPlaceholderFiller && pendingPlaceholders.length > 0 && (
+              <PlaceholderFiller
+                placeholders={pendingPlaceholders}
+                optimizedText={optimizeResult.optimizedText}
+                resumeId={optimizeResult.resumeId || ""}
+                onComplete={(filledText) => {
+                  setOptimizeResult((prev: any) => ({
+                    ...prev,
+                    optimizedText: filledText,
+                  }));
+                  setShowPlaceholderFiller(false);
+                  setPendingPlaceholders([]);
+                }}
+                onSkip={() => {
+                  setShowPlaceholderFiller(false);
+                  setPendingPlaceholders([]);
+                }}
+              />
+            )}
             {/* Top Tracker Banner Message */}
             {!trackerAdded && (
               <div className="bg-gradient-to-r from-[#0d6e5a]/5 via-white to-transparent border border-[#0d6e5a]/10 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 select-none">

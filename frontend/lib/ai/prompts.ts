@@ -64,6 +64,11 @@ export function buildOptimizationPrompt(
     "- No ** ## __ ~~ `` or any other Markdown inside resume text\n" +
     "- Use real newline characters to separate lines -- NOT the literal string \\n\n" +
     "- Maximum 2 blank lines between sections\n\n" +
+    "TECH TERMS NEVER SPLIT ACROSS LINES:\n" +
+    "MySQL TypeScript JavaScript PostgreSQL MongoDB Spring Boot Node.js Next.js\n" +
+    "React.js Vue.js GraphQL FastAPI Django Kubernetes Docker TensorFlow PyTorch\n" +
+    "GitHub GitLab VS Code Power BI CI/CD Machine Learning Deep Learning DevOps\n" +
+    "REST API Microservices Cloud Native\n\n" +
     "EXACT SECTION ORDER (follow exactly):\n" +
     "1. NAME\n" +
     "2. contact line\n" +
@@ -127,7 +132,32 @@ export function buildOptimizationPrompt(
     "  Each item as a bullet point\n" +
     "  LANGUAGES: spoken languages ONLY (English, Telugu, Hindi, Spanish) -- NOT programming languages\n\n" +
     sep + "\n" +
-    "OPTIMIZATION TASKS (execute ALL of these):\n" +
+    "STEP 1 — RESUME COMPLETENESS CHECK (do this first before any other step)\n" +
+    sep + "\n\n" +
+    "Scan EVERY bullet and section for missing critical details. Use [ADD: description] placeholders.\n\n" +
+    "For EACH experience bullet check:\n" +
+    "□ Has quantified metric/number? If no → add [ADD: quantified metric — e.g. 'reduced by 40%' or 'served 500+ users']\n" +
+    "□ Has specific technology? If implied but missing → add it or [ADD: technology used — e.g. Python, AWS]\n" +
+    "□ Is vague/generic? If yes → rewrite with [Action Verb] + [What] + [Tool] + [ADD: metric]\n" +
+    "□ Has team context? If missing for lead roles → add [ADD: team size — e.g. 'team of 5']\n\n" +
+    "For EACH experience block:\n" +
+    "□ Has company name? If missing → [ADD: Company Name]\n" +
+    "□ Has date range? If missing → [ADD: Start Date] – [ADD: End Date]\n" +
+    "□ Has at least 3 bullets? If fewer → add bullets with appropriate [ADD:] placeholders\n\n" +
+    "For EACH education block:\n" +
+    "□ Has graduation year? If missing → [ADD: Graduation Year]\n" +
+    "□ Has GPA/CGPA? If fresher/student → add [ADD: CGPA or Percentage] if absent\n\n" +
+    "PLACEHOLDER FORMAT — use exactly this syntax:\n" +
+    "[ADD: specific description of what to add]\n\n" +
+    "Examples:\n" +
+    "[ADD: quantified metric — e.g. 'reduced by 40%' or 'served 500+ users']\n" +
+    "[ADD: team size — e.g. 'team of 5']\n" +
+    "[ADD: technology used — e.g. Python, AWS, React]\n" +
+    "[ADD: graduation year]\n" +
+    "[ADD: company name]\n" +
+    "[ADD: internship duration in months]\n\n" +
+    sep + "\n" +
+    "STEP 2 — KEYWORD INJECTION\n" +
     sep + "\n\n" +
     "TASK 1 -- KEYWORD INJECTION (top priority):\n" +
     "Keywords to inject (ALL of them, at least once each):\n" +
@@ -137,35 +167,52 @@ export function buildOptimizationPrompt(
     "- Weave remaining keywords naturally into existing bullet rewrites\n" +
     "- Match EXACT casing from the JD (e.g., React.js not ReactJS)\n" +
     "- Rewrite the Professional Summary to include 5+ top JD keywords\n\n" +
-    "TASK 2 -- BULLET REWRITING (Experience and Projects ONLY):\n" +
-    "Formula: [Strong Verb] + [What] + [Tool/Method] + [Quantified Result]\n\n" +
+    sep + "\n" +
+    "STEP 3 — BULLET REWRITING (Experience and Projects ONLY)\n" +
+    sep + "\n\n" +
+    "Formula: [Strong Verb] + [What] + [Tool/Method] + [Quantified Result or ADD: placeholder]\n\n" +
     "CRITICAL: Apply this formula ONLY to Professional Experience and Projects sections. NEVER apply this to Languages, Education, or Certifications. Leave those sections purely factual and unchanged.\n\n" +
-    "Examples:\n" +
-    "\"Worked on backend\" -> \"Engineered RESTful APIs with Node.js and Express, reducing p95 latency by 42%\"\n" +
-    "\"Did data analysis\" -> \"Analyzed 500K+ user records using Python and Pandas, improving churn prediction accuracy by 23%\"\n" +
-    "\"Used Docker\" -> \"Containerized 12 microservices with Docker and Kubernetes, cutting deployment time by 60%\"\n\n" +
+    "Transform examples:\n" +
+    "WEAK: 'Worked on backend' → 'Engineered RESTful APIs with Node.js and Express, reducing p95 latency by [ADD: X%]'\n" +
+    "WEAK: 'Did data analysis' → 'Analyzed [ADD: X]+ records using Python and Pandas, improving accuracy by [ADD: X%]'\n" +
+    "WEAK: 'Used Docker' → 'Containerized [ADD: X] microservices with Docker and Kubernetes, cutting deploy time by [ADD: X%]'\n\n" +
     "Strong verb bank: Accelerated, Architected, Automated, Built, Collaborated, Containerized, Deployed,\n" +
     "Designed, Developed, Drove, Engineered, Executed, Fine-tuned, Generated, Implemented, Improved,\n" +
     "Launched, Led, Migrated, Optimized, Orchestrated, Reduced, Refactored, Scaled, Shipped,\n" +
     "Spearheaded, Streamlined, Trained, Transformed\n\n" +
     "Quantification rules:\n" +
-    "- Use real numbers where implied by context\n" +
-    "- If no number fits naturally, focus on the specific technical scale (e.g. 'high-traffic', 'real-time') or leave it purely factual\n" +
-    "- NEVER invent fabricated numbers that are clearly wrong\n" +
+    "- If number is implied by context → use it\n" +
+    "- If number is genuinely unknown → use [ADD: quantified metric — e.g. '40%' or '500+']\n" +
+    "- NEVER invent fabricated specific numbers\n" +
     "- NEVER use generic corporate filler words\n\n" +
+    sep + "\n" +
+    "STEP 4 — SUMMARY REWRITE\n" +
+    sep + "\n\n" +
+    "TASK 4 -- SUMMARY REWRITE:\n" +
+    "- Sentence 1: [Years / fresher] in [target role from JD] specializing in [top 3 JD skills]\n" +
+    "- Sentence 2: [Key achievement from resume or strong capability statement with JD tech]\n" +
+    "- Sentence 3: [Value proposition matching the JD role and organization type]\n" +
+    "- 55-80 words total, no bullets, no dashes, include 6+ JD keywords\n\n" +
+    sep + "\n" +
+    "STEP 5 — SKILLS REORGANIZATION\n" +
+    sep + "\n\n" +
     "TASK 3 -- SKILLS REORGANIZATION:\n" +
     "- Put JD-matching skills FIRST in every category\n" +
     "- Add every missing JD technical skill to the most relevant category\n" +
     "- Use ONLY these 5 categories (no others): " + SKILL_CATEGORIES.join(", ") + "\n\n" +
-    "TASK 4 -- SUMMARY REWRITE:\n" +
-    "- Sentence 1: [Years] years of [target role] experience specializing in [top 3 JD skills]\n" +
-    "- Sentence 2: [Key achievement from resume with number]\n" +
-    "- Sentence 3: [Value proposition matching the JD]\n" +
-    "- 55-80 words total, no bullets, no dashes\n\n" +
-    "TASK 5 -- SECTION ORDER AND COMPLETENESS:\n" +
-    "- Follow the exact section order from the FORMAT CONTRACT above\n" +
-    "- Do NOT drop any section the original resume had\n" +
-    "- Do NOT invent new jobs, degrees, or certificates -- only optimize what exists\n" +
+    sep + "\n" +
+    "PRESERVATION RULES (never violate)\n" +
+    sep + "\n\n" +
+    "✓ KEEP all company names exactly as written\n" +
+    "✓ KEEP all dates exactly as written\n" +
+    "✓ KEEP all education details exactly\n" +
+    "✓ KEEP all URLs and links exactly\n" +
+    "✓ KEEP all certifications exactly\n" +
+    "✓ KEEP all project names exactly\n" +
+    "✓ NEVER fabricate companies, employers, or degrees\n" +
+    "✓ NEVER change employment dates\n" +
+    "✓ NEVER remove any section or content from the original\n" +
+    "✓ Output MUST be same length or longer than original\n\n" +
     userInstructionBlock + "\n" +
     "LENGTH OPTION: " + lengthOption + "\n" +
     lengthInstruction + "\n\n" +
@@ -176,7 +223,8 @@ export function buildOptimizationPrompt(
     "[ ] Contact line has email | phone | location | URLs separated by |\n" +
     "[ ] Professional Summary is exactly 3 sentences, no bullet points\n" +
     "[ ] TECHNICAL SKILLS has exactly 5 category lines, each on ONE line only\n" +
-    "[ ] Every experience bullet starts with a strong verb + has a quantified result\n" +
+    "[ ] Every experience bullet starts with a strong verb\n" +
+    "[ ] Metrics/numbers added or [ADD:] placeholders used where missing\n" +
     "[ ] No LaTeX, no Markdown, no literal backslash-n in resume text\n" +
     "[ ] All original URLs preserved verbatim\n" +
     "[ ] No sections were dropped from the original resume\n" +
@@ -197,11 +245,19 @@ export function buildOptimizationPrompt(
     "{\n" +
     "  \"detectedJobTitle\": \"Exact Job Title from the JD\",\n" +
     "  \"detectedCompany\": \"Exact Company Name from the JD (or General Application if not mentioned)\",\n" +
-    "  \"resume\": \"COMPLETE optimized resume -- every section, every bullet, nothing omitted. Minimum length = original resume length.\",\n" +
+    "  \"resume\": \"COMPLETE optimized resume -- every section, every bullet, nothing omitted. Minimum length = original resume length. [ADD: ...] placeholders shown exactly where details are missing.\",\n" +
     "  \"keywordsAdded\": [\"keyword1\", \"keyword2\", \"keyword3\"],\n" +
+    "  \"placeholders\": [\n" +
+    "    {\n" +
+    "      \"line\": \"the full bullet or line that contains the placeholder\",\n" +
+    "      \"placeholder\": \"[ADD: quantified metric — e.g. '40%']\",\n" +
+    "      \"hint\": \"Add a specific percentage or number like 35% or 500+ to show your impact\",\n" +
+    "      \"section\": \"PROFESSIONAL EXPERIENCE\"\n" +
+    "    }\n" +
+    "  ],\n" +
     "  \"bulletsRewritten\": 8,\n" +
     "  \"changesCount\": 15,\n" +
-    "  \"summary\": \"X keywords injected, Y bullets rewritten, score improved by ~Z points\"\n" +
+    "  \"summary\": \"X keywords injected, Y bullets rewritten, Z placeholders need your input\"\n" +
     "}"
   );
 }

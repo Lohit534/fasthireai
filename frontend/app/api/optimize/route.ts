@@ -14,6 +14,85 @@ import path from "path";
 export const runtime = "nodejs";
 export const maxDuration = 60; // 60s timeout for AI optimization
 
+// ── Placeholder extraction ────────────────────────────────────────────────────
+// Scans optimized resume text for [ADD: ...] markers and returns structured list
+
+interface ResumeFillerPlaceholder {
+  line: string;
+  placeholder: string;
+  hint: string;
+  section: string;
+}
+
+function extractPlaceholders(
+  text: string,
+  aiPlaceholders?: ResumeFillerPlaceholder[]
+): ResumeFillerPlaceholder[] {
+  const found: ResumeFillerPlaceholder[] = [];
+  const lines = (text || "").split("\n");
+  let currentSection = "GENERAL";
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    // Track section headers (all-caps lines longer than 2 chars that aren't bullets)
+    if (
+      line === line.toUpperCase() &&
+      line.length > 2 &&
+      !line.startsWith("•") &&
+      !line.startsWith("-") &&
+      /^[A-Z\s&]+$/.test(line)
+    ) {
+      currentSection = line;
+    }
+
+    const matches = line.match(/\[ADD:[^\]]+\]/g);
+    if (matches) {
+      for (const match of matches) {
+        const content = match.replace("[ADD:", "").replace("]", "").trim();
+        let hint = `Add ${content}`;
+
+        if (/metric|number|percent|%|impact/i.test(content)) {
+          hint = "Add a specific number like '35%', '500+', or '10x' to quantify your impact";
+        } else if (/team|size/i.test(content)) {
+          hint = "Add your team size, e.g. 'team of 4' or 'team of 10'";
+        } else if (/year|date|duration|graduation/i.test(content)) {
+          hint = "Add the specific year or date range, e.g. '2024' or 'Jan 2022 – May 2024'";
+        } else if (/company|employer|organization/i.test(content)) {
+          hint = "Add the company or organization name";
+        } else if (/technology|tool|tech/i.test(content)) {
+          hint = "Add the specific technology or tool you used, e.g. 'Python', 'AWS S3'";
+        } else if (/cgpa|gpa|percentage|grade/i.test(content)) {
+          hint = "Add your CGPA or percentage, e.g. '8.5/10' or '85%'";
+        } else if (/location|city|country/i.test(content)) {
+          hint = "Add the city and country, e.g. 'Hyderabad, India'";
+        }
+
+        found.push({ line, placeholder: match, hint, section: currentSection });
+      }
+    }
+  }
+
+  // Merge with AI-returned placeholders (AI may have richer hints)
+  if (Array.isArray(aiPlaceholders) && aiPlaceholders.length > 0) {
+    const aiSet = new Set(aiPlaceholders.map((p) => p.placeholder));
+    for (const p of aiPlaceholders) {
+      if (!found.some((f) => f.placeholder === p.placeholder && f.line === p.line)) {
+        found.push(p);
+      }
+    }
+    // Update hints from AI where available (AI hints are usually better)
+    for (const f of found) {
+      const aiMatch = aiPlaceholders.find(
+        (p) => p.placeholder === f.placeholder && p.line === f.line
+      );
+      if (aiMatch?.hint) f.hint = aiMatch.hint;
+    }
+  }
+
+  return found;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const MIN_RESUME_CHARS = 100;
 const MIN_JD_CHARS = 50;
 
@@ -465,6 +544,8 @@ export async function POST(request: NextRequest) {
       company: finalCompany,
       scoreBefore: scoreBefore.overall,
       scoreAfter: scoreAfter.overall,
+      placeholders: extractPlaceholders(aiResult.resume, (aiResult as any).placeholders),
+      hasPlaceholders: extractPlaceholders(aiResult.resume, (aiResult as any).placeholders).length > 0,
     });
   } catch (error: any) {
     logger.error("[optimize] Unhandled error:", error?.message, "\nStack:", error?.stack);

@@ -403,6 +403,10 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
 
   let cleanInput = (text || "");
 
+  // Convert any unfilled [ADD: ...] placeholders to professional blank underlines.
+  // This fires only when user clicked "Skip All" — filled text has no [ADD:] markers.
+  cleanInput = cleanInput.replace(/\[ADD:[^\]]+\]/g, "_______________");
+
   // Rejoin compound tech terms and unwrap hyphenated words broken across linebreaks
   const COMPOUND_TERMS: [RegExp, string][] = [
     [/(\b[A-Za-z]+)-\s*\r?\n+\s*([A-Za-z]+\b)/g, '$1$2'],
