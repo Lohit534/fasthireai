@@ -175,21 +175,7 @@ export default function DashboardPage() {
     checkAuth();
   }, [router]);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (optimizing) {
-      setProgress(0);
-      interval = setInterval(() => {
-        setProgress(prev => {
-          if (prev >= 99) return 99; // Hold at 99% until complete
-          return prev + 1;
-        });
-      }, 200); // 1% every 200ms = 20s total
-    } else {
-      setProgress(100);
-    }
-    return () => clearInterval(interval);
-  }, [optimizing]);
+
 
   const runAIAutoImprove = async (targetResumeText = resumeText) => {
     if (!targetResumeText.trim() || !jobDescription.trim()) {
@@ -526,117 +512,11 @@ export default function DashboardPage() {
         {optimizing && (
           <div className="fixed inset-0 bg-white/95 z-50 flex flex-col items-center justify-center p-6 select-none animate-in fade-in duration-300 overflow-y-auto">
             <div className="max-w-[600px] w-full mx-auto space-y-8 pb-12 mt-12">
-              
-              {/* Circular Progress & Timer */}
-              <div className="relative mx-auto w-40 h-40 flex items-center justify-center">
-                <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="45"
-                    fill="none"
-                    stroke="#F3F4F6"
-                    strokeWidth="8"
-                  />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="45"
-                    fill="none"
-                    stroke="#6366f1"
-                    strokeWidth="8"
-                    strokeLinecap="round"
-                    strokeDasharray="282.7"
-                    strokeDashoffset={282.7 - (282.7 * progress) / 100}
-                    className="transition-all duration-300 ease-out"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-4xl font-black text-slate-900 tracking-tight">{progress}%</span>
-                  <span className="text-[11px] font-bold text-slate-400 font-mono tracking-widest mt-1">
-                    ~{Math.max(0, 20 - Math.floor(progress * 20 / 100))}s left
-                  </span>
-                </div>
-              </div>
-
-              {/* Title & Subtitle */}
-              <div className="text-center space-y-2">
-                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                  {
-                    progress < 15 ? "Reading your resume" :
-                    progress < 30 ? "Parsing the job description" :
-                    progress < 45 ? "Finding your strongest stories" :
-                    progress < 60 ? "Rewriting your experience section" :
-                    progress < 80 ? "Aligning to ATS keywords" :
-                    progress < 95 ? "Polishing the output" :
-                    "Almost ready"
-                  }
-                </h2>
-                <p className="text-sm font-medium text-slate-500">
-                  Stay on this tab — we'll ask you a couple of things if we need them.
-                </p>
-              </div>
-
-              {/* Stepper List */}
-              <div className="space-y-3 mt-8">
-                {[
-                  { label: "Reading your resume", min: 0, max: 15 },
-                  { label: "Parsing the job description", min: 15, max: 30 },
-                  { label: "Finding your strongest stories", min: 30, max: 45 },
-                  { label: "Rewriting your experience section", min: 45, max: 60 },
-                  { label: "Aligning to ATS keywords", min: 60, max: 80 },
-                  { label: "Polishing the output", min: 80, max: 95 },
-                  { label: "Almost ready", min: 95, max: 101 },
-                ].map((step, idx) => {
-                  const isDone = progress >= step.max;
-                  const isActive = progress >= step.min && progress < step.max;
-
-                  return (
-                    <div 
-                      key={idx} 
-                      className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-300 ${
-                        isDone ? "bg-emerald-50/50 border-emerald-100" :
-                        isActive ? "bg-indigo-50/30 border-indigo-100 shadow-sm" :
-                        "bg-white border-slate-50 opacity-60"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`h-5 w-5 rounded-full flex items-center justify-center shrink-0 ${
-                          isDone ? "bg-emerald-500 text-white" :
-                          isActive ? "border-2 border-indigo-400 border-l-transparent animate-spin" :
-                          "border-2 border-slate-200"
-                        }`}>
-                          {isDone && <Check className="h-3 w-3 stroke-[3]" />}
-                        </div>
-                        <span className={`text-[13px] font-bold ${
-                          isDone ? "text-emerald-900" :
-                          isActive ? "text-indigo-600" :
-                          "text-slate-400"
-                        }`}>
-                          {step.label}
-                        </span>
-                      </div>
-                      
-                      {/* Right side indicator */}
-                      <div className="text-[10px] font-mono font-bold">
-                        {isDone ? (
-                          <span className="text-emerald-500/70">{(step.max * 0.2).toFixed(1)}s</span>
-                        ) : isActive ? (
-                          <span className="text-indigo-400/80 uppercase tracking-widest animate-pulse">running</span>
-                        ) : null}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Footer Tip */}
-              <div className="text-center pt-8 pb-4 opacity-50">
-                <p className="text-[11px] font-semibold text-slate-500">
-                  Did you know: recruiters spend about 7 seconds on the first pass of a resume.
-                </p>
-              </div>
-
+              <OptimizingProgress 
+                onComplete={handleOptimizationComplete} 
+                resumeText={resumeText} 
+                jobDescription={jobDescription} 
+              />
             </div>
           </div>
         )}
