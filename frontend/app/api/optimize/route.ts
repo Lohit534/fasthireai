@@ -97,7 +97,19 @@ const MIN_RESUME_CHARS = 100;
 const MIN_JD_CHARS = 50;
 
 export async function POST(request: NextRequest) {
-  try {
+  const encoder = new TextEncoder();
+  const stream = new TransformStream();
+  const writer = stream.writable.getWriter();
+
+  const send = async (step: number, status: 'running'|'done', data?: object) => {
+    try {
+      await writer.write(encoder.encode(`data: ${JSON.stringify({ step, status, ...data })}\n\n`));
+    } catch(e) {}
+  };
+
+  ;(async () => {
+    try {
+      await send(1, 'running');
     // 1. Verify auth session (cookies or Bearer token header)
     const supabase = createClient();
     let { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -117,14 +129,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: "Please sign in to optimize your resume." },
-        { status: 401 }
-      );
+      throw new Error("Please sign in to optimize your resume.");
     }
 
     // 2. Parse and validate body
-    const { resumeText, jobDescription, instructions, lengthOption, jobTitle, company, dataTrainingConsent } = await request.json();
+    const bodyText = await request.text();
+    const { resumeText, jobDescription, instructions, lengthOption, jobTitle, company, dataTrainingConsent } = JSON.parse(bodyText || '{}');
 
     if (!resumeText || resumeText.length < MIN_RESUME_CHARS) {
       return NextResponse.json(
@@ -275,7 +285,13 @@ export async function POST(request: NextRequest) {
     logger.info(`[optimize] User: ${user.email} | activeUserId=${activeUserId} | freeUsed=${freeUsed} | paid=${paidCredits} | isUnlimited=${isUnlimited} | owner=${isOwner}`);
 
     // Core AI optimization pipeline
-    const scoreBefore = await scoreResume(resumeText, jobDescription);
+    await send(1, 'done');
+      await send(2, 'running');
+      await send(2, 'done');
+      await send(3, 'running');
+      const scoreBefore = await scoreResume(resumeText, jobDescription);
+      await send(3, 'done');
+      await send(4, 'running');
 
     const prompt = buildOptimizationPrompt(
       resumeText,
@@ -287,6 +303,8 @@ export async function POST(request: NextRequest) {
     );
 
     const aiResult = await callAI(prompt, resumeText);
+      await send(4, 'done');
+      await send(5, 'running');
     const scoreAfter = await scoreResume(aiResult.resume, jobDescription, scoreBefore.overall);
 
     // Calculate actual injected keywords by combining AI-declared keywords with ATS delta analysis
@@ -312,7 +330,9 @@ export async function POST(request: NextRequest) {
       return true;
     });
 
-    let finalSummary = aiResult.summary;
+    await send(5, 'done');
+      await send(6, 'running');
+      let finalSummary = aiResult.summary;
     if (!finalSummary || finalSummary === "Optimized." || finalSummary.trim().length < 15) {
       const kwCount = mergedKeywordsAdded.length;
       const scoreGain = Math.max(0, scoreAfter.overall - scoreBefore.overall);
@@ -533,25 +553,45 @@ export async function POST(request: NextRequest) {
       logger.warn("[optimize] Training sample insert failed (non-fatal):", trainErr?.message);
     }
 
-    return NextResponse.json({
-      resumeId: resumeRecord?.id || generatedId,
-      optimizedText: aiResult.resume,
-      resumeJSON: aiResult.resumeJSON,
-      keywordsAdded: mergedKeywordsAdded,
-      changesCount: mergedKeywordsAdded.length || aiResult.changesCount || 6,
-      summary: finalSummary,
-      jobTitle: finalJobTitle,
-      company: finalCompany,
-      scoreBefore: scoreBefore.overall,
-      scoreAfter: scoreAfter.overall,
-      placeholders: extractPlaceholders(aiResult.resume, (aiResult as any).placeholders),
-      hasPlaceholders: extractPlaceholders(aiResult.resume, (aiResult as any).placeholders).length > 0,
-    });
-  } catch (error: any) {
-    logger.error("[optimize] Unhandled error:", error?.message, "\nStack:", error?.stack);
-    return NextResponse.json(
-      { error: error?.message || "An error occurred during resume optimization." },
-      { status: 500 }
-    );
-  }
+    await send(6, 'done', {
+        result: {
+          resumeId: resumeRecord?.id || generatedId,
+          optimizedText: aiResult.resume,
+          resumeJSON: aiResult.resumeJSON,
+          keywordsAdded: mergedKeywordsAdded,
+          changesCount: mergedKeywordsAdded.length || aiResult.changesCount || 6,
+          summary: finalSummary,
+          jobTitle: finalJobTitle,
+          company: finalCompany,
+          scoreBefore: {
+            overall: scoreBefore.overall,
+            keywordMatch: scoreBefore.keywordMatch,
+            impactBullets: scoreBefore.impactBullets,
+          },
+          scoreAfter: {
+            overall: scoreAfter.overall,
+            keywordMatch: scoreAfter.keywordMatch,
+            impactBullets: scoreAfter.impactBullets,
+          },
+          placeholders: extractPlaceholders(aiResult.resume, (aiResult as any).placeholders),
+          hasPlaceholders: extractPlaceholders(aiResult.resume, (aiResult as any).placeholders).length > 0,
+        }
+      });
+    } catch (error: any) {
+      logger.error("[optimize-sse] Error:", error?.message);
+      try {
+        await writer.write(encoder.encode(`data: ${JSON.stringify({ error: error?.message || 'Optimization failed' })}\n\n`));
+      } catch(e) {}
+    } finally {
+      try { await writer.close(); } catch(e) {}
+    }
+  })();
+
+  return new Response(stream.readable, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    }
+  });
 }

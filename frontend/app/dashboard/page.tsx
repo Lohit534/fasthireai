@@ -47,6 +47,7 @@ import CircleGauge from "@/components/CircleGauge";
 import ScrollFadeIn from "@/components/ScrollFadeIn";
 import { UseSavedResumeModal } from "@/components/UseSavedResumeModal";
 import PlaceholderFiller, { ResumePlaceholder } from "@/components/PlaceholderFiller";
+import OptimizingProgress from "@/components/OptimizingProgress";
 
 export default function DashboardPage() {
   const router = useRouter();
