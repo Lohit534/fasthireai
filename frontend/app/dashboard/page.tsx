@@ -192,6 +192,11 @@ export default function DashboardPage() {
   }, [optimizing]);
 
   const runAIAutoImprove = async (targetResumeText = resumeText) => {
+    if (!targetResumeText.trim() || !jobDescription.trim()) {
+      toast.error("Please provide both resume text and job description.");
+      return;
+    }
+
     setOptimizing(true);
     setBeforeScore(null);
     setAfterScore(null);
@@ -205,84 +210,29 @@ export default function DashboardPage() {
     setCoverLetterGenerated(null);
     setShowRoadmapAccordion(false);
     setShowCoverLetterAccordion(false);
+  };
 
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-      const apiHeaders: Record<string, string> = { "Content-Type": "application/json" };
-      if (accessToken) {
-        apiHeaders["Authorization"] = `Bearer ${accessToken}`;
-      }
-
-      const dataTrainingConsent = typeof window !== "undefined"
-        ? localStorage.getItem("fastHire_ai_data_training") !== "false"
-        : true;
-
-      const response = await fetch("/api/optimize", {
-        method: "POST",
-        headers: apiHeaders,
-        body: JSON.stringify({ resumeText: targetResumeText, jobDescription, instructions, lengthOption, dataTrainingConsent }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        if (response.status === 403) throw new Error(errorData.error || "Optimization quota limit reached. Please upgrade to continue.");
-        throw new Error(errorData.error || "Optimization failed.");
-      }
-
-      const data = await response.json();
-      setOptimizeResult(data);
-
-      // Show placeholder filler if AI detected missing details
-      if (data.hasPlaceholders && Array.isArray(data.placeholders) && data.placeholders.length > 0) {
-        setPendingPlaceholders(data.placeholders);
-        setShowPlaceholderFiller(true);
-      }
-
-      const beforeRes = await fetch("/api/score", {
-        method: "POST",
-        headers: apiHeaders,
-        body: JSON.stringify({ resumeText: targetResumeText, jobDescription }),
-      });
-
-      let beforeScoreVal = 0;
-      if (beforeRes.ok) {
-        const scoreData = await beforeRes.json();
-        setBeforeScore(scoreData);
-        beforeScoreVal = scoreData.overall;
-      }
-
-      const afterRes = await fetch("/api/score", {
-        method: "POST",
-        headers: apiHeaders,
-        body: JSON.stringify({ resumeText: data.optimizedText, jobDescription, scoreBefore: beforeScoreVal }),
-      });
-
-      let afterScoreVal = 0;
-      if (afterRes.ok) {
-        const scoreData = await afterRes.json();
-        setAfterScore(scoreData);
-        afterScoreVal = scoreData.overall;
-      }
-
-      setRefreshKey((p) => p + 1);
-      setCurrentResumeId(data.resumeId || null);
-
-      // Scroll to results Ref
-      setTimeout(() => {
-        resultsRef.current?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        });
-      }, 100);
-      toast.success(`🎉 Resume optimized! Score: ${beforeScoreVal} → ${afterScoreVal}`);
-    } catch (err: any) {
-      toast.error(err.message || "Something went wrong.");
-      setOptimizeResult(null);
-    } finally {
-      // Removed setIsAILoading(false)
-      setOptimizing(false);
+  const handleOptimizationComplete = (data: any) => {
+    setOptimizeResult(data);
+    
+    // Handle the scores returned in the new stream payload
+    if (data.scoreBefore) setBeforeScore(data.scoreBefore);
+    if (data.scoreAfter) setAfterScore(data.scoreAfter);
+    
+    if (data.hasPlaceholders && Array.isArray(data.placeholders) && data.placeholders.length > 0) {
+      setPendingPlaceholders(data.placeholders);
+      setShowPlaceholderFiller(true);
     }
+    
+    setOptimizing(false);
+    toast.success("AI Optimization Complete!");
+    
+    // Small delay before scrolling to results
+    setTimeout(() => {
+      if (resultsRef.current) {
+        resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 100);
   };
 
   const handleOptimize = async () => {

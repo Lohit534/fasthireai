@@ -319,14 +319,15 @@ export default function SupportChatbot() {
           }
         ]);
       } else {
-        throw new Error("Chat request failed");
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Chat request failed");
       }
-    } catch {
+    } catch (err: any) {
       setAiHistory([
         ...newHistory,
         {
           sender: "ai",
-          text: "I'm temporarily experiencing high traffic. Please feel free to optimize your resume directly or submit an Admin ticket from the Contact Us options.",
+          text: `Error: ${err?.message || "Failed to get a response"}`,
           timestamp: new Date()
         }
       ]);
