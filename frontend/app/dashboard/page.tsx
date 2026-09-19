@@ -38,7 +38,8 @@ import {
   ChevronDown,
   ChevronRight,
   Shield,
-  FolderOpen
+  FolderOpen,
+  Check
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
@@ -168,6 +169,22 @@ export default function DashboardPage() {
     }
     checkAuth();
   }, [router]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (optimizing) {
+      setProgress(0);
+      interval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 99) return 99; // Hold at 99% until complete
+          return prev + 1;
+        });
+      }, 200); // 1% every 200ms = 20s total
+    } else {
+      setProgress(100);
+    }
+    return () => clearInterval(interval);
+  }, [optimizing]);
 
   const runAIAutoImprove = async (targetResumeText = resumeText) => {
     setIsAILoading(true);
@@ -514,60 +531,119 @@ export default function DashboardPage() {
 
         {/* ── LOADING OVERLAY ─────────────────────────────────────── */}
         {optimizing && (
-          <div className="fixed inset-0 bg-white/95 z-50 flex flex-col items-center justify-center p-6 select-none animate-in fade-in duration-300">
-            <div className="max-w-[480px] w-full text-center space-y-6">
-              <div className="relative mx-auto h-16 w-16">
-                <div className="absolute inset-0 rounded-full border-4 border-[#0d6e5a]/10" />
-                <div className="absolute inset-0 rounded-full border-t-4 border-[#0d6e5a] animate-spin" />
-                <Sparkles className="absolute inset-0 m-auto h-6 w-6 text-[#0d6e5a] animate-pulse" />
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="font-extrabold text-slate-900 text-lg tracking-tight">Improving Your Resume</h3>
-                <p className="text-xs text-slate-500 font-medium">Running advanced AI optimizations to upgrade metrics &amp; structure...</p>
-              </div>
-
-              <div className="space-y-2">
-                <Progress value={progress} className="h-1.5 bg-slate-100 [&>div]:bg-gradient-to-r [&>div]:from-[#0d6e5a] [&>div]:to-[#0f766e] rounded-full border border-slate-200" />
-                <div className="flex justify-between text-[10px] font-bold text-[#0d6e5a]">
-                  <span className="uppercase tracking-wider">{loadingMessage}</span>
-                  <span>{progress}%</span>
+          <div className="fixed inset-0 bg-white/95 z-50 flex flex-col items-center justify-center p-6 select-none animate-in fade-in duration-300 overflow-y-auto">
+            <div className="max-w-[600px] w-full mx-auto space-y-8 pb-12 mt-12">
+              
+              {/* Circular Progress & Timer */}
+              <div className="relative mx-auto w-40 h-40 flex items-center justify-center">
+                <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="#F3F4F6"
+                    strokeWidth="8"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="#6366f1"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    strokeDasharray="282.7"
+                    strokeDashoffset={282.7 - (282.7 * progress) / 100}
+                    className="transition-all duration-300 ease-out"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-4xl font-black text-slate-900 tracking-tight">{progress}%</span>
+                  <span className="text-[11px] font-bold text-slate-400 font-mono tracking-widest mt-1">
+                    ~{Math.max(0, 20 - Math.floor(progress * 20 / 100))}s left
+                  </span>
                 </div>
               </div>
 
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3.5 text-left max-w-md mx-auto">
+              {/* Title & Subtitle */}
+              <div className="text-center space-y-2">
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  {
+                    progress < 15 ? "Reading your resume" :
+                    progress < 30 ? "Parsing the job description" :
+                    progress < 45 ? "Finding your strongest stories" :
+                    progress < 60 ? "Rewriting your experience section" :
+                    progress < 80 ? "Aligning to ATS keywords" :
+                    progress < 95 ? "Polishing the output" :
+                    "Almost ready"
+                  }
+                </h2>
+                <p className="text-sm font-medium text-slate-500">
+                  Stay on this tab — we'll ask you a couple of things if we need them.
+                </p>
+              </div>
+
+              {/* Stepper List */}
+              <div className="space-y-3 mt-8">
                 {[
-                  { label: "Analyze keywords & semantic patterns", minPrg: 10 },
-                  { label: "Run AI rewrite engine to upgrade weak bullets", minPrg: 35 },
-                  { label: "Inject missing job description keywords naturally", minPrg: 70 },
-                  { label: "Compute and verify before/after ATS scores", minPrg: 90 },
+                  { label: "Reading your resume", min: 0, max: 15 },
+                  { label: "Parsing the job description", min: 15, max: 30 },
+                  { label: "Finding your strongest stories", min: 30, max: 45 },
+                  { label: "Rewriting your experience section", min: 45, max: 60 },
+                  { label: "Aligning to ATS keywords", min: 60, max: 80 },
+                  { label: "Polishing the output", min: 80, max: 95 },
+                  { label: "Almost ready", min: 95, max: 101 },
                 ].map((step, idx) => {
-                  const isDone = progress > step.minPrg;
-                  const isActive = progress >= step.minPrg && progress < (idx === 3 ? 101 : [35, 70, 90, 101][idx]);
+                  const isDone = progress >= step.max;
+                  const isActive = progress >= step.min && progress < step.max;
+
                   return (
-                    <div key={idx} className="flex items-center gap-3 transition-opacity duration-300">
-                      <div className={`h-5 w-5 rounded-full flex items-center justify-center border text-[10px] font-bold shrink-0 ${
-                        isDone 
-                          ? "bg-emerald-50 border-emerald-200 text-emerald-600" 
-                          : isActive 
-                          ? "bg-[#0d6e5a]/10 border-[#0d6e5a]/30 text-[#0d6e5a] animate-pulse" 
-                          : "bg-slate-100 border-slate-200 text-slate-400"
-                      }`}>
-                        {isDone ? "✓" : idx + 1}
+                    <div 
+                      key={idx} 
+                      className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-300 ${
+                        isDone ? "bg-emerald-50/50 border-emerald-100" :
+                        isActive ? "bg-indigo-50/30 border-indigo-100 shadow-sm" :
+                        "bg-white border-slate-50 opacity-60"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`h-5 w-5 rounded-full flex items-center justify-center shrink-0 ${
+                          isDone ? "bg-emerald-500 text-white" :
+                          isActive ? "border-2 border-indigo-400 border-l-transparent animate-spin" :
+                          "border-2 border-slate-200"
+                        }`}>
+                          {isDone && <Check className="h-3 w-3 stroke-[3]" />}
+                        </div>
+                        <span className={`text-[13px] font-bold ${
+                          isDone ? "text-emerald-900" :
+                          isActive ? "text-indigo-600" :
+                          "text-slate-400"
+                        }`}>
+                          {step.label}
+                        </span>
                       </div>
-                      <span className={`text-[11px] font-semibold ${
-                        isDone 
-                          ? "text-slate-400 line-through decoration-slate-300" 
-                          : isActive 
-                          ? "text-slate-900 font-extrabold" 
-                          : "text-slate-400"
-                      }`}>
-                        {step.label}
-                      </span>
+                      
+                      {/* Right side indicator */}
+                      <div className="text-[10px] font-mono font-bold">
+                        {isDone ? (
+                          <span className="text-emerald-500/70">{(step.max * 0.2).toFixed(1)}s</span>
+                        ) : isActive ? (
+                          <span className="text-indigo-400/80 uppercase tracking-widest animate-pulse">running</span>
+                        ) : null}
+                      </div>
                     </div>
                   );
                 })}
               </div>
+
+              {/* Footer Tip */}
+              <div className="text-center pt-8 pb-4 opacity-50">
+                <p className="text-[11px] font-semibold text-slate-500">
+                  Did you know: recruiters spend about 7 seconds on the first pass of a resume.
+                </p>
+              </div>
+
             </div>
           </div>
         )}

@@ -48,21 +48,20 @@ export async function POST(request: NextRequest) {
       }
 
       const techTerms = extractTechTerms(jd).slice(0, 3);
-      const injected = techTerms.length > 0 ? techTerms : ["targeted technologies"];
+      const injected = techTerms.length > 0 ? techTerms : ["relevant technologies"];
       const fallbackActionVerbs = ["Spearheaded", "Optimized", "Engineered", "Devised", "Automated", "Accelerated"];
       const actionVerb = fallbackActionVerbs[Math.floor(Math.random() * fallbackActionVerbs.length)];
-      const fallbackMetrics = ["yielding a [28]% efficiency increase", "reducing latency by [42]%", "saving over $[15]K in cloud overhead"];
-      const metric = fallbackMetrics[Math.floor(Math.random() * fallbackMetrics.length)];
       
       const cleanedInput = bullet.trim().replace(/^[-*•\s]+/, "");
-      const improvedBullet = `${actionVerb} the deployment and maintenance of ${injected.join(" and ")}, ${metric} while refactoring legacy code (${cleanedInput.charAt(0).toLowerCase() + cleanedInput.slice(1)}).`;
+      // Removed the forced bracketed metrics to avoid inserting unwanted text
+      const improvedBullet = `${actionVerb} the deployment and maintenance of ${injected.join(" and ")}, improving workflow efficiency (${cleanedInput.charAt(0).toLowerCase() + cleanedInput.slice(1)}).`;
 
       return NextResponse.json({
         improvedBullet,
         actionVerbUsed: actionVerb,
-        metricsAdded: metric.match(/\[.*?\]/)?.[0] || "estimated metric",
+        metricsAdded: "",
         keywordsInjected: techTerms,
-        explanation: "Began with a strong action verb, integrated target keywords, and injected estimated impact metrics."
+        explanation: "Began with a strong action verb and integrated target keywords."
       });
     }
 
@@ -127,14 +126,14 @@ Target Job Description: "${jd.slice(0, 3000)}"
 Instructions:
 1. Rewrite the bullet point so it begins with a strong past-tense action verb (e.g., spearheaded, architected, orchestrated, automated, optimized, designed).
 2. Integrate relevant keywords or technical skill sets from the Target Job Description where natural.
-3. Quantify impact. If the original bullet has no metric, you MUST propose a highly realistic placeholder or estimated metric in square brackets, e.g. "[25]%" or "$[5,000]" or "[3] months".
+3. DO NOT inject fake or estimated metrics like "[15]%" or "$[500]". Only include numbers if they were present in the original input. Keep the focus entirely on improving the action verb, keywords, and professional tone.
 4. Ensure the style is professional, concise, and impact-oriented.
 
 Output MUST be a valid JSON object only (do NOT include markdown fences, leading/trailing text, or code block formatting) with the following structure:
 {
-  "improvedBullet": "The complete rewritten bullet point string.",
+  "improvedBullet": "The complete rewritten bullet point string (clean text only, no asterisks).",
   "actionVerbUsed": "The past-tense action verb you started the bullet with.",
-  "metricsAdded": "The metric or placeholder metric you added (e.g. '[35]%').",
+  "metricsAdded": "Any metric you preserved from the original text (or empty string if none).",
   "keywordsInjected": ["array", "of", "keywords", "injected"],
   "explanation": "A one-sentence summary of the specific optimization you made."
 }
@@ -170,12 +169,14 @@ Output MUST be a valid JSON object only (do NOT include markdown fences, leading
           explanation: "Enhanced professional summary structure and tone."
         });
       }
+      
+      const cleanedInput = bullet.trim().replace(/^[-*•\s]+/, "");
       return NextResponse.json({
-        improvedBullet: `Optimized the implementation of target components (${bullet.trim().replace(/^[-*•\s]+/, "")}) generating a [15]% increase in operational performance.`,
+        improvedBullet: `Optimized the implementation of target components and improved workflows (${cleanedInput}).`,
         actionVerbUsed: "Optimized",
-        metricsAdded: "[15]%",
+        metricsAdded: "",
         keywordsInjected: [],
-        explanation: "Began with optimized action verb and added placeholder metrics."
+        explanation: "Began with optimized action verb (AI fallback)."
       });
     }
   } catch (error: any) {

@@ -24,10 +24,13 @@ function extractJobDescription(html: string): string {
   
   const $ = cheerio.load(html);
 
-  // Remove elements that are definitively NOT part of the job description
+  // 1. Remove elements that are definitively NOT part of the job description
   $('script, style, noscript, nav, header, footer, aside, iframe, svg, button, form, input, meta, link').remove();
   
-  // Try to find the specific job description container using common classes/IDs
+  // Remove layout elements based on typical class/id names
+  $('[class*="nav"], [class*="menu"], [class*="header"], [class*="footer"], [class*="sidebar"], [class*="cookie"], [class*="popup"], [class*="banner"], [id*="nav"], [id*="menu"], [id*="header"], [id*="footer"], [id*="sidebar"]').remove();
+
+  // 2. Try to find the specific job description container using common classes/IDs
   let content = "";
   const selectors = [
     '#job-description',
@@ -36,27 +39,56 @@ function extractJobDescription(html: string): string {
     '.jobsearch-JobComponent-description', // Indeed
     '#jobDetailsSection',
     '.job-details',
+    '[data-automation="jobDescription"]',
+    '.description',
     'article',
     'main',
-    '.description',
-    '[data-automation="jobDescription"]'
   ];
 
   for (const selector of selectors) {
     const el = $(selector);
     if (el.length > 0) {
-      content = el.text();
-      // If we got a decent chunk of text, stop looking
+      // If multiple elements match, get the one with the most text
+      let maxText = "";
+      el.each((_, e) => {
+        const text = $(e).text().trim();
+        if (text.length > maxText.length) maxText = text;
+      });
+      content = maxText;
       if (content.length > 200) break;
     }
   }
 
-  // Fallback: If no specific container was found, just take the body text
+  // 3. Fallback: Density Heuristic
+  // If specific containers aren't found, find the deepest node with the most dense text (paragraphs/list items)
   if (content.length < 200) {
-    content = $('body').text() || $.text();
+    let bestNode = null;
+    let maxScore = 0;
+    
+    $('div, section').each((_, el) => {
+      const $el = $(el);
+      const textLength = $el.text().length;
+      if (textLength < 200) return;
+      
+      const pCount = $el.find('p, li, br').length;
+      const score = textLength * Math.log(pCount + 2); // Density score
+      const depth = $el.parents().length; // Depth multiplier (prefer deeper specific nodes over root wrapper)
+      const finalScore = score * depth;
+
+      if (finalScore > maxScore) {
+        maxScore = finalScore;
+        bestNode = el;
+      }
+    });
+
+    if (bestNode) {
+      content = $(bestNode).text();
+    } else {
+      content = $('body').text() || $.text();
+    }
   }
 
-  // Aggressive whitespace and newline trimming (prevent spaces)
+  // 4. Aggressive whitespace and newline trimming (prevent spaces)
   return content
     // Decode common HTML entities (cheerio does most of this, but just in case)
     .replace(/&amp;/g, "&")

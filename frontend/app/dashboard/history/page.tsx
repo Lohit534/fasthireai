@@ -146,7 +146,9 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
       }
 
       const blob = await response.blob();
-      saveAs(blob, `${resume.jobTitle?.replace(/\s+/g, "-") || "resume"}-optimized.${format}`);
+      const safeTitle = resume.jobTitle?.replace(/[^a-zA-Z0-9\s]/g, "").trim().replace(/\s+/g, "_");
+      const filename = safeTitle ? `${safeTitle}_Resume.${format}` : `Resume.${format}`;
+      saveAs(blob, filename);
       toast.success(`${format.toUpperCase()} download completed!`);
     } catch (error: any) {
       toast.error(error.message || `An error occurred during ${format.toUpperCase()} download.`);

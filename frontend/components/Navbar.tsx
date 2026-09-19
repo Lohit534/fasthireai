@@ -7,11 +7,10 @@ import { useResumeStore } from "@/store/useResumeStore";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { 
-  Briefcase, 
-  LogOut, 
-  ChevronDown, 
-  Plus,
+import {
+  Briefcase,
+  LogOut,
+  ChevronDown,
   Compass,
   History,
   CreditCard,
@@ -19,15 +18,11 @@ import {
   MessageSquare,
   Lock,
   FileText,
-  User as UserIcon,
   Sparkles,
   DollarSign,
-  TrendingUp,
-  Settings,
-  Users,
-  ShieldCheck,
-  Film,
-  Play,
+  Gift,
+  Menu,
+  X,
 } from "lucide-react";
 import { CreditInfo } from "@/types";
 import { toast } from "react-hot-toast";
@@ -35,8 +30,6 @@ import SupportChatbot from "@/components/SupportChatbot";
 import AdminChat from "@/components/AdminChat";
 import FeedbackToast from "@/components/FeedbackToast";
 import FeedbackBanner from "@/components/FeedbackBanner";
-
-import { Gift } from "lucide-react";
 import { ReferralModal } from "@/components/ReferralModal";
 import { DemoVideoModal } from "@/components/DemoVideoModal";
 import { DataPreferencesModal } from "@/components/DataPreferencesModal";
@@ -51,11 +44,24 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
   const [user, setUser] = useState<User | null>(null);
   const [credits, setCredits] = useState<CreditInfo | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isReferralOpen, setIsReferralOpen] = useState(false);
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const [isDataPreferencesOpen, setIsDataPreferencesOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsDropdownOpen(false);
+  }, [pathname]);
+
+  // Lock body scroll when mobile menu open
+  useEffect(() => {
+    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [isMobileMenuOpen]);
 
   useEffect(() => {
     const handleOpenDemo = () => setIsDemoModalOpen(true);
@@ -147,12 +153,12 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
 
   // Nav links definitions
   const links = [
-    { label: "Optimize", href: "/dashboard" },
-    { label: "Resumes", href: "/dashboard/resumes" },
-    { label: "Job Tracker", href: "/dashboard/job-tracker" },
-    { label: "History", href: "/dashboard/history" },
-    { label: "Pricing", href: "/dashboard/pricing" },
-    { label: "Billing", href: "/dashboard/billing" },
+    { label: "Optimize", href: "/dashboard", icon: <Compass className="h-4 w-4" /> },
+    { label: "Resumes", href: "/dashboard/resumes", icon: <FileText className="h-4 w-4" /> },
+    { label: "Job Tracker", href: "/dashboard/job-tracker", icon: <Briefcase className="h-4 w-4" /> },
+    { label: "History", href: "/dashboard/history", icon: <History className="h-4 w-4" /> },
+    { label: "Pricing", href: "/dashboard/pricing", icon: <DollarSign className="h-4 w-4" /> },
+    { label: "Billing", href: "/dashboard/billing", icon: <CreditCard className="h-4 w-4" /> },
   ];
 
   // Calculations for credit percentage
@@ -214,21 +220,19 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
           </div>
 
           {/* Right Section Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {user ? (
               <>
-
-
-                {/* Refer & Earn Button */}
+                {/* Refer a Friend — desktop only */}
                 <button
                   onClick={() => setIsReferralOpen(true)}
                   className="hidden sm:flex items-center gap-1.5 h-8 px-3 text-xs font-bold rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 transition-all"
                 >
                   <Gift className="h-3.5 w-3.5" />
-                  <span>Refer & Earn</span>
+                  <span>Refer a Friend</span>
                 </button>
 
-                {/* Upgrade Button */}
+                {/* Upgrade Button — desktop only */}
                 {!(credits?.paidCredits && credits.paidCredits > 900000) && (
                   <Link href="/dashboard/pricing" className="hidden sm:block">
                     <button className="btn-primary-gradient h-8 px-4 text-xs font-semibold rounded-lg shadow-md">
@@ -237,10 +241,11 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                   </Link>
                 )}
 
-                {/* Profile circular avatar dropdown container */}
-                <div className="relative" ref={dropdownRef}>
+                {/* Profile dropdown — desktop only */}
+                <div className="hidden sm:block relative" ref={dropdownRef}>
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    aria-label="Open profile menu"
                     className="flex items-center gap-1.5 p-1 rounded-full hover:bg-slate-100 transition-colors focus:outline-none"
                   >
                     <div className="h-7 w-7 rounded-full bg-[#0d6e5a] border border-[#0d6e5a]/20 flex items-center justify-center text-white font-black text-xs select-none">
@@ -289,32 +294,22 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                           <Briefcase className="h-4 w-4 text-slate-400" />
                           Job Tracker
                         </Link>
-                        {!credits?.isOwner && (
-                          <Link 
-                            href="/dashboard/pricing" 
-                            onClick={() => setIsDropdownOpen(false)}
-                            className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
-                          >
-                            <Sparkles className="h-4 w-4 text-slate-400" />
-                            Pro Max Plan
-                          </Link>
-                        )}
-                        <Link 
-                          href="/dashboard/pricing" 
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
-                        >
+                        <Link href="/dashboard/pricing" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
                           <DollarSign className="h-4 w-4 text-slate-400" />
                           Pricing
                         </Link>
-                        <Link 
-                          href="/dashboard/billing" 
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
-                        >
+                        <Link href="/dashboard/billing" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
                           <CreditCard className="h-4 w-4 text-slate-400" />
                           Billing &amp; Usage
                         </Link>
+                        {/* Refer a Friend in dropdown */}
+                        <button
+                          onClick={() => { setIsDropdownOpen(false); setIsReferralOpen(true); }}
+                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors text-left"
+                        >
+                          <Gift className="h-4 w-4" />
+                          Refer a Friend
+                        </button>
                       </div>
 
                       {/* Divider */}
@@ -370,10 +365,22 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                     </div>
                   )}
                 </div>
+
+                {/* Mobile: Hamburger button */}
+                <button
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+                  className="sm:hidden flex items-center justify-center h-9 w-9 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  {isMobileMenuOpen
+                    ? <X className="h-5 w-5 text-slate-700" />
+                    : <Menu className="h-5 w-5 text-slate-700" />
+                  }
+                </button>
               </>
             ) : (
               <div className="flex items-center gap-3 select-none">
-                <Link href="/dashboard/pricing" className="text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors">
+                <Link href="/dashboard/pricing" className="hidden sm:block text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors">
                   Pricing
                 </Link>
                 <Link href="/auth/login">
@@ -384,9 +391,104 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
               </div>
             )}
           </div>
-
         </div>
       </div>
+
+      {/* ── MOBILE FULL-SCREEN MENU ── */}
+      {user && isMobileMenuOpen && (
+        <div className="sm:hidden fixed inset-0 top-16 z-40 bg-white overflow-y-auto">
+          <div className="px-4 py-4 space-y-1">
+            {/* User strip */}
+            <div className="flex items-center gap-3 px-3 py-3 mb-3 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="h-9 w-9 rounded-full bg-[#0d6e5a] flex items-center justify-center text-white font-black text-sm shrink-0">
+                {user.email ? user.email.charAt(0).toUpperCase() : "U"}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-slate-900 truncate">{user.email}</p>
+                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
+                  {credits?.isFirst50 || (credits?.paidCredits ?? 0) > 0 ? "Premium" : "Free"} &bull; {credits?.freeRemaining ?? 0} left
+                </p>
+              </div>
+            </div>
+
+            {/* Nav links */}
+            {links.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-colors ${
+                    isActive ? "bg-[#0d6e5a]/10 text-[#0d6e5a] font-bold" : "text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  <span className={isActive ? "text-[#0d6e5a]" : "text-slate-400"}>{link.icon}</span>
+                  {link.label}
+                  {isActive && <span className="ml-auto h-2 w-2 rounded-full bg-[#0d6e5a]" />}
+                </Link>
+              );
+            })}
+
+            <div className="border-t border-slate-100 my-2" />
+
+            {/* Refer a Friend — prominent in mobile */}
+            <button
+              onClick={() => { setIsMobileMenuOpen(false); setIsReferralOpen(true); }}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 transition-colors"
+            >
+              <Gift className="h-4 w-4 shrink-0" />
+              Refer a Friend &amp; Earn Rewards
+            </button>
+
+            {/* Upgrade if not Pro Max */}
+            {!(credits?.paidCredits && credits.paidCredits > 900000) && (
+              <Link
+                href="/dashboard/pricing"
+                className="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-sm font-bold text-white bg-[#0d6e5a] hover:bg-[#0a5a49] transition-colors"
+              >
+                <Sparkles className="h-4 w-4" />
+                Upgrade Your Plan
+              </Link>
+            )}
+
+            <div className="border-t border-slate-100 my-2" />
+
+            <button
+              onClick={() => { setIsMobileMenuOpen(false); window.dispatchEvent(new CustomEvent("open-support-chatbot", { detail: { mode: "help-center" } })); }}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              <HelpCircle className="h-4 w-4 text-slate-400 shrink-0" />
+              Help &amp; Support
+            </button>
+            <button
+              onClick={() => { setIsMobileMenuOpen(false); setIsFeedbackOpen(true); }}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              <MessageSquare className="h-4 w-4 text-slate-400 shrink-0" />
+              Feedback
+            </button>
+            <button
+              type="button"
+              onClick={() => { setIsMobileMenuOpen(false); setIsDataPreferencesOpen(true); }}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              <Lock className="h-4 w-4 text-slate-400 shrink-0" />
+              Data Preferences
+            </button>
+
+            <div className="border-t border-slate-100 my-2" />
+
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              Sign out
+            </button>
+            <div className="h-8" />
+          </div>
+        </div>
+      )}
       </nav>
       {user && <FeedbackBanner onOpenFeedback={() => setIsFeedbackOpen(true)} />}
       {/* Unified Help Center, Support Tickets & 24/7 AI Chatbot */}

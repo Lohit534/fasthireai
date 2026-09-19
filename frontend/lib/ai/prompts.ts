@@ -150,8 +150,9 @@ export function buildOptimizationPrompt(
     "Spearheaded, Streamlined, Trained, Transformed\n\n" +
     "Quantification rules:\n" +
     "- Use real numbers where implied by context\n" +
-    "- If no number fits naturally, use large-scale, enterprise-grade, or end-to-end\n" +
-    "- NEVER invent fabricated numbers that are clearly wrong\n\n" +
+    "- If no number fits naturally, focus on the specific technical scale (e.g. 'high-traffic', 'real-time') or leave it purely factual\n" +
+    "- NEVER invent fabricated numbers that are clearly wrong\n" +
+    "- NEVER use generic corporate filler words\n\n" +
     "TASK 3 -- SKILLS REORGANIZATION:\n" +
     "- Put JD-matching skills FIRST in every category\n" +
     "- Add every missing JD technical skill to the most relevant category\n" +

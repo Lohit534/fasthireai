@@ -182,6 +182,11 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
     const question = body.question;
+    const messages = body.messages || [];
+
+    if (!Array.isArray(messages)) {
+      return NextResponse.json({ error: "Messages array is required." }, { status: 400 });
+    }
 
     if (!question || typeof question !== "string" || !question.trim()) {
       return NextResponse.json({ error: "Question is required." }, { status: 400 });
@@ -189,43 +194,54 @@ export async function POST(request: NextRequest) {
 
     const trimmedQuestion = question.trim();
 
-    // 1. Check for Instant Known Answer (0ms latency) for high-frequency platform queries
-    const instantAnswer = getSmartContextualAnswer(trimmedQuestion);
-    // If the question explicitly targeted a core keyword, return immediately for instant UX
-    const qLower = trimmedQuestion.toLowerCase();
-    const isDirectPlatformTopic = 
-      qLower.includes("refund") || 
-      qLower.includes("money back") || 
-      qLower.includes("pricing") || 
-      qLower.includes("plan") || 
-      qLower.includes("promax") || 
-      qLower.includes("pro max") || 
-      qLower.includes("unlimited") || 
-      qLower.includes("gst") || 
-      qLower.includes("invoice") || 
-      qLower.includes("download") || 
-      qLower.includes("switch") || 
-      qLower.includes("only shows free") || 
-      qLower.includes("job tracker") || 
-      qLower.includes("roadmap");
+    const SYSTEM_PROMPT = `
+You are the FastHire AI Support Assistant. Your tone is professional, helpful, and concise.
+You must answer questions based on the following platform rules. NEVER invent pricing or policies.
 
-    if (isDirectPlatformTopic && instantAnswer) {
-      return NextResponse.json({
-        answer: cleanAsterisks(instantAnswer),
-        engine: "FastHire Instant Knowledge"
-      });
+1. Safety & Security:
+- FastHire AI is 100% safe, trustworthy, and enterprise-grade secure.
+- 256-Bit SSL Encryption for all traffic.
+- Payments use Razorpay (PCI-DSS Level 1 compliant). We NEVER store UPI PINs or card details.
+- No auto-debits; strictly one-time payments.
+
+2. Plans & Pricing:
+- Free Tier: Free monthly optimizations, standard ATS score, instant preview. (Users who didn't pay are on this plan).
+- Premium Pro (₹99/mo or ₹999/yr): 20 optimizations/month, full keyword gap, all templates, PDF/DOCX downloads.
+- Pro Max (₹199/mo or ₹1999/yr): Unlimited optimizations, AI bullet rewriter, priority ATS processing, 24/7 AI Assistant.
+- All plans are one-time payments. No recurring debits. Users upgrade securely via the Pricing page.
+
+3. Refund Policy:
+- All payments, plan upgrades, and plan switches are STRICTLY NON-REFUNDABLE under any circumstances.
+- Digital credits are activated immediately, so payments cannot be reversed. Support tickets can resolve technical issues.
+
+4. ATS Scoring (Getting 90+):
+- Paste target Job Description (JD).
+- Match critical hard skills.
+- Use strong action verbs and measurable metrics.
+- Use our AI to highlight and insert missing keywords.
+
+5. Features (Downloads & GST):
+- Official GST invoices (5% GST breakdown, HSN) are generated automatically and available in Billing.
+- Resumes can be downloaded as ATS-Compliant PDF or Editable Word DOCX.
+- Integrated Job Application Tracker (organize search, track salaries, link tailored resumes).
+
+6. Support:
+- Users can create an Admin Support Ticket right here in the widget. Admins reply in 1-2 business days.
+
+IMPORTANT RULES FOR YOU:
+- Format cleanly. NEVER use asterisks (**) or markdown formatting. Use standard dashes (-) or plain text bullets.
+- Do not repeat yourself endlessly. If the user says "hello", just greet them back.
+- Keep answers strictly relevant to the user's latest question while respecting chat history.
+`;
+
+    // Map existing history to prompt context
+    let systemPrompt = SYSTEM_PROMPT + "\n\nChat History:\n";
+    for (const msg of messages) {
+      if (msg.role === 'user') systemPrompt += `User: ${msg.content}\n`;
+      if (msg.role === 'assistant') systemPrompt += `Assistant: ${msg.content}\n`;
     }
+    systemPrompt += `\nUser: ${trimmedQuestion}\nAssistant:`;
 
-    const systemPrompt = `You are the official FastHire AI Assistant.
-Rules:
-1. FastHire is an ATS Resume Optimizer and Career platform.
-2. Plans: Free Tier (free credits), Premium Pro (₹99/mo, 20 credits), Pro Max (₹199/mo, unlimited credits).
-3. Refund Policy: All payments are strictly non-refundable as stated on the Pricing page.
-4. ATS scoring: Scans resume against Job Description, checks skills, quantifiable metrics, and formatting to reach 90+ score.
-5. Provide a helpful, concise answer (2-4 sentences or clean bullet points).
-6. CRITICAL: Never use asterisks (*) or double asterisks (**). Do not use markdown bold or italics. Use • for bullets.
-
-User Question: ${trimmedQuestion}`;
 
     // 2. Try Primary Groq LPU (0.4s response) if GROQ_API_KEY is present
     const groqKey = process.env.GROQ_API_KEY || "";
@@ -308,10 +324,10 @@ User Question: ${trimmedQuestion}`;
       }
     } catch (_aiErr) {}
 
-    // 4. Instant Knowledge Engine Fallback
+    // 4. Generic Fallback
     return NextResponse.json({
-      answer: cleanAsterisks(instantAnswer),
-      engine: "FastHire Knowledge Engine"
+      answer: "I am having trouble connecting to my knowledge base right now, but you can always ask me about ATS resume scoring, pricing plans, or career roadmaps!",
+      engine: "FastHire Fallback Engine"
     });
 
   } catch (error: any) {

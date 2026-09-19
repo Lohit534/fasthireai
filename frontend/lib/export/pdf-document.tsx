@@ -8,19 +8,19 @@ Font.registerHyphenationCallback(word => [word]);
 const styles = StyleSheet.create({
   page: {
     fontFamily: 'Times-Roman',
-    fontSize: 9.5,
-    paddingTop: 28,
-    paddingBottom: 28,
-    paddingHorizontal: 36,
+    fontSize: 10.5,
+    paddingTop: 36,
+    paddingBottom: 36,
+    paddingHorizontal: 40,
     color: '#000000',
-    lineHeight: 1.25,
+    lineHeight: 1.3,
     backgroundColor: '#FFFFFF',
   },
 
   // ── NAME ──
   name: {
     fontFamily: 'Times-Bold',
-    fontSize: 17,
+    fontSize: 22,
     textAlign: 'center',
     marginBottom: 6,
     paddingBottom: 2,
@@ -34,36 +34,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexWrap: 'wrap',
     marginTop: 2,
-    marginBottom: 8,
-    fontSize: 9,
+    marginBottom: 10,
+    fontSize: 10,
     lineHeight: 1.3,
   },
   contactText: {
     fontFamily: 'Times-Roman',
-    fontSize: 9,
+    fontSize: 10,
     color: '#000000',
   },
   contactSeparator: {
     fontFamily: 'Times-Roman',
-    fontSize: 9,
-    marginHorizontal: 4,
+    fontSize: 10,
+    marginHorizontal: 5,
     color: '#000000',
   },
   contactLink: {
     fontFamily: 'Times-Roman',
-    fontSize: 9,
-    color: '#0000EE',
-    textDecoration: 'underline',
+    fontSize: 10,
+    color: '#000000',
+    textDecoration: 'none',
   },
 
   // ── SECTION HEADER ──
   sectionHeader: {
     fontFamily: 'Times-Bold',
-    fontSize: 10.5,
-    marginTop: 7,
-    marginBottom: 2,
-    paddingBottom: 1,
-    borderBottomWidth: 0.75,
+    fontSize: 12,
+    marginTop: 8,
+    marginBottom: 4,
+    paddingBottom: 2,
+    borderBottomWidth: 1,
     borderBottomColor: '#000000',
     borderBottomStyle: 'solid',
     textTransform: 'uppercase',
@@ -72,25 +72,25 @@ const styles = StyleSheet.create({
   // ── PROFESSIONAL SUMMARY ──
   summaryText: {
     fontFamily: 'Times-Roman',
-    fontSize: 9.5,
-    lineHeight: 1.3,
-    marginBottom: 2,
+    fontSize: 10.5,
+    lineHeight: 1.35,
+    marginBottom: 4,
     textAlign: 'justify',
   },
 
   // ── SKILLS ──
   skillRow: {
     flexDirection: 'row',
-    marginBottom: 2,
+    marginBottom: 3,
   },
   skillLabel: {
     fontFamily: 'Times-Bold',
-    fontSize: 9.5,
-    width: 170,
+    fontSize: 10.5,
+    width: 175,
   },
   skillValue: {
     fontFamily: 'Times-Roman',
-    fontSize: 9.5,
+    fontSize: 10.5,
     flex: 1,
   },
 
@@ -99,8 +99,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginTop: 3,
-    marginBottom: 1,
+    marginTop: 4,
+    marginBottom: 2,
   },
   projectTitleLeft: {
     flexDirection: 'row',
@@ -109,18 +109,18 @@ const styles = StyleSheet.create({
   },
   projectTitle: {
     fontFamily: 'Times-Bold',
-    fontSize: 9.5,
+    fontSize: 10.5,
   },
   projectLink: {
     fontFamily: 'Times-Roman',
-    fontSize: 9,
-    color: '#0000EE',
-    textDecoration: 'underline',
+    fontSize: 10,
+    color: '#000000',
+    textDecoration: 'none',
     marginLeft: 6,
   },
   projectTech: {
     fontFamily: 'Times-Italic',
-    fontSize: 9,
+    fontSize: 10,
     color: '#333333',
     marginLeft: 8,
     textAlign: 'right',
@@ -131,24 +131,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 3,
-    marginBottom: 1,
+    marginTop: 4,
+    marginBottom: 2,
   },
   jobTitle: {
     fontFamily: 'Times-Bold',
-    fontSize: 9.5,
+    fontSize: 10.5,
     flex: 1,
   },
   jobDates: {
     fontFamily: 'Times-Roman',
-    fontSize: 9,
+    fontSize: 10.5,
     color: '#000000',
     textAlign: 'right',
   },
   jobCompany: {
     fontFamily: 'Times-Italic',
-    fontSize: 9,
-    marginBottom: 1,
+    fontSize: 10.5,
+    marginBottom: 2,
   },
 
   // ── EDUCATION ──
@@ -156,34 +156,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginTop: 3,
-    marginBottom: 1,
+    marginTop: 4,
+    marginBottom: 2,
   },
   educationDegree: {
     fontFamily: 'Times-Bold',
-    fontSize: 9.5,
+    fontSize: 10.5,
     flex: 1,
   },
   educationDates: {
     fontFamily: 'Times-Roman',
-    fontSize: 9,
+    fontSize: 10.5,
     textAlign: 'right',
     minWidth: 80,
   },
   educationInstitution: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 1,
+    marginBottom: 2,
   },
   educationSchool: {
     fontFamily: 'Times-Roman',
-    fontSize: 9.5,
+    fontSize: 10.5,
     color: '#000000',
     flex: 1,
   },
   educationGPA: {
     fontFamily: 'Times-Roman',
-    fontSize: 9,
+    fontSize: 10.5,
     textAlign: 'right',
     minWidth: 80,
   },
@@ -191,35 +191,35 @@ const styles = StyleSheet.create({
   // ── BULLET POINTS ──
   bulletRow: {
     flexDirection: 'row',
-    marginBottom: 1.5,
-    paddingLeft: 8,
+    marginBottom: 2,
+    paddingLeft: 10,
   },
   bulletDot: {
-    width: 8,
-    fontSize: 9.5,
+    width: 10,
+    fontSize: 10.5,
     fontFamily: 'Times-Roman',
   },
   bulletText: {
     flex: 1,
     fontFamily: 'Times-Roman',
-    fontSize: 9.5,
-    lineHeight: 1.25,
+    fontSize: 10.5,
+    lineHeight: 1.3,
   },
 
   // ── CERTIFICATIONS / LANGUAGES ──
   certItem: {
     fontFamily: 'Times-Roman',
-    fontSize: 9.5,
-    marginBottom: 1.5,
+    fontSize: 10.5,
+    marginBottom: 2,
   },
 
   // ── STANDALONE LINK ──
   link: {
-    color: '#0000EE',
-    textDecoration: 'underline',
+    color: '#000000',
+    textDecoration: 'none',
     fontFamily: 'Times-Roman',
-    fontSize: 9,
-    marginBottom: 1.5,
+    fontSize: 10.5,
+    marginBottom: 2,
   },
   spacer: {
     height: 1.5,
@@ -397,8 +397,8 @@ function swapEducationAndSkillsIfNeeded(blocks: ParsedResumeBlock[]): ParsedResu
 export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
   const SECTION_NAMES_LIST = [
     'PROFESSIONAL SUMMARY', 'TECHNICAL SKILLS', 'PROFESSIONAL EXPERIENCE', 'WORK EXPERIENCE', 'EMPLOYMENT HISTORY',
-    'PERSONAL PROJECTS', 'ACADEMIC BACKGROUND', 'CORE SKILLS', 'KEY SKILLS', 'SUMMARY', 'OBJECTIVE', 'SKILLS',
-    'EXPERIENCE', 'INTERNSHIP', 'INTERNSHIPS', 'PROJECTS', 'EDUCATION', 'CERTIFICATIONS', 'ACHIEVEMENTS', 'AWARDS', 'LANGUAGES'
+    'PERSONAL PROJECTS', 'ACADEMIC PROJECTS', 'ACADEMIC BACKGROUND', 'CORE SKILLS', 'KEY SKILLS', 'SUMMARY', 'OBJECTIVE', 'SKILLS',
+    'EXPERIENCE', 'INTERNSHIP', 'INTERNSHIPS', 'PROJECTS', 'EDUCATION', 'CERTIFICATIONS', 'ACHIEVEMENTS', 'KEY ACHIEVEMENTS', 'EXTRA-CURRICULAR', 'AWARDS', 'LANGUAGES'
   ];
 
   let cleanInput = (text || "");

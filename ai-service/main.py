@@ -95,25 +95,47 @@ def semantic_score(resume_text: str, job_description: str) -> int:
         return 0
 
 def extract_keywords(text: str) -> Set[str]:
-    """Clean text, remove punctuation and split into single-words & bigrams"""
+    """Clean text and extract hard technical keywords using spaCy (ignore soft/filler words)"""
     if not text:
         return set()
     
-    cleaned = re.sub(r'[^a-zA-Z0-9\s+#]', ' ', text.lower())
-    words = [w.strip() for w in cleaned.split() if w.strip()]
+    # Generic corporate/soft words to ignore
+    IGNORE_WORDS = {
+        "condition", "risk", "communication", "team", "work", "time", "project", 
+        "business", "data", "system", "process", "management", "development", 
+        "support", "environment", "solution", "user", "customer", "client", 
+        "design", "analysis", "experience", "skill", "ability", "knowledge", 
+        "understanding", "issue", "problem", "solution", "requirement", "need",
+        "impact", "result", "outcome", "goal", "objective", "target", "metric",
+        "kpi", "performance", "quality", "standard", "policy", "procedure",
+        "documentation", "report", "presentation", "meeting", "discussion"
+    }
     
     keywords = set()
-    # Single words
-    for w in words:
-        if w not in STOP_WORDS and len(w) > 2:
-            keywords.add(w)
+    doc = nlp(text)
+    
+    for token in doc:
+        if token.is_stop or token.is_punct or len(token.text) <= 2:
+            continue
             
-    # Bigrams (adjacent word combinations)
-    for i in range(len(words) - 1):
-        w1, w2 = words[i], words[i+1]
-        if w1 not in STOP_WORDS and w2 not in STOP_WORDS:
-            keywords.add(f"{w1} {w2}")
-            
+        # Target Nouns, Proper Nouns, and specific technical entity types
+        if token.pos_ in ("NOUN", "PROPN") or token.ent_type_ in ("PRODUCT", "ORG"):
+            word = token.lemma_.lower().strip()
+            if word not in IGNORE_WORDS and word not in STOP_WORDS and not word.isnumeric():
+                # Add capitalised versions for aesthetic rendering
+                if len(word) > 2:
+                    keywords.add(token.text)
+                    
+    # Also extract noun chunks (e.g. "machine learning", "data pipelines")
+    for chunk in doc.noun_chunks:
+        clean_chunk = re.sub(r'[^a-zA-Z0-9\s+#\.]', '', chunk.text).strip()
+        words = clean_chunk.lower().split()
+        
+        # Keep multi-word chunks where the head is not ignored
+        if 1 < len(words) <= 3:
+            if not any(w in IGNORE_WORDS for w in words):
+                keywords.add(clean_chunk)
+                
     return keywords
 
 def keyword_match_score(resume_keywords: Set[str], jd_keywords: Set[str]) -> Dict[str, Any]:
