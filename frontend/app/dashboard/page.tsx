@@ -88,7 +88,9 @@ export default function DashboardPage() {
   const [roadmapContent, setRoadmapContent] = useState<string | null>(null);
   const [roadmapLoading, setRoadmapLoading] = useState(false);
   const [coverLetterGenerated, setCoverLetterGenerated] = useState<string | null>(null);
-  const [generatingLetter, setGeneratingLetter] = useState(false);
+  const [pdfGenerationStatus, setPdfGenerationStatus] = useState<string>("");
+  const [isPrechecking, setIsPrechecking] = useState(false);
+  const [activeOptimizationText, setActiveOptimizationText] = useState("");
   const [showRoadmapAccordion, setShowRoadmapAccordion] = useState(false);
   const [showCoverLetterAccordion, setShowCoverLetterAccordion] = useState(false);
   // Removed isAILoading state
@@ -183,6 +185,7 @@ export default function DashboardPage() {
       return;
     }
 
+    setActiveOptimizationText(targetResumeText);
     setOptimizing(true);
     setBeforeScore(null);
     setAfterScore(null);
@@ -231,9 +234,7 @@ export default function DashboardPage() {
       return;
     }
 
-    setOptimizing(true);
-    setLoadingMessage("Pre-checking experience for missing metrics...");
-    setProgress(5);
+    setIsPrechecking(true);
 
     try {
       const res = await fetch("/api/pre-check", {
@@ -248,14 +249,16 @@ export default function DashboardPage() {
         setWeakBullets(data.questions);
         setPendingResumeText(resumeText);
         setShowBulletModal(true);
-        setOptimizing(false); // Pause loading overlay
+        setIsPrechecking(false); // Pause loading overlay
         return;
       }
       
       // If no weak bullets, proceed normally
+      setIsPrechecking(false);
       runAIAutoImprove(resumeText);
     } catch (e) {
       // Fallback
+      setIsPrechecking(false);
       runAIAutoImprove(resumeText);
     }
   };
@@ -508,6 +511,14 @@ export default function DashboardPage() {
 
       <main className="relative flex-1 mx-auto max-w-[1280px] w-full px-4 sm:px-6 lg:px-8 py-8">
 
+        {/* ── PRECHECK OVERLAY ─────────────────────────────────────── */}
+        {isPrechecking && (
+          <div className="fixed inset-0 bg-white/95 z-50 flex flex-col items-center justify-center p-6 select-none animate-in fade-in duration-300">
+             <Loader2 className="h-10 w-10 animate-spin text-[#0d6e5a] mb-4" />
+             <h2 className="text-xl font-bold text-slate-900">Pre-checking experience for missing metrics...</h2>
+          </div>
+        )}
+
         {/* ── LOADING OVERLAY ─────────────────────────────────────── */}
         {optimizing && (
           <div className="fixed inset-0 bg-white/95 z-50 flex flex-col items-center justify-center p-6 select-none animate-in fade-in duration-300 overflow-y-auto">
@@ -518,7 +529,7 @@ export default function DashboardPage() {
                   toast.error(err);
                   setOptimizing(false);
                 }}
-                resumeText={resumeText} 
+                resumeText={activeOptimizationText || resumeText} 
                 jobDescription={jobDescription} 
               />
             </div>
