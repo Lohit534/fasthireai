@@ -11,7 +11,7 @@ import KeywordBadges from "@/components/KeywordBadges";
 import { generateSkillRoadmap, generateMultiSkillRoadmap } from "@/lib/roadmap-generator";
 import ResumeViewer from "@/components/ResumeViewer";
 import BulletImprover from "@/components/BulletImprover";
-import LoadingOverlay from "@/components/LoadingOverlay";
+// Removed LoadingOverlay import as user requested native background animation
 import BulletEnrichmentModal, { WeakBullet } from "@/components/BulletEnrichmentModal";
 import { enrichResumeWithAnswers } from "@/lib/resume-inspector";
 import { Button } from "@/components/ui/button";
@@ -86,7 +86,7 @@ export default function DashboardPage() {
   const [generatingLetter, setGeneratingLetter] = useState(false);
   const [showRoadmapAccordion, setShowRoadmapAccordion] = useState(false);
   const [showCoverLetterAccordion, setShowCoverLetterAccordion] = useState(false);
-  const [isAILoading, setIsAILoading] = useState(false);
+  // Removed isAILoading state
   const [isSavedResumesOpen, setIsSavedResumesOpen] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -187,7 +187,6 @@ export default function DashboardPage() {
   }, [optimizing]);
 
   const runAIAutoImprove = async (targetResumeText = resumeText) => {
-    setIsAILoading(true);
     setOptimizing(true);
     setBeforeScore(null);
     setAfterScore(null);
@@ -270,7 +269,7 @@ export default function DashboardPage() {
       toast.error(err.message || "Something went wrong.");
       setOptimizeResult(null);
     } finally {
-      setIsAILoading(false);
+      // Removed setIsAILoading(false)
       setOptimizing(false);
     }
   };
@@ -345,7 +344,7 @@ export default function DashboardPage() {
     setAfterScore(null);
     setOptimizeResult(null);
     setTrackerAdded(false);
-    setIsAILoading(false);
+    // Removed setIsAILoading(false)
     setBulletImprovementsCount(0);
     // silent clear — user can see the cleared workspace
   };
@@ -1224,7 +1223,7 @@ export default function DashboardPage() {
       </main>
 
       {/* Loading Overlay */}
-      {isAILoading && <LoadingOverlay />}
+      {/* LoadingOverlay removed per user request */}
 
       {/* Saved Resumes Modal */}
       <UseSavedResumeModal

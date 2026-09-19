@@ -227,7 +227,11 @@ export async function POST(request: NextRequest) {
         ...injectedFromScorer,
         ...missingNowFound
       ])
-    ).filter(kw => kw && kw.trim().length > 1);
+    ).filter(kw => {
+      if (!kw || kw.trim().length <= 1) return false;
+      if (beforeKeywordsSet.has(kw.toLowerCase().trim())) return false;
+      return true;
+    });
 
     let finalSummary = aiResult.summary;
     if (!finalSummary || finalSummary === "Optimized." || finalSummary.trim().length < 15) {

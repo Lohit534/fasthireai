@@ -661,6 +661,28 @@ export default function SupportChatbot() {
                 <div ref={messagesEndRef} />
               </div>
 
+              {/* Suggested Quick Issue Chips */}
+              <div className="px-3.5 py-2 border-t border-slate-200 bg-slate-50 flex items-center gap-1.5 overflow-x-auto select-none no-scrollbar">
+                {[
+                  "Billing & Payment Issue",
+                  "Resume Parsing Error",
+                  "Upgrade Not Reflected",
+                  "Request a Refund",
+                  "Feature Request",
+                  "Other Inquiry"
+                ].map((chip, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setInputText(chip);
+                    }}
+                    className="shrink-0 text-[9px] font-bold px-2.5 py-1 rounded-full bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors shadow-sm cursor-pointer"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+
               {/* Compose Ticket Input */}
               <div className="p-3.5 border-t border-slate-200 bg-white">
                 <form onSubmit={handleSendTicketMessage} className="flex gap-2">

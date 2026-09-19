@@ -23,6 +23,7 @@ import {
   Gift,
   Menu,
   X,
+  PenLine,
 } from "lucide-react";
 import { CreditInfo } from "@/types";
 import { toast } from "react-hot-toast";
@@ -431,14 +432,6 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
 
             <div className="border-t border-slate-100 my-2" />
 
-            {/* Refer a Friend — prominent in mobile */}
-            <button
-              onClick={() => { setIsMobileMenuOpen(false); setIsReferralOpen(true); }}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 transition-colors"
-            >
-              <Gift className="h-4 w-4 shrink-0" />
-              Refer a Friend &amp; Earn Rewards
-            </button>
 
             {/* Upgrade if not Pro Max */}
             {!(credits?.paidCredits && credits.paidCredits > 900000) && (
@@ -490,6 +483,32 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
         </div>
       )}
       </nav>
+
+      {/* Mobile Bottom Navigation Bar */}
+      {user && (
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-slate-200 flex items-center justify-around px-2 py-3 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+          <Link href="/dashboard" className={`flex flex-col items-center gap-1.5 transition-colors ${pathname === '/dashboard' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+            <PenLine className="h-[22px] w-[22px]" />
+            <span className="text-[10px] font-bold">Optimize</span>
+          </Link>
+          <Link href="/dashboard/resumes" className={`flex flex-col items-center gap-1.5 transition-colors ${pathname === '/dashboard/resumes' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+            <FileText className="h-[22px] w-[22px]" />
+            <span className="text-[10px] font-bold">Resumes</span>
+          </Link>
+          <Link href="/dashboard/job-tracker" className={`flex flex-col items-center gap-1.5 transition-colors ${pathname === '/dashboard/job-tracker' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+            <Briefcase className="h-[22px] w-[22px]" />
+            <span className="text-[10px] font-bold">Tracker</span>
+          </Link>
+          <Link href="/dashboard/history" className={`flex flex-col items-center gap-1.5 transition-colors ${pathname === '/dashboard/history' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+            <History className="h-[22px] w-[22px]" />
+            <span className="text-[10px] font-bold">History</span>
+          </Link>
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="flex flex-col items-center gap-1.5 text-slate-400 hover:text-slate-600 transition-colors">
+            <Menu className="h-[22px] w-[22px]" />
+            <span className="text-[10px] font-bold">Menu</span>
+          </button>
+        </div>
+      )}
       {user && <FeedbackBanner onOpenFeedback={() => setIsFeedbackOpen(true)} />}
       {/* Unified Help Center, Support Tickets & 24/7 AI Chatbot */}
       {user && <SupportChatbot />}
