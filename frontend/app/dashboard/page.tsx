@@ -88,6 +88,7 @@ export default function DashboardPage() {
   const [roadmapContent, setRoadmapContent] = useState<string | null>(null);
   const [roadmapLoading, setRoadmapLoading] = useState(false);
   const [coverLetterGenerated, setCoverLetterGenerated] = useState<string | null>(null);
+  const [generatingLetter, setGeneratingLetter] = useState(false);
   const [pdfGenerationStatus, setPdfGenerationStatus] = useState<string>("");
   const [isPrechecking, setIsPrechecking] = useState(false);
   const [activeOptimizationText, setActiveOptimizationText] = useState("");
