@@ -242,8 +242,8 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                   </Link>
                 )}
 
-                {/* Profile dropdown — desktop only */}
-                <div className="hidden sm:block relative" ref={dropdownRef}>
+                {/* Profile dropdown */}
+                <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     aria-label="Open profile menu"
@@ -306,9 +306,9 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                         {/* Refer a Friend in dropdown */}
                         <button
                           onClick={() => { setIsDropdownOpen(false); setIsReferralOpen(true); }}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors text-left"
+                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors text-left"
                         >
-                          <Gift className="h-4 w-4" />
+                          <Gift className="h-4 w-4 text-slate-400" />
                           Refer a Friend
                         </button>
                       </div>
@@ -366,18 +366,6 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
                     </div>
                   )}
                 </div>
-
-                {/* Mobile: Hamburger button */}
-                <button
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-                  className="sm:hidden flex items-center justify-center h-9 w-9 rounded-lg hover:bg-slate-100 transition-colors"
-                >
-                  {isMobileMenuOpen
-                    ? <X className="h-5 w-5 text-slate-700" />
-                    : <Menu className="h-5 w-5 text-slate-700" />
-                  }
-                </button>
               </>
             ) : (
               <div className="flex items-center gap-3 select-none">
@@ -395,109 +383,26 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
         </div>
       </div>
 
-      {/* ── MOBILE FULL-SCREEN MENU ── */}
-      {user && isMobileMenuOpen && (
-        <div className="sm:hidden fixed inset-0 top-16 z-40 bg-white overflow-y-auto">
-          <div className="px-4 py-4 space-y-1">
-            {/* User strip */}
-            <div className="flex items-center gap-3 px-3 py-3 mb-3 bg-slate-50 rounded-xl border border-slate-100">
-              <div className="h-9 w-9 rounded-full bg-[#0d6e5a] flex items-center justify-center text-white font-black text-sm shrink-0">
-                {user.email ? user.email.charAt(0).toUpperCase() : "U"}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-slate-900 truncate">{user.email}</p>
-                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
-                  {credits?.isFirst50 || (credits?.paidCredits ?? 0) > 0 ? "Premium" : "Free"} &bull; {credits?.freeRemaining ?? 0} left
-                </p>
-              </div>
-            </div>
-
-            {/* Nav links */}
-            {links.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-colors ${
-                    isActive ? "bg-[#0d6e5a]/10 text-[#0d6e5a] font-bold" : "text-slate-600 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className={isActive ? "text-[#0d6e5a]" : "text-slate-400"}>{link.icon}</span>
-                  {link.label}
-                  {isActive && <span className="ml-auto h-2 w-2 rounded-full bg-[#0d6e5a]" />}
-                </Link>
-              );
-            })}
-
-            <div className="border-t border-slate-100 my-2" />
-
-
-            {/* Upgrade if not Pro Max */}
-            {!(credits?.paidCredits && credits.paidCredits > 900000) && (
-              <Link
-                href="/dashboard/pricing"
-                className="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-sm font-bold text-white bg-[#0d6e5a] hover:bg-[#0a5a49] transition-colors"
-              >
-                <Sparkles className="h-4 w-4" />
-                Upgrade Your Plan
-              </Link>
-            )}
-
-            <div className="border-t border-slate-100 my-2" />
-
-            <button
-              onClick={() => { setIsMobileMenuOpen(false); window.dispatchEvent(new CustomEvent("open-support-chatbot", { detail: { mode: "help-center" } })); }}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              <HelpCircle className="h-4 w-4 text-slate-400 shrink-0" />
-              Help &amp; Support
-            </button>
-            <button
-              onClick={() => { setIsMobileMenuOpen(false); setIsFeedbackOpen(true); }}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              <MessageSquare className="h-4 w-4 text-slate-400 shrink-0" />
-              Feedback
-            </button>
-            <button
-              type="button"
-              onClick={() => { setIsMobileMenuOpen(false); setIsDataPreferencesOpen(true); }}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              <Lock className="h-4 w-4 text-slate-400 shrink-0" />
-              Data Preferences
-            </button>
-
-            <div className="border-t border-slate-100 my-2" />
-
-            <button
-              onClick={handleSignOut}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 transition-colors"
-            >
-              <LogOut className="h-4 w-4 shrink-0" />
-              Sign out
-            </button>
-            <div className="h-8" />
-          </div>
-        </div>
-      )}
       </nav>
 
       {/* Mobile Bottom Navigation Bar */}
       {user && (
         <div className="sm:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-slate-200 flex items-center justify-around px-2 py-3 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
-          <Link href="/dashboard" className={`flex items-center justify-center p-2 rounded-xl transition-colors ${pathname === '/dashboard' ? 'bg-[#0d6e5a]/10 text-[#0d6e5a]' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}>
-            <PenLine className="h-6 w-6" />
+          <Link href="/dashboard" className={`flex flex-col items-center gap-1 transition-colors ${pathname === '/dashboard' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+            <PenLine className="h-5 w-5" />
+            <span className="text-[10px] font-bold">Optimize</span>
           </Link>
-          <Link href="/dashboard/resumes" className={`flex items-center justify-center p-2 rounded-xl transition-colors ${pathname === '/dashboard/resumes' ? 'bg-[#0d6e5a]/10 text-[#0d6e5a]' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}>
-            <FileText className="h-6 w-6" />
+          <Link href="/dashboard/resumes" className={`flex flex-col items-center gap-1 transition-colors ${pathname === '/dashboard/resumes' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+            <FileText className="h-5 w-5" />
+            <span className="text-[10px] font-bold">Resumes</span>
           </Link>
-          <Link href="/dashboard/job-tracker" className={`flex items-center justify-center p-2 rounded-xl transition-colors ${pathname === '/dashboard/job-tracker' ? 'bg-[#0d6e5a]/10 text-[#0d6e5a]' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}>
-            <Briefcase className="h-6 w-6" />
+          <Link href="/dashboard/job-tracker" className={`flex flex-col items-center gap-1 transition-colors ${pathname === '/dashboard/job-tracker' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+            <Briefcase className="h-5 w-5" />
+            <span className="text-[10px] font-bold">Tracker</span>
           </Link>
-          <Link href="/dashboard/history" className={`flex items-center justify-center p-2 rounded-xl transition-colors ${pathname === '/dashboard/history' ? 'bg-[#0d6e5a]/10 text-[#0d6e5a]' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}>
-            <History className="h-6 w-6" />
+          <Link href="/dashboard/history" className={`flex flex-col items-center gap-1 transition-colors ${pathname === '/dashboard/history' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+            <History className="h-5 w-5" />
+            <span className="text-[10px] font-bold">History</span>
           </Link>
         </div>
       )}
