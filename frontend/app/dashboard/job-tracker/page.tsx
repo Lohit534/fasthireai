@@ -105,7 +105,8 @@ export default function JobTrackerPage() {
         try {
           const historyRes = await fetch("/api/history");
           if (historyRes.ok) {
-            dbData = await historyRes.json();
+            const data = await historyRes.json();
+            dbData = data.records || [];
           } else {
             dbError = new Error("Failed to load resumes");
           }
@@ -113,7 +114,7 @@ export default function JobTrackerPage() {
           dbError = e;
         }
 
-        if (!dbError && dbData) {
+        if (!dbError) {
           setResumes(dbData as MiniResume[]);
         }
 

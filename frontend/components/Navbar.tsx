@@ -487,26 +487,18 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
       {/* Mobile Bottom Navigation Bar */}
       {user && (
         <div className="sm:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-slate-200 flex items-center justify-around px-2 py-3 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
-          <Link href="/dashboard" className={`flex flex-col items-center gap-1.5 transition-colors ${pathname === '/dashboard' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
-            <PenLine className="h-[22px] w-[22px]" />
-            <span className="text-[10px] font-bold">Optimize</span>
+          <Link href="/dashboard" className={`flex items-center justify-center p-2 rounded-xl transition-colors ${pathname === '/dashboard' ? 'bg-[#0d6e5a]/10 text-[#0d6e5a]' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}>
+            <PenLine className="h-6 w-6" />
           </Link>
-          <Link href="/dashboard/resumes" className={`flex flex-col items-center gap-1.5 transition-colors ${pathname === '/dashboard/resumes' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
-            <FileText className="h-[22px] w-[22px]" />
-            <span className="text-[10px] font-bold">Resumes</span>
+          <Link href="/dashboard/resumes" className={`flex items-center justify-center p-2 rounded-xl transition-colors ${pathname === '/dashboard/resumes' ? 'bg-[#0d6e5a]/10 text-[#0d6e5a]' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}>
+            <FileText className="h-6 w-6" />
           </Link>
-          <Link href="/dashboard/job-tracker" className={`flex flex-col items-center gap-1.5 transition-colors ${pathname === '/dashboard/job-tracker' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
-            <Briefcase className="h-[22px] w-[22px]" />
-            <span className="text-[10px] font-bold">Tracker</span>
+          <Link href="/dashboard/job-tracker" className={`flex items-center justify-center p-2 rounded-xl transition-colors ${pathname === '/dashboard/job-tracker' ? 'bg-[#0d6e5a]/10 text-[#0d6e5a]' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}>
+            <Briefcase className="h-6 w-6" />
           </Link>
-          <Link href="/dashboard/history" className={`flex flex-col items-center gap-1.5 transition-colors ${pathname === '/dashboard/history' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
-            <History className="h-[22px] w-[22px]" />
-            <span className="text-[10px] font-bold">History</span>
+          <Link href="/dashboard/history" className={`flex items-center justify-center p-2 rounded-xl transition-colors ${pathname === '/dashboard/history' ? 'bg-[#0d6e5a]/10 text-[#0d6e5a]' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}>
+            <History className="h-6 w-6" />
           </Link>
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="flex flex-col items-center gap-1.5 text-slate-400 hover:text-slate-600 transition-colors">
-            <Menu className="h-[22px] w-[22px]" />
-            <span className="text-[10px] font-bold">Menu</span>
-          </button>
         </div>
       )}
       {user && <FeedbackBanner onOpenFeedback={() => setIsFeedbackOpen(true)} />}
