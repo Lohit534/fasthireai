@@ -513,7 +513,11 @@ export default function DashboardPage() {
           <div className="fixed inset-0 bg-white/95 z-50 flex flex-col items-center justify-center p-6 select-none animate-in fade-in duration-300 overflow-y-auto">
             <div className="max-w-[600px] w-full mx-auto space-y-8 pb-12 mt-12">
               <OptimizingProgress 
-                onComplete={handleOptimizationComplete} 
+                onComplete={handleOptimizationComplete}
+                onError={(err) => {
+                  toast.error(err);
+                  setOptimizing(false);
+                }}
                 resumeText={resumeText} 
                 jobDescription={jobDescription} 
               />

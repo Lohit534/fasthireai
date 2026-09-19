@@ -20,11 +20,12 @@ const FUN_FACTS = [
 
 interface OptimizingProgressProps {
   onComplete: (result: any) => void;
+  onError?: (error: string) => void;
   resumeText: string;
   jobDescription: string;
 }
 
-export default function OptimizingProgress({ onComplete, resumeText, jobDescription }: OptimizingProgressProps) {
+export default function OptimizingProgress({ onComplete, onError, resumeText, jobDescription }: OptimizingProgressProps) {
   const [steps, setSteps] = useState<{ id: number; status: 'pending' | 'running' | 'done'; duration?: string }[]>(
     STEPS.map(s => ({ id: s.id, status: 'pending' }))
   );
@@ -77,6 +78,7 @@ export default function OptimizingProgress({ onComplete, resumeText, jobDescript
 
               if (data.error) {
                 console.error("Optimization failed:", data.error);
+                if (onError) onError(data.error);
                 break;
               }
 
@@ -107,8 +109,9 @@ export default function OptimizingProgress({ onComplete, resumeText, jobDescript
             }
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Fetch error:", error);
+        if (onError) onError(error.message || "Failed to connect to the server.");
       }
     };
 
