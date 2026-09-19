@@ -70,7 +70,10 @@ export default function OptimizingProgress({ onComplete, resumeText, jobDescript
           for (const line of lines) {
             if (!line.startsWith('data: ')) continue;
             try {
-              const data = JSON.parse(line.slice(6));
+              const jsonStart = line.indexOf('{');
+              if (jsonStart === -1) continue;
+              const jsonStr = line.slice(jsonStart);
+              const data = JSON.parse(jsonStr);
 
               if (data.error) {
                 console.error("Optimization failed:", data.error);

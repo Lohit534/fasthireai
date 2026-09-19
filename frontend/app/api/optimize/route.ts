@@ -137,17 +137,11 @@ export async function POST(request: NextRequest) {
     const { resumeText, jobDescription, instructions, lengthOption, jobTitle, company, dataTrainingConsent } = JSON.parse(bodyText || '{}');
 
     if (!resumeText || resumeText.length < MIN_RESUME_CHARS) {
-      return NextResponse.json(
-        { error: `Resume text is too short. Please provide at least ${MIN_RESUME_CHARS} characters.` },
-        { status: 400 }
-      );
+      throw new Error(`Resume text is too short. Please provide at least ${MIN_RESUME_CHARS} characters.`);
     }
 
     if (!jobDescription || jobDescription.length < MIN_JD_CHARS) {
-      return NextResponse.json(
-        { error: `Job description is too short. Please provide at least ${MIN_JD_CHARS} characters.` },
-        { status: 400 }
-      );
+      throw new Error(`Job description is too short. Please provide at least ${MIN_JD_CHARS} characters.`);
     }
 
     const isOwner = isOwnerEmail(user.email);
@@ -267,15 +261,9 @@ export async function POST(request: NextRequest) {
 
           if (freeUsed >= allowedLimit) {
             if (isProPlan) {
-              return NextResponse.json(
-                { error: `Monthly quota of ${PRO_CREDITS_PER_MONTH} optimizations reached for Pro plan. Please upgrade to Pro Max for unlimited access or wait for your monthly cycle reset.` },
-                { status: 403 }
-              );
+              throw new Error(`Monthly quota of ${PRO_CREDITS_PER_MONTH} optimizations reached for Pro plan. Please upgrade to Pro Max for unlimited access or wait for your monthly cycle reset.`);
             } else {
-              return NextResponse.json(
-                { error: `Monthly limit of ${FREE_CREDITS_PER_MONTH} optimizations reached for Free plan. Please upgrade to Premium Pro (20 optimizations) or Pro Max to continue.` },
-                { status: 403 }
-              );
+              throw new Error(`Monthly limit of ${FREE_CREDITS_PER_MONTH} optimizations reached for Free plan. Please upgrade to Premium Pro (20 optimizations) or Pro Max to continue.`);
             }
           }
         }
