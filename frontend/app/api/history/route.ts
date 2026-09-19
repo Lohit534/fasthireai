@@ -220,20 +220,24 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { resumeId, scoreAfter } = body;
+    const { resumeId, scoreAfter, optimizedText } = body;
 
-    if (!resumeId || scoreAfter === undefined) {
+    if (!resumeId) {
       return NextResponse.json(
-        { error: "resumeId and scoreAfter are required." },
+        { error: "resumeId is required." },
         { status: 400 }
       );
     }
 
     const admin = getAdminClient() as any;
 
+    const updatePayload: any = {};
+    if (scoreAfter !== undefined) updatePayload.scoreAfter = Math.round(scoreAfter);
+    if (optimizedText !== undefined) updatePayload.optimizedText = optimizedText;
+
     const { error: updateErr } = await admin
       .from("Resume")
-      .update({ scoreAfter: Math.round(scoreAfter) })
+      .update(updatePayload)
       .eq("id", resumeId);
 
     if (updateErr) {
@@ -245,7 +249,8 @@ export async function PATCH(request: NextRequest) {
         const localResumes = JSON.parse(fs.readFileSync(FILE_PATH, "utf8") || "[]");
         const idx = localResumes.findIndex((r: any) => r.id === resumeId);
         if (idx !== -1) {
-          localResumes[idx].scoreAfter = Math.round(scoreAfter);
+          if (scoreAfter !== undefined) localResumes[idx].scoreAfter = Math.round(scoreAfter);
+          if (optimizedText !== undefined) localResumes[idx].optimizedText = optimizedText;
           fs.writeFileSync(FILE_PATH, JSON.stringify(localResumes, null, 2), "utf8");
         }
       }

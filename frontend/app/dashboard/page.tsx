@@ -12,8 +12,8 @@ import { generateSkillRoadmap, generateMultiSkillRoadmap } from "@/lib/roadmap-g
 import ResumeViewer from "@/components/ResumeViewer";
 import BulletImprover from "@/components/BulletImprover";
 import LoadingOverlay from "@/components/LoadingOverlay";
-import MissingDetailsModal from "@/components/MissingDetailsModal";
-import { detectMissingFields, enrichResumeWithAnswers } from "@/lib/resume-inspector";
+import BulletEnrichmentModal, { WeakBullet } from "@/components/BulletEnrichmentModal";
+import { enrichResumeWithAnswers } from "@/lib/resume-inspector";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
@@ -90,9 +90,9 @@ export default function DashboardPage() {
   const [isSavedResumesOpen, setIsSavedResumesOpen] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  // Missing details modal state
-  const [missingFields, setMissingFields] = useState<ReturnType<typeof detectMissingFields>>([]);
-  const [showMissingModal, setShowMissingModal] = useState(false);
+  // Bullet enrichment modal state
+  const [weakBullets, setWeakBullets] = useState<WeakBullet[]>([]);
+  const [showBulletModal, setShowBulletModal] = useState(false);
   const [pendingResumeText, setPendingResumeText] = useState("");
   const sampleLoadedRef = useRef(false);
 
@@ -285,28 +285,56 @@ export default function DashboardPage() {
       return;
     }
 
-    // Detect missing critical fields in resume and prompt user to enrich if needed
-    const missing = detectMissingFields(resumeText);
-    if (missing && missing.length > 0) {
-      setMissingFields(missing);
-      setPendingResumeText(resumeText);
-      setShowMissingModal(true);
-      return;
-    }
+    setOptimizing(true);
+    setLoadingMessage("Pre-checking experience for missing metrics...");
+    setProgress(5);
 
-    runAIAutoImprove(resumeText);
+    try {
+      const res = await fetch("/api/pre-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeText, jobDescription }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.questions && data.questions.length > 0) {
+        setWeakBullets(data.questions);
+        setPendingResumeText(resumeText);
+        setShowBulletModal(true);
+        setOptimizing(false); // Pause loading overlay
+        return;
+      }
+      
+      // If no weak bullets, proceed normally
+      runAIAutoImprove(resumeText);
+    } catch (e) {
+      // Fallback
+      runAIAutoImprove(resumeText);
+    }
   };
 
-  const handleMissingDetailsContinue = (answers: Record<string, string>) => {
-    setShowMissingModal(false);
-    const enriched = enrichResumeWithAnswers(pendingResumeText, answers);
+  const handleBulletEnrichmentSubmit = (answers: Record<string, string>) => {
+    setShowBulletModal(false);
+    
+    const enrichmentLines = weakBullets.map(b => {
+      if (answers[b.id]?.trim()) {
+        return `[User Added Metric for "${b.originalBullet}"]: ${answers[b.id]}`;
+      }
+      return null;
+    }).filter(Boolean);
+
+    let enriched = pendingResumeText;
+    if (enrichmentLines.length > 0) {
+      enriched += `\n\n--- USER SUPPLEMENTAL METRICS (integrate these into the exact bullets) ---\n${enrichmentLines.join("\n")}`;
+    }
+
     runAIAutoImprove(enriched);
   };
 
-  const handleMissingDetailsCancel = () => {
-    setShowMissingModal(false);
-    setPendingResumeText("");
-    setMissingFields([]);
+  const handleBulletEnrichmentCancel = () => {
+    setShowBulletModal(false);
+    runAIAutoImprove(pendingResumeText);
   };
 
   const handleReset = () => {
@@ -349,12 +377,16 @@ export default function DashboardPage() {
           };
           setAfterScore(adjustedAfterScore);
 
-          // Persist updated scoreAfter to history DB so history shows the same improved score
+          // Persist updated scoreAfter and optimizedText to history DB so history shows the same improved score
           if (currentResumeId) {
             fetch("/api/history", {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ resumeId: currentResumeId, scoreAfter: guaranteedOverall })
+              body: JSON.stringify({ 
+                resumeId: currentResumeId, 
+                scoreAfter: guaranteedOverall,
+                optimizedText: newText
+              })
             }).catch(() => {});
           }
         }
@@ -509,12 +541,13 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f8fafc] text-[#0f172a] font-sans">
-      {/* Missing Details Modal — shown before optimization if resume has gaps */}
-      {showMissingModal && missingFields.length > 0 && (
-        <MissingDetailsModal
-          fields={missingFields}
-          onContinue={handleMissingDetailsContinue}
-          onCancel={handleMissingDetailsCancel}
+      {/* Bullet Enrichment Modal */}
+      {showBulletModal && (
+        <BulletEnrichmentModal
+          isOpen={showBulletModal}
+          bullets={weakBullets}
+          onClose={handleBulletEnrichmentCancel}
+          onSubmit={handleBulletEnrichmentSubmit}
         />
       )}
 

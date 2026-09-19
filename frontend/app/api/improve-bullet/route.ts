@@ -53,8 +53,14 @@ export async function POST(request: NextRequest) {
       const actionVerb = fallbackActionVerbs[Math.floor(Math.random() * fallbackActionVerbs.length)];
       
       const cleanedInput = bullet.trim().replace(/^[-*•\s]+/, "");
-      // Removed the forced bracketed metrics to avoid inserting unwanted text
-      const improvedBullet = `${actionVerb} the deployment and maintenance of ${injected.join(" and ")}, improving workflow efficiency (${cleanedInput.charAt(0).toLowerCase() + cleanedInput.slice(1)}).`;
+      const lowerCleaned = cleanedInput.charAt(0).toLowerCase() + cleanedInput.slice(1);
+      
+      let improvedBullet = "";
+      if (techTerms.length > 0) {
+         improvedBullet = `${actionVerb} ${lowerCleaned} utilizing ${injected.join(", ")}.`;
+      } else {
+         improvedBullet = `${actionVerb} ${lowerCleaned}`;
+      }
 
       return NextResponse.json({
         improvedBullet,
@@ -171,8 +177,9 @@ Output MUST be a valid JSON object only (do NOT include markdown fences, leading
       }
       
       const cleanedInput = bullet.trim().replace(/^[-*•\s]+/, "");
+      const lowerCleaned = cleanedInput.charAt(0).toLowerCase() + cleanedInput.slice(1);
       return NextResponse.json({
-        improvedBullet: `Optimized the implementation of target components and improved workflows (${cleanedInput}).`,
+        improvedBullet: `Optimized ${lowerCleaned}`,
         actionVerbUsed: "Optimized",
         metricsAdded: "",
         keywordsInjected: [],

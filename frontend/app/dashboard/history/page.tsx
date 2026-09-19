@@ -324,10 +324,18 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
             )}
             {/* Structured resume renderer with section header highlighting */}
             <div className="text-xs leading-relaxed select-text font-serif text-slate-900">
-              {(resume.optimizedText || "No optimized text found.").split("\n").map((line, i) => {
-                const trimmed = line.trim();
-                // ALL-CAPS section headers (e.g. LANGUAGES, SKILLS, EDUCATION)
-                const isSectionHeader = /^[A-Z][A-Z\s&/]{3,}$/.test(trimmed) && trimmed.length <= 40;
+              {(() => {
+                const SECTION_NAMES = ['PROFESSIONAL SUMMARY', 'TECHNICAL SKILLS', 'PROFESSIONAL EXPERIENCE', 'WORK EXPERIENCE', 'EMPLOYMENT HISTORY', 'PERSONAL PROJECTS', 'ACADEMIC PROJECTS', 'ACADEMIC BACKGROUND', 'CORE SKILLS', 'KEY SKILLS', 'SUMMARY', 'OBJECTIVE', 'SKILLS', 'EXPERIENCE', 'INTERNSHIP', 'INTERNSHIPS', 'PROJECTS', 'EDUCATION', 'CERTIFICATIONS', 'ACHIEVEMENTS', 'KEY ACHIEVEMENTS', 'EXTRA-CURRICULAR', 'AWARDS', 'LANGUAGES'];
+                let cleanInput = (resume.optimizedText || "No optimized text found.");
+                for (const sec of SECTION_NAMES) {
+                  const reg = new RegExp(`(^|\\n)\\s*(${sec})\\b`, 'gi');
+                  cleanInput = cleanInput.replace(reg, '\n\n$2\n');
+                }
+                
+                return cleanInput.split("\n").map((line, i) => {
+                  const trimmed = line.trim();
+                  const upperLine = trimmed.toUpperCase();
+                  const isSectionHeader = SECTION_NAMES.some(sec => upperLine === sec || upperLine.includes(`${sec}:`));
                 // Name header (first line, usually longest all-caps or title-case)
                 const isFirstLine = i === 0 && trimmed.length > 0;
                 if (isFirstLine && trimmed.length > 0) {
@@ -354,7 +362,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                 return (
                   <p key={i} className="leading-[1.45] text-slate-800">{line}</p>
                 );
-              })}
+              })})()}
             </div>
           </div>
 
