@@ -13,7 +13,7 @@ export default function KeywordBadges({ added, missing }: KeywordBadgesProps) {
   const MAX_DISPLAY = 15;
 
   const renderBadgeList = (
-    keywords: string[],
+    rawKeywords: string[] | undefined | null,
     type: "added" | "missing",
     title: string,
     icon: React.ReactNode,
@@ -21,6 +21,7 @@ export default function KeywordBadges({ added, missing }: KeywordBadgesProps) {
     badgeHeaderIcon: React.ReactNode,
     countClass: string
   ) => {
+    const keywords = rawKeywords || [];
     if (keywords.length === 0) {
       return (
         <div className="space-y-2">
