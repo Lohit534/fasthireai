@@ -508,7 +508,7 @@ export default function DashboardPage() {
         <div className="absolute bottom-0 left-0 w-[600px] h-[400px] bg-slate-200/50 rounded-full blur-[120px]" />
       </div>
 
-      <Navbar refreshKey={refreshKey} />
+      <Navbar refreshKey={refreshKey} hideNav={!!(hasResults && optimizeResult)} />
 
       <main className="relative flex-1 mx-auto max-w-[1280px] w-full px-4 sm:px-6 lg:px-8 py-8">
 
@@ -537,36 +537,31 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Dynamic header routing toggle */}
-        {hasResults ? (
-          <div className="mb-6 flex justify-between items-center select-none">
-            <button
-              onClick={() => {
-                setOptimizeResult(null);
-                setBeforeScore(null);
-                setAfterScore(null);
-              }}
-              className="flex items-center text-xs font-bold text-slate-500 hover:text-[#0d6e5a] transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1.5" />
-              Back to Editor
-            </button>
-            <div className="flex gap-2">
+        {/* Clean result page header — shown instead of nav when results exist */}
+        {hasResults && optimizeResult ? (
+          <div className="mb-6 flex items-center justify-between select-none">
+            {/* Score improvement headline */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Score improved{" "}
+                <span className="text-slate-500">{beforeScore?.overall ?? 0}%</span>
+                {" "}→{" "}
+                <span className="text-emerald-600">{afterScore?.overall ?? 0}%</span>
+              </h1>
+              {delta > 0 && (
+                <span className="text-xs font-black px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                  +{delta} points
+                </span>
+              )}
+            </div>
+            {/* Actions */}
+            <div className="flex items-center gap-2 shrink-0">
               <Link href="/dashboard/history">
-                <Button size="sm" variant="outline" className="border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold h-8 rounded-lg">
+                <Button size="sm" className="bg-slate-900 hover:bg-slate-700 text-white text-xs font-bold h-9 rounded-xl px-4">
                   <History className="h-3.5 w-3.5 mr-1.5" />
-                  View History
+                  Back to History
                 </Button>
               </Link>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleReset}
-                className="border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold h-8 rounded-lg"
-              >
-                <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
-                Reset
-              </Button>
             </div>
           </div>
         ) : (
@@ -642,28 +637,15 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Overall Score Banner */}
-            <div className="bg-white border border-slate-200 p-4 sm:p-6 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 select-none shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
-                  <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                    ATS Optimization Complete
-                  </h2>
-                  <p className="text-[11px] sm:text-xs text-slate-500 font-medium">Your resume has been optimized with target keywords and metrics.</p>
-                </div>
+            {/* ATS Optimization Complete banner — no reset button */}
+            <div className="bg-white border border-slate-200 p-4 sm:p-5 rounded-xl flex items-center gap-3 select-none shadow-sm">
+              <div className="h-9 w-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
+                <TrendingUp className="h-4 w-4 text-emerald-600" />
               </div>
-              
-              <Button
-                variant="outline"
-                onClick={handleReset}
-                className="w-full sm:w-auto border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs h-9 rounded-lg px-4 sm:px-5 bg-transparent justify-center"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Optimize Another Resume
-              </Button>
+              <div>
+                <h2 className="text-sm font-black text-slate-900 tracking-tight">ATS Optimization Complete</h2>
+                <p className="text-[11px] text-slate-500 font-medium">Your resume has been optimized with target keywords and metrics.</p>
+              </div>
             </div>
 
             {/* Top Row: Edit & review workspace split (Score gauges & PDF Preview) */}

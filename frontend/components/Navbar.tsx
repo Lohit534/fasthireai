@@ -37,9 +37,10 @@ import { DataPreferencesModal } from "@/components/DataPreferencesModal";
 
 interface NavbarProps {
   refreshKey?: number;
+  hideNav?: boolean;
 }
 
-export default function Navbar({ refreshKey = 0 }: NavbarProps) {
+export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
@@ -194,8 +195,8 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
               </span>
             </Link>
 
-            {/* Desktop Navigation Tabs */}
-            {user && (
+            {/* Desktop Navigation Tabs — hidden when showing result page */}
+            {user && !hideNav && (
               <div className="hidden md:flex items-center gap-1 h-16">
                 {links.map((link) => {
                   const isActive = pathname === link.href;
@@ -385,8 +386,8 @@ export default function Navbar({ refreshKey = 0 }: NavbarProps) {
 
       </nav>
 
-      {/* Mobile Bottom Navigation Bar */}
-      {user && (
+      {/* Mobile Bottom Navigation Bar — hidden on result page */}
+      {user && !hideNav && (
         <div className="sm:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-slate-200 flex items-center justify-around px-2 py-3 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
           <Link href="/dashboard" className={`flex flex-col items-center gap-1 transition-colors ${pathname === '/dashboard' ? 'text-[#0d6e5a]' : 'text-slate-400 hover:text-slate-600'}`}>
             <Sparkles className="h-5 w-5" />
