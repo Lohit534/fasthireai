@@ -512,13 +512,7 @@ export default function DashboardPage() {
 
       <main className="relative flex-1 mx-auto max-w-[1280px] w-full px-4 sm:px-6 lg:px-8 py-8">
 
-        {/* ── PRECHECK OVERLAY ─────────────────────────────────────── */}
-        {isPrechecking && (
-          <div className="fixed inset-0 bg-white/95 z-50 flex flex-col items-center justify-center p-6 select-none animate-in fade-in duration-300">
-             <Loader2 className="h-10 w-10 animate-spin text-[#0d6e5a] mb-4" />
-             <h2 className="text-xl font-bold text-slate-900">Pre-checking experience for missing metrics...</h2>
-          </div>
-        )}
+
 
         {/* ── LOADING OVERLAY ─────────────────────────────────────── */}
         {optimizing && (
@@ -684,7 +678,7 @@ export default function DashboardPage() {
                   <div className="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-5 shadow-sm select-none">
                     <KeywordBadges
                       added={optimizeResult?.keywordsAdded || []}
-                      missing={afterScore?.missingKeywords || []}
+                      found={afterScore?.foundKeywords || []}
                     />
                   </div>
                 )}

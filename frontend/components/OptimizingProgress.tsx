@@ -31,14 +31,23 @@ export default function OptimizingProgress({ onComplete, onError, resumeText, jo
   );
   const [progress, setProgress] = useState(0);
   const [funFact, setFunFact] = useState(FUN_FACTS[0]);
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const startRef = React.useRef<number>(Date.now());
 
   useEffect(() => {
+    startRef.current = Date.now();
     let factIndex = 0;
-    const interval = setInterval(() => {
+    const factInterval = setInterval(() => {
       factIndex = (factIndex + 1) % FUN_FACTS.length;
       setFunFact(FUN_FACTS[factIndex]);
     }, 4000);
-    return () => clearInterval(interval);
+    const timerInterval = setInterval(() => {
+      setElapsedSec(Math.floor((Date.now() - startRef.current) / 1000));
+    }, 1000);
+    return () => {
+      clearInterval(factInterval);
+      clearInterval(timerInterval);
+    };
   }, []);
 
   useEffect(() => {
@@ -127,15 +136,15 @@ export default function OptimizingProgress({ onComplete, onError, resumeText, jo
       {/* Circular progress ring */}
       <div className="relative w-32 h-32 mb-8">
         <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
-          {/* Background ring */}
-          <circle cx="60" cy="60" r="54" fill="none" stroke="#E8E6F5" strokeWidth="8" />
-          {/* Progress ring */}
+                  {/* Background ring */}
+          <circle cx="60" cy="60" r="54" fill="none" stroke="#d1fae5" strokeWidth="8" />
+          {/* Progress ring — teal */}
           <circle
             cx="60"
             cy="60"
             r="54"
             fill="none"
-            stroke="#6366F1"
+            stroke="#0d6e5a"
             strokeWidth="8"
             strokeLinecap="round"
             strokeDasharray={`${2 * Math.PI * 54}`}
@@ -145,7 +154,7 @@ export default function OptimizingProgress({ onComplete, onError, resumeText, jo
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-2xl font-bold text-gray-900">{progress}%</span>
-          <span className="text-xs text-gray-500">~{Math.round((100 - progress) / 5)}s left</span>
+          <span className="text-xs text-gray-500">{elapsedSec}s elapsed</span>
         </div>
       </div>
 
@@ -188,7 +197,7 @@ export default function OptimizingProgress({ onComplete, onError, resumeText, jo
                     </svg>
                   </div>
                 ) : status === 'running' ? (
-                  <div className="w-6 h-6 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin flex-shrink-0" />
+                  <div className="w-6 h-6 rounded-full border-2 border-[#0d6e5a] border-t-transparent animate-spin flex-shrink-0" />
                 ) : (
                   <div className="w-6 h-6 rounded-full border-2 border-gray-200 flex-shrink-0" />
                 )}
@@ -200,7 +209,7 @@ export default function OptimizingProgress({ onComplete, onError, resumeText, jo
                     status === 'done'
                       ? 'text-gray-500'
                       : status === 'running'
-                      ? 'text-indigo-700 font-semibold'
+                      ? 'text-[#0d6e5a] font-semibold'
                       : 'text-gray-400'
                   }
                 `}
@@ -211,7 +220,7 @@ export default function OptimizingProgress({ onComplete, onError, resumeText, jo
 
               {/* Right side */}
               {status === 'done' && s?.duration && <span className="text-xs text-gray-400">{s.duration}</span>}
-              {status === 'running' && <span className="text-xs text-indigo-500 font-medium">running</span>}
+              {status === 'running' && <span className="text-xs text-[#0d6e5a] font-medium">running</span>}
             </div>
           );
         })}

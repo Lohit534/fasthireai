@@ -2,19 +2,19 @@
 
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { Check, AlertTriangle } from "lucide-react";
+import { Check, Star } from "lucide-react";
 
 interface KeywordBadgesProps {
   added: string[];
-  missing: string[];
+  found: string[];
 }
 
-export default function KeywordBadges({ added, missing }: KeywordBadgesProps) {
-  const MAX_DISPLAY = 15;
+export default function KeywordBadges({ added, found }: KeywordBadgesProps) {
+  const MAX_DISPLAY = 20;
 
   const renderBadgeList = (
     rawKeywords: string[] | undefined | null,
-    type: "added" | "missing",
+    type: "added" | "found",
     title: string,
     icon: React.ReactNode,
     badgeClass: string,
@@ -74,26 +74,26 @@ export default function KeywordBadges({ added, missing }: KeywordBadgesProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Keywords Added */}
+      {/* Keywords Added from JD */}
       {renderBadgeList(
         added,
         "added",
-        "Keywords Injected from JD",
-        <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />,
-        "border-emerald-200 bg-emerald-50 text-emerald-800 font-semibold hover:bg-emerald-100/80",
-        <Check className="h-4 w-4 text-emerald-600 shrink-0" />,
-        "text-emerald-700 bg-emerald-50 border border-emerald-200"
+        "Keywords Added from JD",
+        <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />,
+        "border-[#0d6e5a]/30 bg-[#0d6e5a]/8 text-[#0d6e5a] font-semibold hover:bg-[#0d6e5a]/15",
+        <Check className="h-4 w-4 text-[#0d6e5a] shrink-0" />,
+        "text-[#0d6e5a] bg-[#0d6e5a]/10 border border-[#0d6e5a]/20"
       )}
 
-      {/* Still Missing */}
+      {/* Already in Resume */}
       {renderBadgeList(
-        missing,
-        "missing",
-        "Missing Keywords",
-        <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />,
-        "border-amber-200 bg-amber-50 text-amber-900 font-semibold hover:bg-amber-100/80",
-        <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />,
-        "text-amber-800 bg-amber-50 border border-amber-200"
+        found,
+        "found",
+        "Already in Resume",
+        <Star className="h-3.5 w-3.5 text-slate-500 shrink-0" />,
+        "border-slate-200 bg-slate-50 text-slate-700 font-semibold hover:bg-slate-100",
+        <Star className="h-4 w-4 text-slate-500 shrink-0" />,
+        "text-slate-600 bg-slate-100 border border-slate-200"
       )}
     </div>
   );
