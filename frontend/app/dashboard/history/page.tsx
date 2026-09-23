@@ -13,6 +13,7 @@ import { generateSkillRoadmap, generateMultiSkillRoadmap } from "@/lib/roadmap-g
 import { extractTechTerms, extractKeywords } from "@/lib/ats/keywords";
 import { saveAs } from "file-saver";
 import { useUpgradeModalStore } from "@/store/useUpgradeModalStore";
+import { PageMotionLoader } from "@/components/SkeletonShimmer";
 import {
   Loader2,
   History,
@@ -984,12 +985,10 @@ export default function HistoryPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
-        <div className="text-center space-y-2">
-          <Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-semibold">Verifying session...</p>
-        </div>
-      </div>
+      <PageMotionLoader 
+        title="Loading History Logs..." 
+        subtitle="Retrieving your previous resume scans, match scores, and versions..." 
+      />
     );
   }
 

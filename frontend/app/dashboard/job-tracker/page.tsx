@@ -29,6 +29,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { PageMotionLoader } from "@/components/SkeletonShimmer";
 
 interface Job {
   id: string;
@@ -265,12 +266,10 @@ export default function JobTrackerPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
-        <div className="text-center space-y-2">
-          <Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-semibold">Loading tracker...</p>
-        </div>
-      </div>
+      <PageMotionLoader 
+        title="Loading Job Tracker..." 
+        subtitle="Organizing your applications, interviews, and interview statuses..." 
+      />
     );
   }
 

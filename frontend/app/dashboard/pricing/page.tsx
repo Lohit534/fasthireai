@@ -28,6 +28,7 @@ import {
 import { toast } from "react-hot-toast";
 import ScrollFadeIn from "@/components/ScrollFadeIn";
 import GstInvoiceModal, { InvoiceData } from "@/components/GstInvoiceModal";
+import { PageMotionLoader } from "@/components/SkeletonShimmer";
 
 interface Plan {
   id: "free" | "premium" | "promax";
@@ -500,12 +501,10 @@ export default function PricingPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
-        <div className="text-center space-y-2">
-          <Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-semibold">Loading options...</p>
-        </div>
-      </div>
+      <PageMotionLoader 
+        title="Loading Pricing Plans..." 
+        subtitle="Fetching verified tier quotas and payment options..." 
+      />
     );
   }
 

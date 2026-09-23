@@ -549,17 +549,27 @@ export default function SupportChatbot() {
                   <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-[#0d6e5a] group-hover:translate-x-0.5 transition-all shrink-0" />
                 </button>
 
-                {/* Option 2: AI Assistant Chat (Only visible to users who are in Pro Max plan) */}
+                {/* Option 2: AI Assistant Chat (Available for all, Free/Pro shows PRO badge to upgrade) */}
                 {(() => {
                   const isProMax = activePlan.toLowerCase().includes("promax") || 
                                    activePlan.toLowerCase().includes("pro max") || 
                                    activePlan.toLowerCase().includes("owner") || 
                                    (rawCredits?.isOwner ?? false) || 
-                                   (rawCredits?.paidCredits ?? 0) >= 99999;
-                  if (!isProMax) return null;
+                                   (rawCredits?.paidCredits ?? 0) >= 90;
                   return (
                     <button
-                      onClick={() => setView("ai-chat")}
+                      onClick={() => {
+                        if (!isProMax) {
+                          setIsOpen(false);
+                          useUpgradeModalStore.getState().openModal({
+                            badge: "PRO",
+                            title: "Unlock 24/7 AI Assistant & Coach",
+                            description: "24/7 AI Chatbot Assistant is an exclusive feature of the Pro Max plan. Get instant resume advice, live ATS diagnostics, and 90 optimizations/month.",
+                          });
+                          return;
+                        }
+                        setView("ai-chat");
+                      }}
                       className="w-full p-4 bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#0d6e5a]/40 rounded-2xl flex items-center justify-between gap-4 text-left transition-all group shadow-sm cursor-pointer"
                     >
                       <div className="flex items-center gap-3.5">
@@ -571,9 +581,10 @@ export default function SupportChatbot() {
                             <h4 className="text-xs font-extrabold text-slate-900 group-hover:text-[#0d6e5a] transition-colors">
                               AI Chat
                             </h4>
-                            <Badge className="bg-emerald-50 border border-emerald-200 text-[#0d6e5a] text-[8px] font-black uppercase tracking-wider px-1.5 py-0 rounded select-none">
-                              PRO MAX
-                            </Badge>
+                            {/* Badge matching user reference image */}
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#ede9fe] text-[#6d28d9] tracking-wide select-none">
+                              PRO
+                            </span>
                           </div>
                           <p className="text-[10px] text-slate-500 mt-0.5 font-medium">
                             24/7 AI Assistant &bull; Ask anything about FastHire

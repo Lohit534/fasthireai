@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
         .maybeSingle();
 
       if (!creditRow && !creditFetchErr) {
-        const initialPaidCredits = isFirst50 ? 365 : 0;
+        const initialPaidCredits = isFirst50 ? PRO_CREDITS_PER_MONTH : 0;
         logger.info(`[optimize] Initializing Credit record for user ${user.email} (isFirst50=${isFirst50}, initialPaid=${initialPaidCredits})`);
         
         const { data: newCredit } = await admin
@@ -239,8 +239,8 @@ export async function POST(request: NextRequest) {
 
         freeUsed = isNewMonth ? 0 : (creditRow.freeUsed || 0);
         paidCredits = isNewMonth 
-          ? (isFirst50 ? 365 : (creditRow.paidCredits > 20 ? PRO_MAX_CREDITS_PER_MONTH : (creditRow.paidCredits > 0 ? PRO_CREDITS_PER_MONTH : 0))) 
-          : (creditRow.paidCredits || 0);
+          ? (creditRow.paidCredits >= 90 ? PRO_MAX_CREDITS_PER_MONTH : ((creditRow.paidCredits > 0 || isFirst50) ? PRO_CREDITS_PER_MONTH : 0)) 
+          : (creditRow.paidCredits || (isFirst50 ? PRO_CREDITS_PER_MONTH : 0));
 
         if (isNewMonth) {
           await admin
@@ -253,12 +253,12 @@ export async function POST(request: NextRequest) {
             .eq("userId", activeUserId);
         }
 
-        isUnlimited = isFirst50 || isOwner;
+        isUnlimited = isOwner;
 
         // STRICT QUOTA ENFORCEMENT
         if (!isUnlimited) {
-          const isProMax = paidCredits > 20;
-          const isProPlan = paidCredits > 0;
+          const isProMax = paidCredits >= 90;
+          const isProPlan = paidCredits > 0 || isFirst50;
           const allowedLimit = isProMax ? PRO_MAX_CREDITS_PER_MONTH : (isProPlan ? PRO_CREDITS_PER_MONTH : FREE_CREDITS_PER_MONTH);
 
           if (freeUsed >= allowedLimit) {

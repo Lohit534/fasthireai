@@ -118,13 +118,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (!creditRow) {
-      // Create initial credit row (First 50 members automatically get 365 Pro credits for 1 year free)
+      // Create initial credit row (First 50 members automatically get 1 year of free Premium Pro plan with 20 credits/mo)
       const { data: newCredit, error: createErr } = await admin
         .from("Credit")
         .insert({
           userId: activeUserId,
           freeUsed: 0,
-          paidCredits: isFirst50 ? 365 : 0,
+          paidCredits: isFirst50 ? PRO_CREDITS_PER_MONTH : 0,
           billingCycle: isFirst50 ? "yearly" : "monthly",
           resetAt: now.toISOString(),
         })
@@ -136,8 +136,8 @@ export async function GET(request: NextRequest) {
         // Return safe default on DB error
         return NextResponse.json({
           freeUsed: 0,
-          paidCredits: isFirst50 ? 365 : 0,
-          freeRemaining: FREE_CREDITS_PER_MONTH,
+          paidCredits: isFirst50 ? PRO_CREDITS_PER_MONTH : 0,
+          freeRemaining: isFirst50 ? PRO_CREDITS_PER_MONTH : FREE_CREDITS_PER_MONTH,
           resetAt: now.toISOString(),
           isOwner: false,
           isFirst50: isFirst50,
@@ -145,11 +145,11 @@ export async function GET(request: NextRequest) {
         });
       }
       creditRow = newCredit;
-    } else if (isFirst50 && creditRow.paidCredits < 365) {
-      // Auto-upgrade free tier credits to Premium Pro plan (365 credits) for first 50 members
+    } else if (isFirst50 && creditRow.paidCredits === 0) {
+      // Upgrade free tier credits to Premium Pro plan (20 credits/month) for first 50 members
       const { data: updatedCredit } = await admin
         .from("Credit")
-        .update({ paidCredits: 365, billingCycle: "yearly" })
+        .update({ paidCredits: PRO_CREDITS_PER_MONTH, billingCycle: "yearly" })
         .eq("userId", activeUserId)
         .select()
         .single();
@@ -166,6 +166,7 @@ export async function GET(request: NextRequest) {
         resetAt: now.toISOString(),
         isOwner: false,
         isFirst50: false,
+        planId: "free",
       });
     }
 
@@ -214,12 +215,10 @@ export async function GET(request: NextRequest) {
 
     if (isNewMonth) {
       freeUsed = 0;
-      if (isFirst50) {
-        paidCredits = 365;
-      } else if (paidCredits > 0 && paidCredits <= 20) {
-        paidCredits = PRO_CREDITS_PER_MONTH;
-      } else if (paidCredits > 20) {
-        paidCredits = PRO_MAX_CREDITS_PER_MONTH;
+      if (paidCredits >= 90) {
+        paidCredits = PRO_MAX_CREDITS_PER_MONTH; // 90
+      } else if (paidCredits > 0 || isFirst50) {
+        paidCredits = PRO_CREDITS_PER_MONTH; // 20
       } else {
         paidCredits = 0;
       }
@@ -233,14 +232,19 @@ export async function GET(request: NextRequest) {
         .eq("userId", activeUserId);
     }
 
+    // Determine correct planId (promax ONLY if paidCredits >= 90)
     let planId = "free";
-    if (paidCredits > 0 && paidCredits <= 20) {
-      planId = "premium";
-    } else if (paidCredits > 20) {
+    if (paidCredits >= 90) {
       planId = "promax";
+    } else if (paidCredits > 0 || isFirst50) {
+      planId = "premium";
     }
 
-    const totalAllowed = isOwner ? 999999 : (planId === "promax" ? PRO_MAX_CREDITS_PER_MONTH : (planId === "premium" ? PRO_CREDITS_PER_MONTH : FREE_CREDITS_PER_MONTH));
+    const totalAllowed = isOwner
+      ? 999999
+      : (planId === "promax"
+          ? PRO_MAX_CREDITS_PER_MONTH
+          : (planId === "premium" ? PRO_CREDITS_PER_MONTH : FREE_CREDITS_PER_MONTH));
     const freeRemaining = Math.max(0, totalAllowed - freeUsed);
 
     return NextResponse.json({

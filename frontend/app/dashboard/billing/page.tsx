@@ -33,6 +33,7 @@ import { toast } from "react-hot-toast";
 import Link from "next/link";
 import ScrollFadeIn from "@/components/ScrollFadeIn";
 import GstInvoiceModal, { InvoiceData } from "@/components/GstInvoiceModal";
+import { PageMotionLoader } from "@/components/SkeletonShimmer";
 
 interface Invoice {
   id: string;
@@ -165,16 +166,10 @@ export default function BillingPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
-        <div className="text-center space-y-3">
-          <div className="relative mx-auto h-12 w-12">
-            <div className="absolute inset-0 rounded-full border-2 border-teal-500/20" />
-            <div className="absolute inset-0 rounded-full border-t-2 border-[#0d6e5a] animate-spin" />
-            <CreditCard className="absolute inset-0 m-auto h-5 w-5 text-[#0d6e5a]" />
-          </div>
-          <p className="text-xs text-slate-500 font-semibold tracking-wide">Loading billing workspace...</p>
-        </div>
-      </div>
+      <PageMotionLoader 
+        title="Loading Billing Workspace..." 
+        subtitle="Verifying active subscription and credit allocations..." 
+      />
     );
   }
 

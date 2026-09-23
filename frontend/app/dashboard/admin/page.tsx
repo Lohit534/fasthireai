@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
+import { PageMotionLoader } from "@/components/SkeletonShimmer";
 
 interface UserRecord {
   id: string;
@@ -296,12 +297,10 @@ export default function UnifiedAdminDashboard() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
-        <div className="text-center space-y-2">
-          <Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-semibold">Verifying admin access...</p>
-        </div>
-      </div>
+      <PageMotionLoader 
+        title="Verifying Admin Access..." 
+        subtitle="Loading FastHire platform analytics and user management records..." 
+      />
     );
   }
 

@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
+import { PageMotionLoader } from "@/components/SkeletonShimmer";
 
 // Structured Resume Form Types
 interface StructuredResume {
@@ -1088,12 +1089,10 @@ export default function ResumesPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
-        <div className="text-center space-y-2">
-          <Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-semibold">Loading Resumes...</p>
-        </div>
-      </div>
+      <PageMotionLoader 
+        title="Loading Your Resumes..." 
+        subtitle="Retrieving saved ATS-optimized resumes and document drafts..." 
+      />
     );
   }
 

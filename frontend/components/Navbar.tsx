@@ -111,7 +111,16 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
     // Immediately load cached plan from localStorage to avoid UI flash
     const cachedPlan = localStorage.getItem(`fastHire_plan_${userId}`);
     if (cachedPlan === "premium" || cachedPlan === "promax" || cachedPlan === "owner") {
-      setCredits((prev) => prev || { isOwner: cachedPlan === "owner", paidCredits: cachedPlan === "promax" ? 999999 : 20, freeRemaining: 20, freeUsed: 0, resetAt: new Date().toISOString(), planId: cachedPlan });
+      const isOwnerCached = cachedPlan === "owner";
+      const isProMaxCached = cachedPlan === "promax";
+      setCredits((prev) => prev || {
+        isOwner: isOwnerCached,
+        paidCredits: isOwnerCached ? 999999 : (isProMaxCached ? 90 : 20),
+        freeRemaining: isOwnerCached ? 999999 : (isProMaxCached ? 90 : 20),
+        freeUsed: 0,
+        resetAt: new Date().toISOString(),
+        planId: cachedPlan,
+      });
     }
 
     async function fetchCredits() {
@@ -121,10 +130,14 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
           const data = await res.json();
           setCredits(data);
           if (userId) {
-            if (data.isFirst50 || (data.paidCredits > 0 && data.paidCredits <= 900000)) {
-              localStorage.setItem(`fastHire_plan_${userId}`, "premium");
-            } else if (data.paidCredits > 900000) {
+            if (data.isOwner) {
+              localStorage.setItem(`fastHire_plan_${userId}`, "owner");
+            } else if (data.planId === "promax") {
               localStorage.setItem(`fastHire_plan_${userId}`, "promax");
+            } else if (data.planId === "premium" || data.isFirst50) {
+              localStorage.setItem(`fastHire_plan_${userId}`, "premium");
+            } else {
+              localStorage.setItem(`fastHire_plan_${userId}`, "free");
             }
           }
         }
@@ -169,19 +182,21 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
 
   // Calculations for credit percentage and plan
   const isOwner = credits?.isOwner;
-  const isProMax = credits?.planId === "promax" || (credits?.paidCredits ?? 0) > 20;
-  const isPremium = credits?.isFirst50 || (credits?.paidCredits ?? 0) > 0;
-  const freeRemaining = credits?.freeRemaining ?? (isProMax ? 90 : (isPremium ? 20 : 2));
+  const isProMax = !isOwner && (credits?.planId === "promax" || (credits?.paidCredits ?? 0) >= 90);
+  const isPremium = !isOwner && !isProMax && (credits?.planId === "premium" || credits?.isFirst50 || ((credits?.paidCredits ?? 0) > 0 && (credits?.paidCredits ?? 0) < 90));
+  const freeRemaining = isOwner 
+    ? 9999 
+    : (credits?.freeRemaining ?? (isProMax ? 90 : (isPremium ? 20 : 2)));
   const freeUsed = credits?.freeUsed ?? 0;
-  const totalFree = isProMax ? 90 : (isPremium ? 20 : 2);
+  const totalFree = isOwner ? 9999 : (isProMax ? 90 : (isPremium ? 20 : 2));
   const usedPercent = Math.min(100, Math.max(0, Math.round((freeUsed / totalFree) * 100)));
 
   const planLabel = isOwner
     ? "Owner Unlimited"
     : isProMax
-    ? "Pro Max Plan (90/mo)"
+    ? "Pro Max"
     : isPremium
-    ? "Premium Pro Plan"
+    ? "Premium Pro"
     : "Free Career Tier";
 
   const creditsDisplay = isOwner
@@ -243,36 +258,62 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
           <div className="flex items-center gap-2 sm:gap-4">
             {user ? (
               <>
-                {/* Profile Button: only circular avatar with teal circle ring */}
+                {/* Profile Button with dots around the circle representing credits */}
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     aria-label="Open profile menu"
-                    className="relative p-0.5 rounded-full hover:scale-105 transition-all focus:outline-none cursor-pointer group"
+                    className="relative p-1 rounded-full hover:scale-105 transition-all focus:outline-none cursor-pointer group flex items-center justify-center"
                   >
-                    <div className="h-9 w-9 rounded-full bg-emerald-50 border-2 border-[#0d6e5a] ring-2 ring-[#0d6e5a]/25 flex items-center justify-center text-[#0d6e5a] font-black text-sm shadow-xs transition-transform group-hover:scale-105 select-none">
-                      {user.email ? user.email.charAt(0).toUpperCase() : "U"}
+                    {/* Dotted credits ring around circular avatar */}
+                    <div className="relative flex items-center justify-center">
+                      <svg className="w-10 h-10 -rotate-90 pointer-events-none select-none" viewBox="0 0 44 44">
+                        {Array.from({ length: 16 }).map((_, i) => {
+                          const totalDots = 16;
+                          const maxVal = isOwner ? totalDots : totalFree;
+                          const currentVal = isOwner ? totalDots : freeRemaining;
+                          const filledDots = isOwner ? totalDots : Math.round((Math.min(currentVal, maxVal) / maxVal) * totalDots);
+                          const angle = (i * 360) / totalDots;
+                          const rad = (angle * Math.PI) / 180;
+                          const cx = 22 + 18 * Math.cos(rad);
+                          const cy = 22 + 18 * Math.sin(rad);
+                          const isActive = i < filledDots;
+                          return (
+                            <circle
+                              key={i}
+                              cx={cx}
+                              cy={cy}
+                              r={isActive ? "2.2" : "1.4"}
+                              fill={isActive ? "#0d6e5a" : "#cbd5e1"}
+                              className="transition-colors duration-150"
+                            />
+                          );
+                        })}
+                      </svg>
+                      {/* Centered Avatar Circle */}
+                      <div className="absolute inset-0 m-auto h-7 w-7 rounded-full bg-emerald-50 border border-[#0d6e5a]/30 flex items-center justify-center text-[#0d6e5a] font-black text-xs shadow-xs select-none">
+                        {user.email ? user.email.charAt(0).toUpperCase() : "U"}
+                      </div>
                     </div>
-                    <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[#0d6e5a] ring-2 ring-white" />
                   </button>
 
-                  {/* PROFILE DROPDOWN MENU (Clean White & Brand Teal Theme) */}
+                  {/* PROFILE DROPDOWN MENU (Compact Resized White & Brand Teal Theme) */}
                   {isDropdownOpen && (
-                    <div className="absolute right-0 mt-2.5 w-[310px] sm:w-[330px] bg-white text-slate-800 border border-slate-200 rounded-3xl shadow-2xl p-4 space-y-3.5 select-none animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                    <div className="absolute right-0 mt-2 w-[260px] sm:w-[275px] bg-white text-slate-800 border border-slate-200 rounded-2xl shadow-xl p-3 space-y-2.5 select-none animate-in fade-in slide-in-from-top-2 duration-150 z-50">
                       
                       {/* 1. User Header */}
-                      <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                        <div className="h-10 w-10 rounded-full bg-emerald-50 border-2 border-[#0d6e5a] ring-2 ring-[#0d6e5a]/25 flex items-center justify-center text-[#0d6e5a] font-black text-sm shrink-0">
+                      <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
+                        <div className="h-8 w-8 rounded-full bg-emerald-50 border-2 border-[#0d6e5a] ring-2 ring-[#0d6e5a]/25 flex items-center justify-center text-[#0d6e5a] font-black text-xs shrink-0">
                           {user.email ? user.email.charAt(0).toUpperCase() : "U"}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm font-bold text-slate-900 truncate max-w-full">
+                          <div className="text-xs font-bold text-slate-900 truncate max-w-full">
                             {user.user_metadata?.full_name || (user.email ? user.email.split("@")[0] : "User")}
                           </div>
-                          <div className="text-xs text-slate-500 font-semibold truncate flex items-center gap-1.5 mt-0.5">
+                          <div className="text-[10px] text-slate-500 font-semibold truncate flex items-center gap-1 mt-0.5">
                             <span>{planLabel}</span>
                             {isOwner && (
-                              <span className="bg-amber-100 text-amber-800 text-[9px] font-black uppercase px-1.5 py-0.2 rounded border border-amber-200">
+                              <span className="bg-amber-100 text-amber-800 text-[8px] font-black uppercase px-1 py-0.2 rounded border border-amber-200">
                                 Owner
                               </span>
                             )}
@@ -281,10 +322,10 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                       </div>
 
                       {/* 2. Credits Box (White & Teal) */}
-                      <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3.5 space-y-3">
+                      <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-2.5 space-y-2">
                         {/* Header: Credits ⓘ and X left > */}
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                          <div className="flex items-center gap-1 text-xs font-bold text-slate-800">
                             <span>Credits</span>
                             <HelpCircle className="h-3 w-3 text-slate-400" />
                           </div>
@@ -294,23 +335,23 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                             className="text-xs font-black text-[#0d6e5a] hover:text-[#094d3f] flex items-center gap-0.5 transition-colors"
                           >
                             <span>{creditsDisplay}</span>
-                            <ChevronRight className="h-3.5 w-3.5" />
+                            <ChevronRight className="h-3 w-3" />
                           </Link>
                         </div>
 
                         {/* Credit progress dots in website teal */}
-                        <div className="flex items-center gap-1 w-full overflow-hidden py-0.5">
+                        <div className="flex items-center gap-0.5 w-full overflow-hidden py-0.5">
                           {Array.from({ length: 24 }).map((_, i) => {
-                            const maxVal = isProMax ? 90 : (isPremium ? 20 : 2);
-                            const currentVal = isOwner ? 9999 : (credits?.freeRemaining ?? 2);
+                            const maxVal = isOwner ? 24 : totalFree;
+                            const currentVal = isOwner ? 24 : freeRemaining;
                             const filledCount = Math.round((Math.min(currentVal, maxVal) / maxVal) * 24);
                             const isActive = isOwner || i < filledCount;
                             return (
                               <span
                                 key={i}
-                                className={`h-1.5 flex-1 rounded-full transition-all ${
+                                className={`h-1 flex-1 rounded-full transition-all ${
                                   isActive
-                                    ? "bg-[#0d6e5a] shadow-[0_0_4px_rgba(13,110,90,0.6)]"
+                                    ? "bg-[#0d6e5a] shadow-[0_0_3px_rgba(13,110,90,0.6)]"
                                     : "bg-slate-200"
                                 }`}
                               />
@@ -320,14 +361,14 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
 
                         {/* Action Rows: Only show upgrades if NOT on Pro Max and NOT Owner */}
                         {!isProMax && !isOwner ? (
-                          <div className="space-y-2 pt-1 border-t border-slate-200/80">
+                          <div className="space-y-1.5 pt-1 border-t border-slate-200/80">
                             {/* Action Row 1: Top-up credits / Upgrade to Pro */}
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <div className="h-6 w-6 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0">
-                                  <Sparkles className="h-3.5 w-3.5 text-[#0d6e5a]" />
+                            <div className="flex items-center justify-between gap-1.5">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <div className="h-5 w-5 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0">
+                                  <Sparkles className="h-3 w-3 text-[#0d6e5a]" />
                                 </div>
-                                <span className="text-xs font-bold text-slate-800 truncate">
+                                <span className="text-[11px] font-bold text-slate-800 truncate">
                                   {isPremium ? "Refill Pro (20/mo)" : "Upgrade Pro (20/mo)"}
                                 </span>
                               </div>
@@ -336,24 +377,24 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                                 onClick={() => {
                                   setIsDropdownOpen(false);
                                   useUpgradeModalStore.getState().openModal({
-                                    badge: "PREMIUM PRO",
+                                    badge: "PRO",
                                     title: "Upgrade to Premium Pro",
                                     description: "Get 20 AI resume optimizations/month, unlimited PDF & DOCX downloads, and priority features.",
                                   });
                                 }}
-                                className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white text-[11px] font-black px-3.5 py-1 rounded-full shadow-xs transition-all cursor-pointer shrink-0"
+                                className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-xs transition-all cursor-pointer shrink-0"
                               >
                                 Get
                               </button>
                             </div>
 
                             {/* Action Row 2: Pro Max / 90 Optimizations */}
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <div className="h-6 w-6 rounded-full bg-teal-100 border border-teal-200 flex items-center justify-center shrink-0">
-                                  <Zap className="h-3.5 w-3.5 text-[#0d6e5a]" />
+                            <div className="flex items-center justify-between gap-1.5">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <div className="h-5 w-5 rounded-full bg-teal-100 border border-teal-200 flex items-center justify-center shrink-0">
+                                  <Zap className="h-3 w-3 text-[#0d6e5a]" />
                                 </div>
-                                <span className="text-xs font-bold text-slate-800 truncate">
+                                <span className="text-[11px] font-bold text-slate-800 truncate">
                                   Pro Max (90/mo)
                                 </span>
                               </div>
@@ -362,21 +403,21 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                                 onClick={() => {
                                   setIsDropdownOpen(false);
                                   useUpgradeModalStore.getState().openModal({
-                                    badge: "PRO MAX POWER",
+                                    badge: "PRO",
                                     title: "Upgrade to Pro Max",
                                     description: "Unlock 90 AI optimizations every month, priority ATS scoring, and high-performance resume analysis.",
                                   });
                                 }}
-                                className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white text-[11px] font-black px-3.5 py-1 rounded-full shadow-xs transition-all cursor-pointer shrink-0"
+                                className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-xs transition-all cursor-pointer shrink-0"
                               >
                                 Get
                               </button>
                             </div>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2 pt-1 border-t border-slate-200/80 text-xs font-bold text-[#0d6e5a]">
+                          <div className="flex items-center gap-1.5 pt-1 border-t border-slate-200/80 text-[11px] font-bold text-[#0d6e5a]">
                             <Zap className="h-3.5 w-3.5 text-[#0d6e5a]" />
-                            <span>Pro Max Plan Active &bull; 90 / month</span>
+                            <span>Pro Max Plan Active &bull; 90 / mo</span>
                           </div>
                         )}
                       </div>
@@ -386,53 +427,53 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                         <Link 
                           href="/dashboard" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
+                          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
                         >
-                          <Compass className="h-4 w-4 text-slate-400" />
+                          <Compass className="h-3.5 w-3.5 text-slate-400" />
                           <span>Optimize Resume</span>
                         </Link>
                         <Link 
                           href="/dashboard/resumes" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
+                          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
                         >
-                          <FileText className="h-4 w-4 text-slate-400" />
+                          <FileText className="h-3.5 w-3.5 text-slate-400" />
                           <span>My Resumes</span>
                         </Link>
                         <Link 
                           href="/dashboard/job-tracker" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
+                          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
                         >
-                          <Briefcase className="h-4 w-4 text-slate-400" />
+                          <Briefcase className="h-3.5 w-3.5 text-slate-400" />
                           <span>Job Tracker</span>
                         </Link>
                         <Link 
                           href="/dashboard/pricing" 
                           onClick={() => setIsDropdownOpen(false)} 
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
+                          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
                         >
-                          <DollarSign className="h-4 w-4 text-slate-400" />
+                          <DollarSign className="h-3.5 w-3.5 text-slate-400" />
                           <span>Pricing Plans</span>
                         </Link>
                         <Link 
                           href="/dashboard/billing" 
                           onClick={() => setIsDropdownOpen(false)} 
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
+                          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
                         >
-                          <CreditCard className="h-4 w-4 text-slate-400" />
+                          <CreditCard className="h-3.5 w-3.5 text-slate-400" />
                           <span>Billing &amp; Usage</span>
                         </Link>
                         <button
                           type="button"
                           onClick={() => { setIsDropdownOpen(false); setIsReferralOpen(true); }}
-                          className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors text-left cursor-pointer"
                         >
-                          <div className="flex items-center gap-2.5">
-                            <Gift className="h-4 w-4 text-slate-400" />
+                          <div className="flex items-center gap-2">
+                            <Gift className="h-3.5 w-3.5 text-slate-400" />
                             <span>Refer a Friend</span>
                           </div>
-                          <span className="bg-emerald-50 border border-emerald-200 text-[#0d6e5a] text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full">
+                          <span className="bg-emerald-50 border border-emerald-200 text-[#0d6e5a] text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full">
                             New
                           </span>
                         </button>
@@ -448,9 +489,9 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                             setIsDropdownOpen(false);
                             window.dispatchEvent(new CustomEvent("open-support-chatbot", { detail: { mode: "help-center" } }));
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors text-left cursor-pointer"
                         >
-                          <HelpCircle className="h-4 w-4 text-slate-400" />
+                          <HelpCircle className="h-3.5 w-3.5 text-slate-400" />
                           <span>Help &amp; Support</span>
                         </button>
                         <button
@@ -458,9 +499,9 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                             setIsDropdownOpen(false);
                             setIsFeedbackOpen(true);
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors text-left cursor-pointer"
                         >
-                          <MessageSquare className="h-4 w-4 text-slate-400" />
+                          <MessageSquare className="h-3.5 w-3.5 text-slate-400" />
                           <span>Feedback</span>
                         </button>
                         <button
@@ -469,9 +510,9 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                             setIsDropdownOpen(false);
                             setIsDataPreferencesOpen(true);
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors text-left cursor-pointer"
                         >
-                          <Lock className="h-4 w-4 text-slate-400" />
+                          <Lock className="h-3.5 w-3.5 text-slate-400" />
                           <span>Data Preferences</span>
                         </button>
                       </div>
@@ -482,9 +523,9 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                       {/* 5. Sign Out */}
                       <button
                         onClick={handleSignOut}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-colors text-left cursor-pointer"
+                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-colors text-left cursor-pointer"
                       >
-                        <LogOut className="h-4 w-4 text-rose-500" />
+                        <LogOut className="h-3.5 w-3.5 text-rose-500" />
                         <span>Sign Out</span>
                       </button>
 
