@@ -1110,7 +1110,7 @@ export default function ResumesPage() {
         <>
           <Navbar />
 
-          <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-6">
+          <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10 pb-28 sm:pb-10 flex flex-col gap-6">
             <ScrollFadeIn className="flex flex-col gap-6 w-full">
               {/* Header Details */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

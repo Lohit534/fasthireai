@@ -512,7 +512,7 @@ export default function PricingPage() {
     <div className="flex flex-col min-h-screen bg-[#f8fafc] text-slate-900 font-sans select-text">
       <Navbar />
 
-      <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-10">
+      <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10 pb-28 sm:pb-10 flex flex-col gap-10">
 
         {/* Title details */}
         <ScrollFadeIn className="text-center space-y-4">

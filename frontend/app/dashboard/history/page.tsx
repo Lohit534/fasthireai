@@ -985,7 +985,7 @@ export default function HistoryPage() {
     <div className="flex flex-col min-h-screen text-slate-900 bg-[#f8fafc]">
       <Navbar />
 
-      <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 py-10 select-text">
+      <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 pt-6 sm:pt-10 pb-28 sm:pb-10 select-text">
         <ScrollFadeIn>
           {selected ? (
             /* Detailed 3-Column optimization report */

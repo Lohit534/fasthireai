@@ -164,46 +164,55 @@ export function extractActionVerbs(bulletText: string): string[] {
   return verbs.filter((verb) => new RegExp(`\\b${verb}\\b`, "i").test(lowerText));
 }
 
+const HR_FILLER_WORDS = new Set([
+  "looking", "seeking", "join", "fast-paced", "team", "required", "qualifications",
+  "strong", "demonstrated", "candidate", "applicant", "opportunity", "equal", "employer",
+  "gender", "race", "benefits", "salary", "experience", "years", "working", "ability",
+  "skills", "role", "responsibilities", "duties", "job", "position", "company",
+  "apply", "description", "requirements", "preferred", "plus", "environment", "work",
+  "day", "closely", "ideal", "passion", "passionate", "drive", "driven", "culture",
+  "inclusive", "disability", "veteran", "status", "protected", "sexual", "orientation"
+]);
+
+function cleanWord(w: string): string {
+  return w.replace(/^[^a-zA-Z0-9+#.]+|[^a-zA-Z0-9+#.]+$/g, "").trim().toLowerCase();
+}
+
 export function extractKeywords(text: string): Set<string> {
   const keywords = new Set<string>();
   if (!text) return keywords;
 
-  // 1. Extract known tech terms and phrases (highest priority)
+  // 1. Extract known tech terms and phrases (highest precision)
   const textTechTerms = extractTechTerms(text);
   for (const tech of textTechTerms) keywords.add(tech);
 
-  // 2. Tokenise — preserve alphanumeric + + # . / (for framework names)
-  const cleaned = text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s+#.\-\/]/g, " ");
+  // 2. Extract line-by-line / clause-by-clause to prevent cross-clause nonsense bigrams
+  const clauses = text.split(/[\r\n,;•\-\*\u2022▸►→|]+/);
+  for (const clause of clauses) {
+    const rawTokens = clause
+      .split(/\s+/)
+      .map(cleanWord)
+      .filter((w) => w.length > 2 && !STOP_WORDS.has(w) && !HR_FILLER_WORDS.has(w) && !/^\d+$/.test(w));
 
-  const words = cleaned
-    .split(/\s+/)
-    .map((w) => w.trim())
-    .filter(Boolean);
-
-  // 3. Single-word extraction
-  for (let i = 0; i < words.length; i++) {
-    const word = words[i];
-    if (TECH_MAP.has(word)) {
-      keywords.add(TECH_MAP.get(word)!);
-      continue;
+    // Single words
+    for (const word of rawTokens) {
+      if (TECH_MAP.has(word)) {
+        keywords.add(TECH_MAP.get(word)!);
+      } else {
+        keywords.add(word);
+      }
     }
-    if (!STOP_WORDS.has(word) && word.length > 2) {
-      keywords.add(word);
-    }
-  }
 
-  // 4. Bigrams
-  for (let i = 0; i < words.length - 1; i++) {
-    const w1 = words[i];
-    const w2 = words[i + 1];
-    if (STOP_WORDS.has(w1) || STOP_WORDS.has(w2)) continue;
-    const bigram = `${w1} ${w2}`;
-    if (TECH_MAP.has(bigram)) {
-      keywords.add(TECH_MAP.get(bigram)!);
-    } else {
-      keywords.add(bigram);
+    // Meaningful bigrams within the same clause
+    for (let i = 0; i < rawTokens.length - 1; i++) {
+      const w1 = rawTokens[i];
+      const w2 = rawTokens[i + 1];
+      const bigram = `${w1} ${w2}`;
+      if (TECH_MAP.has(bigram)) {
+        keywords.add(TECH_MAP.get(bigram)!);
+      } else if (PHRASE_TERMS.some(p => p.toLowerCase() === bigram)) {
+        keywords.add(bigram);
+      }
     }
   }
 

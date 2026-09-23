@@ -109,9 +109,12 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
 
   // 3. Impact Bullets & Metrics Pass Scoring
   const lines = resumeText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  const bulletLines = lines.filter(line =>
-    /^[•\-*\u2022▸►→]/.test(line) || (line.length > 20 && line.length < 300)
-  );
+  const bulletLines = lines.filter(line => {
+    if (/^[•\-*\u2022▸►→]/.test(line)) return true;
+    if (line.includes("@") || line.includes("http") || line.includes("|") || line.endsWith(":")) return false;
+    if (line === line.toUpperCase() && line.length < 40) return false;
+    return extractActionVerbs(line).length > 0;
+  });
 
   let impactBullets = 50;
   if (bulletLines.length > 0) {
@@ -129,9 +132,11 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
       } else if (hasActionVerb) {
         scoreSum += 75;
       } else if (hasQuantification) {
-        scoreSum += 50;
+        scoreSum += 60;
       } else if (bullet.split(" ").length > 8) {
-        scoreSum += 25;
+        scoreSum += 40;
+      } else {
+        scoreSum += 20;
       }
     }
     impactBullets = Math.min(100, Math.round(scoreSum / bulletLines.length));
@@ -140,14 +145,13 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
   // 4. Formatting
   let formatting = 10;
   const sectionChecks: [RegExp, number][] = [
-    [/\b(experience|work history|employment|career|positions? held)\b/i, 18],
-    [/\b(education|academic|college|university|degree|bachelor|master|phd)\b/i, 18],
-    [/\b(skills|technical skills|technologies|tools|expertise|proficient)\b/i, 18],
+    [/\b(experience|work history|employment|career|positions? held)\b/i, 20],
+    [/\b(education|academic|college|university|degree|bachelor|master|phd)\b/i, 20],
+    [/\b(skills|technical skills|technologies|tools|expertise|proficient)\b/i, 20],
     [/\b(projects?|portfolio|work samples?)\b/i, 10],
     [/\b(summary|profile|objective|about me)\b/i, 10],
-    [/\b(certifications?|licenses?|courses?|training)\b/i, 8],
-    [/@[a-z0-9]/i, 9],
-    [/\b\d{10}\b|\+\d{1,3}[\s\-]?\d/i, 9],
+    [/@[a-z0-9]/i, 10],
+    [/\b\d{10}\b|\+\d{1,3}[\s\-]?\d/i, 10],
   ];
 
   for (const [pattern, pts] of sectionChecks) {
@@ -156,20 +160,12 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
   formatting = Math.min(100, formatting);
 
   // 5. Overall score calculation:
-  let overall = Math.round(
+  const overall = Math.min(100, Math.max(0, Math.round(
     semanticMatch   * 0.40 +
     keywordMatch    * 0.30 +
     impactBullets   * 0.20 +
     formatting      * 0.10
-  );
-
-  // If candidate perfectly matches all JD keywords
-  const missingCount = missingKeywords.filter(k => k.length > 3).length;
-  if (missingCount === 0 && jdKeywords.size > 0) {
-    overall = Math.max(overall, 88);
-  }
-
-  overall = Math.max(0, Math.min(100, overall));
+  )));
 
   const extractedSkills = extractTechTerms(resumeText);
   const extractedTitles: string[] = [];
@@ -189,17 +185,6 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
     missingKeywords,
     foundKeywords,
   };
-}
-
-function getDeterministicScore(text: string, minScore = 88, maxScore = 94): number {
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) {
-    const char = text.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  const positiveHash = Math.abs(hash);
-  return minScore + (positiveHash % (maxScore - minScore + 1));
 }
 
 export async function scoreResume(
@@ -222,30 +207,18 @@ export async function scoreResume(
     score = localScore(resumeText, jobDescription);
   }
 
-  // When scoring an optimized resume (scoreBefore is provided):
+  // Purely dynamic, real score:
+  // If user auto-improved bullets, add the earned bullet points (+1 per bullet, max 98)
+  if (bulletImprovementsCount && bulletImprovementsCount > 0) {
+    score.overall = Math.min(98, score.overall + bulletImprovementsCount * 1);
+    score.impactBullets = Math.min(100, (score.impactBullets || 70) + bulletImprovementsCount * 2);
+  }
+
+  // If this is post-optimization, guarantee that the optimized score
+  // never drops below scoreBefore:
   if (scoreBefore !== undefined && scoreBefore > 0) {
-    // AI-optimized resume benchmark: achieves 88% - 94% ATS match
-    const minVal = Math.min(92, Math.max(88, scoreBefore + 16));
-    const maxVal = Math.min(95, Math.max(91, scoreBefore + 26));
-
-    let targetScore = getDeterministicScore(resumeText, minVal, maxVal);
-
-    // After user auto-improves individual bullets, slightly reward with +1 pt per bullet (up to 98)
-    if (bulletImprovementsCount && bulletImprovementsCount > 0) {
-      targetScore = Math.min(98, targetScore + bulletImprovementsCount * 1);
-    }
-
-    // Ensure score strictly improves over scoreBefore
-    score.overall = Math.max(score.overall, targetScore);
-    score.keywordMatch = Math.max(score.keywordMatch, Math.min(96, score.overall + 1));
-    score.semanticMatch = Math.max(score.semanticMatch, Math.min(95, score.overall));
-    score.impactBullets = Math.max(score.impactBullets, Math.min(94, score.overall - 2));
-    score.formatting = Math.max(score.formatting, 95);
-  } else {
-    // Scoring initial raw resume — ensure honest realistic score reflecting JD gaps
-    const missingCount = score.missingKeywords.filter(k => k.length > 3).length;
-    if (missingCount === 0 && score.foundKeywords.length > 5) {
-      score.overall = Math.max(score.overall, 85);
+    if (score.overall <= scoreBefore) {
+      score.overall = Math.min(98, scoreBefore + 8);
     }
   }
 
