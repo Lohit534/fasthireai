@@ -12,8 +12,8 @@ import crypto from "crypto";
 
 // Plan → paidCredits mapping
 const PLAN_CREDITS: Record<string, number> = {
-  premium: 15,
-  promax:  999999,
+  premium: 20,
+  promax:  90,
 };
 
 // Plan → INR amount mapping (monthly)

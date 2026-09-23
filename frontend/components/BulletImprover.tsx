@@ -15,6 +15,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { useUpgradeModalStore } from "@/store/useUpgradeModalStore";
 
 interface BulletImproverProps {
   resumeText: string;
@@ -78,12 +79,13 @@ export default function BulletImprover({ resumeText, jobDescription, userId, use
   const handleAutoImprove = async (bulletIdx: number, rawLine: string) => {
     // Plan-based limit check
     if (remaining <= 0) {
-      if (userPlan === "free") {
-        toast.error("You've used all 2 free auto-improves this month. Upgrade to Pro for 10/month.");
-      } else if (userPlan === "premium") {
-        toast.error("You've used all 10 Premium auto-improves this month. Upgrade to Pro Max for unlimited.");
-      }
-      setTimeout(() => { window.location.href = "/dashboard/pricing"; }, 1800);
+      useUpgradeModalStore.getState().openModal({
+        badge: "PRO ACCESS FEATURE",
+        title: "Bullet Improver Limit Reached",
+        description: userPlan === "free"
+          ? "You've used all 2 free auto-improves this month. Upgrade to Premium Pro (10/month) or Pro Max (unlimited) to rewrite bullet points with AI."
+          : "You've used all Premium auto-improves this month. Upgrade to Pro Max for unlimited auto-improves.",
+      });
       return;
     }
 
@@ -251,10 +253,16 @@ export default function BulletImprover({ resumeText, jobDescription, userId, use
                       size="sm"
                       onClick={() => canImprove
                         ? handleAutoImprove(index, line)
-                        : toast.error(userPlan === "free" ? "Upgrade to Pro for more auto-improves." : "Upgrade to Pro Max for unlimited.")
+                        : useUpgradeModalStore.getState().openModal({
+                            badge: "PRO ACCESS FEATURE",
+                            title: "Bullet Improver Limit Reached",
+                            description: userPlan === "free"
+                              ? "You've used all 2 free auto-improves this month. Upgrade to Premium Pro (10/month) or Pro Max (unlimited) to rewrite bullet points with AI."
+                              : "You've used all Premium auto-improves this month. Upgrade to Pro Max for unlimited auto-improves.",
+                          })
                       }
                       disabled={isImproving}
-                      className={`font-bold rounded-lg text-sm ${canImprove ? "bg-indigo-600 hover:bg-indigo-500 text-white" : "bg-slate-200 text-slate-500 cursor-not-allowed"}`}
+                      className={`font-bold rounded-lg text-sm cursor-pointer ${canImprove ? "bg-indigo-600 hover:bg-indigo-500 text-white" : "bg-slate-200 text-slate-700 hover:bg-slate-300"}`}
                     >
                       {isImproving ? (
                         <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Improving...</>

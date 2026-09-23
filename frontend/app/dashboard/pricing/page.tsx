@@ -84,18 +84,19 @@ const PLANS: Plan[] = [
   },
   {
     id: "promax",
-    name: "Pro Max (Individual Unlimited)",
+    name: "Pro Max",
     priceMonthly: "₹199",
     priceYearly: "₹332",
     periodMonthly: "month",
     periodYearly: "year",
-    description: "For hardcore job seekers needing absolute limit bypass and priority features.",
+    description: "For active career changers needing maximum optimization power and 24/7 AI features.",
     features: [
-      "Unlimited AI resume optimizations",
+      "90 AI resume optimizations per month",
       "Unlimited PDF + DOCX downloads",
       "15 cover letters / month",
       "Skills learning roadmap (15/month)",
       "Build up to 40 resumes from scratch",
+      "24/7 AI Chatbot & Assistant",
       "AI resume builder (improve bullets, write summary)",
       "Import resume via AI",
       "Optimization history logs (4 months retention)",
@@ -278,7 +279,7 @@ export default function PricingPage() {
           localStorage.setItem(`fastHire_plan_${userId}`, plan.id);
           setCurrentPlan(plan.id);
 
-          const limitValue = plan.id === "premium" ? 15 : plan.id === "promax" ? 999999 : 999999;
+          const limitValue = plan.id === "premium" ? 20 : plan.id === "promax" ? 90 : 2;
           const creditsObject = {
             freeUsed: 0,
             paidCredits: limitValue,
@@ -458,7 +459,7 @@ export default function PricingPage() {
           localStorage.setItem(`fastHire_planDate_${userId}`, new Date().toISOString());
           setCurrentPlan(selectedPlan.id);
 
-          const limitValue = selectedPlan.id === "premium" ? 15 : selectedPlan.id === "promax" ? 999999 : 999999;
+          const limitValue = selectedPlan.id === "premium" ? 20 : selectedPlan.id === "promax" ? 90 : 2;
           const creditsObject = {
             freeUsed: 0,
             paidCredits: limitValue,

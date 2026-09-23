@@ -11,6 +11,7 @@ import {
   Briefcase,
   LogOut,
   ChevronDown,
+  ChevronRight,
   Compass,
   History,
   CreditCard,
@@ -24,6 +25,7 @@ import {
   Menu,
   X,
   PenLine,
+  Zap,
 } from "lucide-react";
 import { CreditInfo } from "@/types";
 import { toast } from "react-hot-toast";
@@ -34,6 +36,8 @@ import FeedbackBanner from "@/components/FeedbackBanner";
 import { ReferralModal } from "@/components/ReferralModal";
 import { DemoVideoModal } from "@/components/DemoVideoModal";
 import { DataPreferencesModal } from "@/components/DataPreferencesModal";
+import UpgradePaywallModal from "@/components/UpgradePaywallModal";
+import { useUpgradeModalStore } from "@/store/useUpgradeModalStore";
 
 interface NavbarProps {
   refreshKey?: number;
@@ -163,12 +167,26 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
     { label: "Billing", href: "/dashboard/billing", icon: <CreditCard className="h-4 w-4" /> },
   ];
 
-  // Calculations for credit percentage
-  const freeRemaining = credits?.freeRemaining ?? 1;
-  const freeUsed = credits?.freeUsed ?? 1;
-  const totalFree = credits?.isFirst50 ? 15 : 2;
-  const usedPercent = Math.min(100, Math.max(0, Math.round((freeUsed / totalFree) * 100)));
+  // Calculations for credit percentage and plan
+  const isOwner = credits?.isOwner;
+  const isProMax = credits?.planId === "promax" || (credits?.paidCredits ?? 0) > 20;
   const isPremium = credits?.isFirst50 || (credits?.paidCredits ?? 0) > 0;
+  const freeRemaining = credits?.freeRemaining ?? (isProMax ? 90 : (isPremium ? 20 : 2));
+  const freeUsed = credits?.freeUsed ?? 0;
+  const totalFree = isProMax ? 90 : (isPremium ? 20 : 2);
+  const usedPercent = Math.min(100, Math.max(0, Math.round((freeUsed / totalFree) * 100)));
+
+  const planLabel = isOwner
+    ? "Owner Unlimited"
+    : isProMax
+    ? "Pro Max Plan (90/mo)"
+    : isPremium
+    ? "Premium Pro Plan"
+    : "Free Career Tier";
+
+  const creditsDisplay = isOwner
+    ? "Unlimited"
+    : `${freeRemaining} left`;
 
   // Calculate dynamic days left until credit reset (30 days cycle logic)
   const getDaysLeft = () => {
@@ -225,119 +243,224 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
           <div className="flex items-center gap-2 sm:gap-4">
             {user ? (
               <>
-                {/* Refer a Friend — desktop only */}
-                <button
-                  onClick={() => setIsReferralOpen(true)}
-                  className="hidden sm:flex items-center gap-1.5 h-8 px-3 text-xs font-bold rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 transition-all"
-                >
-                  <Gift className="h-3.5 w-3.5" />
-                  <span>Refer a Friend</span>
-                </button>
-
-                {/* Upgrade Button — desktop only */}
-                {!(credits?.paidCredits && credits.paidCredits > 900000) && (
-                  <Link href="/dashboard/pricing" className="hidden sm:block">
-                    <button className="btn-primary-gradient h-8 px-4 text-xs font-semibold rounded-lg shadow-md">
-                      Upgrade
-                    </button>
-                  </Link>
-                )}
-
-                {/* Profile dropdown */}
+                {/* Profile Button with circular avatar and down credits in teal */}
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     aria-label="Open profile menu"
-                    className="flex items-center gap-1.5 p-1 rounded-full hover:bg-slate-100 transition-colors focus:outline-none"
+                    className="flex items-center gap-2 sm:gap-2.5 py-1 px-1.5 sm:px-2.5 rounded-2xl hover:bg-slate-100/90 border border-slate-200 bg-white transition-all shadow-xs cursor-pointer group select-none"
                   >
-                    <div className="h-7 w-7 rounded-full bg-[#0d6e5a] border border-[#0d6e5a]/20 flex items-center justify-center text-white font-black text-xs select-none">
-                      {user.email ? user.email.charAt(0).toUpperCase() : "U"}
+                    <div className="relative">
+                      <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-slate-900 ring-2 ring-[#0d6e5a] ring-offset-1 flex items-center justify-center text-white font-extrabold text-xs sm:text-sm shadow-xs transition-transform group-hover:scale-105">
+                        {user.email ? user.email.charAt(0).toUpperCase() : "U"}
+                      </div>
+                      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#0d6e5a] ring-2 ring-white" />
                     </div>
-                    <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
+                    <div className="flex flex-col items-start leading-tight text-left">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider hidden sm:block">Credits</span>
+                      <span className="text-xs font-black text-[#0d6e5a]">
+                        {creditsDisplay}
+                      </span>
+                    </div>
+                    <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? "rotate-180 text-slate-700" : "group-hover:text-slate-700"} ml-0.5`} />
                   </button>
 
-                  {/* PROFILE DROPDOWN MENU DRAWER (Image 4) */}
+                  {/* PROFILE DROPDOWN MENU (Styled after user reference image) */}
                   {isDropdownOpen && (
-                    <div className="absolute right-0 mt-2.5 w-[240px] bg-white border border-slate-200 rounded-xl shadow-lg p-2.5 space-y-1.5 select-none animate-in fade-in slide-in-from-top-1 duration-150">
+                    <div className="absolute right-0 mt-2.5 w-[310px] sm:w-[330px] bg-[#12161f] text-slate-100 border border-slate-800 rounded-3xl shadow-2xl p-4 space-y-3.5 select-none animate-in fade-in slide-in-from-top-2 duration-150 z-50">
                       
-                      {/* User title/credits summary */}
-                       <div className="px-2.5 py-2 border-b border-slate-100">
-                        <div className="text-sm font-bold text-slate-900 truncate max-w-full">
-                          {user.email}
+                      {/* 1. User Header */}
+                      <div className="flex items-center gap-3 pb-3 border-b border-slate-800/80">
+                        <div className="h-10 w-10 rounded-full bg-slate-800 ring-2 ring-[#0d6e5a] p-0.5 flex items-center justify-center text-emerald-400 font-black text-sm shrink-0">
+                          {user.email ? user.email.charAt(0).toUpperCase() : "U"}
                         </div>
-                        <div className="text-xs text-slate-500 font-semibold mt-0.5 uppercase tracking-wider">
-                          {isPremium ? "Premium" : "Free"} &bull; {freeRemaining} left
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-bold text-white truncate max-w-full">
+                            {user.user_metadata?.full_name || (user.email ? user.email.split("@")[0] : "User")}
+                          </div>
+                          <div className="text-xs text-slate-400 font-semibold truncate flex items-center gap-1.5 mt-0.5">
+                            <span>{planLabel}</span>
+                            {isOwner && (
+                              <span className="bg-amber-400/20 text-amber-300 text-[9px] font-black uppercase px-1.5 py-0.2 rounded">
+                                Owner
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
-                      {/* Main links list */}
-                      <div className="space-y-0.5">
+                      {/* 2. Credits Box (Card matching reference image) */}
+                      <div className="bg-[#1b2230] border border-slate-700/60 rounded-2xl p-3.5 space-y-3">
+                        {/* Header: Credits ⓘ and X left > */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
+                            <span>Credits</span>
+                            <HelpCircle className="h-3 w-3 text-slate-400" />
+                          </div>
+                          <Link
+                            href="/dashboard/billing"
+                            onClick={() => setIsDropdownOpen(false)}
+                            className="text-xs font-black text-[#0d6e5a] hover:text-emerald-400 flex items-center gap-0.5 transition-colors"
+                          >
+                            <span>{creditsDisplay}</span>
+                            <ChevronRight className="h-3.5 w-3.5" />
+                          </Link>
+                        </div>
+
+                        {/* Credit progress dots in website teal */}
+                        <div className="flex items-center gap-1 w-full overflow-hidden py-0.5">
+                          {Array.from({ length: 24 }).map((_, i) => {
+                            const maxVal = isProMax ? 90 : (isPremium ? 20 : 2);
+                            const currentVal = isOwner ? 9999 : (credits?.freeRemaining ?? 2);
+                            const filledCount = Math.round((Math.min(currentVal, maxVal) / maxVal) * 24);
+                            const isActive = isOwner || i < filledCount;
+                            return (
+                              <span
+                                key={i}
+                                className={`h-1.5 flex-1 rounded-full transition-all ${
+                                  isActive
+                                    ? "bg-[#0d6e5a] shadow-[0_0_6px_rgba(13,110,90,0.8)]"
+                                    : "bg-slate-700/50"
+                                }`}
+                              />
+                            );
+                          })}
+                        </div>
+
+                        {/* Action Row 1: Top-up credits / Upgrade to Pro */}
+                        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-700/50">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="h-6 w-6 rounded-full bg-emerald-950/80 border border-emerald-800/60 flex items-center justify-center shrink-0">
+                              <Sparkles className="h-3.5 w-3.5 text-[#0d6e5a]" />
+                            </div>
+                            <span className="text-xs font-bold text-slate-200 truncate">
+                              {isPremium ? "Refill Pro (20/mo)" : "Upgrade Pro (20/mo)"}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsDropdownOpen(false);
+                              useUpgradeModalStore.getState().openModal({
+                                badge: "PREMIUM PRO",
+                                title: "Upgrade to Premium Pro",
+                                description: "Get 20 AI resume optimizations/month, unlimited PDF & DOCX downloads, and priority features.",
+                              });
+                            }}
+                            className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white text-[11px] font-black px-3.5 py-1 rounded-full shadow-sm transition-all cursor-pointer shrink-0"
+                          >
+                            Get
+                          </button>
+                        </div>
+
+                        {/* Action Row 2: Pro Max / 90 Optimizations */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="h-6 w-6 rounded-full bg-amber-950/80 border border-amber-800/60 flex items-center justify-center shrink-0">
+                              <Zap className="h-3.5 w-3.5 text-amber-400" />
+                            </div>
+                            <span className="text-xs font-bold text-slate-200 truncate">
+                              Pro Max (90/mo + 24/7 AI)
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsDropdownOpen(false);
+                              useUpgradeModalStore.getState().openModal({
+                                badge: "PRO MAX POWER",
+                                title: "Upgrade to Pro Max",
+                                description: "Unlock 90 AI optimizations every month, 24/7 AI Assistant, and instant priority ATS scoring.",
+                              });
+                            }}
+                            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-black px-3.5 py-1 rounded-full shadow-sm transition-all cursor-pointer shrink-0"
+                          >
+                            Get
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 3. Navigation Links List (All original links retained) */}
+                      <div className="space-y-0.5 pt-0.5">
                         <Link 
                           href="/dashboard" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
                         >
                           <Compass className="h-4 w-4 text-slate-400" />
-                          Optimize Resume
+                          <span>Optimize Resume</span>
                         </Link>
                         <Link 
                           href="/dashboard/resumes" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
                         >
                           <FileText className="h-4 w-4 text-slate-400" />
-                          My Resumes
+                          <span>My Resumes</span>
                         </Link>
                         <Link 
                           href="/dashboard/job-tracker" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
                         >
                           <Briefcase className="h-4 w-4 text-slate-400" />
-                          Job Tracker
+                          <span>Job Tracker</span>
                         </Link>
-                        <Link href="/dashboard/pricing" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
-                          <DollarSign className="h-4 w-4 text-slate-400" />
-                          Pricing
-                        </Link>
-                        <Link href="/dashboard/billing" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
-                          <CreditCard className="h-4 w-4 text-slate-400" />
-                          Billing &amp; Usage
-                        </Link>
-                        {/* Refer a Friend in dropdown */}
-                        <button
-                          onClick={() => { setIsDropdownOpen(false); setIsReferralOpen(true); }}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors text-left"
+                        <Link 
+                          href="/dashboard/pricing" 
+                          onClick={() => setIsDropdownOpen(false)} 
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
                         >
-                          <Gift className="h-4 w-4 text-slate-400" />
-                          Refer a Friend
+                          <DollarSign className="h-4 w-4 text-slate-400" />
+                          <span>Pricing Plans</span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/billing" 
+                          onClick={() => setIsDropdownOpen(false)} 
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
+                        >
+                          <CreditCard className="h-4 w-4 text-slate-400" />
+                          <span>Billing &amp; Usage</span>
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => { setIsDropdownOpen(false); setIsReferralOpen(true); }}
+                          className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors text-left cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Gift className="h-4 w-4 text-slate-400" />
+                            <span>Refer a Friend</span>
+                          </div>
+                          <span className="bg-[#0d6e5a]/30 border border-[#0d6e5a]/60 text-emerald-400 text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full">
+                            New
+                          </span>
                         </button>
                       </div>
 
                       {/* Divider */}
-                      <div className="border-t border-slate-100" />
+                      <div className="border-t border-slate-800/80" />
 
-                      {/* Secondary list */}
+                      {/* 4. Secondary actions */}
                       <div className="space-y-0.5">
                         <button
                           onClick={() => {
                             setIsDropdownOpen(false);
                             window.dispatchEvent(new CustomEvent("open-support-chatbot", { detail: { mode: "help-center" } }));
                           }}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors text-left cursor-pointer"
                         >
                           <HelpCircle className="h-4 w-4 text-slate-400" />
-                          Help &amp; Support
+                          <span>Help &amp; Support</span>
                         </button>
                         <button
                           onClick={() => {
                             setIsDropdownOpen(false);
                             setIsFeedbackOpen(true);
                           }}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors text-left cursor-pointer"
                         >
                           <MessageSquare className="h-4 w-4 text-slate-400" />
-                          Feedback
+                          <span>Feedback</span>
                         </button>
                         <button
                           type="button"
@@ -345,23 +468,23 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                             setIsDropdownOpen(false);
                             setIsDataPreferencesOpen(true);
                           }}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors text-left cursor-pointer"
                         >
                           <Lock className="h-4 w-4 text-slate-400" />
-                          Data Preferences
+                          <span>Data Preferences</span>
                         </button>
                       </div>
 
                       {/* Divider */}
-                      <div className="border-t border-slate-100" />
+                      <div className="border-t border-slate-800/80" />
 
-                      {/* Exit door sign out */}
+                      {/* 5. Sign Out */}
                       <button
                         onClick={handleSignOut}
-                        className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-bold text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors text-left"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors text-left cursor-pointer"
                       >
                         <LogOut className="h-4 w-4" />
-                        Sign out
+                        <span>Sign Out</span>
                       </button>
 
                     </div>
@@ -414,6 +537,7 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
       <ReferralModal isOpen={isReferralOpen} onClose={() => setIsReferralOpen(false)} />
       <DemoVideoModal isOpen={isDemoModalOpen} onClose={() => setIsDemoModalOpen(false)} />
       <DataPreferencesModal isOpen={isDataPreferencesOpen} onClose={() => setIsDataPreferencesOpen(false)} />
+      <UpgradePaywallModal />
     </>
   );
 }

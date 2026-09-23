@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
+import { useUpgradeModalStore } from "@/store/useUpgradeModalStore";
 
 interface ChatMessage {
   sender: "user" | "ai" | "admin" | "system";
@@ -557,10 +558,12 @@ export default function SupportChatbot() {
                                      (rawCredits?.isOwner ?? false) || 
                                      (rawCredits?.paidCredits ?? 0) >= 99999;
                     if (!isProMax) {
-                      toast.error("24/7 AI Chatbot is an exclusive feature of the Pro Max plan. Please upgrade to Pro Max.");
-                      setTimeout(() => {
-                        window.location.href = "/dashboard/pricing";
-                      }, 1500);
+                      setIsOpen(false);
+                      useUpgradeModalStore.getState().openModal({
+                        badge: "PRO ACCESS FEATURE",
+                        title: "Unlock 24/7 AI Assistant & Coach",
+                        description: "24/7 AI Chatbot Assistant is an exclusive feature of the Pro Max plan. Get instant resume advice, live ATS diagnostics, and 90 optimizations/month.",
+                      });
                       return;
                     }
                     setView("ai-chat");
@@ -576,8 +579,8 @@ export default function SupportChatbot() {
                         <h4 className="text-xs font-extrabold text-slate-900 group-hover:text-[#0d6e5a] transition-colors">
                           AI Chat
                         </h4>
-                        <Badge className="bg-emerald-50 border border-emerald-200 text-[#0d6e5a] text-[8px] font-bold uppercase tracking-wider px-1.5 py-0 rounded select-none">
-                          24/7 ONLINE
+                        <Badge className="bg-amber-50 border border-amber-200 text-amber-800 text-[8px] font-black uppercase tracking-wider px-1.5 py-0 rounded select-none">
+                          PRO ACCESS
                         </Badge>
                       </div>
                       <p className="text-[10px] text-slate-500 mt-0.5 font-medium">

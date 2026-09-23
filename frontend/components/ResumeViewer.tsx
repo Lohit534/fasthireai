@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Copy, Check, FileText, Sparkles } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { parseResumeIntoBlocks, stripMarkdownAsterisks, getCleanExportFilename, ResumeBlock } from "@/lib/export/pdf-document";
+import { useUpgradeModalStore } from "@/store/useUpgradeModalStore";
 
 function getPdfDownloadLimit(plan: string): number {
   if (plan === "promax" || plan === "owner") return 30;
@@ -90,10 +91,11 @@ export default function ResumeViewer({
 
   const handleDownloadPDF = async () => {
     if (userPlan === "free") {
-      toast.error("AI optimized PDF downloads are a Pro feature. Upgrade to Pro, or download your manual resumes in My Resumes!");
-      setTimeout(() => {
-        window.location.href = "/dashboard/pricing";
-      }, 1800);
+      useUpgradeModalStore.getState().openModal({
+        badge: "DOWNLOAD BLOCKED",
+        title: "Your 2 free optimizations are used up",
+        description: "Your optimized resume is saved and stays in your history. Free includes the ATS score and live preview; downloading is on a paid plan.",
+      });
       return;
     }
 
@@ -137,6 +139,15 @@ export default function ResumeViewer({
   };
 
   const handleDownloadDOCX = async () => {
+    if (userPlan === "free") {
+      useUpgradeModalStore.getState().openModal({
+        badge: "DOWNLOAD BLOCKED",
+        title: "Your 2 free optimizations are used up",
+        description: "Your optimized resume is saved and stays in your history. Free includes the ATS score and live preview; downloading is on a paid plan.",
+      });
+      return;
+    }
+
     setDocxLoading(true);
     try {
       const response = await fetch("/api/export/docx", {
@@ -186,20 +197,30 @@ export default function ResumeViewer({
           <Button
             onClick={handleDownloadPDF}
             disabled={pdfLoading}
-            className="flex-1 sm:flex-initial bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-bold text-xs h-8 sm:h-9 rounded-lg flex items-center justify-center gap-1.5 px-3 sm:px-4"
+            className="flex-1 sm:flex-initial bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-bold text-xs h-8 sm:h-9 rounded-lg flex items-center justify-center gap-1.5 px-3 sm:px-4 cursor-pointer"
           >
             {pdfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
             <span>PDF</span>
+            {userPlan === "free" && (
+              <span className="bg-amber-400 text-slate-900 text-[8px] font-black uppercase px-1 rounded">
+                PRO
+              </span>
+            )}
           </Button>
 
           <Button
             onClick={handleDownloadDOCX}
             disabled={docxLoading}
             variant="outline"
-            className="flex-1 sm:flex-initial border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs h-8 sm:h-9 rounded-lg flex items-center justify-center gap-1.5 px-3 sm:px-4 bg-transparent"
+            className="flex-1 sm:flex-initial border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs h-8 sm:h-9 rounded-lg flex items-center justify-center gap-1.5 px-3 sm:px-4 bg-transparent cursor-pointer"
           >
             {docxLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
             <span>DOCX</span>
+            {userPlan === "free" && (
+              <span className="bg-amber-100 text-amber-800 text-[8px] font-black uppercase px-1 rounded border border-amber-300">
+                PRO
+              </span>
+            )}
           </Button>
         </div>
       </div>

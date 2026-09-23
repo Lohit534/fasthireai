@@ -179,8 +179,8 @@ export default function BillingPage() {
   }
 
   // Quota computations
-  const totalLimit = activePlan === "free" ? 2 : activePlan === "premium" ? 20 : 999999;
-  const isUnlimited = activePlan === "team" || activePlan === "promax" || credits?.isOwner;
+  const totalLimit = activePlan === "free" ? 2 : activePlan === "premium" ? 20 : credits?.isOwner ? 999999 : 90;
+  const isUnlimited = credits?.isOwner;
   const used = credits?.freeUsed ?? 0;
   const remaining = isUnlimited ? "Unlimited" : Math.max(0, totalLimit - used);
   const percentUsed = isUnlimited ? 15 : Math.min(100, Math.round((used / totalLimit) * 100));
@@ -188,7 +188,7 @@ export default function BillingPage() {
   const planDisplayName = credits?.isOwner 
     ? "Developer Owner Account (Bypassed)"
     : activePlan === "promax" || activePlan === "team" 
-    ? "Pro Max (Unlimited Power)" 
+    ? "Pro Max (90 Optimizations / Mo)" 
     : activePlan === "premium" 
     ? "Premium Pro" 
     : "Free Career Tier";
@@ -385,7 +385,7 @@ export default function BillingPage() {
                 {/* Action Footer */}
                 <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-200">
                   <span className="text-[11px] text-slate-500">
-                    {activePlan === "free" ? "Upgrade anytime to unlock 20 monthly optimizations or unlimited access." : "Need to upgrade or switch plans?"}
+                    {activePlan === "free" ? "Upgrade anytime to unlock 20 monthly optimizations or 90 with Pro Max." : "Need to upgrade or switch plans?"}
                   </span>
                   <Link href="/dashboard/pricing">
                     <Button className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-9 rounded-xl px-5 shadow-sm transition-colors">

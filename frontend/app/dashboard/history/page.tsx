@@ -12,6 +12,7 @@ import { logger } from "@/lib/logger";
 import { generateSkillRoadmap, generateMultiSkillRoadmap } from "@/lib/roadmap-generator";
 import { extractTechTerms, extractKeywords } from "@/lib/ats/keywords";
 import { saveAs } from "file-saver";
+import { useUpgradeModalStore } from "@/store/useUpgradeModalStore";
 import {
   Loader2,
   History,
@@ -118,10 +119,11 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
 
   const downloadFile = async (format: "pdf" | "docx") => {
     if (userPlan === "free") {
-      toast.error("Optimized resume exports are available for Premium Pro & Pro Max members. Upgrade to Pro or download manual resumes in My Resumes!");
-      setTimeout(() => {
-        window.location.href = "/dashboard/pricing";
-      }, 1800);
+      useUpgradeModalStore.getState().openModal({
+        badge: "DOWNLOAD BLOCKED",
+        title: "Your 2 free optimizations are used up",
+        description: "Your optimized resume is saved and stays in your history. Free includes the ATS score and live preview; downloading is on a paid plan.",
+      });
       return;
     }
 
@@ -369,12 +371,22 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
           {/* Download & Share Actions */}
           <div className="space-y-3 pt-1">
             {isLocked ? (
-              <Link href="/dashboard/pricing" className="w-full block">
-                <Button className="w-full bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-11 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-colors">
-                  <Lock className="h-4 w-4" />
-                  Unlock PDF &amp; DOCX Download
-                </Button>
-              </Link>
+              <Button
+                onClick={() => {
+                  useUpgradeModalStore.getState().openModal({
+                    badge: "DOWNLOAD BLOCKED",
+                    title: "Your 2 free optimizations are used up",
+                    description: "Your optimized resume is saved and stays in your history. Free includes the ATS score and live preview; downloading is on a paid plan.",
+                  });
+                }}
+                className="w-full bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-11 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
+              >
+                <Lock className="h-4 w-4" />
+                <span>Unlock PDF &amp; DOCX Download</span>
+                <span className="ml-1 px-1.5 py-0.5 text-[9px] font-black uppercase rounded bg-amber-400 text-slate-900">
+                  PRO ACCESS
+                </span>
+              </Button>
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 <Button

@@ -7,7 +7,7 @@ import { callAI } from "@/lib/ai/router";
 import { scoreResume } from "@/lib/ats/scorer";
 import { extractTechTerms } from "@/lib/ats/keywords";
 import { generateUUID } from "@/lib/utils";
-import { isOwnerEmail, FREE_CREDITS_PER_MONTH, PRO_CREDITS_PER_MONTH } from "@/types";
+import { isOwnerEmail, FREE_CREDITS_PER_MONTH, PRO_CREDITS_PER_MONTH, PRO_MAX_CREDITS_PER_MONTH } from "@/types";
 import { buildTrainingSample } from "@/lib/anonymizer";
 import fs from "fs";
 import path from "path";
@@ -239,7 +239,7 @@ export async function POST(request: NextRequest) {
 
         freeUsed = isNewMonth ? 0 : (creditRow.freeUsed || 0);
         paidCredits = isNewMonth 
-          ? (isFirst50 ? 365 : (creditRow.paidCredits >= 900000 ? 999999 : (creditRow.paidCredits > 0 ? PRO_CREDITS_PER_MONTH : 0))) 
+          ? (isFirst50 ? 365 : (creditRow.paidCredits > 20 ? PRO_MAX_CREDITS_PER_MONTH : (creditRow.paidCredits > 0 ? PRO_CREDITS_PER_MONTH : 0))) 
           : (creditRow.paidCredits || 0);
 
         if (isNewMonth) {
@@ -253,18 +253,21 @@ export async function POST(request: NextRequest) {
             .eq("userId", activeUserId);
         }
 
-        isUnlimited = isFirst50 || paidCredits >= 900000;
+        isUnlimited = isFirst50 || isOwner;
 
         // STRICT QUOTA ENFORCEMENT
         if (!isUnlimited) {
+          const isProMax = paidCredits > 20;
           const isProPlan = paidCredits > 0;
-          const allowedLimit = isProPlan ? PRO_CREDITS_PER_MONTH : FREE_CREDITS_PER_MONTH;
+          const allowedLimit = isProMax ? PRO_MAX_CREDITS_PER_MONTH : (isProPlan ? PRO_CREDITS_PER_MONTH : FREE_CREDITS_PER_MONTH);
 
           if (freeUsed >= allowedLimit) {
-            if (isProPlan) {
-              throw new Error(`Monthly quota of ${PRO_CREDITS_PER_MONTH} optimizations reached for Pro plan. Please upgrade to Pro Max for unlimited access or wait for your monthly cycle reset.`);
+            if (isProMax) {
+              throw new Error(`Monthly quota of ${PRO_MAX_CREDITS_PER_MONTH} optimizations reached for Pro Max plan. Please wait for your monthly cycle reset.`);
+            } else if (isProPlan) {
+              throw new Error(`Monthly quota of ${PRO_CREDITS_PER_MONTH} optimizations reached for Pro plan. Please upgrade to Pro Max for 90 optimizations/month or wait for your monthly cycle reset.`);
             } else {
-              throw new Error(`Monthly limit of ${FREE_CREDITS_PER_MONTH} optimizations reached for Free plan. Please upgrade to Premium Pro (20 optimizations) or Pro Max to continue.`);
+              throw new Error(`Monthly limit of ${FREE_CREDITS_PER_MONTH} optimizations reached for Free plan. Please upgrade to Premium Pro (20 optimizations) or Pro Max (90 optimizations) to continue.`);
             }
           }
         }

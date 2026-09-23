@@ -9,6 +9,7 @@ import { formatDate } from "@/lib/utils";
 import { FileDown, Calendar, Building, ArrowUpRight, Loader2 } from "lucide-react";
 import { saveAs } from "file-saver";
 import { toast } from "react-hot-toast";
+import { useUpgradeModalStore } from "@/store/useUpgradeModalStore";
 
 interface HistoryCardProps {
   resume: ResumeRecord;
@@ -23,10 +24,11 @@ export default function HistoryCard({ resume, userPlan = "free", onSelect }: His
     e.stopPropagation(); // Prevent card select click
 
     if (userPlan === "free") {
-      toast.error("Optimized resume downloads are for Pro & Pro Max members. Upgrade to Pro or download manual resumes in My Resumes!");
-      setTimeout(() => {
-        window.location.href = "/dashboard/pricing";
-      }, 1800);
+      useUpgradeModalStore.getState().openModal({
+        badge: "DOWNLOAD BLOCKED",
+        title: "Your 2 free optimizations are used up",
+        description: "Your optimized resume is saved and stays in your history. Free includes the ATS score and live preview; downloading is on a paid plan.",
+      });
       return;
     }
 

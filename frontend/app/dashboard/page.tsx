@@ -48,6 +48,7 @@ import ScrollFadeIn from "@/components/ScrollFadeIn";
 import { UseSavedResumeModal } from "@/components/UseSavedResumeModal";
 import PlaceholderFiller, { ResumePlaceholder } from "@/components/PlaceholderFiller";
 import OptimizingProgress from "@/components/OptimizingProgress";
+import { useUpgradeModalStore } from "@/store/useUpgradeModalStore";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -76,6 +77,7 @@ export default function DashboardPage() {
   // User plan states
   const [user, setUser] = useState<any>(null);
   const [userPlan, setUserPlan] = useState<string>("free");
+  const [userCredits, setUserCredits] = useState<any>(null);
   const [trackerAdded, setTrackerAdded] = useState(false);
   const [bulletImprovementsCount, setBulletImprovementsCount] = useState(0);
   const [currentResumeId, setCurrentResumeId] = useState<string | null>(null);
@@ -154,10 +156,11 @@ export default function DashboardPage() {
           const creditsRes = await fetch("/api/credits");
           if (creditsRes.ok) {
             const creditsData = await creditsRes.json();
+            setUserCredits(creditsData);
             let plan = "free";
             if (creditsData.isOwner) {
               plan = "owner";
-            } else if (creditsData.paidCredits > 900000) {
+            } else if (creditsData.paidCredits > 20) {
               plan = "promax";
             } else if (creditsData.paidCredits > 0 || creditsData.isFirst50) {
               plan = "premium";
@@ -232,6 +235,15 @@ export default function DashboardPage() {
     }
     if (!jobDescription?.trim()) {
       toast.error("Paste the job description to match against.");
+      return;
+    }
+
+    if (userPlan === "free" && userCredits && (userCredits.freeRemaining <= 0 || userCredits.freeUsed >= 2)) {
+      useUpgradeModalStore.getState().openModal({
+        badge: "DOWNLOAD BLOCKED",
+        title: "Your 2 free optimizations are used up",
+        description: "Your optimized resume is saved and stays in your history. Free includes the ATS score and live preview; downloading is on a paid plan.",
+      });
       return;
     }
 
@@ -382,10 +394,11 @@ export default function DashboardPage() {
   const handleGenerateRoadmap = async () => {
     const isOwner = userPlan === "owner" || (user?.email && isOwnerEmail(user.email));
     if (userPlan === "free" && !isOwner) {
-      toast.error("Skills learning roadmaps are a Pro & Pro Max feature. Please upgrade your plan to unlock instant career roadmaps!");
-      setTimeout(() => {
-        router.push("/dashboard/pricing");
-      }, 1800);
+      useUpgradeModalStore.getState().openModal({
+        badge: "PRO ACCESS FEATURE",
+        title: "Unlock AI Skill Learning Roadmaps",
+        description: "Skills learning roadmaps are a Pro & Pro Max feature. Please upgrade your plan to unlock instant career roadmaps!",
+      });
       return;
     }
 
@@ -401,10 +414,11 @@ export default function DashboardPage() {
       const currentCount = parseInt(localStorage.getItem(storageKey) || "0", 10);
       
       if (currentCount >= limit) {
-        toast.error(`You have reached your monthly limit of ${limit} roadmaps for the ${userPlan === "premium" ? "Premium Pro" : "Pro Max"} plan.`);
-        setTimeout(() => {
-          router.push("/dashboard/pricing");
-        }, 1800);
+        useUpgradeModalStore.getState().openModal({
+          badge: "PRO ACCESS FEATURE",
+          title: "Roadmap Quota Reached",
+          description: `You have reached your monthly limit of ${limit} roadmaps for the ${userPlan === "premium" ? "Premium Pro" : "Pro Max"} plan. Upgrade to unlock more roadmaps and 90 optimizations/month.`,
+        });
         return;
       }
       localStorage.setItem(storageKey, (currentCount + 1).toString());
@@ -433,10 +447,11 @@ export default function DashboardPage() {
       const currentCount = parseInt(localStorage.getItem(storageKey) || "0", 10);
       
       if (currentCount >= limit) {
-        toast.error(`You have reached your limit of ${limit} cover letters for the ${userPlan === "free" ? "Free" : userPlan === "premium" ? "Premium Pro" : "Pro Max"} plan.`);
-        setTimeout(() => {
-          router.push("/dashboard/pricing");
-        }, 2000);
+        useUpgradeModalStore.getState().openModal({
+          badge: "PRO ACCESS FEATURE",
+          title: "Cover Letter Limit Reached",
+          description: `You have reached your limit of ${limit} cover letters for the ${userPlan === "free" ? "Free" : userPlan === "premium" ? "Premium Pro" : "Pro Max"} plan. Please upgrade to unlock more cover letters and 90 optimizations/month.`,
+        });
         return;
       }
       localStorage.setItem(storageKey, (currentCount + 1).toString());

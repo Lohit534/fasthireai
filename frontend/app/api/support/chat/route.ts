@@ -88,8 +88,8 @@ function getSmartContextualAnswer(question: string): string {
     return cleanAsterisks(
       "FastHire AI offers 3 simple, non-recurring plans:\n\n" +
       "• Free Tier: Free monthly optimizations, standard ATS score breakdown, and instant resume preview.\n" +
-      "• Premium Pro (₹99/mo or ₹999/yr): 20 resume optimizations/month, full keyword gap analysis, all resume templates, and PDF & DOCX downloads.\n" +
-      "• Pro Max (₹199/mo or ₹1999/yr): Unlimited AI resume optimizations, AI bullet point rewriter, priority ATS processing, 24/7 AI Assistant, and official GST tax invoices.\n\n" +
+      "• Premium Pro (₹99/mo or ₹166/yr): 20 resume optimizations/month, full keyword gap analysis, all resume templates, and PDF & DOCX downloads.\n" +
+      "• Pro Max (₹199/mo or ₹332/yr): 90 AI resume optimizations/month, AI bullet point rewriter, priority ATS processing, 24/7 AI Assistant, and official GST tax invoices.\n\n" +
       "All plans are one-time payments with no surprise recurring debits."
     );
   }
@@ -208,8 +208,8 @@ You must answer questions based on the following platform rules. NEVER invent pr
 
 2. Plans & Pricing:
 - Free Tier: Free monthly optimizations, standard ATS score, instant preview. (Users who didn't pay are on this plan).
-- Premium Pro (₹99/mo or ₹999/yr): 20 optimizations/month, full keyword gap, all templates, PDF/DOCX downloads.
-- Pro Max (₹199/mo or ₹1999/yr): Unlimited optimizations, AI bullet rewriter, priority ATS processing, 24/7 AI Assistant.
+- Premium Pro (₹99/mo or ₹166/yr): 20 optimizations/month, full keyword gap, all templates, PDF/DOCX downloads.
+- Pro Max (₹199/mo or ₹332/yr): 90 optimizations/month, AI bullet rewriter, priority ATS processing, 24/7 AI Assistant.
 - All plans are one-time payments. No recurring debits. Users upgrade securely via the Pricing page.
 
 3. Refund Policy:

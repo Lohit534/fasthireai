@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { FREE_CREDITS_PER_MONTH, PRO_CREDITS_PER_MONTH, isOwnerEmail } from "@/types";
+import { FREE_CREDITS_PER_MONTH, PRO_CREDITS_PER_MONTH, PRO_MAX_CREDITS_PER_MONTH, isOwnerEmail } from "@/types";
 import { logger } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
@@ -216,10 +216,10 @@ export async function GET(request: NextRequest) {
       freeUsed = 0;
       if (isFirst50) {
         paidCredits = 365;
-      } else if (paidCredits > 0 && paidCredits < 900000) {
+      } else if (paidCredits > 0 && paidCredits <= 20) {
         paidCredits = PRO_CREDITS_PER_MONTH;
-      } else if (paidCredits >= 900000) {
-        paidCredits = 999999;
+      } else if (paidCredits > 20) {
+        paidCredits = PRO_MAX_CREDITS_PER_MONTH;
       } else {
         paidCredits = 0;
       }
@@ -234,13 +234,13 @@ export async function GET(request: NextRequest) {
     }
 
     let planId = "free";
-    if (paidCredits > 0 && paidCredits < 900000) {
+    if (paidCredits > 0 && paidCredits <= 20) {
       planId = "premium";
-    } else if (paidCredits >= 900000) {
+    } else if (paidCredits > 20) {
       planId = "promax";
     }
 
-    const totalAllowed = isOwner || planId === "promax" ? 999999 : (planId === "premium" ? PRO_CREDITS_PER_MONTH : FREE_CREDITS_PER_MONTH);
+    const totalAllowed = isOwner ? 999999 : (planId === "promax" ? PRO_MAX_CREDITS_PER_MONTH : (planId === "premium" ? PRO_CREDITS_PER_MONTH : FREE_CREDITS_PER_MONTH));
     const freeRemaining = Math.max(0, totalAllowed - freeUsed);
 
     return NextResponse.json({
@@ -326,7 +326,7 @@ export async function POST(request: NextRequest) {
       const days = billingCycle === "yearly" ? 365 : 30;
       expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
     } else if (planId === "team" || planId === "promax") {
-      paidCredits = 999999;
+      paidCredits = PRO_MAX_CREDITS_PER_MONTH;
       const days = billingCycle === "yearly" ? 365 : 30;
       expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
     }
