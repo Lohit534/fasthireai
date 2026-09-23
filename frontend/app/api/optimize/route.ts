@@ -5,6 +5,7 @@ import { logger } from "@/lib/logger";
 import { buildOptimizationPrompt } from "@/lib/ai/prompts";
 import { callAI } from "@/lib/ai/router";
 import { scoreResume } from "@/lib/ats/scorer";
+import { extractTechTerms } from "@/lib/ats/keywords";
 import { generateUUID } from "@/lib/utils";
 import { isOwnerEmail, FREE_CREDITS_PER_MONTH, PRO_CREDITS_PER_MONTH } from "@/types";
 import { buildTrainingSample } from "@/lib/anonymizer";
@@ -295,22 +296,43 @@ export async function POST(request: NextRequest) {
       await send(5, 'running');
     const scoreAfter = await scoreResume(aiResult.resume, jobDescription, scoreBefore.overall);
 
+    // Calculate keywords already present in the original resume that match the JD
+    const resumeTech = extractTechTerms(resumeText || "");
+    const jdLower = (jobDescription || "").toLowerCase();
+    const resumeTechInJd = resumeTech.filter(t => jdLower.includes(t.toLowerCase()));
+
+    const alreadyInResume = Array.from(new Set([
+      ...(scoreBefore.foundKeywords || []),
+      ...resumeTechInJd
+    ])).filter(k => k && k.trim().length > 1);
+
+    const beforeKeywordsSet = new Set([
+      ...scoreBefore.foundKeywords.map(k => k.toLowerCase().trim()),
+      ...alreadyInResume.map(k => k.toLowerCase().trim())
+    ]);
+
     // Calculate actual injected keywords by combining AI-declared keywords with ATS delta analysis
-    const beforeKeywordsSet = new Set(scoreBefore.foundKeywords.map(k => k.toLowerCase()));
     const injectedFromScorer = scoreAfter.foundKeywords.filter(
-      k => !beforeKeywordsSet.has(k.toLowerCase())
+      k => !beforeKeywordsSet.has(k.toLowerCase().trim())
     );
 
     const optimizedLower = (aiResult.resume || "").toLowerCase();
     const missingNowFound = (scoreBefore.missingKeywords || []).filter(
-      kw => kw && kw.length > 2 && optimizedLower.includes(kw.toLowerCase())
+      kw => kw && kw.length > 2 && optimizedLower.includes(kw.toLowerCase().trim())
+    );
+
+    // Also detect newly introduced tech terms from JD in the optimized text
+    const optimizedTech = extractTechTerms(aiResult.resume || "");
+    const newTechFromJd = optimizedTech.filter(
+      t => jdLower.includes(t.toLowerCase()) && !beforeKeywordsSet.has(t.toLowerCase().trim())
     );
 
     const mergedKeywordsAdded = Array.from(
       new Set([
         ...(Array.isArray(aiResult.keywordsAdded) ? aiResult.keywordsAdded : []),
         ...injectedFromScorer,
-        ...missingNowFound
+        ...missingNowFound,
+        ...newTechFromJd
       ])
     ).filter(kw => {
       if (!kw || kw.trim().length <= 1) return false;
@@ -547,6 +569,7 @@ export async function POST(request: NextRequest) {
           optimizedText: aiResult.resume,
           resumeJSON: aiResult.resumeJSON,
           keywordsAdded: mergedKeywordsAdded,
+          alreadyInResume: alreadyInResume,
           changesCount: mergedKeywordsAdded.length || aiResult.changesCount || 6,
           summary: finalSummary,
           jobTitle: finalJobTitle,
@@ -555,11 +578,13 @@ export async function POST(request: NextRequest) {
             overall: scoreBefore.overall,
             keywordMatch: scoreBefore.keywordMatch,
             impactBullets: scoreBefore.impactBullets,
+            foundKeywords: alreadyInResume,
           },
           scoreAfter: {
             overall: scoreAfter.overall,
             keywordMatch: scoreAfter.keywordMatch,
             impactBullets: scoreAfter.impactBullets,
+            foundKeywords: scoreAfter.foundKeywords || [],
           },
           placeholders: extractPlaceholders(aiResult.resume, (aiResult as any).placeholders),
           hasPlaceholders: extractPlaceholders(aiResult.resume, (aiResult as any).placeholders).length > 0,

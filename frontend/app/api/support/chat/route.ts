@@ -173,9 +173,11 @@ export const runtime = "nodejs";
 export const maxDuration = 15;
 
 const FAST_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-2.5-flash-lite",
-  "gemini-2.0-flash"
+  "gemini-3.6-flash",
+  "gemini-flash-latest",
+  "gemini-flash-lite-latest",
+  "gemini-3.5-flash-lite",
+  "gemini-3.8-flash",
 ];
 
 export async function POST(request: NextRequest) {
@@ -244,7 +246,7 @@ IMPORTANT RULES FOR YOU:
 
 
     // 2. Try Primary Groq LPU (0.4s response) if GROQ_API_KEY is present
-    const groqKey = process.env.GROQ_API_KEY || "";
+    const groqKey = (process.env.GROQ_API_KEY || "").replace(/^["']|["']$/g, "").trim();
     if (groqKey) {
       try {
         const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -278,7 +280,7 @@ IMPORTANT RULES FOR YOU:
     }
 
     // 3. High-Speed Gemini Fallback / Primary (1.0s response)
-    const geminiKey = process.env.GEMINI_API_KEY || "";
+    const geminiKey = (process.env.GEMINI_API_KEY || "").replace(/^["']|["']$/g, "").trim();
     if (geminiKey) {
       const { GoogleGenerativeAI } = await import("@google/generative-ai");
       const genAI = new GoogleGenerativeAI(geminiKey);

@@ -678,7 +678,7 @@ export default function DashboardPage() {
                   <div className="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-5 shadow-sm select-none">
                     <KeywordBadges
                       added={optimizeResult?.keywordsAdded || []}
-                      found={afterScore?.foundKeywords || []}
+                      found={optimizeResult?.alreadyInResume || beforeScore?.foundKeywords || afterScore?.foundKeywords || []}
                     />
                   </div>
                 )}

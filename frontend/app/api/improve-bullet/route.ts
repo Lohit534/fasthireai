@@ -5,8 +5,11 @@ import { extractTechTerms, extractKeywords } from "@/lib/ats/keywords";
 import { logger } from "@/lib/logger";
 import { stripMarkdownAsterisks } from "@/lib/export/pdf-document";
 
-const apiKey = process.env.GEMINI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(apiKey);
+function getGenAI() {
+  const apiKey = (process.env.GEMINI_API_KEY || "").replace(/^["']|["']$/g, "").trim();
+  if (!apiKey) return null;
+  return new GoogleGenerativeAI(apiKey);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +36,8 @@ export async function POST(request: NextRequest) {
     logger.info(`Improving ${isSummaryRequest ? "summary" : "bullet"} for user ${user.email}...`);
 
     // 3. Fallback Flow if Gemini key is missing
-    if (!apiKey) {
+    const genAI = getGenAI();
+    if (!genAI) {
       logger.warn("GEMINI_API_KEY missing. Using fallback rule-based improver.");
       
       if (isSummaryRequest) {
@@ -74,9 +78,9 @@ export async function POST(request: NextRequest) {
     // 4. Gemini AI Call
     try {
       const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.6-flash",
         generationConfig: {
-          temperature: 0.7,
+          temperature: 0.4,
           maxOutputTokens: 1000,
         },
       });

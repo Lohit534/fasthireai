@@ -569,7 +569,7 @@ const GROQ_MODELS = [
 ].filter(Boolean) as string[];
 
 export async function callAIText(prompt: string): Promise<string> {
-  const apiKeyGroq = process.env.GROQ_API_KEY || "";
+  const apiKeyGroq = (process.env.GROQ_API_KEY || "").replace(/^["']|["']$/g, "").trim();
   if (apiKeyGroq) {
     for (const modelName of GROQ_MODELS) {
       try {
@@ -599,10 +599,17 @@ export async function callAIText(prompt: string): Promise<string> {
   }
 
   // Fallback to Gemini
-  if (process.env.GEMINI_API_KEY) {
-    const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"];
+  const apiKeyGemini = (process.env.GEMINI_API_KEY || "").replace(/^["']|["']$/g, "").trim();
+  if (apiKeyGemini) {
+    const GEMINI_MODELS = [
+      "gemini-3.6-flash",
+      "gemini-flash-latest",
+      "gemini-flash-lite-latest",
+      "gemini-3.5-flash-lite",
+      "gemini-3.8-flash",
+    ];
     const { GoogleGenerativeAI } = await import("@google/generative-ai");
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const genAI = new GoogleGenerativeAI(apiKeyGemini);
 
     for (const modelName of GEMINI_MODELS) {
       try {
@@ -622,7 +629,7 @@ export async function callAIText(prompt: string): Promise<string> {
 
 // Raw Groq call returning string content (with multi-model fallback)
 async function callGroqRaw(prompt: string): Promise<string> {
-  const apiKey = process.env.GROQ_API_KEY || "";
+  const apiKey = (process.env.GROQ_API_KEY || "").replace(/^["']|["']$/g, "").trim();
   if (!apiKey) throw new Error("Groq API key is missing");
 
   let lastError: any = null;
