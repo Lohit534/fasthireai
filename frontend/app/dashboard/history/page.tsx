@@ -384,7 +384,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                 <Lock className="h-4 w-4" />
                 <span>Unlock PDF &amp; DOCX Download</span>
                 <span className="ml-1 px-1.5 py-0.5 text-[9px] font-black uppercase rounded bg-amber-400 text-slate-900">
-                  PRO ACCESS
+                  PRO
                 </span>
               </Button>
             ) : (

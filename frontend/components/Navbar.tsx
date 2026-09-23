@@ -243,45 +243,36 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
           <div className="flex items-center gap-2 sm:gap-4">
             {user ? (
               <>
-                {/* Profile Button with circular avatar and down credits in teal */}
+                {/* Profile Button: only circular avatar with teal circle ring */}
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     aria-label="Open profile menu"
-                    className="flex items-center gap-2 sm:gap-2.5 py-1 px-1.5 sm:px-2.5 rounded-2xl hover:bg-slate-100/90 border border-slate-200 bg-white transition-all shadow-xs cursor-pointer group select-none"
+                    className="relative p-0.5 rounded-full hover:scale-105 transition-all focus:outline-none cursor-pointer group"
                   >
-                    <div className="relative">
-                      <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-slate-900 ring-2 ring-[#0d6e5a] ring-offset-1 flex items-center justify-center text-white font-extrabold text-xs sm:text-sm shadow-xs transition-transform group-hover:scale-105">
-                        {user.email ? user.email.charAt(0).toUpperCase() : "U"}
-                      </div>
-                      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#0d6e5a] ring-2 ring-white" />
+                    <div className="h-9 w-9 rounded-full bg-emerald-50 border-2 border-[#0d6e5a] ring-2 ring-[#0d6e5a]/25 flex items-center justify-center text-[#0d6e5a] font-black text-sm shadow-xs transition-transform group-hover:scale-105 select-none">
+                      {user.email ? user.email.charAt(0).toUpperCase() : "U"}
                     </div>
-                    <div className="flex flex-col items-start leading-tight text-left">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider hidden sm:block">Credits</span>
-                      <span className="text-xs font-black text-[#0d6e5a]">
-                        {creditsDisplay}
-                      </span>
-                    </div>
-                    <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? "rotate-180 text-slate-700" : "group-hover:text-slate-700"} ml-0.5`} />
+                    <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[#0d6e5a] ring-2 ring-white" />
                   </button>
 
-                  {/* PROFILE DROPDOWN MENU (Styled after user reference image) */}
+                  {/* PROFILE DROPDOWN MENU (Clean White & Brand Teal Theme) */}
                   {isDropdownOpen && (
-                    <div className="absolute right-0 mt-2.5 w-[310px] sm:w-[330px] bg-[#12161f] text-slate-100 border border-slate-800 rounded-3xl shadow-2xl p-4 space-y-3.5 select-none animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                    <div className="absolute right-0 mt-2.5 w-[310px] sm:w-[330px] bg-white text-slate-800 border border-slate-200 rounded-3xl shadow-2xl p-4 space-y-3.5 select-none animate-in fade-in slide-in-from-top-2 duration-150 z-50">
                       
                       {/* 1. User Header */}
-                      <div className="flex items-center gap-3 pb-3 border-b border-slate-800/80">
-                        <div className="h-10 w-10 rounded-full bg-slate-800 ring-2 ring-[#0d6e5a] p-0.5 flex items-center justify-center text-emerald-400 font-black text-sm shrink-0">
+                      <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                        <div className="h-10 w-10 rounded-full bg-emerald-50 border-2 border-[#0d6e5a] ring-2 ring-[#0d6e5a]/25 flex items-center justify-center text-[#0d6e5a] font-black text-sm shrink-0">
                           {user.email ? user.email.charAt(0).toUpperCase() : "U"}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm font-bold text-white truncate max-w-full">
+                          <div className="text-sm font-bold text-slate-900 truncate max-w-full">
                             {user.user_metadata?.full_name || (user.email ? user.email.split("@")[0] : "User")}
                           </div>
-                          <div className="text-xs text-slate-400 font-semibold truncate flex items-center gap-1.5 mt-0.5">
+                          <div className="text-xs text-slate-500 font-semibold truncate flex items-center gap-1.5 mt-0.5">
                             <span>{planLabel}</span>
                             {isOwner && (
-                              <span className="bg-amber-400/20 text-amber-300 text-[9px] font-black uppercase px-1.5 py-0.2 rounded">
+                              <span className="bg-amber-100 text-amber-800 text-[9px] font-black uppercase px-1.5 py-0.2 rounded border border-amber-200">
                                 Owner
                               </span>
                             )}
@@ -289,18 +280,18 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                         </div>
                       </div>
 
-                      {/* 2. Credits Box (Card matching reference image) */}
-                      <div className="bg-[#1b2230] border border-slate-700/60 rounded-2xl p-3.5 space-y-3">
+                      {/* 2. Credits Box (White & Teal) */}
+                      <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3.5 space-y-3">
                         {/* Header: Credits ⓘ and X left > */}
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                             <span>Credits</span>
                             <HelpCircle className="h-3 w-3 text-slate-400" />
                           </div>
                           <Link
                             href="/dashboard/billing"
                             onClick={() => setIsDropdownOpen(false)}
-                            className="text-xs font-black text-[#0d6e5a] hover:text-emerald-400 flex items-center gap-0.5 transition-colors"
+                            className="text-xs font-black text-[#0d6e5a] hover:text-[#094d3f] flex items-center gap-0.5 transition-colors"
                           >
                             <span>{creditsDisplay}</span>
                             <ChevronRight className="h-3.5 w-3.5" />
@@ -319,73 +310,83 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                                 key={i}
                                 className={`h-1.5 flex-1 rounded-full transition-all ${
                                   isActive
-                                    ? "bg-[#0d6e5a] shadow-[0_0_6px_rgba(13,110,90,0.8)]"
-                                    : "bg-slate-700/50"
+                                    ? "bg-[#0d6e5a] shadow-[0_0_4px_rgba(13,110,90,0.6)]"
+                                    : "bg-slate-200"
                                 }`}
                               />
                             );
                           })}
                         </div>
 
-                        {/* Action Row 1: Top-up credits / Upgrade to Pro */}
-                        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-700/50">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div className="h-6 w-6 rounded-full bg-emerald-950/80 border border-emerald-800/60 flex items-center justify-center shrink-0">
-                              <Sparkles className="h-3.5 w-3.5 text-[#0d6e5a]" />
+                        {/* Action Rows: Only show upgrades if NOT on Pro Max and NOT Owner */}
+                        {!isProMax && !isOwner ? (
+                          <div className="space-y-2 pt-1 border-t border-slate-200/80">
+                            {/* Action Row 1: Top-up credits / Upgrade to Pro */}
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="h-6 w-6 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0">
+                                  <Sparkles className="h-3.5 w-3.5 text-[#0d6e5a]" />
+                                </div>
+                                <span className="text-xs font-bold text-slate-800 truncate">
+                                  {isPremium ? "Refill Pro (20/mo)" : "Upgrade Pro (20/mo)"}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsDropdownOpen(false);
+                                  useUpgradeModalStore.getState().openModal({
+                                    badge: "PREMIUM PRO",
+                                    title: "Upgrade to Premium Pro",
+                                    description: "Get 20 AI resume optimizations/month, unlimited PDF & DOCX downloads, and priority features.",
+                                  });
+                                }}
+                                className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white text-[11px] font-black px-3.5 py-1 rounded-full shadow-xs transition-all cursor-pointer shrink-0"
+                              >
+                                Get
+                              </button>
                             </div>
-                            <span className="text-xs font-bold text-slate-200 truncate">
-                              {isPremium ? "Refill Pro (20/mo)" : "Upgrade Pro (20/mo)"}
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsDropdownOpen(false);
-                              useUpgradeModalStore.getState().openModal({
-                                badge: "PREMIUM PRO",
-                                title: "Upgrade to Premium Pro",
-                                description: "Get 20 AI resume optimizations/month, unlimited PDF & DOCX downloads, and priority features.",
-                              });
-                            }}
-                            className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white text-[11px] font-black px-3.5 py-1 rounded-full shadow-sm transition-all cursor-pointer shrink-0"
-                          >
-                            Get
-                          </button>
-                        </div>
 
-                        {/* Action Row 2: Pro Max / 90 Optimizations */}
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div className="h-6 w-6 rounded-full bg-amber-950/80 border border-amber-800/60 flex items-center justify-center shrink-0">
-                              <Zap className="h-3.5 w-3.5 text-amber-400" />
+                            {/* Action Row 2: Pro Max / 90 Optimizations */}
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="h-6 w-6 rounded-full bg-teal-100 border border-teal-200 flex items-center justify-center shrink-0">
+                                  <Zap className="h-3.5 w-3.5 text-[#0d6e5a]" />
+                                </div>
+                                <span className="text-xs font-bold text-slate-800 truncate">
+                                  Pro Max (90/mo)
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsDropdownOpen(false);
+                                  useUpgradeModalStore.getState().openModal({
+                                    badge: "PRO MAX POWER",
+                                    title: "Upgrade to Pro Max",
+                                    description: "Unlock 90 AI optimizations every month, priority ATS scoring, and high-performance resume analysis.",
+                                  });
+                                }}
+                                className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white text-[11px] font-black px-3.5 py-1 rounded-full shadow-xs transition-all cursor-pointer shrink-0"
+                              >
+                                Get
+                              </button>
                             </div>
-                            <span className="text-xs font-bold text-slate-200 truncate">
-                              Pro Max (90/mo + 24/7 AI)
-                            </span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsDropdownOpen(false);
-                              useUpgradeModalStore.getState().openModal({
-                                badge: "PRO MAX POWER",
-                                title: "Upgrade to Pro Max",
-                                description: "Unlock 90 AI optimizations every month, 24/7 AI Assistant, and instant priority ATS scoring.",
-                              });
-                            }}
-                            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-black px-3.5 py-1 rounded-full shadow-sm transition-all cursor-pointer shrink-0"
-                          >
-                            Get
-                          </button>
-                        </div>
+                        ) : (
+                          <div className="flex items-center gap-2 pt-1 border-t border-slate-200/80 text-xs font-bold text-[#0d6e5a]">
+                            <Zap className="h-3.5 w-3.5 text-[#0d6e5a]" />
+                            <span>Pro Max Plan Active &bull; 90 / month</span>
+                          </div>
+                        )}
                       </div>
 
-                      {/* 3. Navigation Links List (All original links retained) */}
+                      {/* 3. Navigation Links List */}
                       <div className="space-y-0.5 pt-0.5">
                         <Link 
                           href="/dashboard" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
                         >
                           <Compass className="h-4 w-4 text-slate-400" />
                           <span>Optimize Resume</span>
@@ -393,7 +394,7 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                         <Link 
                           href="/dashboard/resumes" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
                         >
                           <FileText className="h-4 w-4 text-slate-400" />
                           <span>My Resumes</span>
@@ -401,7 +402,7 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                         <Link 
                           href="/dashboard/job-tracker" 
                           onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
                         >
                           <Briefcase className="h-4 w-4 text-slate-400" />
                           <span>Job Tracker</span>
@@ -409,7 +410,7 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                         <Link 
                           href="/dashboard/pricing" 
                           onClick={() => setIsDropdownOpen(false)} 
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
                         >
                           <DollarSign className="h-4 w-4 text-slate-400" />
                           <span>Pricing Plans</span>
@@ -417,7 +418,7 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                         <Link 
                           href="/dashboard/billing" 
                           onClick={() => setIsDropdownOpen(false)} 
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
                         >
                           <CreditCard className="h-4 w-4 text-slate-400" />
                           <span>Billing &amp; Usage</span>
@@ -425,20 +426,20 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                         <button
                           type="button"
                           onClick={() => { setIsDropdownOpen(false); setIsReferralOpen(true); }}
-                          className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors text-left cursor-pointer"
                         >
                           <div className="flex items-center gap-2.5">
                             <Gift className="h-4 w-4 text-slate-400" />
                             <span>Refer a Friend</span>
                           </div>
-                          <span className="bg-[#0d6e5a]/30 border border-[#0d6e5a]/60 text-emerald-400 text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full">
+                          <span className="bg-emerald-50 border border-emerald-200 text-[#0d6e5a] text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full">
                             New
                           </span>
                         </button>
                       </div>
 
                       {/* Divider */}
-                      <div className="border-t border-slate-800/80" />
+                      <div className="border-t border-slate-100" />
 
                       {/* 4. Secondary actions */}
                       <div className="space-y-0.5">
@@ -447,7 +448,7 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                             setIsDropdownOpen(false);
                             window.dispatchEvent(new CustomEvent("open-support-chatbot", { detail: { mode: "help-center" } }));
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors text-left cursor-pointer"
                         >
                           <HelpCircle className="h-4 w-4 text-slate-400" />
                           <span>Help &amp; Support</span>
@@ -457,7 +458,7 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                             setIsDropdownOpen(false);
                             setIsFeedbackOpen(true);
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors text-left cursor-pointer"
                         >
                           <MessageSquare className="h-4 w-4 text-slate-400" />
                           <span>Feedback</span>
@@ -468,7 +469,7 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                             setIsDropdownOpen(false);
                             setIsDataPreferencesOpen(true);
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors text-left cursor-pointer"
                         >
                           <Lock className="h-4 w-4 text-slate-400" />
                           <span>Data Preferences</span>
@@ -476,14 +477,14 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                       </div>
 
                       {/* Divider */}
-                      <div className="border-t border-slate-800/80" />
+                      <div className="border-t border-slate-100" />
 
                       {/* 5. Sign Out */}
                       <button
                         onClick={handleSignOut}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors text-left cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-colors text-left cursor-pointer"
                       >
-                        <LogOut className="h-4 w-4" />
+                        <LogOut className="h-4 w-4 text-rose-500" />
                         <span>Sign Out</span>
                       </button>
 

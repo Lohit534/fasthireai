@@ -549,47 +549,41 @@ export default function SupportChatbot() {
                   <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-[#0d6e5a] group-hover:translate-x-0.5 transition-all shrink-0" />
                 </button>
 
-                {/* Option 2: AI Assistant Chat (Pro Max Exclusive) */}
-                <button
-                  onClick={() => {
-                    const isProMax = activePlan.toLowerCase().includes("promax") || 
-                                     activePlan.toLowerCase().includes("pro max") || 
-                                     activePlan.toLowerCase().includes("owner") || 
-                                     (rawCredits?.isOwner ?? false) || 
-                                     (rawCredits?.paidCredits ?? 0) >= 99999;
-                    if (!isProMax) {
-                      setIsOpen(false);
-                      useUpgradeModalStore.getState().openModal({
-                        badge: "PRO ACCESS FEATURE",
-                        title: "Unlock 24/7 AI Assistant & Coach",
-                        description: "24/7 AI Chatbot Assistant is an exclusive feature of the Pro Max plan. Get instant resume advice, live ATS diagnostics, and 90 optimizations/month.",
-                      });
-                      return;
-                    }
-                    setView("ai-chat");
-                  }}
-                  className="w-full p-4 bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#0d6e5a]/40 rounded-2xl flex items-center justify-between gap-4 text-left transition-all group shadow-sm cursor-pointer"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#0d6e5a] group-hover:scale-105 transition-transform shrink-0">
-                      <Sparkles className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-xs font-extrabold text-slate-900 group-hover:text-[#0d6e5a] transition-colors">
-                          AI Chat
-                        </h4>
-                        <Badge className="bg-amber-50 border border-amber-200 text-amber-800 text-[8px] font-black uppercase tracking-wider px-1.5 py-0 rounded select-none">
-                          PRO ACCESS
-                        </Badge>
+                {/* Option 2: AI Assistant Chat (Only visible to users who are in Pro Max plan) */}
+                {(() => {
+                  const isProMax = activePlan.toLowerCase().includes("promax") || 
+                                   activePlan.toLowerCase().includes("pro max") || 
+                                   activePlan.toLowerCase().includes("owner") || 
+                                   (rawCredits?.isOwner ?? false) || 
+                                   (rawCredits?.paidCredits ?? 0) >= 99999;
+                  if (!isProMax) return null;
+                  return (
+                    <button
+                      onClick={() => setView("ai-chat")}
+                      className="w-full p-4 bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#0d6e5a]/40 rounded-2xl flex items-center justify-between gap-4 text-left transition-all group shadow-sm cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3.5">
+                        <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#0d6e5a] group-hover:scale-105 transition-transform shrink-0">
+                          <Sparkles className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-xs font-extrabold text-slate-900 group-hover:text-[#0d6e5a] transition-colors">
+                              AI Chat
+                            </h4>
+                            <Badge className="bg-emerald-50 border border-emerald-200 text-[#0d6e5a] text-[8px] font-black uppercase tracking-wider px-1.5 py-0 rounded select-none">
+                              PRO MAX
+                            </Badge>
+                          </div>
+                          <p className="text-[10px] text-slate-500 mt-0.5 font-medium">
+                            24/7 AI Assistant &bull; Ask anything about FastHire
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-[10px] text-slate-500 mt-0.5 font-medium">
-                        Instant AI Assistant &bull; Ask anything about FastHire
-                      </p>
-                    </div>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-[#0d6e5a] group-hover:translate-x-0.5 transition-all shrink-0" />
-                </button>
+                      <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-[#0d6e5a] group-hover:translate-x-0.5 transition-all shrink-0" />
+                    </button>
+                  );
+                })()}
               </div>
 
               {/* Bottom Quick Back Link */}

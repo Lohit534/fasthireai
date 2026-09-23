@@ -395,7 +395,7 @@ export default function DashboardPage() {
     const isOwner = userPlan === "owner" || (user?.email && isOwnerEmail(user.email));
     if (userPlan === "free" && !isOwner) {
       useUpgradeModalStore.getState().openModal({
-        badge: "PRO ACCESS FEATURE",
+        badge: "PRO",
         title: "Unlock AI Skill Learning Roadmaps",
         description: "Skills learning roadmaps are a Pro & Pro Max feature. Please upgrade your plan to unlock instant career roadmaps!",
       });
@@ -415,7 +415,7 @@ export default function DashboardPage() {
       
       if (currentCount >= limit) {
         useUpgradeModalStore.getState().openModal({
-          badge: "PRO ACCESS FEATURE",
+          badge: "PRO",
           title: "Roadmap Quota Reached",
           description: `You have reached your monthly limit of ${limit} roadmaps for the ${userPlan === "premium" ? "Premium Pro" : "Pro Max"} plan. Upgrade to unlock more roadmaps and 90 optimizations/month.`,
         });
@@ -448,7 +448,7 @@ export default function DashboardPage() {
       
       if (currentCount >= limit) {
         useUpgradeModalStore.getState().openModal({
-          badge: "PRO ACCESS FEATURE",
+          badge: "PRO",
           title: "Cover Letter Limit Reached",
           description: `You have reached your limit of ${limit} cover letters for the ${userPlan === "free" ? "Free" : userPlan === "premium" ? "Premium Pro" : "Pro Max"} plan. Please upgrade to unlock more cover letters and 90 optimizations/month.`,
         });

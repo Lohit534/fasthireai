@@ -52,11 +52,12 @@ export default function UpgradePaywallModal() {
 
   if (!isOpen) return null;
 
-  const badgeText = options.badge || "PRO ACCESS FEATURE";
+  const rawBadge = options.badge || "PRO";
+  const badgeText = rawBadge.replace(/ACCESS\s*FEATURE|ACCESS/gi, "").trim() || "PRO";
   const titleText = options.title || "Your 2 free optimizations are used up";
   const descriptionText =
     options.description ||
-    "Your optimized resume is saved and stays in your history. Free includes the ATS score and live preview; downloading and 24/7 AI are on a paid plan.";
+    "Your optimized resume is saved and stays in your history. Upgrade to continue optimizing, downloading, and unlocking powerful AI career features.";
 
   const handleUpgrade = async (planId: "premium" | "promax") => {
     try {
@@ -233,7 +234,7 @@ export default function UpgradePaywallModal() {
           </div>
         </div>
 
-        {/* Scrollable Center Body: Comparison Table */}
+        {/* Scrollable Center Body: Comparison Table & 3 Plans */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
           {/* Comparison Table */}
           <div className="border border-slate-200/90 rounded-2xl overflow-hidden bg-white shadow-sm">
@@ -269,13 +270,15 @@ export default function UpgradePaywallModal() {
             </table>
           </div>
 
-          {/* 3 Plan Cards Grid */}
+          {/* 3 Plan Cards Grid — Text matching Pricing Page */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-            {/* Plan 1: Free */}
+            {/* Plan 1: Free Career Tier */}
             <div className="border border-slate-200 rounded-2xl p-4 bg-white flex flex-col justify-between shadow-sm">
               <div>
                 <h3 className="font-extrabold text-sm text-slate-900">Free Career Tier</h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">Essential baseline ATS scan</p>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                  Perfect for casual job seekers needing basic optimization.
+                </p>
                 <div className="mt-3 flex items-baseline gap-1">
                   <span className="text-2xl font-black text-slate-900">₹0</span>
                   <span className="text-xs text-slate-500 font-semibold">/ forever</span>
@@ -283,15 +286,20 @@ export default function UpgradePaywallModal() {
                 <div className="border-t border-slate-100 my-3" />
                 <ul className="space-y-1.5 text-xs text-slate-600 font-medium">
                   <li className="flex items-center gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-slate-400" />
-                    <span>2 optimizations / month</span>
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>2 AI resume optimizations per month</span>
                   </li>
                   <li className="flex items-center gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-slate-400" />
-                    <span>Live score & preview</span>
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>1 resume download (PDF + DOCX)</span>
                   </li>
-                  <li className="flex items-center gap-1.5 text-slate-400">
-                    <span>— PDF & DOCX download locked</span>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>1 cover letter download (PDF + DOCX)</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>Job application tracker</span>
                   </li>
                 </ul>
               </div>
@@ -311,7 +319,9 @@ export default function UpgradePaywallModal() {
               </span>
               <div>
                 <h3 className="font-extrabold text-sm text-[#0d6e5a]">Premium Pro</h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">For active job applicants</p>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                  For active job hunters targeting multiple roles.
+                </p>
                 <div className="mt-3 flex items-baseline gap-1">
                   <span className="text-2xl font-black text-slate-900">
                     {billingCycle === "yearly" ? "₹166" : "₹99"}
@@ -323,16 +333,44 @@ export default function UpgradePaywallModal() {
                 <div className="border-t border-emerald-100 my-3" />
                 <ul className="space-y-1.5 text-xs text-slate-700 font-medium">
                   <li className="flex items-center gap-1.5 font-bold text-[#0d6e5a]">
-                    <Check className="h-3.5 w-3.5 text-[#0d6e5a]" />
-                    <span>20 optimizations / month</span>
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>20 AI resume optimizations per month</span>
                   </li>
                   <li className="flex items-center gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-[#0d6e5a]" />
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
                     <span>Unlimited PDF + DOCX downloads</span>
                   </li>
                   <li className="flex items-center gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-[#0d6e5a]" />
-                    <span>5 cover letters & 5 roadmaps</span>
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>5 cover letters / month</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>Skills learning roadmap (5/month)</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>Build up to 20 resumes from scratch</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>AI resume builder (improve bullets, write summary)</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>Import resume via AI</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>Optimization history logs (2 months retention)</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>Job application tracker</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>Priority support</span>
                   </li>
                 </ul>
               </div>
@@ -354,15 +392,17 @@ export default function UpgradePaywallModal() {
             </div>
 
             {/* Plan 3: Pro Max */}
-            <div className="border border-slate-200 hover:border-amber-400/50 rounded-2xl p-4 bg-white flex flex-col justify-between shadow-sm">
+            <div className="border border-slate-200 hover:border-emerald-300 rounded-2xl p-4 bg-white flex flex-col justify-between shadow-sm">
               <div>
                 <div className="flex items-center justify-between">
                   <h3 className="font-extrabold text-sm text-slate-900">Pro Max</h3>
-                  <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                  <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-50 text-[#0d6e5a] border border-emerald-200">
                     POWER TIER
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">Maximum power & 24/7 AI</p>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                  For active career changers needing maximum optimization power and 24/7 AI features.
+                </p>
                 <div className="mt-3 flex items-baseline gap-1">
                   <span className="text-2xl font-black text-slate-900">
                     {billingCycle === "yearly" ? "₹332" : "₹199"}
@@ -373,17 +413,49 @@ export default function UpgradePaywallModal() {
                 </div>
                 <div className="border-t border-slate-100 my-3" />
                 <ul className="space-y-1.5 text-xs text-slate-700 font-medium">
-                  <li className="flex items-center gap-1.5 font-bold text-amber-700">
-                    <Check className="h-3.5 w-3.5 text-amber-600" />
-                    <span>90 optimizations / month</span>
+                  <li className="flex items-center gap-1.5 font-bold text-[#0d6e5a]">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>90 AI resume optimizations per month</span>
                   </li>
                   <li className="flex items-center gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-amber-600" />
-                    <span>24/7 AI Chatbot Assistant</span>
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>Unlimited PDF + DOCX downloads</span>
                   </li>
                   <li className="flex items-center gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-amber-600" />
-                    <span>15 cover letters & 15 roadmaps</span>
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>15 cover letters / month</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>Skills learning roadmap (15/month)</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>Build up to 40 resumes from scratch</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>24/7 AI Chatbot &amp; Assistant</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>AI resume builder (improve bullets, write summary)</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>Import resume via AI</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>Optimization history logs (4 months retention)</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>Job application tracker</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+                    <span>Priority support</span>
                   </li>
                 </ul>
               </div>
@@ -391,7 +463,7 @@ export default function UpgradePaywallModal() {
                 type="button"
                 onClick={() => handleUpgrade("promax")}
                 disabled={loadingPlan === "promax"}
-                className="mt-4 w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-70"
+                className="mt-4 w-full py-2 px-3 rounded-xl bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-extrabold text-xs shadow transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-70"
               >
                 {loadingPlan === "promax" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

@@ -80,7 +80,7 @@ export default function BulletImprover({ resumeText, jobDescription, userId, use
     // Plan-based limit check
     if (remaining <= 0) {
       useUpgradeModalStore.getState().openModal({
-        badge: "PRO ACCESS FEATURE",
+        badge: "PRO",
         title: "Bullet Improver Limit Reached",
         description: userPlan === "free"
           ? "You've used all 2 free auto-improves this month. Upgrade to Premium Pro (10/month) or Pro Max (unlimited) to rewrite bullet points with AI."
@@ -254,7 +254,7 @@ export default function BulletImprover({ resumeText, jobDescription, userId, use
                       onClick={() => canImprove
                         ? handleAutoImprove(index, line)
                         : useUpgradeModalStore.getState().openModal({
-                            badge: "PRO ACCESS FEATURE",
+                            badge: "PRO",
                             title: "Bullet Improver Limit Reached",
                             description: userPlan === "free"
                               ? "You've used all 2 free auto-improves this month. Upgrade to Premium Pro (10/month) or Pro Max (unlimited) to rewrite bullet points with AI."
