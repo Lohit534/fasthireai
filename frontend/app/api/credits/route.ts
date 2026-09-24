@@ -170,43 +170,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Check if plan has expired
-    let expiresAt = creditRow.expiresAt ? new Date(creditRow.expiresAt) : null;
-    let billingCycle = creditRow.billingCycle || "monthly";
-    let paidCredits = creditRow.paidCredits;
-    let freeUsed = creditRow.freeUsed;
-
-    // For first 50 users, if expiresAt is not set, set it to 1 year from signup time
-    if (isFirst50 && !expiresAt) {
-      const signupTime = new Date(creditRow.resetAt || now);
-      expiresAt = new Date(signupTime.getTime() + 365 * 24 * 60 * 60 * 1000);
-      await admin
-        .from("Credit")
-        .update({ expiresAt: expiresAt.toISOString(), billingCycle: "yearly" })
-        .eq("userId", activeUserId);
-    }
-
-    if (expiresAt && now > expiresAt) {
-      // Plan expired! Revert to free plan
-      paidCredits = 0;
-      billingCycle = "monthly";
-      expiresAt = null;
-      freeUsed = 0;
-
-      await admin
-        .from("Credit")
-        .update({
-          paidCredits: 0,
-          billingCycle: "monthly",
-          expiresAt: null,
-          freeUsed: 0,
-          resetAt: now.toISOString(),
-        })
-        .eq("userId", activeUserId);
-      
-      logger.info(`[credits] Plan expired for user ${user.email}. Reverted to free tier.`);
-    }
-
     const userEmail = (user.email || "").toLowerCase().trim();
     const isProMaxPurchasedUser = userEmail === "payyalajyothika333@gmail.com";
 
@@ -226,37 +189,81 @@ export async function GET(request: NextRequest) {
         .maybeSingle();
 
       if (proMaxPayment) {
+        isPaidProMax = true;
         const payDate = new Date(proMaxPayment.createdAt);
-        const days = proMaxPayment.billingCycle === "yearly" ? 365 : 30;
+        const isYearly = proMaxPayment.billingCycle === "yearly" && (proMaxPayment.amount > 300);
+        const days = isYearly ? 365 : 30;
         const validUntil = new Date(payDate.getTime() + days * 24 * 60 * 60 * 1000);
-        if (now < validUntil || isProMaxPurchasedUser) {
-          isPaidProMax = true;
-          proMaxValidUntil = validUntil > now ? validUntil : proMaxValidUntil;
-        }
+        proMaxValidUntil = isProMaxPurchasedUser ? new Date("2026-10-12T06:32:35.000Z") : validUntil;
       }
     } catch (e: any) {
       logger.warn("[credits] Failed checking promax payment logs:", e.message);
     }
 
     if (isPaidProMax) {
-      // User has paid Pro Max! Ensure they get 90 credits and monthly billing
-      expiresAt = proMaxValidUntil || expiresAt || new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      isFirst50 = false; // Paying Pro Max customer is NOT a free promotional user
+    }
+
+    // Check if plan has expired
+    let expiresAt = creditRow.expiresAt ? new Date(creditRow.expiresAt) : null;
+    let billingCycle = isPaidProMax ? "monthly" : (creditRow.billingCycle || "monthly");
+    let paidCredits = creditRow.paidCredits;
+    let freeUsed = creditRow.freeUsed;
+
+    if (isPaidProMax) {
+      // User purchased 1 month Pro Max on 12/9 (Sep 12) -> strictly expires on Oct 12, 2026
+      expiresAt = proMaxValidUntil || new Date("2026-10-12T06:32:35.000Z");
       billingCycle = "monthly";
       paidCredits = PRO_MAX_CREDITS_PER_MONTH; // 90
 
-      if (creditRow.paidCredits !== PRO_MAX_CREDITS_PER_MONTH) {
+      // Always persist monthly cycle, 90 credits, and Oct 12 expiry to database
+      const targetExpiryStr = expiresAt.toISOString();
+      if (creditRow.billingCycle !== "monthly" || creditRow.paidCredits !== PRO_MAX_CREDITS_PER_MONTH || creditRow.expiresAt !== targetExpiryStr) {
         await admin
           .from("Credit")
           .update({
             paidCredits: PRO_MAX_CREDITS_PER_MONTH,
             billingCycle: "monthly",
-            expiresAt: expiresAt.toISOString(),
+            expiresAt: targetExpiryStr,
           })
           .eq("userId", activeUserId);
         creditRow.paidCredits = PRO_MAX_CREDITS_PER_MONTH;
-        logger.info(`[credits] Restored Pro Max plan with ${PRO_MAX_CREDITS_PER_MONTH} credits for paying user ${userEmail}`);
+        creditRow.billingCycle = "monthly";
+        creditRow.expiresAt = targetExpiryStr;
+        logger.info(`[credits] Corrected Pro Max plan to monthly (90 credits, expires ${targetExpiryStr}) for ${userEmail}`);
       }
     } else {
+      // For first 50 free promotional users ONLY, set 1 year expiry
+      if (isFirst50 && !expiresAt) {
+        const signupTime = new Date(creditRow.resetAt || now);
+        expiresAt = new Date(signupTime.getTime() + 365 * 24 * 60 * 60 * 1000);
+        await admin
+          .from("Credit")
+          .update({ expiresAt: expiresAt.toISOString(), billingCycle: "yearly" })
+          .eq("userId", activeUserId);
+      }
+
+      if (expiresAt && now > expiresAt) {
+        // Plan expired! Revert to free plan
+        paidCredits = 0;
+        billingCycle = "monthly";
+        expiresAt = null;
+        freeUsed = 0;
+
+        await admin
+          .from("Credit")
+          .update({
+            paidCredits: 0,
+            billingCycle: "monthly",
+            expiresAt: null,
+            freeUsed: 0,
+            resetAt: now.toISOString(),
+          })
+          .eq("userId", activeUserId);
+        
+        logger.info(`[credits] Plan expired for user ${user.email}. Reverted to free tier.`);
+      }
+
       // Auto-heal ONLY for non-paying users: If user is isFirst50 or has legacy credits (>20 and <=365), clamp DB to 20 Pro credits
       if (isFirst50 || (creditRow.paidCredits > 20 && creditRow.paidCredits <= 365)) {
         if (creditRow.paidCredits !== PRO_CREDITS_PER_MONTH) {

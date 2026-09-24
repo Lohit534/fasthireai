@@ -46,6 +46,8 @@ interface UserRecord {
   plan: "free" | "premium" | "promax" | "owner";
   freeUsed: number;
   paidCredits: number;
+  expiresAt?: string | null;
+  billingCycle?: string | null;
 }
 
 interface Ticket {
@@ -857,6 +859,14 @@ export default function UnifiedAdminDashboard() {
                               <span>Paid Balance:</span>
                               <span className="text-[#0d6e5a] font-bold">{u.paidCredits > 9999 ? "Unlimited" : `${u.paidCredits} Credits`}</span>
                             </div>
+                            {u.expiresAt && (
+                              <div className="flex justify-between">
+                                <span>Expires:</span>
+                                <span className="text-emerald-700 font-bold">
+                                  {new Date(u.expiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                </span>
+                              </div>
+                            )}
                           </div>
 
                           <div className="border-t border-slate-200 pt-3 flex items-center justify-between">

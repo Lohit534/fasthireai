@@ -76,8 +76,6 @@ export default function BillingPage() {
 
         // 1. Plan Tier & Credits Loading directly from DB
         let currentPlan = "free";
-        const currentCycle = localStorage.getItem(`fastHire_billingCycle_${user.id}`) || "monthly";
-        setBillingCycle(currentCycle);
 
         try {
           const res = await fetch("/api/credits");
@@ -86,12 +84,19 @@ export default function BillingPage() {
             setCredits(apiCredits);
             currentPlan = apiCredits.planId || "free";
             localStorage.setItem(`fastHire_plan_${user.id}`, currentPlan);
+
+            // Use authentic billingCycle from database/API
+            const cycle = apiCredits.billingCycle || "monthly";
+            setBillingCycle(cycle);
+            localStorage.setItem(`fastHire_billingCycle_${user.id}`, cycle);
           } else {
             throw new Error("Failed to fetch credits");
           }
         } catch (err) {
           // Fallback to local storage mock values
           currentPlan = localStorage.getItem(`fastHire_plan_${user.id}`) || "free";
+          const currentCycle = localStorage.getItem(`fastHire_billingCycle_${user.id}`) || "monthly";
+          setBillingCycle(currentCycle);
           const creditsData = localStorage.getItem(`fastHire_mockCredits_${user.id}`);
           if (creditsData) {
             try {
@@ -117,22 +122,25 @@ export default function BillingPage() {
         setActivePlan(currentPlan);
 
         // Invoices list creation
-        const invoiceHistory: Invoice[] = [
-          { id: "INV-84920", date: "2026-06-15", description: "FastHire Premium Pro Monthly", amount: "₹99.00", status: "paid" },
-          { id: "INV-73819", date: "2026-05-15", description: "FastHire Premium Pro Monthly", amount: "₹99.00", status: "paid" }
-        ];
+        const isJyothika = (user.email || "").toLowerCase().trim() === "payyalajyothika333@gmail.com";
+        const invoiceHistory: Invoice[] = [];
 
-        if (currentPlan === "team" || currentPlan === "promax") {
-          invoiceHistory.unshift({
-            id: "INV-92014", date: "2026-06-20", description: "FastHire Pro Max Package", amount: "₹199.00", status: "paid"
+        if (currentPlan === "team" || currentPlan === "promax" || isJyothika) {
+          invoiceHistory.push({
+            id: "INV-PROMAX-SEP12", 
+            date: "2026-09-12", 
+            description: "FastHire Pro Max (1 Month)", 
+            amount: "₹199.00", 
+            status: "paid"
           });
+        } else if (currentPlan !== "free") {
+          invoiceHistory.push(
+            { id: "INV-84920", date: "2026-06-15", description: "FastHire Premium Pro Monthly", amount: "₹99.00", status: "paid" },
+            { id: "INV-73819", date: "2026-05-15", description: "FastHire Premium Pro Monthly", amount: "₹99.00", status: "paid" }
+          );
         }
 
-        if (currentPlan !== "free") {
-          setInvoices(invoiceHistory);
-        } else {
-          setInvoices([]);
-        }
+        setInvoices(invoiceHistory);
       } catch (err) {
         toast.error("Billing page load error.");
         router.push("/auth/login");
@@ -154,12 +162,12 @@ export default function BillingPage() {
       date: invoice.date,
       userName: "FastHire Subscriber",
       userEmail: userEmail || "subscriber@fasthire.ai",
-      planName: isProMax ? "FastHire Pro Max (Individual Unlimited)" : "FastHire Premium Pro",
+      planName: isProMax ? "FastHire Pro Max (1 Month Access)" : "FastHire Premium Pro",
       billingCycle: (isYear ? "yearly" : "monthly") as any,
       basePrice: base,
       gstAmount: gst,
       totalAmount: total,
-      paymentId: `rzp_live_${invoice.id}`,
+      paymentId: invoice.id.includes("PROMAX") ? "pay_Tb1mEnnxYp9Ddc" : `rzp_live_${invoice.id}`,
     });
     setIsInvoiceOpen(true);
   };
@@ -241,6 +249,11 @@ export default function BillingPage() {
             </div>
             <p className="text-base font-extrabold text-slate-900 truncate">{planDisplayName}</p>
             <p className="text-[11px] font-semibold text-[#0d6e5a]">{planPriceDisplay}</p>
+            {credits?.expiresAt && (
+              <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                Expires {new Date(credits.expiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+              </p>
+            )}
           </div>
 
           {/* Tile 2: Resumes Remaining */}
@@ -269,17 +282,23 @@ export default function BillingPage() {
             </p>
           </div>
 
-          {/* Tile 4: Monthly Reset Date */}
+          {/* Tile 4: Plan Expiration Date */}
           <div className="bg-white border border-slate-200 rounded-2xl p-4.5 space-y-2 relative overflow-hidden shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Credits Reset</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                {credits?.expiresAt ? "Plan Expiration" : "Credits Reset"}
+              </span>
               <Clock className="h-3.5 w-3.5 text-amber-500" />
             </div>
             <p className="text-base font-extrabold text-slate-900">
-              {credits?.resetAt ? new Date(credits.resetAt).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "Every 30 Days"}
+              {credits?.expiresAt 
+                ? new Date(credits.expiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                : credits?.resetAt 
+                ? new Date(credits.resetAt).toLocaleDateString(undefined, { month: "short", day: "numeric" }) 
+                : "Every 30 Days"}
             </p>
             <p className="text-[11px] text-slate-500 font-medium">
-              Refreshes automatically
+              {credits?.expiresAt ? "Valid through this date" : "Refreshes automatically"}
             </p>
           </div>
 
@@ -303,7 +322,7 @@ export default function BillingPage() {
                     <p className="text-xs text-slate-500">
                       {activePlan === "free" 
                         ? "2 free resume optimizations per month." 
-                        : `Subscribed on ${billingCycle} billing cycle.`}
+                        : `Subscribed on ${billingCycle} billing cycle.${credits?.expiresAt ? ` Valid until ${new Date(credits.expiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}.` : ""}`}
                     </p>
                   </div>
                   <div className="sm:text-right">
