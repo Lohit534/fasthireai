@@ -61,6 +61,16 @@ export async function GET(request: NextRequest) {
       logger.warn("[admin/users] Auto-heal jyothika failed:", e.message);
     }
 
+    // Query captured Pro Max payments to ensure all paid Pro Max users are identified
+    const { data: proMaxPurchasers } = await admin
+      .from("PaymentLog")
+      .select("userId, email")
+      .eq("planId", "promax")
+      .eq("status", "captured");
+
+    const proMaxUserIds = new Set((proMaxPurchasers || []).map((p: any) => p.userId));
+    const proMaxEmails = new Set((proMaxPurchasers || []).map((p: any) => (p.email || "").toLowerCase().trim()));
+
     // Merge users and credits
     const merged = users.map((u: any) => {
       const credit = credits.find((c: any) => c.userId === u.id) || {
@@ -69,7 +79,7 @@ export async function GET(request: NextRequest) {
       };
 
       const userEmail = (u.email || "").toLowerCase().trim();
-      const isKnownProMax = userEmail === "payyalajyothika333@gmail.com";
+      const isKnownProMax = userEmail === "payyalajyothika333@gmail.com" || proMaxUserIds.has(u.id) || proMaxEmails.has(userEmail);
 
       // Determine plan tier
       let plan = "free";
@@ -176,6 +186,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
     }
 
+    const admin = getAdminClient() as any;
+
+    // Check if target user is an immutable Pro Max user
+    const { data: targetUserData } = await admin
+      .from("User")
+      .select("id, email")
+      .eq("id", targetUserId)
+      .maybeSingle();
+
+    const targetEmail = (targetUserData?.email || "").toLowerCase().trim();
+
+    const { data: proMaxPayment } = await admin
+      .from("PaymentLog")
+      .select("id")
+      .eq("userId", targetUserId)
+      .eq("planId", "promax")
+      .eq("status", "captured")
+      .maybeSingle();
+
+    if (targetEmail === "payyalajyothika333@gmail.com" || proMaxPayment) {
+      logger.warn(`[admin/users] Blocked attempt to change Pro Max user ${targetEmail} (${targetUserId})`);
+      return NextResponse.json({ 
+        error: "Pro Max subscribers cannot be modified from the admin portal." 
+      }, { status: 403 });
+    }
+
     // Map planId to paidCredits
     let paidCredits = 0;
     if (planId === "premium") {
@@ -184,7 +220,6 @@ export async function POST(request: NextRequest) {
       paidCredits = PRO_MAX_CREDITS_PER_MONTH; // 90
     }
 
-    const admin = getAdminClient() as any;
     const now = new Date();
 
     // Fetch existing credit row to avoid not-null primary key constraint failures

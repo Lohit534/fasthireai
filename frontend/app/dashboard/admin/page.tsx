@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
-  Loader2, 
   ArrowLeft, 
   MessageSquare, 
   User as UserIcon, 
@@ -37,7 +36,7 @@ import {
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "motion/react";
-import { AdminSkeleton, AdminUsersSkeleton, AdminTicketsSkeleton } from "@/components/SkeletonShimmer";
+import { AdminSkeleton, AdminUsersSkeleton, AdminTicketsSkeleton, Bone } from "@/components/SkeletonShimmer";
 
 interface UserRecord {
   id: string;
@@ -202,6 +201,12 @@ export default function UnifiedAdminDashboard() {
   };
 
   const handleUpdateUserPlan = async (targetUserId: string, newPlanId: "free" | "premium" | "promax") => {
+    const targetUser = users.find(u => u.id === targetUserId);
+    if (targetUser?.plan === "promax") {
+      toast.error("Pro Max users are protected and cannot be modified.");
+      return;
+    }
+
     setUpdatingPlanId(targetUserId);
     try {
       const res = await fetch("/api/admin/users", {
@@ -858,10 +863,15 @@ export default function UnifiedAdminDashboard() {
                             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Plan Tier</span>
                             {isOwnerUser ? (
                               <span className="text-[10px] text-[#0d6e5a] font-bold uppercase">Immutable Owner</span>
+                            ) : u.plan === "promax" ? (
+                              <span className="text-[10px] text-emerald-700 font-bold uppercase flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-lg">
+                                <Sparkles className="h-3 w-3 text-emerald-600" />
+                                <span>Pro Max (Protected)</span>
+                              </span>
                             ) : (
                               <div className="flex items-center gap-1.5">
                                 {updatingPlanId === u.id ? (
-                                  <Loader2 className="h-3.5 w-3.5 text-[#0d6e5a] animate-spin mr-1" />
+                                  <Bone width={90} height={26} borderRadius={8} duration={1.2} />
                                 ) : (
                                   <select
                                     value={u.plan}
@@ -1042,14 +1052,19 @@ export default function UnifiedAdminDashboard() {
                         <Button
                           type="submit"
                           disabled={submittingReply || !replyText.trim()}
-                          className="w-full bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-colors"
+                          className="w-full bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-colors"
                         >
                           {submittingReply ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <div className="flex items-center gap-2">
+                              <Bone width={14} height={14} borderRadius={3} duration={1.2} style={{ background: "rgba(255,255,255,0.4)" }} />
+                              <span>Sending Reply...</span>
+                            </div>
                           ) : (
-                            <CheckCircle className="h-4 w-4" />
+                            <>
+                              <CheckCircle className="h-4 w-4" />
+                              <span>Send Reply Message</span>
+                            </>
                           )}
-                          Send Reply Message
                         </Button>
                       </form>
 
@@ -1144,7 +1159,7 @@ export default function UnifiedAdminDashboard() {
                             title="Delete feedback"
                           >
                             {deletingFeedbackId === fb.id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              <Bone width={14} height={14} borderRadius={3} duration={1.2} />
                             ) : (
                               <Trash2 className="h-3.5 w-3.5" />
                             )}
