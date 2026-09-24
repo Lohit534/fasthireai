@@ -122,6 +122,20 @@ export default function ResumesPage() {
           setActivePlan(plan);
         }
 
+        // Optimistically load cached resumes if available
+        if (typeof window !== "undefined") {
+          const cached = localStorage.getItem(`fastHire_resumes_cache_${user.id}`);
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setResumes(parsed);
+                setLoading(false);
+              }
+            } catch (e) {}
+          }
+        }
+
         // Fetch resumes via API endpoint to bypass client RLS issues
         let dbData: any[] = [];
         let dbError: any = null;
@@ -144,6 +158,9 @@ export default function ResumesPage() {
           toast.error("Could not load resumes.");
         } else if (dbData) {
           setResumes(dbData as ResumeRecord[]);
+          if (typeof window !== "undefined" && dbData.length > 0) {
+            localStorage.setItem(`fastHire_resumes_cache_${user.id}`, JSON.stringify(dbData));
+          }
         }
         setLoading(false);
       } catch (err) {

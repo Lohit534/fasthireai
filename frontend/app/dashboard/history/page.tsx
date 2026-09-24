@@ -890,6 +890,20 @@ export default function HistoryPage() {
 
         if (active) setAuthLoading(false);
 
+        // Optimistically load cached history if available
+        if (typeof window !== "undefined") {
+          const cached = localStorage.getItem(`fastHire_history_cache_${user.id}`);
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setResumes(parsed);
+                setLoading(false);
+              }
+            } catch (e) {}
+          }
+        }
+
         // Fetch history via API endpoint with Authorization Bearer token fallback
         const { data: sessionData } = await supabase.auth.getSession();
         const accessToken = sessionData?.session?.access_token;
@@ -953,6 +967,9 @@ export default function HistoryPage() {
         if (!active) return;
 
         setResumes(dbData as any[]);
+        if (typeof window !== "undefined" && dbData.length > 0) {
+          localStorage.setItem(`fastHire_history_cache_${user.id}`, JSON.stringify(dbData));
+        }
         setLoading(false);
       } catch (err) {
         logger.error("Unexpected error loading history:", err);

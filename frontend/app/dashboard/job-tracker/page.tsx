@@ -99,6 +99,20 @@ export default function JobTrackerPage() {
         const user = data.user;
         setUserId(user.id);
 
+        // Load cached jobs immediately so user's existing tracked values appear right away
+        const storedJobs = localStorage.getItem(`fastHire_jobs_${user.id}`);
+        if (storedJobs) {
+          try {
+            const parsed = JSON.parse(storedJobs);
+            if (Array.isArray(parsed)) {
+              setJobs(parsed);
+              if (parsed.length > 0) {
+                setAuthLoading(false);
+              }
+            }
+          } catch (e) {}
+        }
+
         // Fetch user's saved resumes via history API to ensure correct activeUserId resolution
         let dbData: any[] = [];
         let dbError: any = null;
@@ -116,16 +130,6 @@ export default function JobTrackerPage() {
 
         if (!dbError) {
           setResumes(dbData as MiniResume[]);
-        }
-
-        // Load jobs from localStorage
-        const storedJobs = localStorage.getItem(`fastHire_jobs_${user.id}`);
-        if (storedJobs) {
-          try {
-            setJobs(JSON.parse(storedJobs));
-          } catch (e) {
-            // silent — failed to parse local jobs database
-          }
         }
         setAuthLoading(false);
       } catch (err) {
