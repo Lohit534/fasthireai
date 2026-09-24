@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
-import { PageMotionLoader } from "@/components/SkeletonShimmer";
+import { ResumesSkeleton } from "@/components/SkeletonShimmer";
 
 // Structured Resume Form Types
 interface StructuredResume {
@@ -1088,12 +1088,7 @@ export default function ResumesPage() {
   };
 
   if (authLoading) {
-    return (
-      <PageMotionLoader 
-        title="Loading Your Resumes..." 
-        subtitle="Retrieving saved ATS-optimized resumes and document drafts..." 
-      />
-    );
+    return <ResumesSkeleton />;
   }
 
   // Max Quota limit calculation based on tier

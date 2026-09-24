@@ -28,7 +28,7 @@ import {
 import { toast } from "react-hot-toast";
 import ScrollFadeIn from "@/components/ScrollFadeIn";
 import GstInvoiceModal, { InvoiceData } from "@/components/GstInvoiceModal";
-import { PageMotionLoader } from "@/components/SkeletonShimmer";
+import { PricingSkeleton } from "@/components/SkeletonShimmer";
 
 interface Plan {
   id: "free" | "premium" | "promax";
@@ -228,9 +228,9 @@ export default function PricingPage() {
             let plan = "free";
             if (apiCredits.isOwner) {
               plan = apiCredits.planId || "premium";
-            } else if (apiCredits.paidCredits >= 900000) {
+            } else if (apiCredits.planId === "promax" && !apiCredits.isFirst50) {
               plan = "promax";
-            } else if (apiCredits.paidCredits > 0 || apiCredits.isFirst50) {
+            } else if (apiCredits.planId === "premium" || apiCredits.isFirst50 || apiCredits.paidCredits > 0) {
               plan = "premium";
             } else {
               plan = apiCredits.planId || cachedPlan || "free";
@@ -500,12 +500,7 @@ export default function PricingPage() {
   };
 
   if (authLoading) {
-    return (
-      <PageMotionLoader 
-        title="Loading Pricing Plans..." 
-        subtitle="Fetching verified tier quotas and payment options..." 
-      />
-    );
+    return <PricingSkeleton />;
   }
 
   return (

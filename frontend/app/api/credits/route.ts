@@ -207,6 +207,19 @@ export async function GET(request: NextRequest) {
       logger.info(`[credits] Plan expired for user ${user.email}. Reverted to free tier.`);
     }
 
+    // Auto-heal: If user is isFirst50 or has legacy credits (>20 and <=365), heal DB to 20 Pro credits
+    if (isFirst50 || (creditRow.paidCredits > 20 && creditRow.paidCredits <= 365)) {
+      if (creditRow.paidCredits !== PRO_CREDITS_PER_MONTH) {
+        await admin
+          .from("Credit")
+          .update({ paidCredits: PRO_CREDITS_PER_MONTH })
+          .eq("userId", activeUserId);
+        creditRow.paidCredits = PRO_CREDITS_PER_MONTH;
+        paidCredits = PRO_CREDITS_PER_MONTH;
+        logger.info(`[credits] Auto-healed credits for user ${user.email} to ${PRO_CREDITS_PER_MONTH} Pro credits.`);
+      }
+    }
+
     // 4. Monthly reset check
     const resetAt = new Date(creditRow.resetAt);
     const isNewMonth =
@@ -215,7 +228,7 @@ export async function GET(request: NextRequest) {
 
     if (isNewMonth) {
       freeUsed = 0;
-      if (paidCredits >= 90) {
+      if (!isFirst50 && paidCredits >= 90) {
         paidCredits = PRO_MAX_CREDITS_PER_MONTH; // 90
       } else if (paidCredits > 0 || isFirst50) {
         paidCredits = PRO_CREDITS_PER_MONTH; // 20
@@ -232,12 +245,22 @@ export async function GET(request: NextRequest) {
         .eq("userId", activeUserId);
     }
 
-    // Determine correct planId (promax ONLY if paidCredits >= 90)
+    // Determine correct planId:
+    // First-50 users and Pro users are strictly "premium" (20 credits/mo).
+    // Pro Max (90 credits/mo) is ONLY for users with a paid promax subscription.
     let planId = "free";
-    if (paidCredits >= 90) {
+    if (isOwner) {
+      planId = "promax";
+    } else if (!isFirst50 && paidCredits >= 90 && paidCredits < 900000) {
       planId = "promax";
     } else if (paidCredits > 0 || isFirst50) {
       planId = "premium";
+    }
+
+    if (planId === "premium" || isFirst50) {
+      paidCredits = PRO_CREDITS_PER_MONTH; // Strictly 20
+    } else if (planId === "promax" && !isOwner) {
+      paidCredits = PRO_MAX_CREDITS_PER_MONTH; // 90
     }
 
     const totalAllowed = isOwner
@@ -245,11 +268,11 @@ export async function GET(request: NextRequest) {
       : (planId === "promax"
           ? PRO_MAX_CREDITS_PER_MONTH
           : (planId === "premium" ? PRO_CREDITS_PER_MONTH : FREE_CREDITS_PER_MONTH));
-    const freeRemaining = Math.max(0, totalAllowed - freeUsed);
+    const freeRemaining = isOwner ? 999999 : Math.min(totalAllowed, Math.max(0, totalAllowed - freeUsed));
 
     return NextResponse.json({
       freeUsed,
-      paidCredits,
+      paidCredits: isOwner ? 999999 : (planId === "promax" ? PRO_MAX_CREDITS_PER_MONTH : (planId === "premium" ? PRO_CREDITS_PER_MONTH : 0)),
       freeRemaining,
       resetAt: isNewMonth ? now.toISOString() : creditRow.resetAt,
       isOwner: false,

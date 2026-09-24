@@ -132,7 +132,7 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
           if (userId) {
             if (data.isOwner) {
               localStorage.setItem(`fastHire_plan_${userId}`, "owner");
-            } else if (data.planId === "promax") {
+            } else if (data.planId === "promax" && !data.isFirst50) {
               localStorage.setItem(`fastHire_plan_${userId}`, "promax");
             } else if (data.planId === "premium" || data.isFirst50) {
               localStorage.setItem(`fastHire_plan_${userId}`, "premium");
@@ -182,13 +182,13 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
 
   // Calculations for credit percentage and plan
   const isOwner = credits?.isOwner;
-  const isProMax = !isOwner && (credits?.planId === "promax" || (credits?.paidCredits ?? 0) >= 90);
-  const isPremium = !isOwner && !isProMax && (credits?.planId === "premium" || credits?.isFirst50 || ((credits?.paidCredits ?? 0) > 0 && (credits?.paidCredits ?? 0) < 90));
+  const isProMax = !isOwner && credits?.planId === "promax" && !credits?.isFirst50;
+  const isPremium = !isOwner && !isProMax && (credits?.planId === "premium" || credits?.isFirst50 || (credits?.paidCredits ?? 0) > 0);
+  const totalFree = isOwner ? 9999 : (isProMax ? 90 : (isPremium ? 20 : 2));
   const freeRemaining = isOwner 
     ? 9999 
-    : (credits?.freeRemaining ?? (isProMax ? 90 : (isPremium ? 20 : 2)));
+    : Math.min(totalFree, credits?.freeRemaining ?? totalFree);
   const freeUsed = credits?.freeUsed ?? 0;
-  const totalFree = isOwner ? 9999 : (isProMax ? 90 : (isPremium ? 20 : 2));
   const usedPercent = Math.min(100, Math.max(0, Math.round((freeUsed / totalFree) * 100)));
 
   const planLabel = isOwner

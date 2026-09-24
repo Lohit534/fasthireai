@@ -33,7 +33,7 @@ import { toast } from "react-hot-toast";
 import Link from "next/link";
 import ScrollFadeIn from "@/components/ScrollFadeIn";
 import GstInvoiceModal, { InvoiceData } from "@/components/GstInvoiceModal";
-import { PageMotionLoader } from "@/components/SkeletonShimmer";
+import { BillingSkeleton } from "@/components/SkeletonShimmer";
 
 interface Invoice {
   id: string;
@@ -165,12 +165,7 @@ export default function BillingPage() {
   };
 
   if (authLoading) {
-    return (
-      <PageMotionLoader 
-        title="Loading Billing Workspace..." 
-        subtitle="Verifying active subscription and credit allocations..." 
-      />
-    );
+    return <BillingSkeleton />;
   }
 
   // Quota computations

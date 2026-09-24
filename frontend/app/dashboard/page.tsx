@@ -14,6 +14,7 @@ import BulletImprover from "@/components/BulletImprover";
 // Removed LoadingOverlay import as user requested native background animation
 import BulletEnrichmentModal, { WeakBullet } from "@/components/BulletEnrichmentModal";
 import { enrichResumeWithAnswers } from "@/lib/resume-inspector";
+import { DashboardSkeleton } from "@/components/SkeletonShimmer";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
@@ -160,9 +161,9 @@ export default function DashboardPage() {
             let plan = "free";
             if (creditsData.isOwner) {
               plan = "owner";
-            } else if (creditsData.paidCredits > 20) {
+            } else if (creditsData.planId === "promax" && !creditsData.isFirst50) {
               plan = "promax";
-            } else if (creditsData.paidCredits > 0 || creditsData.isFirst50) {
+            } else if (creditsData.planId === "premium" || creditsData.isFirst50 || creditsData.paidCredits > 0) {
               plan = "premium";
             } else {
               plan = creditsData.planId || localStorage.getItem(`fastHire_plan_${data.user.id}`) || "free";
@@ -485,18 +486,7 @@ export default function DashboardPage() {
   };
 
   if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
-        <div className="text-center space-y-3">
-          <div className="relative mx-auto h-12 w-12">
-            <div className="absolute inset-0 rounded-full border-2 border-cyan-500/20" />
-            <div className="absolute inset-0 rounded-full border-t-2 border-[#0d6e5a] animate-spin" />
-            <Zap className="absolute inset-0 m-auto h-5 w-5 text-[#0d6e5a]" />
-          </div>
-          <p className="text-xs text-slate-500 font-semibold tracking-wide">Authenticating...</p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
 

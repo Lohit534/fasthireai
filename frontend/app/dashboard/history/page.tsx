@@ -13,7 +13,7 @@ import { generateSkillRoadmap, generateMultiSkillRoadmap } from "@/lib/roadmap-g
 import { extractTechTerms, extractKeywords } from "@/lib/ats/keywords";
 import { saveAs } from "file-saver";
 import { useUpgradeModalStore } from "@/store/useUpgradeModalStore";
-import { PageMotionLoader } from "@/components/SkeletonShimmer";
+import { HistorySkeleton } from "@/components/SkeletonShimmer";
 import {
   Loader2,
   History,
@@ -984,12 +984,7 @@ export default function HistoryPage() {
   const pagedResumes = resumes.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   if (authLoading) {
-    return (
-      <PageMotionLoader 
-        title="Loading History Logs..." 
-        subtitle="Retrieving your previous resume scans, match scores, and versions..." 
-      />
-    );
+    return <HistorySkeleton />;
   }
 
   return (

@@ -29,7 +29,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { PageMotionLoader } from "@/components/SkeletonShimmer";
+import { JobTrackerSkeleton } from "@/components/SkeletonShimmer";
 
 interface Job {
   id: string;
@@ -265,12 +265,7 @@ export default function JobTrackerPage() {
   };
 
   if (authLoading) {
-    return (
-      <PageMotionLoader 
-        title="Loading Job Tracker..." 
-        subtitle="Organizing your applications, interviews, and interview statuses..." 
-      />
-    );
+    return <JobTrackerSkeleton />;
   }
 
   // Filter jobs by search query

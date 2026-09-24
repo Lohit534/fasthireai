@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
-import { PageMotionLoader } from "@/components/SkeletonShimmer";
+import { AdminSkeleton } from "@/components/SkeletonShimmer";
 
 interface UserRecord {
   id: string;
@@ -296,12 +296,7 @@ export default function UnifiedAdminDashboard() {
   };
 
   if (authLoading) {
-    return (
-      <PageMotionLoader 
-        title="Verifying Admin Access..." 
-        subtitle="Loading FastHire platform analytics and user management records..." 
-      />
-    );
+    return <AdminSkeleton />;
   }
 
   // Filter computations
