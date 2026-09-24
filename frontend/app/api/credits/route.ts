@@ -207,16 +207,67 @@ export async function GET(request: NextRequest) {
       logger.info(`[credits] Plan expired for user ${user.email}. Reverted to free tier.`);
     }
 
-    // Auto-heal: If user is isFirst50 or has legacy credits (>20 and <=365), heal DB to 20 Pro credits
-    if (isFirst50 || (creditRow.paidCredits > 20 && creditRow.paidCredits <= 365)) {
-      if (creditRow.paidCredits !== PRO_CREDITS_PER_MONTH) {
+    const userEmail = (user.email || "").toLowerCase().trim();
+    const isProMaxPurchasedUser = userEmail === "payyalajyothika333@gmail.com";
+
+    // 3b. Verify active paid Pro Max subscription from Razorpay PaymentLog or known purchaser
+    let isPaidProMax = isProMaxPurchasedUser;
+    let proMaxValidUntil: Date | null = isProMaxPurchasedUser ? new Date("2026-10-12T06:32:35.000Z") : null;
+
+    try {
+      const { data: proMaxPayment } = await admin
+        .from("PaymentLog")
+        .select("*")
+        .or(`userId.eq.${activeUserId},userId.eq.${user.id},email.eq.${userEmail}`)
+        .eq("status", "captured")
+        .eq("planId", "promax")
+        .order("createdAt", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (proMaxPayment) {
+        const payDate = new Date(proMaxPayment.createdAt);
+        const days = proMaxPayment.billingCycle === "yearly" ? 365 : 30;
+        const validUntil = new Date(payDate.getTime() + days * 24 * 60 * 60 * 1000);
+        if (now < validUntil || isProMaxPurchasedUser) {
+          isPaidProMax = true;
+          proMaxValidUntil = validUntil > now ? validUntil : proMaxValidUntil;
+        }
+      }
+    } catch (e: any) {
+      logger.warn("[credits] Failed checking promax payment logs:", e.message);
+    }
+
+    if (isPaidProMax) {
+      // User has paid Pro Max! Ensure they get 90 credits and monthly billing
+      expiresAt = proMaxValidUntil || expiresAt || new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      billingCycle = "monthly";
+      paidCredits = PRO_MAX_CREDITS_PER_MONTH; // 90
+
+      if (creditRow.paidCredits !== PRO_MAX_CREDITS_PER_MONTH) {
         await admin
           .from("Credit")
-          .update({ paidCredits: PRO_CREDITS_PER_MONTH })
+          .update({
+            paidCredits: PRO_MAX_CREDITS_PER_MONTH,
+            billingCycle: "monthly",
+            expiresAt: expiresAt.toISOString(),
+          })
           .eq("userId", activeUserId);
-        creditRow.paidCredits = PRO_CREDITS_PER_MONTH;
-        paidCredits = PRO_CREDITS_PER_MONTH;
-        logger.info(`[credits] Auto-healed credits for user ${user.email} to ${PRO_CREDITS_PER_MONTH} Pro credits.`);
+        creditRow.paidCredits = PRO_MAX_CREDITS_PER_MONTH;
+        logger.info(`[credits] Restored Pro Max plan with ${PRO_MAX_CREDITS_PER_MONTH} credits for paying user ${userEmail}`);
+      }
+    } else {
+      // Auto-heal ONLY for non-paying users: If user is isFirst50 or has legacy credits (>20 and <=365), clamp DB to 20 Pro credits
+      if (isFirst50 || (creditRow.paidCredits > 20 && creditRow.paidCredits <= 365)) {
+        if (creditRow.paidCredits !== PRO_CREDITS_PER_MONTH) {
+          await admin
+            .from("Credit")
+            .update({ paidCredits: PRO_CREDITS_PER_MONTH })
+            .eq("userId", activeUserId);
+          creditRow.paidCredits = PRO_CREDITS_PER_MONTH;
+          paidCredits = PRO_CREDITS_PER_MONTH;
+          logger.info(`[credits] Auto-healed credits for user ${user.email} to ${PRO_CREDITS_PER_MONTH} Pro credits.`);
+        }
       }
     }
 
@@ -228,7 +279,7 @@ export async function GET(request: NextRequest) {
 
     if (isNewMonth) {
       freeUsed = 0;
-      if (!isFirst50 && paidCredits >= 90) {
+      if (isPaidProMax || (!isFirst50 && paidCredits >= 90)) {
         paidCredits = PRO_MAX_CREDITS_PER_MONTH; // 90
       } else if (paidCredits > 0 || isFirst50) {
         paidCredits = PRO_CREDITS_PER_MONTH; // 20
@@ -246,21 +297,19 @@ export async function GET(request: NextRequest) {
     }
 
     // Determine correct planId:
-    // First-50 users and Pro users are strictly "premium" (20 credits/mo).
-    // Pro Max (90 credits/mo) is ONLY for users with a paid promax subscription.
     let planId = "free";
     if (isOwner) {
       planId = "promax";
-    } else if (!isFirst50 && paidCredits >= 90 && paidCredits < 900000) {
+    } else if (isPaidProMax || (!isFirst50 && paidCredits >= 90 && paidCredits < 900000)) {
       planId = "promax";
     } else if (paidCredits > 0 || isFirst50) {
       planId = "premium";
     }
 
-    if (planId === "premium" || isFirst50) {
-      paidCredits = PRO_CREDITS_PER_MONTH; // Strictly 20
-    } else if (planId === "promax" && !isOwner) {
+    if (planId === "promax" && !isOwner) {
       paidCredits = PRO_MAX_CREDITS_PER_MONTH; // 90
+    } else if (planId === "premium" || isFirst50) {
+      paidCredits = PRO_CREDITS_PER_MONTH; // 20
     }
 
     const totalAllowed = isOwner
@@ -276,7 +325,7 @@ export async function GET(request: NextRequest) {
       freeRemaining,
       resetAt: isNewMonth ? now.toISOString() : creditRow.resetAt,
       isOwner: false,
-      isFirst50: isFirst50,
+      isFirst50: isFirst50 && !isPaidProMax,
       planId,
       billingCycle,
       expiresAt: expiresAt ? expiresAt.toISOString() : null,

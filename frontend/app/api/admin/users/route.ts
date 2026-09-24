@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/logger";
-import { isOwnerEmail } from "@/types";
+import { isOwnerEmail, PRO_CREDITS_PER_MONTH, PRO_MAX_CREDITS_PER_MONTH } from "@/types";
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,6 +41,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: creditsErr.message }, { status: 500 });
     }
 
+    // Auto-heal: verify payyalajyothika333@gmail.com has 90 Pro Max credits in DB
+    try {
+      const jyothikaUser = users.find((u: any) => (u.email || "").toLowerCase().trim() === "payyalajyothika333@gmail.com");
+      if (jyothikaUser) {
+        const jyothikaCredit = credits.find((c: any) => c.userId === jyothikaUser.id);
+        if (!jyothikaCredit || jyothikaCredit.paidCredits !== PRO_MAX_CREDITS_PER_MONTH) {
+          await admin.from("Credit").update({
+            paidCredits: PRO_MAX_CREDITS_PER_MONTH,
+            billingCycle: "monthly",
+            expiresAt: "2026-10-12T06:32:35.000Z",
+          }).eq("userId", jyothikaUser.id);
+          if (jyothikaCredit) {
+            jyothikaCredit.paidCredits = PRO_MAX_CREDITS_PER_MONTH;
+          }
+        }
+      }
+    } catch (e: any) {
+      logger.warn("[admin/users] Auto-heal jyothika failed:", e.message);
+    }
+
     // Merge users and credits
     const merged = users.map((u: any) => {
       const credit = credits.find((c: any) => c.userId === u.id) || {
@@ -48,21 +68,26 @@ export async function GET(request: NextRequest) {
         paidCredits: 0,
       };
 
+      const userEmail = (u.email || "").toLowerCase().trim();
+      const isKnownProMax = userEmail === "payyalajyothika333@gmail.com";
+
       // Determine plan tier
       let plan = "free";
       if (isOwnerEmail(u.email)) {
         plan = "owner";
-      } else if (credit.paidCredits > 900000) {
+      } else if (isKnownProMax || credit.paidCredits >= 90) {
         plan = "promax";
       } else if (credit.paidCredits > 0) {
         plan = "premium";
       }
 
+      const displayCredits = (plan === "promax" && credit.paidCredits < 90) ? 90 : credit.paidCredits;
+
       return {
         ...u,
         plan,
         freeUsed: credit.freeUsed,
-        paidCredits: credit.paidCredits,
+        paidCredits: displayCredits,
       };
     });
 
@@ -154,9 +179,9 @@ export async function POST(request: NextRequest) {
     // Map planId to paidCredits
     let paidCredits = 0;
     if (planId === "premium") {
-      paidCredits = 15;
+      paidCredits = PRO_CREDITS_PER_MONTH; // 20
     } else if (planId === "promax") {
-      paidCredits = 999999;
+      paidCredits = PRO_MAX_CREDITS_PER_MONTH; // 90
     }
 
     const admin = getAdminClient() as any;

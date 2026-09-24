@@ -36,7 +36,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
-import { AdminSkeleton } from "@/components/SkeletonShimmer";
+import { motion, AnimatePresence } from "motion/react";
+import { AdminSkeleton, AdminUsersSkeleton, AdminTicketsSkeleton } from "@/components/SkeletonShimmer";
 
 interface UserRecord {
   id: string;
@@ -214,7 +215,7 @@ export default function UnifiedAdminDashboard() {
         // Refresh local user records list
         setUsers(prev => prev.map(u => 
           u.id === targetUserId 
-            ? { ...u, plan: newPlanId, paidCredits: newPlanId === "premium" ? 15 : newPlanId === "promax" ? 999999 : 0 }
+            ? { ...u, plan: newPlanId, paidCredits: newPlanId === "premium" ? 20 : newPlanId === "promax" ? 90 : 0 }
             : u
         ));
       } else {
@@ -327,7 +328,12 @@ export default function UnifiedAdminDashboard() {
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-28 sm:pb-8 flex flex-col gap-6">
         
         {/* Top Header Block */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+        <motion.div 
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 pb-6"
+        >
           <div className="flex items-center gap-4">
             <Link href="/dashboard">
               <Button variant="outline" size="sm" className="border-slate-200 text-slate-700 hover:bg-slate-100 h-9 w-9 p-0 rounded-full bg-white shadow-sm transition-transform hover:scale-105">
@@ -358,7 +364,7 @@ export default function UnifiedAdminDashboard() {
               Owner Portal
             </Badge>
           </div>
-        </div>
+        </motion.div>
 
         {/* Tab selection bar */}
         <div className="flex bg-white border border-slate-200 p-1.5 rounded-2xl max-w-xl select-none shadow-sm">
@@ -412,9 +418,17 @@ export default function UnifiedAdminDashboard() {
           </button>
         </div>
 
+        <AnimatePresence mode="wait">
         {/* TAB 1: USERS & PRICING LEVEL */}
         {activeTab === "users" && (
-          <div className="space-y-6 animate-in fade-in duration-200">
+          <motion.div
+            key="users"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-6"
+          >
             
             {/* Financial Overview Metrics */}
             <div className="space-y-3 select-none">
@@ -523,18 +537,24 @@ export default function UnifiedAdminDashboard() {
               ].map((kpi, idx) => {
                 const Icon = kpi.icon;
                 return (
-                  <Card key={idx} className="bg-white border border-slate-200 rounded-2xl relative overflow-hidden shadow-sm hover:border-slate-300 transition-colors">
-                    <CardContent className="p-5 flex items-center justify-between">
-                      <div className="space-y-1">
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">{kpi.label}</span>
-                        <span className={`text-2xl font-black ${kpi.color}`}>{kpi.value}</span>
-                        <span className="text-[10px] text-slate-400 font-medium block">{kpi.badge}</span>
-                      </div>
-                      <div className="h-11 w-11 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center">
-                        <Icon className={`h-5 w-5 ${kpi.color}`} />
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <motion.div
+                    key={idx}
+                    whileHover={{ y: -2 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    <Card className="bg-white border border-slate-200 rounded-2xl relative overflow-hidden shadow-sm hover:border-slate-300 transition-colors h-full">
+                      <CardContent className="p-5 flex items-center justify-between">
+                        <div className="space-y-1">
+                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">{kpi.label}</span>
+                          <span className={`text-2xl font-black ${kpi.color}`}>{kpi.value}</span>
+                          <span className="text-[10px] text-slate-400 font-medium block">{kpi.badge}</span>
+                        </div>
+                        <div className="h-11 w-11 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center">
+                          <Icon className={`h-5 w-5 ${kpi.color}`} />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 );
               })}
             </div>
@@ -776,10 +796,7 @@ export default function UnifiedAdminDashboard() {
 
                 {/* Lookup output cards */}
                 {usersLoading ? (
-                  <div className="flex flex-col items-center justify-center py-16 gap-2">
-                    <Loader2 className="h-6 w-6 text-[#0d6e5a] animate-spin" />
-                    <p className="text-xs text-slate-500 font-semibold">Loading user accounts...</p>
-                  </div>
+                  <AdminUsersSkeleton count={6} />
                 ) : filteredUsers.length === 0 ? (
                   <div className="text-center py-16 border border-dashed border-slate-200 bg-slate-50/60 rounded-2xl select-none">
                     <AlertCircle className="h-8 w-8 text-slate-400 mx-auto mb-2" />
@@ -791,7 +808,14 @@ export default function UnifiedAdminDashboard() {
                     {filteredUsers.map((u) => {
                       const isOwnerUser = u.plan === "owner";
                       return (
-                        <div key={u.id} className="bg-slate-50 hover:bg-white border border-slate-200 rounded-2xl p-4 space-y-3.5 hover:border-slate-300 hover:shadow-md transition-all">
+                        <motion.div
+                          key={u.id}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          whileHover={{ y: -2 }}
+                          transition={{ duration: 0.15 }}
+                          className="bg-slate-50 hover:bg-white border border-slate-200 rounded-2xl p-4 space-y-3.5 hover:border-slate-300 hover:shadow-md transition-all"
+                        >
                           <div className="flex items-start justify-between gap-2.5">
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="h-9 w-9 rounded-xl bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center text-[#0d6e5a] font-extrabold text-xs shrink-0">
@@ -852,7 +876,7 @@ export default function UnifiedAdminDashboard() {
                               </div>
                             )}
                           </div>
-                        </div>
+                        </motion.div>
                       );
                     })}
                   </div>
@@ -860,17 +884,21 @@ export default function UnifiedAdminDashboard() {
               </CardContent>
             </Card>
 
-          </div>
+          </motion.div>
         )}
 
         {/* TAB 2: SUPPORT TICKETS LIST */}
         {activeTab === "tickets" && (
-          <div className="space-y-6">
+          <motion.div
+            key="tickets"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-6"
+          >
             {ticketsLoading ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-3">
-                <Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin" />
-                <p className="text-xs text-slate-500 font-semibold">Loading tickets list...</p>
-              </div>
+              <AdminTicketsSkeleton count={4} />
             ) : tickets.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-2xl p-20 text-center border border-dashed border-slate-200 bg-white shadow-sm max-w-xl mx-auto w-full select-none">
                 <div className="h-14 w-14 rounded-2xl bg-teal-50 border border-teal-200/60 flex items-center justify-center mb-4">
@@ -1035,12 +1063,19 @@ export default function UnifiedAdminDashboard() {
 
               </div>
             )}
-          </div>
+          </motion.div>
         )}
 
         {/* TAB 3: FEEDBACK MESSAGES */}
         {activeTab === "feedback" && (
-          <div className="space-y-4 animate-in fade-in duration-200">
+          <motion.div
+            key="feedback"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-4"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-black text-slate-900">Feedback Inbox</h2>
@@ -1055,9 +1090,7 @@ export default function UnifiedAdminDashboard() {
             </div>
 
             {feedbackLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-6 w-6 animate-spin text-[#0d6e5a]" />
-              </div>
+              <AdminTicketsSkeleton count={3} />
             ) : feedbackMessages.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-slate-200 bg-white rounded-2xl shadow-sm">
                 <Inbox className="h-10 w-10 text-slate-400 mb-3" />
@@ -1086,8 +1119,12 @@ export default function UnifiedAdminDashboard() {
                   const hoursLeft = Math.max(0, Math.round((expiresAt.getTime() - Date.now()) / 3600000));
 
                   return (
-                    <div
+                    <motion.div
                       key={fb.id}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ y: -2 }}
+                      transition={{ duration: 0.15 }}
                       className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 hover:border-slate-300 transition-all shadow-sm"
                     >
                       {/* Header row */}
@@ -1129,13 +1166,14 @@ export default function UnifiedAdminDashboard() {
                           Expires in {hoursLeft}h
                         </span>
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
             )}
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
 
       </main>
     </div>

@@ -541,6 +541,69 @@ export function BillingSkeleton() {
 /**
  * 7. ADMIN SKELETON
  */
+export function AdminUsersSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 select-none">
+      {Array.from({ length: count }).map((_, idx) => (
+        <div key={idx} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3.5">
+          <div className="flex items-start justify-between gap-2.5">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Bone width={36} height={36} borderRadius={12} duration={1.3} />
+              <div className="space-y-1.5 flex-1 min-w-0">
+                <Bone width="65%" height={14} borderRadius={4} duration={1.3} />
+                <Bone width="80%" height={10} borderRadius={3} duration={1.3} />
+              </div>
+            </div>
+            <Bone width={55} height={20} borderRadius={8} duration={1.3} />
+          </div>
+
+          <div className="border-t border-slate-200/80 pt-3 space-y-2">
+            <div className="flex justify-between items-center">
+              <Bone width={70} height={10} borderRadius={3} duration={1.3} />
+              <Bone width={85} height={10} borderRadius={3} duration={1.3} />
+            </div>
+            <div className="flex justify-between items-center">
+              <Bone width={90} height={10} borderRadius={3} duration={1.3} />
+              <Bone width={50} height={10} borderRadius={3} duration={1.3} />
+            </div>
+            <div className="flex justify-between items-center">
+              <Bone width={75} height={10} borderRadius={3} duration={1.3} />
+              <Bone width={65} height={10} borderRadius={3} duration={1.3} />
+            </div>
+          </div>
+
+          <div className="border-t border-slate-200/80 pt-3 flex items-center justify-between">
+            <Bone width={60} height={12} borderRadius={3} duration={1.3} />
+            <Bone width={90} height={26} borderRadius={8} duration={1.3} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function AdminTicketsSkeleton({ count = 3 }: { count?: number }) {
+  return (
+    <div className="space-y-3 select-none">
+      {Array.from({ length: count }).map((_, idx) => (
+        <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center justify-between shadow-2xs">
+          <div className="flex items-center gap-3 flex-1">
+            <Bone width={36} height={36} borderRadius={10} duration={1.3} />
+            <div className="space-y-1.5 flex-1">
+              <Bone width="45%" height={14} borderRadius={4} duration={1.3} />
+              <Bone width="65%" height={10} borderRadius={3} duration={1.3} />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Bone width={60} height={22} borderRadius={10} duration={1.3} />
+            <Bone width={70} height={30} borderRadius={8} duration={1.3} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function AdminSkeleton() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col select-none">
@@ -552,7 +615,7 @@ export function AdminSkeleton() {
           <Bone width={340} height={14} borderRadius={6} duration={1.3} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs space-y-2">
               <Bone width={100} height={14} borderRadius={4} duration={1.4} />
@@ -561,21 +624,7 @@ export function AdminSkeleton() {
           ))}
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-3">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <Bone width={140} height={18} borderRadius={6} duration={1.5} />
-            <Bone width={200} height={34} borderRadius={8} duration={1.5} />
-          </div>
-          {[1, 2, 3, 4].map((r) => (
-            <div key={r} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
-              <div className="flex items-center gap-3">
-                <Bone width={32} height={32} borderRadius="50%" duration={1.5} />
-                <Bone width={150} height={14} borderRadius={4} duration={1.5} />
-              </div>
-              <Bone width={80} height={20} borderRadius={10} duration={1.5} />
-            </div>
-          ))}
-        </div>
+        <AdminUsersSkeleton count={6} />
       </main>
     </div>
   );
