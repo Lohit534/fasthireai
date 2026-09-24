@@ -98,7 +98,6 @@ export default function JobTrackerPage() {
         
         const user = data.user;
         setUserId(user.id);
-        setAuthLoading(false);
 
         // Fetch user's saved resumes via history API to ensure correct activeUserId resolution
         let dbData: any[] = [];
@@ -128,8 +127,10 @@ export default function JobTrackerPage() {
             // silent — failed to parse local jobs database
           }
         }
+        setAuthLoading(false);
       } catch (err) {
         toast.error("Could not load user details.");
+        setAuthLoading(false);
         router.push("/auth/login");
       }
     }

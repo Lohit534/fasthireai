@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
-import { ResumesSkeleton } from "@/components/SkeletonShimmer";
+import { ResumesSkeleton, ResumesGridSkeleton } from "@/components/SkeletonShimmer";
 
 // Structured Resume Form Types
 interface StructuredResume {
@@ -1133,9 +1133,7 @@ export default function ResumesPage() {
 
               {/* Grid display options */}
               {loading ? (
-                <div className="flex justify-center py-20">
-                  <Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin" />
-                </div>
+                <ResumesGridSkeleton />
               ) : resumes.length === 0 ? (
                 
                 /* Empty state listing card options */

@@ -13,7 +13,7 @@ import { generateSkillRoadmap, generateMultiSkillRoadmap } from "@/lib/roadmap-g
 import { extractTechTerms, extractKeywords } from "@/lib/ats/keywords";
 import { saveAs } from "file-saver";
 import { useUpgradeModalStore } from "@/store/useUpgradeModalStore";
-import { HistorySkeleton } from "@/components/SkeletonShimmer";
+import { HistorySkeleton, HistoryListSkeleton } from "@/components/SkeletonShimmer";
 import {
   Loader2,
   History,
@@ -1030,10 +1030,7 @@ export default function HistoryPage() {
 
               {/* Content list */}
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-24 gap-3">
-                  <Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin" />
-                  <p className="text-xs text-slate-500 font-semibold">Loading history...</p>
-                </div>
+                <HistoryListSkeleton />
               ) : historyLocked ? (
                 /* ── FREE PLAN UPGRADE WALL ── */
                 <div className="flex flex-col items-center justify-center rounded-2xl p-12 text-center border border-dashed border-slate-300 bg-white shadow-sm space-y-5">
