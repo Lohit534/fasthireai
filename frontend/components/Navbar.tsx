@@ -362,31 +362,33 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                         {/* Action Rows: Only show upgrades if NOT on Pro Max and NOT Owner */}
                         {!isProMax && !isOwner ? (
                           <div className="space-y-1.5 pt-1 border-t border-slate-200/80">
-                            {/* Action Row 1: Top-up credits / Upgrade to Pro */}
-                            <div className="flex items-center justify-between gap-1.5">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <div className="h-5 w-5 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0">
-                                  <Sparkles className="h-3 w-3 text-[#0d6e5a]" />
+                            {/* Action Row 1: Upgrade to Pro (Hidden if already Premium) */}
+                            {!isPremium && (
+                              <div className="flex items-center justify-between gap-1.5 pb-1.5 border-b border-slate-100/50">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <div className="h-5 w-5 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0">
+                                    <Sparkles className="h-3 w-3 text-[#0d6e5a]" />
+                                  </div>
+                                  <span className="text-[11px] font-bold text-slate-800 truncate">
+                                    Upgrade Pro (20/mo)
+                                  </span>
                                 </div>
-                                <span className="text-[11px] font-bold text-slate-800 truncate">
-                                  {isPremium ? "Refill Pro (20/mo)" : "Upgrade Pro (20/mo)"}
-                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setIsDropdownOpen(false);
+                                    useUpgradeModalStore.getState().openModal({
+                                      badge: "PRO",
+                                      title: "Upgrade to Premium Pro",
+                                      description: "Get 20 AI resume optimizations/month, unlimited PDF & DOCX downloads, and priority features.",
+                                    });
+                                  }}
+                                  className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-xs transition-all cursor-pointer shrink-0"
+                                >
+                                  Get
+                                </button>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setIsDropdownOpen(false);
-                                  useUpgradeModalStore.getState().openModal({
-                                    badge: "PRO",
-                                    title: "Upgrade to Premium Pro",
-                                    description: "Get 20 AI resume optimizations/month, unlimited PDF & DOCX downloads, and priority features.",
-                                  });
-                                }}
-                                className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-xs transition-all cursor-pointer shrink-0"
-                              >
-                                Get
-                              </button>
-                            </div>
+                            )}
 
                             {/* Action Row 2: Pro Max / 90 Optimizations */}
                             <div className="flex items-center justify-between gap-1.5">
@@ -474,7 +476,7 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                             <span>Refer a Friend</span>
                           </div>
                           <span className="bg-emerald-50 border border-emerald-200 text-[#0d6e5a] text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full">
-                            New
+                            +1
                           </span>
                         </button>
                       </div>

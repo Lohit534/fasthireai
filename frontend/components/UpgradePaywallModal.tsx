@@ -28,6 +28,34 @@ export default function UpgradePaywallModal() {
   const { isOpen, options, closeModal } = useUpgradeModalStore();
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [activePlan, setActivePlan] = useState<string>("free");
+
+  // Load user plan on open
+  useEffect(() => {
+    if (isOpen) {
+      const fetchPlan = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const cachedPlan = localStorage.getItem(`fastHire_plan_${user.id}`);
+          if (cachedPlan) {
+            setActivePlan(cachedPlan);
+          } else {
+            // Optional: fetch from API if not cached, but cached is usually reliable since navbar sets it
+            fetch("/api/credits")
+              .then(res => res.json())
+              .then(data => {
+                if (data.isOwner) setActivePlan("owner");
+                else if (data.paidCredits >= 90) setActivePlan("promax");
+                else if (data.paidCredits > 0) setActivePlan("premium");
+                else setActivePlan("free");
+              })
+              .catch(() => setActivePlan("free"));
+          }
+        }
+      };
+      fetchPlan();
+    }
+  }, [isOpen]);
 
   // Load Razorpay checkout script if needed
   useEffect(() => {
@@ -178,8 +206,19 @@ export default function UpgradePaywallModal() {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header Section */}
-        <div className="p-5 sm:p-7 pb-4 bg-white border-b border-slate-100 flex flex-col gap-3">
-          <div className="flex items-start justify-between gap-4">
+        <div className="p-5 sm:p-7 pb-4 bg-white border-b border-slate-100 flex flex-col gap-3 relative">
+          
+          {/* Absolute Close Button for Mobile Accessibility */}
+          <button
+            type="button"
+            onClick={closeModal}
+            className="absolute top-4 right-4 sm:top-5 sm:right-5 h-8 w-8 rounded-full flex items-center justify-center bg-slate-100 text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer z-50 shadow-sm"
+            aria-label="Close modal"
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pr-10 sm:pr-14">
             <div>
               <span className="inline-block text-[11px] sm:text-xs font-black tracking-widest uppercase text-[#0d6e5a] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                 {badgeText}
@@ -192,8 +231,8 @@ export default function UpgradePaywallModal() {
               </p>
             </div>
 
-            {/* Toggle + Close Icon */}
-            <div className="flex items-center gap-3 shrink-0">
+            {/* Toggle */}
+            <div className="flex items-center gap-3 shrink-0 self-start sm:self-auto mt-2 sm:mt-0">
               <div className="bg-slate-100 p-1 rounded-full flex items-center gap-1 border border-slate-200 shadow-inner">
                 <button
                   type="button"
@@ -221,15 +260,6 @@ export default function UpgradePaywallModal() {
                   </span>
                 </button>
               </div>
-
-              <button
-                type="button"
-                onClick={closeModal}
-                className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                aria-label="Close modal"
-              >
-                <X className="h-5 w-5" />
-              </button>
             </div>
           </div>
         </div>
@@ -305,10 +335,14 @@ export default function UpgradePaywallModal() {
               </div>
               <button
                 type="button"
-                disabled
-                className="mt-4 w-full py-2 px-3 rounded-xl bg-slate-100 text-slate-500 font-bold text-xs cursor-default"
+                disabled={activePlan === "free" || activePlan === "owner"}
+                className={`mt-4 w-full py-2 px-3 rounded-xl font-bold text-xs transition-all ${
+                  activePlan === "free" || activePlan === "owner" 
+                    ? "bg-slate-100 text-slate-500 cursor-default" 
+                    : "bg-slate-100 text-slate-500 opacity-50 cursor-not-allowed"
+                }`}
               >
-                Current Plan
+                {activePlan === "free" || activePlan === "owner" ? "Current Plan" : "Included"}
               </button>
             </div>
 
@@ -377,11 +411,21 @@ export default function UpgradePaywallModal() {
               <button
                 type="button"
                 onClick={() => handleUpgrade("premium")}
-                disabled={loadingPlan === "premium"}
-                className="mt-4 w-full py-2 px-3 rounded-xl bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-70"
+                disabled={loadingPlan === "premium" || activePlan === "premium" || activePlan === "promax" || activePlan === "owner"}
+                className={`mt-4 w-full py-2 px-3 rounded-xl font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 ${
+                  activePlan === "premium" 
+                    ? "bg-emerald-100 text-emerald-800 cursor-default" 
+                    : activePlan === "promax" || activePlan === "owner"
+                    ? "bg-slate-100 text-slate-500 opacity-50 cursor-not-allowed"
+                    : "bg-[#0d6e5a] hover:bg-[#094d3f] text-white cursor-pointer disabled:opacity-70"
+                }`}
               >
                 {loadingPlan === "premium" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
+                ) : activePlan === "premium" ? (
+                  <span>Current Plan</span>
+                ) : activePlan === "promax" || activePlan === "owner" ? (
+                  <span>Included in Pro Max</span>
                 ) : (
                   <>
                     <span>Upgrade to Pro</span>
@@ -462,11 +506,17 @@ export default function UpgradePaywallModal() {
               <button
                 type="button"
                 onClick={() => handleUpgrade("promax")}
-                disabled={loadingPlan === "promax"}
-                className="mt-4 w-full py-2 px-3 rounded-xl bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-extrabold text-xs shadow transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-70"
+                disabled={loadingPlan === "promax" || activePlan === "promax" || activePlan === "owner"}
+                className={`mt-4 w-full py-2 px-3 rounded-xl font-extrabold text-xs shadow transition-all flex items-center justify-center gap-1.5 ${
+                  activePlan === "promax" || activePlan === "owner"
+                    ? "bg-emerald-100 text-emerald-800 cursor-default" 
+                    : "bg-[#0d6e5a] hover:bg-[#0a5a49] text-white cursor-pointer disabled:opacity-70"
+                }`}
               >
                 {loadingPlan === "promax" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
+                ) : activePlan === "promax" || activePlan === "owner" ? (
+                  <span>Current Plan</span>
                 ) : (
                   <>
                     <span>Upgrade to Pro Max</span>
