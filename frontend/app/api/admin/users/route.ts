@@ -29,15 +29,17 @@ export async function GET(request: NextRequest) {
 
     let usersList: any[] = dbUsers ? [...dbUsers] : [];
 
-    // 2. Query captured Pro Max payments to ensure all paid Pro Max users are identified
+    // 2. Query all real Pro Max payments (isFreeGrant=false ensures no admin grants slip in)
+    // We don't filter by status because older records may have status=null (before we added the status field)
     const { data: proMaxPurchasers } = await admin
       .from("PaymentLog")
-      .select("*")
+      .select("userId, email, status, planId")
       .eq("planId", "promax")
-      .eq("status", "captured");
+      .or("isFreeGrant.is.null,isFreeGrant.eq.false");
 
-    const proMaxUserIds = new Set((proMaxPurchasers || []).map((p: any) => p.userId));
-    const proMaxEmails = new Set((proMaxPurchasers || []).map((p: any) => (p.email || "").toLowerCase().trim()));
+    const proMaxUserIds = new Set((proMaxPurchasers || []).map((p: any) => p.userId).filter(Boolean));
+    const proMaxEmails = new Set((proMaxPurchasers || []).map((p: any) => (p.email || "").toLowerCase().trim()).filter(Boolean));
+    // Hardcode known Pro Max purchaser (Jyothika) as safety fallback
     proMaxEmails.add("payyalajyothika333@gmail.com");
     proMaxUserIds.add("d9301154-778f-45d7-91e3-873c6d5be4aa");
 
@@ -172,7 +174,7 @@ export async function GET(request: NextRequest) {
     const { data: paymentLogs, error: paymentErr } = await admin
       .from("PaymentLog")
       .select("*")
-      .eq("isFreeGrant", false)
+      .or("isFreeGrant.is.null,isFreeGrant.eq.false")
       .order("createdAt", { ascending: false })
       .limit(50);
 
