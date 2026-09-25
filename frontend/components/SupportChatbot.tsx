@@ -208,16 +208,16 @@ export default function SupportChatbot() {
           const planId = localStorage.getItem(`fastHire_plan_${user.id}`) || "free";
           
           if (creds.isOwner) {
-            setActivePlan("Owner (Unlimited)");
+            setActivePlan("promax");
             setRemainingCredits("Unlimited");
-          } else if (planId === "promax" || creds.paidCredits >= 99999) {
-            setActivePlan("Pro Max");
+          } else if (planId === "promax" || creds.paidCredits >= 90) {
+            setActivePlan("promax");
             setRemainingCredits("Unlimited");
-          } else if (planId === "premium") {
-            setActivePlan("Premium Pro");
+          } else if (planId === "premium" || (creds.paidCredits > 0 && creds.paidCredits < 90)) {
+            setActivePlan("premium");
             setRemainingCredits(`${creds.paidCredits} Credits`);
           } else {
-            setActivePlan("Free Tier");
+            setActivePlan("free");
             setRemainingCredits(`${creds.freeRemaining} Credits`);
           }
         }
@@ -305,7 +305,7 @@ export default function SupportChatbot() {
             role: m.sender === 'user' ? 'user' : 'assistant',
             content: m.text
           })),
-          userPlan: activePlan.toLowerCase().includes("promax") ? "promax" : activePlan.toLowerCase().includes("premium") ? "premium" : "free"
+          userPlan: activePlan === "promax" || activePlan === "owner" ? "promax" : activePlan === "premium" ? "premium" : "free"
         })
       });
 
@@ -352,8 +352,8 @@ export default function SupportChatbot() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: userMsg,
-          userPlan: activePlan.toLowerCase().includes("promax") ? "promax" : activePlan.toLowerCase().includes("premium") ? "premium" : "free",
-          userCredits: rawCredits?.isOwner ? 999999 : (activePlan === "Premium Pro" ? rawCredits?.paidCredits : rawCredits?.freeRemaining) || 0
+          userPlan: activePlan === "promax" || activePlan === "owner" ? "promax" : activePlan === "premium" ? "premium" : "free",
+          userCredits: rawCredits?.isOwner ? 999999 : (activePlan === "premium" ? rawCredits?.paidCredits : rawCredits?.freeRemaining) || 0
         })
       });
 
@@ -551,9 +551,8 @@ export default function SupportChatbot() {
 
                 {/* Option 2: AI Assistant Chat (Available for all, Free/Pro shows PRO badge to upgrade) */}
                 {(() => {
-                  const isProMax = activePlan.toLowerCase().includes("promax") || 
-                                   activePlan.toLowerCase().includes("pro max") || 
-                                   activePlan.toLowerCase().includes("owner") || 
+                  const isProMax = activePlan === "promax" || 
+                                   activePlan === "owner" || 
                                    (rawCredits?.isOwner ?? false) || 
                                    (rawCredits?.paidCredits ?? 0) >= 90;
                   return (

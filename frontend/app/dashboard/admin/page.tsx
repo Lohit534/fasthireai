@@ -426,16 +426,16 @@ export default function UnifiedAdminDashboard() {
         </div>
 
         <AnimatePresence mode="wait">
-        {/* TAB 1: USERS & PRICING LEVEL */}
-        {activeTab === "users" && (
-          <motion.div
-            key="users"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-6"
-          >
+          {/* TAB 1: USERS & PRICING LEVEL */}
+          {activeTab === "users" && (
+            <motion.div
+              key="tab-users"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.22, ease: "easeInOut" }}
+              className="space-y-6"
+            >
             
             {/* Financial Overview Metrics */}
             <div className="space-y-3 select-none">
@@ -905,18 +905,18 @@ export default function UnifiedAdminDashboard() {
             </Card>
 
           </motion.div>
-        )}
+          )}
 
-        {/* TAB 2: SUPPORT TICKETS LIST */}
-        {activeTab === "tickets" && (
-          <motion.div
-            key="tickets"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-6"
-          >
+          {/* TAB 2: SUPPORT TICKETS LIST */}
+          {activeTab === "tickets" && (
+            <motion.div
+              key="tab-tickets"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.22, ease: "easeInOut" }}
+              className="space-y-6"
+            >
             {ticketsLoading ? (
               <AdminTicketsSkeleton count={4} />
             ) : tickets.length === 0 ? (
@@ -1088,19 +1088,19 @@ export default function UnifiedAdminDashboard() {
 
               </div>
             )}
-          </motion.div>
-        )}
+            </motion.div>
+          )}
 
-        {/* TAB 3: FEEDBACK MESSAGES */}
-        {activeTab === "feedback" && (
-          <motion.div
-            key="feedback"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-4"
-          >
+          {/* TAB 3: FEEDBACK MESSAGES */}
+          {activeTab === "feedback" && (
+            <motion.div
+              key="tab-feedback"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.22, ease: "easeInOut" }}
+              className="space-y-4"
+            >
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-black text-slate-900">Feedback Inbox</h2>
@@ -1196,8 +1196,8 @@ export default function UnifiedAdminDashboard() {
                 })}
               </div>
             )}
-          </motion.div>
-        )}
+            </motion.div>
+          )}
         </AnimatePresence>
 
       </main>
