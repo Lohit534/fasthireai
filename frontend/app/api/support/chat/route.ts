@@ -182,6 +182,39 @@ const FAST_MODELS = [
 
 export async function POST(request: NextRequest) {
   try {
+    // 1. Verify authentication
+    const supabase = createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized. Please sign in." }, { status: 401 });
+    }
+
+    // 2. Enforce Pro Max plan server-side (AI Chat is Pro Max exclusive)
+    const isOwner = isOwnerEmail(user.email);
+    if (!isOwner) {
+      const admin = getAdminClient() as any;
+      let activeUserId = user.id;
+      if (user.email) {
+        const { data: existingUser } = await admin
+          .from("User")
+          .select("id")
+          .eq("email", user.email.toLowerCase().trim())
+          .maybeSingle();
+        if (existingUser) activeUserId = existingUser.id;
+      }
+      const { data: creditRow } = await admin
+        .from("Credit")
+        .select("paidCredits")
+        .eq("userId", activeUserId)
+        .maybeSingle();
+      if (!creditRow || creditRow.paidCredits < 90) {
+        return NextResponse.json(
+          { error: "AI Chat is exclusive to Pro Max plan. Please upgrade to access this feature." },
+          { status: 403 }
+        );
+      }
+    }
+
     const body = await request.json().catch(() => ({}));
     const question = body.question;
     const messages = body.messages || [];

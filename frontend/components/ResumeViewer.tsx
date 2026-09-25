@@ -197,12 +197,16 @@ export default function ResumeViewer({
           <Button
             onClick={handleDownloadPDF}
             disabled={pdfLoading}
-            className="flex-1 sm:flex-initial bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-bold text-xs h-8 sm:h-9 rounded-lg flex items-center justify-center gap-1.5 px-3 sm:px-4 cursor-pointer"
+            className={`flex-1 sm:flex-initial text-xs h-8 sm:h-9 rounded-lg flex items-center justify-center gap-1.5 px-3 sm:px-4 cursor-pointer font-bold ${
+              userPlan === "free"
+                ? "bg-slate-100 text-slate-400 hover:bg-slate-200"
+                : "bg-[#0d6e5a] hover:bg-[#0a5a49] text-white"
+            }`}
           >
             {pdfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
             <span>PDF</span>
             {userPlan === "free" && (
-              <span className="bg-amber-400 text-slate-900 text-[8px] font-black uppercase px-1 rounded">
+              <span className="bg-slate-200 text-slate-500 text-[8px] font-black uppercase px-1 rounded">
                 PRO
               </span>
             )}
@@ -211,13 +215,17 @@ export default function ResumeViewer({
           <Button
             onClick={handleDownloadDOCX}
             disabled={docxLoading}
-            variant="outline"
-            className="flex-1 sm:flex-initial border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs h-8 sm:h-9 rounded-lg flex items-center justify-center gap-1.5 px-3 sm:px-4 bg-transparent cursor-pointer"
+            variant={userPlan === "free" ? "ghost" : "outline"}
+            className={`flex-1 sm:flex-initial text-xs h-8 sm:h-9 rounded-lg flex items-center justify-center gap-1.5 px-3 sm:px-4 cursor-pointer font-bold ${
+              userPlan === "free"
+                ? "bg-slate-100 text-slate-400 hover:bg-slate-200 border-none"
+                : "border-slate-200 text-slate-600 hover:bg-slate-50 bg-transparent"
+            }`}
           >
             {docxLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
             <span>DOCX</span>
             {userPlan === "free" && (
-              <span className="bg-amber-100 text-amber-800 text-[8px] font-black uppercase px-1 rounded border border-amber-300">
+              <span className="bg-slate-200 text-slate-500 text-[8px] font-black uppercase px-1 rounded">
                 PRO
               </span>
             )}

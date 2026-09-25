@@ -577,7 +577,7 @@ export default function SupportChatbot() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="text-xs font-extrabold text-slate-900 group-hover:text-[#0d6e5a] transition-colors">
+                            <h4 className="text-xs font-extrabold text-slate-600 group-hover:text-[#0d6e5a] transition-colors">
                               AI Chat
                             </h4>
                             {/* Badge matching user reference image */}

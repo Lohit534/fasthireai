@@ -729,7 +729,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between select-none">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-5 w-5 text-[#0d6e5a]" />
-                    <h3 className="text-sm font-extrabold text-slate-900">Interactive Bullet Point Improver</h3>
+                    <h3 className="text-sm font-extrabold text-slate-600">Interactive Bullet Point Improver</h3>
                   </div>
                   <Badge className="bg-[#0d6e5a]/10 border-[#0d6e5a]/20 text-[#0d6e5a] text-[10px] font-bold select-none px-2 py-0.5">
                     Pro Feature
