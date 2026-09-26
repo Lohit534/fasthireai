@@ -549,7 +549,7 @@ export default function SupportChatbot() {
                   <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-[#0d6e5a] group-hover:translate-x-0.5 transition-all shrink-0" />
                 </button>
 
-                {/* Option 2: AI Assistant Chat (Available for all, Free/Pro shows PRO badge to upgrade) */}
+                {/* Option 2: AI Assistant Chat (Available for all, Free/Pro shows PRO MAX badge to upgrade) */}
                 {(() => {
                   const isProMax = activePlan === "promax" || 
                                    activePlan === "owner" || 
@@ -561,7 +561,7 @@ export default function SupportChatbot() {
                         if (!isProMax) {
                           setIsOpen(false);
                           useUpgradeModalStore.getState().openModal({
-                            badge: "PRO",
+                            badge: "PRO MAX",
                             title: "Unlock 24/7 AI Assistant & Coach",
                             description: "24/7 AI Chatbot Assistant is an exclusive feature of the Pro Max plan. Get instant resume advice, live ATS diagnostics, and 90 optimizations/month.",
                           });
@@ -577,13 +577,15 @@ export default function SupportChatbot() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="text-xs font-extrabold text-slate-600 group-hover:text-[#0d6e5a] transition-colors">
+                            <h4 className={`text-xs font-extrabold ${isProMax ? "text-slate-900" : "text-slate-700"} group-hover:text-[#0d6e5a] transition-colors`}>
                               AI Chat
                             </h4>
-                            {/* Badge matching user reference image */}
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#ede9fe] text-[#6d28d9] tracking-wide select-none">
-                              PRO
-                            </span>
+                            {/* Pro Max exclusive badge — only visible for non-Pro Max users */}
+                            {!isProMax && (
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 uppercase tracking-wider select-none shadow-xs">
+                                PRO MAX
+                              </span>
+                            )}
                           </div>
                           <p className="text-[10px] text-slate-500 mt-0.5 font-medium">
                             24/7 AI Assistant &bull; Ask anything about FastHire

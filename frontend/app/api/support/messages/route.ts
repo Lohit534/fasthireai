@@ -88,40 +88,45 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
     if (error) throw error;
 
-    // Map to the expected output format and filter out messages replied over 24 hours ago
+    // Map to the expected output format
+    // Auto-delete only tickets that the admin has replied to AND are older than 24 hours (post-reply)
     const now = Date.now();
     const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
     const expiredIdsToDelete: string[] = [];
 
     const formattedMessages = (data || []).map((row: any) => {
+      let meta: any = {};
       try {
-        const meta = JSON.parse(row.jobDescription || "{}");
-        const repliedAt = meta.repliedAt;
-
-        // If admin has replied and repliedAt is older than 24 hours, mark for deletion
-        if (meta.status === "replied" && repliedAt) {
-          const replyTime = new Date(repliedAt).getTime();
-          if (now - replyTime > TWENTY_FOUR_HOURS) {
-            expiredIdsToDelete.push(row.id);
-            return null;
-          }
-        }
-
-        return {
-          id: row.id,
-          userId: row.userId,
-          userEmail: meta.userEmail,
-          userPlan: meta.userPlan,
-          userCredits: meta.userCredits,
-          message: row.originalText,
-          reply: row.optimizedText || null,
-          status: meta.status,
-          createdAt: row.createdAt,
-          repliedAt: meta.repliedAt
-        };
-      } catch (e) {
-        return null;
+        meta = JSON.parse(row.jobDescription || "{}");
+      } catch {
+        meta = {};
       }
+
+      const hasAdminReply = Boolean(row.optimizedText && row.optimizedText.trim());
+      const ticketStatus: "pending" | "replied" = hasAdminReply ? "replied" : "pending";
+      const repliedAt = meta.repliedAt;
+
+      // If admin has replied AND repliedAt is older than 24 hours, mark for deletion
+      if (ticketStatus === "replied" && repliedAt) {
+        const replyTime = new Date(repliedAt).getTime();
+        if (now - replyTime > TWENTY_FOUR_HOURS) {
+          expiredIdsToDelete.push(row.id);
+          return null;
+        }
+      }
+
+      return {
+        id: row.id,
+        userId: row.userId,
+        userEmail: meta.userEmail || "Customer",
+        userPlan: meta.userPlan || "free",
+        userCredits: meta.userCredits ?? 0,
+        message: row.originalText || "",
+        reply: hasAdminReply ? row.optimizedText.trim() : null,
+        status: ticketStatus,
+        createdAt: row.createdAt,
+        repliedAt: meta.repliedAt || null
+      };
     }).filter(Boolean) as any[];
 
     // Auto-clean expired tickets (>24 hours post-admin reply) from database asynchronously

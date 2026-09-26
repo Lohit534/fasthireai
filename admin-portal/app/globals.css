@@ -36,3 +36,96 @@ input:-webkit-autofill:active {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(13, 110, 90, 0.2); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(13, 110, 90, 0.4); }
+
+/* Shimmer Keyframes & Utilities */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(226, 232, 240, 0.8) 25%,
+    rgba(13, 110, 90, 0.18) 50%,
+    rgba(226, 232, 240, 0.8) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* Motion Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 3s linear infinite;
+}
+
+/* tailwindcss-animate polyfill: animate-in, fade-in, slide-in-from-bottom */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation-fill-mode: both;
+}
+
+.animate-in.fade-in {
+  animation-name: fadeInUp;
+  animation-duration: 0.2s;
+  animation-timing-function: ease-out;
+}
+
+.animate-in.fade-in.duration-200 {
+  animation-duration: 0.2s;
+}
+
+.animate-in.fade-in.duration-300 {
+  animation-duration: 0.3s;
+}
+
+/* Shimmer skeleton loading */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(226, 232, 240, 0.8) 25%,
+    rgba(13, 110, 90, 0.18) 50%,
+    rgba(226, 232, 240, 0.8) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 0.5rem;
+}

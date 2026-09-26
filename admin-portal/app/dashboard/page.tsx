@@ -7,7 +7,7 @@ import {
   Loader2, LogOut, Layers, Users, MessageSquare, Inbox,
   Search, TrendingUp, TrendingDown, Wallet, Sparkles,
   CheckCircle, User as UserIcon, Clock, AlertCircle,
-  Trash2, ShieldAlert, CheckCircle2
+  Trash2, ShieldAlert, CheckCircle2, RefreshCw
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -61,8 +61,12 @@ export default function AdminDashboard() {
   const [feedbackLoading, setFeedbackLoading] = useState(true);
   const [deletingFeedbackId, setDeletingFeedbackId] = useState<string | null>(null);
 
+  const [refreshing, setRefreshing] = useState(false);
+
   /* ── Auth guard ── */
   useEffect(() => {
+    let resolved = false;
+
     const checkAndInit = (session: any) => {
       const user = session?.user;
       const token = session?.access_token;
@@ -70,6 +74,7 @@ export default function AdminDashboard() {
         window.location.href = "/";
         return;
       }
+      resolved = true;
       setAccessToken(token || null);
       setAuthLoading(false);
       loadUsers(token);
@@ -93,7 +98,24 @@ export default function AdminDashboard() {
         if (typeof window !== "undefined" && window.location.hash.includes("access_token")) {
           return;
         }
-        window.location.href = "/";
+        // Fallback: check getUser before redirecting (prevents false logout on page refresh/reload)
+        supabase.auth.getUser().then(({ data: userData }) => {
+          if (userData?.user && isAdminEmail(userData.user.email)) {
+            supabase.auth.getSession().then(({ data: freshSession }) => {
+              if (freshSession?.session) {
+                checkAndInit(freshSession.session);
+              }
+            });
+            return;
+          }
+          if (!resolved) {
+            window.location.href = "/";
+          }
+        }).catch(() => {
+          if (!resolved) {
+            window.location.href = "/";
+          }
+        });
       }
     });
 
@@ -101,6 +123,25 @@ export default function AdminDashboard() {
       authListener?.subscription?.unsubscribe();
     };
   }, []);
+
+  const handleReload = async () => {
+    setRefreshing(true);
+    setUsersLoading(true);
+    setTicketsLoading(true);
+    setFeedbackLoading(true);
+    try {
+      await Promise.allSettled([
+        loadUsers(accessToken),
+        loadTickets(accessToken),
+        loadFeedback(accessToken),
+      ]);
+      toast.success("Dashboard reloaded");
+    } catch {
+      toast.error("Failed to reload data");
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const authHeaders = (token: string | null) => ({
     "Content-Type": "application/json",
@@ -322,9 +363,20 @@ export default function AdminDashboard() {
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">Monitor users, update plans, and respond to support tickets.</p>
           </div>
-          <span className="text-[10px] font-black text-[#0d6e5a] bg-teal-50 border border-teal-200 px-3 py-1 rounded-full shadow-xs">
-            Owner Workspace
-          </span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleReload}
+              disabled={refreshing || usersLoading || ticketsLoading}
+              className="flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-[#0d6e5a] bg-white hover:bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50"
+              title="Reload dashboard data"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 text-[#0d6e5a] ${refreshing ? "animate-spin" : ""}`} />
+              <span>{refreshing ? "Reloading..." : "Reload Data"}</span>
+            </button>
+            <span className="text-[10px] font-black text-[#0d6e5a] bg-teal-50 border border-teal-200 px-3 py-1 rounded-full shadow-xs">
+              Owner Workspace
+            </span>
+          </div>
         </div>
 
         {/* Tab bar */}
@@ -363,47 +415,82 @@ export default function AdminDashboard() {
         {activeTab === "users" && (
           <div className="space-y-6 animate-in fade-in duration-200">
 
-            {/* Revenue cards */}
+            {/* Revenue cards — shimmer while loading */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: TrendingUp, sub: `${payingUsers.length} paying user${payingUsers.length !== 1 ? 's' : ''} (51st onwards)`, color: "text-slate-900" },
-                { label: "Received", value: `₹${totalReceived.toLocaleString()}`, icon: TrendingUp, sub: "Collected from paid users", color: "text-slate-900" },
-                { label: "Expenses", value: `₹${earlyAdopterExpenses.toLocaleString()}`, icon: TrendingDown, sub: `${earlyAdopterProCount} early adopters (1-yr free)`, color: "text-rose-600" },
-                { label: "Net Balance", value: `₹${netBalance.toLocaleString()}`, icon: Wallet, sub: "Collected net revenue", color: "text-[#0d6e5a]" },
-              ].map((card, i) => (
-                <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 hover:border-slate-300 shadow-sm transition-all">
-                  <div className="flex items-center gap-2 text-slate-600 text-sm font-semibold">
-                    <div className="h-8 w-8 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0d6e5a]">
-                      <card.icon className="h-4 w-4" />
+              {usersLoading ? (
+                <>
+                  {[0,1,2,3].map(i => (
+                    <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-lg animate-shimmer" />
+                        <div className="h-4 w-20 rounded-lg animate-shimmer" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="h-7 w-28 rounded-lg animate-shimmer" />
+                        <div className="h-3 w-36 rounded-lg animate-shimmer" />
+                      </div>
                     </div>
-                    {card.label}
-                  </div>
-                  <div>
-                    <div className={`text-2xl font-black ${card.color}`}>{card.value}</div>
-                    <p className="text-xs text-slate-500 mt-1 font-medium">{card.sub}</p>
-                  </div>
-                </div>
-              ))}
+                  ))}
+                </>
+              ) : (
+                <>
+                  {[
+                    { label: "Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: TrendingUp, sub: `${payingUsers.length} paying user${payingUsers.length !== 1 ? 's' : ''} (51st onwards)`, color: "text-slate-900" },
+                    { label: "Received", value: `₹${totalReceived.toLocaleString()}`, icon: TrendingUp, sub: "Collected from paid users", color: "text-slate-900" },
+                    { label: "Expenses", value: `₹${earlyAdopterExpenses.toLocaleString()}`, icon: TrendingDown, sub: `${earlyAdopterProCount} early adopters (1-yr free)`, color: "text-rose-600" },
+                    { label: "Net Balance", value: `₹${netBalance.toLocaleString()}`, icon: Wallet, sub: "Collected net revenue", color: "text-[#0d6e5a]" },
+                  ].map((card, i) => (
+                    <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 hover:border-slate-300 shadow-sm transition-all">
+                      <div className="flex items-center gap-2 text-slate-600 text-sm font-semibold">
+                        <div className="h-8 w-8 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0d6e5a]">
+                          <card.icon className="h-4 w-4" />
+                        </div>
+                        {card.label}
+                      </div>
+                      <div>
+                        <div className={`text-2xl font-black ${card.color}`}>{card.value}</div>
+                        <p className="text-xs text-slate-500 mt-1 font-medium">{card.sub}</p>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
 
-            {/* KPI tiles */}
+            {/* KPI tiles — shimmer while loading */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Total Registrations", value: totalUsers, icon: Users, color: "text-slate-900", iconBg: "bg-slate-100 text-slate-700" },
-                { label: "Pro Max Tier", value: promaxUsers, icon: Sparkles, color: "text-emerald-700", iconBg: "bg-emerald-50 text-emerald-700" },
-                { label: "Premium Pro", value: premiumUsers, icon: CheckCircle, color: "text-teal-700", iconBg: "bg-teal-50 text-teal-700" },
-                { label: "Free Tier", value: freeUsers, icon: UserIcon, color: "text-slate-600", iconBg: "bg-slate-100 text-slate-600" },
-              ].map((kpi, i) => (
-                <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center justify-between shadow-sm">
-                  <div>
-                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">{kpi.label}</span>
-                    <span className={`text-2xl font-black ${kpi.color}`}>{kpi.value}</span>
-                  </div>
-                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center border border-slate-200/60 ${kpi.iconBg}`}>
-                    <kpi.icon className="h-5 w-5" />
-                  </div>
-                </div>
-              ))}
+              {usersLoading ? (
+                <>
+                  {[0,1,2,3].map(i => (
+                    <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+                      <div className="space-y-1.5">
+                        <div className="h-2.5 w-24 rounded-lg animate-shimmer" />
+                        <div className="h-7 w-16 rounded-lg animate-shimmer" />
+                      </div>
+                      <div className="h-10 w-10 rounded-xl animate-shimmer" />
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <>
+                  {[
+                    { label: "Total Registrations", value: totalUsers, icon: Users, color: "text-slate-900", iconBg: "bg-slate-100 text-slate-700" },
+                    { label: "Pro Max Tier", value: promaxUsers, icon: Sparkles, color: "text-emerald-700", iconBg: "bg-emerald-50 text-emerald-700" },
+                    { label: "Premium Pro", value: premiumUsers, icon: CheckCircle, color: "text-teal-700", iconBg: "bg-teal-50 text-teal-700" },
+                    { label: "Free Tier", value: freeUsers, icon: UserIcon, color: "text-slate-600", iconBg: "bg-slate-100 text-slate-600" },
+                  ].map((kpi, i) => (
+                    <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+                      <div>
+                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">{kpi.label}</span>
+                        <span className={`text-2xl font-black ${kpi.color}`}>{kpi.value}</span>
+                      </div>
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center border border-slate-200/60 ${kpi.iconBg}`}>
+                        <kpi.icon className="h-5 w-5" />
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
 
             {/* Analytics grid */}
@@ -477,7 +564,27 @@ export default function AdminDashboard() {
                 />
               </div>
               {usersLoading ? (
-                <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 text-[#0d6e5a] animate-spin" /></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-2">
+                  {[0,1,2].map(i => (
+                    <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-1.5 flex-1">
+                          <div className="h-3.5 w-24 rounded-lg animate-shimmer" />
+                          <div className="h-2.5 w-36 rounded-lg animate-shimmer" />
+                        </div>
+                        <div className="h-5 w-16 rounded-full animate-shimmer" />
+                      </div>
+                      <div className="border-t border-slate-200 pt-3 space-y-2">
+                        <div className="h-2.5 w-full rounded-lg animate-shimmer" />
+                        <div className="h-2.5 w-3/4 rounded-lg animate-shimmer" />
+                        <div className="h-2.5 w-1/2 rounded-lg animate-shimmer" />
+                      </div>
+                      <div className="border-t border-slate-200 pt-3">
+                        <div className="h-7 w-full rounded-lg animate-shimmer" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : userSearch.trim() === "" ? (
                 <div className="text-center py-10 border border-dashed border-slate-200 rounded-xl text-slate-500 text-xs bg-slate-50/50">
                   Enter a name or email to search users
@@ -540,7 +647,41 @@ export default function AdminDashboard() {
         {activeTab === "tickets" && (
           <div className="space-y-6 animate-in fade-in duration-200">
             {ticketsLoading ? (
-              <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 text-[#0d6e5a] animate-spin" /></div>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Ticket list shimmer */}
+                <div className="lg:col-span-5 space-y-3">
+                  {[0,1,2,3].map(i => (
+                    <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="h-3 w-36 rounded-lg animate-shimmer" />
+                        <div className="h-4 w-14 rounded-full animate-shimmer" />
+                      </div>
+                      <div className="h-2.5 w-full rounded-lg animate-shimmer" />
+                      <div className="h-2.5 w-3/4 rounded-lg animate-shimmer" />
+                      <div className="h-2.5 w-20 rounded-lg animate-shimmer" />
+                    </div>
+                  ))}
+                </div>
+                {/* Ticket detail shimmer */}
+                <div className="lg:col-span-7">
+                  <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 shadow-sm">
+                    <div className="space-y-2 pb-4 border-b border-slate-200">
+                      <div className="h-2.5 w-20 rounded-lg animate-shimmer" />
+                      <div className="h-5 w-48 rounded-lg animate-shimmer" />
+                      <div className="h-3 w-32 rounded-lg animate-shimmer" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-2.5 w-24 rounded-lg animate-shimmer" />
+                      <div className="h-24 w-full rounded-xl animate-shimmer" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-2.5 w-24 rounded-lg animate-shimmer" />
+                      <div className="h-20 w-full rounded-xl animate-shimmer" />
+                      <div className="h-10 w-full rounded-xl animate-shimmer" />
+                    </div>
+                  </div>
+                </div>
+              </div>
             ) : tickets.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-slate-200 bg-white rounded-2xl shadow-sm">
                 <Inbox className="h-10 w-10 text-slate-400 mb-3" />
@@ -664,7 +805,28 @@ export default function AdminDashboard() {
               </button>
             </div>
             {feedbackLoading ? (
-              <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-[#0d6e5a]" /></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {[0,1,2,3,4,5].map(i => (
+                  <div key={i} className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-1.5">
+                        <div className="h-3.5 w-20 rounded-lg animate-shimmer" />
+                        <div className="h-2.5 w-28 rounded-lg animate-shimmer" />
+                      </div>
+                      <div className="h-5 w-16 rounded-full animate-shimmer" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="h-2.5 w-full rounded-lg animate-shimmer" />
+                      <div className="h-2.5 w-5/6 rounded-lg animate-shimmer" />
+                      <div className="h-2.5 w-4/6 rounded-lg animate-shimmer" />
+                    </div>
+                    <div className="pt-1 border-t border-slate-100 flex justify-between">
+                      <div className="h-2.5 w-16 rounded-lg animate-shimmer" />
+                      <div className="h-2.5 w-12 rounded-lg animate-shimmer" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : feedbackMessages.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-slate-200 bg-white rounded-2xl shadow-sm">
                 <Inbox className="h-10 w-10 text-slate-400 mb-3" />

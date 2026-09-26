@@ -133,6 +133,11 @@ export async function POST(request: NextRequest) {
       throw new Error("Please sign in to optimize your resume.");
     }
 
+    const isEmailUser = user.app_metadata?.provider === "email" || user.identities?.[0]?.provider === "email";
+    if (isEmailUser && !user.email_confirmed_at) {
+      throw new Error("Please verify your email address before using resume optimization.");
+    }
+
     // 2. Parse and validate body
     const bodyText = await request.text();
     const { resumeText, jobDescription, instructions, lengthOption, jobTitle, company, dataTrainingConsent } = JSON.parse(bodyText || '{}');

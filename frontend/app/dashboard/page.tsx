@@ -144,6 +144,16 @@ export default function DashboardPage() {
           router.push(hasSample ? "/auth/login?sample=true" : "/auth/login");
           return;
         }
+
+        // Email verification guard: block unconfirmed email accounts
+        const isEmailProvider = data.user.app_metadata?.provider === "email" || data.user.identities?.[0]?.provider === "email";
+        if (isEmailProvider && !data.user.email_confirmed_at) {
+          toast.error("Please verify your email address before accessing your dashboard.");
+          await supabase.auth.signOut();
+          router.push("/auth/login?error=email-not-confirmed");
+          return;
+        }
+
         setUser(data.user);
         // Pre-load cached plan to prevent UI flash
         const cachedPlan = localStorage.getItem(`fastHire_plan_${data.user.id}`);
@@ -729,11 +739,15 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between select-none">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-5 w-5 text-[#0d6e5a]" />
-                    <h3 className="text-sm font-extrabold text-slate-600">Interactive Bullet Point Improver</h3>
+                    <h3 className={`text-sm font-extrabold ${userPlan === "free" ? "text-slate-600" : "text-slate-900"}`}>
+                      Interactive Bullet Point Improver
+                    </h3>
                   </div>
-                  <Badge className="bg-[#0d6e5a]/10 border-[#0d6e5a]/20 text-[#0d6e5a] text-[10px] font-bold select-none px-2 py-0.5">
-                    Pro Feature
-                  </Badge>
+                  {userPlan === "free" && (
+                    <Badge className="bg-[#0d6e5a]/10 border-[#0d6e5a]/20 text-[#0d6e5a] text-[10px] font-bold select-none px-2 py-0.5">
+                      Pro Feature
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-xs text-slate-500 leading-relaxed font-semibold select-none">
                   Scan and optimize individual bullet points on your original resume text. We identify missing action verbs and metrics.

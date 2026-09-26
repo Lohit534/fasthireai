@@ -2,26 +2,26 @@
 
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, KeyRound, Mail, User, AlertCircle, CheckCircle2, Briefcase, Check, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import {
+  Loader2,
+  AlertCircle,
+  Briefcase,
+  Check,
+  ShieldCheck,
+  Lock,
+  Sparkles
+} from "lucide-react";
 import { toast } from "react-hot-toast";
 
 export const dynamic = "force-dynamic";
 
 function SignupFormContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   React.useEffect(() => {
     if (searchParams.get("sample") !== "true" && localStorage.getItem("fastHire_pendingSample") !== "true") {
@@ -31,126 +31,27 @@ function SignupFormContent() {
     }
   }, [searchParams]);
 
-  // Check password against HaveIBeenPwned using k-anonymity (password never sent — only first 5 chars of SHA-1 hash)
-  const checkLeakedPassword = async (pwd: string): Promise<boolean> => {
-    try {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(pwd);
-      const hashBuffer = await crypto.subtle.digest("SHA-1", data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
-      const prefix = hashHex.slice(0, 5);
-      const suffix = hashHex.slice(5);
-
-      const res = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`, {
-        headers: { "Add-Padding": "true" },
-      });
-      if (!res.ok) return false; // If HIBP is down, don't block signup
-
-      const text = await res.text();
-      const lines = text.split("\n");
-      for (const line of lines) {
-        const [hashSuffix, count] = line.split(":");
-        if (hashSuffix.trim().toUpperCase() === suffix && parseInt(count, 10) > 0) {
-          return true; // Password found in breach database
-        }
-      }
-      return false;
-    } catch {
-      return false; // Network error — fail open (don't block signup)
-    }
-  };
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGoogleSignup = async () => {
+    setLoading(true);
     setError(null);
-
-    // Basic password length check
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
-
-    setLoading(true);
-
     try {
-      // Check if password has been leaked in known data breaches
-      const isLeaked = await checkLeakedPassword(password);
-      if (isLeaked) {
-        setError(
-          "This password has appeared in a known data breach. Please choose a stronger, unique password."
-        );
-        toast.error("Password found in breach database. Please choose a different one.");
-        setLoading(false);
-        return;
-      }
+      const isSample = searchParams.get("sample") === "true" || localStorage.getItem("fastHire_pendingSample") === "true";
+      const nextPath = isSample ? "/dashboard?sample=true" : "/dashboard";
 
-      const { data, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: name,
-          },
-        },
-      });
-
-      if (authError) {
-        throw authError;
-      }
-
-      if (data?.session || data?.user) {
-        // Trigger referral reward claim if user signed up with a referral link
-        const refCode = searchParams.get("ref");
-        if (refCode && data.user) {
-          try {
-            await fetch("/api/referral", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                referralCode: refCode,
-                newUserId: data.user.id,
-                newUserEmail: data.user.email,
-              }),
-            });
-            toast.success("🎁 Welcome bonus credit claimed!");
-          } catch (refErr) {
-            // silent — referral claim error
-          }
-        }
-
-        if (data?.session) {
-          const isSample = searchParams.get("sample") === "true" || localStorage.getItem("fastHire_pendingSample") === "true";
-          router.push(isSample ? "/dashboard?sample=true" : "/dashboard");
-          router.refresh();
-          return;
-        }
-      }
-
-      setSuccess(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to create account.");
-      toast.error(err.message || "Registration failed.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    try {
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
         },
       });
+
       if (authError) {
         throw authError;
       }
     } catch (err: any) {
-      setError(err.message || "Google sign-in failed.");
-      toast.error(err.message || "Google sign-in failed.");
+      const msg = err.message || "Google sign-up failed. Please try again.";
+      setError(msg);
+      toast.error(msg);
       setLoading(false);
     }
   };
@@ -160,7 +61,7 @@ function SignupFormContent() {
       
       {/* LEFT PANE: Branding Showroom (Desktop Only) */}
       <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 bg-[#0d6e5a] relative overflow-hidden">
-        {/* Subtle pattern */}
+        {/* Subtle background glow */}
         <div className="absolute top-1/4 left-1/4 h-[300px] w-[300px] rounded-full bg-white/5 blur-[100px] -z-10" />
 
         {/* Logo */}
@@ -173,11 +74,16 @@ function SignupFormContent() {
 
         {/* Headline content */}
         <div className="space-y-6 max-w-lg my-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-green-100 text-xs font-semibold">
+            <Sparkles className="h-3.5 w-3.5 text-green-200" />
+            <span>AI-Powered Resume Optimization</span>
+          </div>
+
           <h2 className="text-4xl font-black tracking-tight leading-tight text-white">
             Land more interviews starting today.
           </h2>
           <p className="text-sm text-green-100 font-medium leading-relaxed">
-            Tailored, ATS-optimised resumes in under 30 seconds — 2 free every month.
+            Tailored, ATS-optimised resumes in under 30 seconds — 2 free optimizations every month.
           </p>
 
           <div className="space-y-4 pt-4 font-semibold text-xs text-green-50">
@@ -185,30 +91,24 @@ function SignupFormContent() {
               <span className="h-5 w-5 bg-white/15 border border-white/20 text-white rounded-md flex items-center justify-center shrink-0">
                 <Check className="h-3 w-3" />
               </span>
-              <span>ATS keyword matching for every job</span>
+              <span>ATS keyword matching for every job description</span>
             </div>
             <div className="flex items-center gap-3">
               <span className="h-5 w-5 bg-white/15 border border-white/20 text-white rounded-md flex items-center justify-center shrink-0">
                 <Check className="h-3 w-3" />
               </span>
-              <span>Stronger bullet points, real impact</span>
+              <span>Stronger bullet points with measurable impact</span>
             </div>
             <div className="flex items-center gap-3">
               <span className="h-5 w-5 bg-white/15 border border-white/20 text-white rounded-md flex items-center justify-center shrink-0">
                 <Check className="h-3 w-3" />
               </span>
-              <span>Before & after ATS score tracking</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="h-5 w-5 bg-white/15 border border-white/20 text-white rounded-md flex items-center justify-center shrink-0">
-                <Check className="h-3 w-3" />
-              </span>
-              <span>PDF & DOCX export, ready to send</span>
+              <span>Instant PDF &amp; DOCX export, ready to send</span>
             </div>
           </div>
         </div>
 
-        {/* ATS Scorecard */}
+        {/* ATS Scorecard preview */}
         <div className="max-w-[340px] bg-white/10 border border-white/20 p-5 rounded-xl space-y-4">
           <div className="flex justify-between items-center">
             <span className="text-[10px] text-green-100 font-bold uppercase tracking-wider">ATS Score</span>
@@ -226,12 +126,12 @@ function SignupFormContent() {
             </div>
           </div>
           <div className="h-2 w-full rounded-full overflow-hidden bg-white/10">
-            <div className="h-full w-[91%] rounded-full" style={{ background: 'linear-gradient(90deg, #ef4444 0%, #eab308 50%, #22c55e 100%)' }} />
+            <div className="h-full w-[91%] rounded-full" style={{ background: "linear-gradient(90deg, #ef4444 0%, #eab308 50%, #22c55e 100%)" }} />
           </div>
         </div>
       </div>
 
-      {/* RIGHT PANE: Interactive Signup Block */}
+      {/* RIGHT PANE: Interactive Google Signup Block */}
       <div className="flex flex-col justify-between w-full lg:w-1/2 p-8 md:p-12 min-h-screen">
         
         {/* Top bar */}
@@ -251,161 +151,97 @@ function SignupFormContent() {
           </p>
         </div>
 
-        {/* Center welcome card */}
-        <div className="w-full max-w-[390px] mx-auto my-auto space-y-6">
-          
-          {success ? (
-            <div className="space-y-4 text-center py-6 border border-slate-200 bg-white rounded-2xl p-6 shadow-sm">
-              <div className="flex justify-center">
-                <CheckCircle2 className="h-12 w-12 text-[#0d6e5a] animate-bounce" />
-              </div>
-              <h3 className="text-base font-bold text-slate-900">Verify Your Email Address</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                We sent a confirmation link to <span className="font-semibold text-slate-800">{email}</span>. Click the link to complete registration.
-              </p>
-              <div className="pt-2">
-                <Link href="/auth/login">
-                  <Button variant="outline" className="w-full border-slate-200 text-slate-700 hover:bg-slate-50">
-                    Return to Login
-                  </Button>
-                </Link>
-              </div>
+        {/* Center Card */}
+        <div className="w-full max-w-[400px] mx-auto my-auto space-y-6">
+          <div className="space-y-1.5 text-center sm:text-left">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+              Create your account
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 font-medium">
+              Join thousands of job seekers optimizing their resumes with FastHire AI.
+            </p>
+          </div>
+
+          {/* Alert Error Box */}
+          {error && (
+            <div className="flex items-start gap-2 p-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl">
+              <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
+              <span>{error}</span>
             </div>
-          ) : (
-            <>
-              <div className="space-y-1">
-                <h1 className="text-2xl font-black tracking-tight text-slate-900">Create your account</h1>
-                <p className="text-xs text-slate-500 font-semibold">Start tailoring your resume for free</p>
-              </div>
-
-              {/* Alert Error Box */}
-              {error && (
-                <div className="flex items-start gap-2 p-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg">
-                  <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {/* Google OAuth Button */}
-              <Button
-                type="button"
-                onClick={handleGoogleLogin}
-                disabled={loading}
-                className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold h-11 flex items-center justify-center gap-2.5 rounded-xl shadow-sm"
-              >
-                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
-                  <g transform="matrix(1, 0, 0, 1, 0, 0)">
-                    <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.58h3.29c1.92,-1.77 3.03,-4.38 3.03,-7.39c0,-0.71 -0.06,-1.42 -0.18,-2.09Z" fill="#4285f4" />
-                    <path d="M12,20.57c2.31,0 4.25,-0.77 5.67,-2.09l-3.29,-2.58c-0.91,0.61 -2.08,0.97 -3.38,0.97c-2.6,0 -4.8,-1.76 -5.59,-4.13H1.97v2.66c1.46,2.9 4.47,4.82 8.03,4.82Z" fill="#34a853" />
-                    <path d="M6.41,12.74c-0.2,-0.61 -0.31,-1.27 -0.31,-1.94c0,-0.67 0.11,-1.33 0.31,-1.94V6.2H1.97C1.29,7.56 0.9,9.09 0.9,10.7c0,1.61 0.39,3.14 1.07,4.5H6.41Z" fill="#fbbc05" />
-                    <path d="M12,6.13c1.26,0 2.39,0.43 3.28,1.28l2.46,-2.46c-1.48,-1.38 -3.42,-2.22 -5.74,-2.22c-3.56,0 -6.57,1.92 -8.03,4.82l4.44,3.45c0.79,-2.37 2.99,-4.13 5.59,-4.13Z" fill="#ea4335" />
-                  </g>
-                </svg>
-                Sign up with Google
-              </Button>
-
-              {/* Checklist */}
-              <div className="space-y-2 pt-2 border-t border-slate-100 text-[11px] font-semibold text-slate-500">
-                <div className="flex items-center gap-2">
-                  <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                  <span>2 free optimizations every single month</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                  <span>Interactive Multi-step Wizard Resume Builder</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                  <span>Tailored AI keyword and summary rewrites</span>
-                </div>
-              </div>
-
-              {/* Separator */}
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200"></div>
-                </div>
-                <div className="relative flex justify-center text-[10px]">
-                  <span className="bg-[#f8fafc] px-2.5 text-slate-400 font-bold uppercase tracking-wider">Or email signup</span>
-                </div>
-              </div>
-
-              {/* Form fields */}
-              <form onSubmit={handleSignup} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Full Name</label>
-                  <div className="relative">
-                    <User className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
-                    <Input
-                      type="text"
-                      placeholder="Alex Rivera"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      disabled={loading}
-                      className="pl-11 h-10 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] focus:ring-[#0d6e5a] rounded-xl"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Email Address</label>
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
-                    <Input
-                      type="email"
-                      placeholder="name@example.com"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      disabled={loading}
-                      className="pl-11 h-10 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] focus:ring-[#0d6e5a] rounded-xl"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Password (Min. 8 chars)</label>
-                  <div className="relative">
-                    <KeyRound className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      disabled={loading}
-                      className="pl-11 pr-11 h-10 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] focus:ring-[#0d6e5a] rounded-xl"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                      tabIndex={-1}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold h-10 rounded-xl shadow-md transition-colors"
-                >
-                  {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : "Create Account"}
-                </Button>
-              </form>
-            </>
           )}
 
-          {/* Legal note */}
-          <p className="text-xs text-slate-500 text-center pt-4">
-            By signing up you agree to our <Link href="/terms" className="hover:text-slate-800 underline">Terms</Link> &amp; <Link href="/privacy" className="hover:text-slate-800 underline">Privacy</Link>.
-          </p>
+          {/* Google Sign Up Button */}
+          <div className="space-y-3 pt-2">
+            <Button
+              type="button"
+              onClick={handleGoogleSignup}
+              disabled={loading}
+              className="w-full bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-200 hover:border-slate-300 text-slate-800 font-bold h-12 flex items-center justify-center gap-3 rounded-xl shadow-sm transition-all hover:shadow text-sm"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-[#0d6e5a]" />
+                  <span>Connecting to Google...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+                    <g transform="matrix(1, 0, 0, 1, 0, 0)">
+                      <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.58h3.29c1.92,-1.77 3.03,-4.38 3.03,-7.39c0,-0.71 -0.06,-1.42 -0.18,-2.09Z" fill="#4285f4" />
+                      <path d="M12,20.57c2.31,0 4.25,-0.77 5.67,-2.09l-3.29,-2.58c-0.91,0.61 -2.08,0.97 -3.38,0.97c-2.6,0 -4.8,-1.76 -5.59,-4.13H1.97v2.66c1.46,2.9 4.47,4.82 8.03,4.82Z" fill="#34a853" />
+                      <path d="M6.41,12.74c-0.2,-0.61 -0.31,-1.27 -0.31,-1.94c0,-0.67 0.11,-1.33 0.31,-1.94V6.2H1.97C1.29,7.56 0.9,9.09 0.9,10.7c0,1.61 0.39,3.14 1.07,4.5H6.41Z" fill="#fbbc05" />
+                      <path d="M12,6.13c1.26,0 2.39,0.43 3.28,1.28l2.46,-2.46c-1.48,-1.38 -3.42,-2.22 -5.74,-2.22c-3.56,0 -6.57,1.92 -8.03,4.82l4.44,3.45c0.79,-2.37 2.99,-4.13 5.59,-4.13Z" fill="#ea4335" />
+                    </g>
+                  </svg>
+                  <span>Sign up with Google</span>
+                </>
+              )}
+            </Button>
+          </div>
 
+          {/* Security & Verification Guarantees */}
+          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2.5">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+              <ShieldCheck className="h-4 w-4 text-[#0d6e5a] shrink-0" />
+              <span>Verified Google Accounts Only</span>
+            </div>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              We exclusively use Google OAuth 2.0 to ensure 100% verified, authentic profiles. No passwords to remember or lose.
+            </p>
+            <div className="flex items-center gap-4 pt-1 text-[11px] font-semibold text-slate-500 border-t border-slate-200/60">
+              <span className="flex items-center gap-1.5">
+                <Lock className="h-3 w-3 text-slate-400" />
+                256-bit SSL Encrypted
+              </span>
+              <span>•</span>
+              <span>Zero Spam Guarantee</span>
+            </div>
+          </div>
+
+          {/* Checklist */}
+          <div className="space-y-2 pt-1 text-xs font-medium text-slate-600">
+            <div className="flex items-center gap-2">
+              <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+              <span>2 free AI resume optimizations every month</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+              <span>Interactive step-by-step resume builder</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="h-3.5 w-3.5 text-[#0d6e5a] shrink-0" />
+              <span>Instant ATS keyword scoring &amp; recommendations</span>
+            </div>
+          </div>
         </div>
 
+        {/* Footer info */}
+        <div className="text-center text-[11px] text-slate-400 select-none">
+          By signing up, you agree to our{" "}
+          <Link href="/terms" className="underline hover:text-slate-600">Terms of Service</Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="underline hover:text-slate-600">Privacy Policy</Link>.
+        </div>
       </div>
     </div>
   );
@@ -413,7 +249,11 @@ function SignupFormContent() {
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-slate-600 font-semibold text-xs">Loading...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#0d6e5a]" />
+      </div>
+    }>
       <SignupFormContent />
     </Suspense>
   );

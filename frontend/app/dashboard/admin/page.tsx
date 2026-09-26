@@ -204,8 +204,8 @@ export default function UnifiedAdminDashboard() {
 
   const handleUpdateUserPlan = async (targetUserId: string, newPlanId: "free" | "premium" | "promax") => {
     const targetUser = users.find(u => u.id === targetUserId);
-    if (targetUser?.plan === "promax") {
-      toast.error("Pro Max users are protected and cannot be modified.");
+    if (targetUser?.plan === "owner") {
+      toast.error("Owner account cannot be modified.");
       return;
     }
 
@@ -218,11 +218,14 @@ export default function UnifiedAdminDashboard() {
       });
 
       if (res.ok) {
-        toast.success(`User plan tier updated to ${newPlanId}!`);
-        // Refresh local user records list
+        const data = await res.json().catch(() => ({}));
+        const displayPlanId = data.planId || newPlanId;
+        const displayCredits = data.paidCredits ?? (newPlanId === "premium" ? 20 : newPlanId === "promax" ? 90 : 0);
+        toast.success(`User plan updated to ${displayPlanId}!`);
+        // Refresh local user records list optimistically
         setUsers(prev => prev.map(u => 
           u.id === targetUserId 
-            ? { ...u, plan: newPlanId, paidCredits: newPlanId === "premium" ? 20 : newPlanId === "promax" ? 90 : 0 }
+            ? { ...u, plan: displayPlanId as any, paidCredits: displayCredits }
             : u
         ));
       } else {
@@ -873,11 +876,6 @@ export default function UnifiedAdminDashboard() {
                             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Plan Tier</span>
                             {isOwnerUser ? (
                               <span className="text-[10px] text-[#0d6e5a] font-bold uppercase">Immutable Owner</span>
-                            ) : u.plan === "promax" ? (
-                              <span className="text-[10px] text-emerald-700 font-bold uppercase flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-lg">
-                                <Sparkles className="h-3 w-3 text-emerald-600" />
-                                <span>Pro Max (Protected)</span>
-                              </span>
                             ) : (
                               <div className="flex items-center gap-1.5">
                                 {updatingPlanId === u.id ? (

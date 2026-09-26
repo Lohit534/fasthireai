@@ -428,9 +428,7 @@ export function PricingSkeleton() {
           ].map((plan, idx) => (
             <div 
               key={idx} 
-              className={`bg-white rounded-2xl p-6 shadow-sm flex flex-col gap-5 border ${
-                plan.isPopular ? "border-[#0d6e5a] ring-2 ring-[#0d6e5a]/20" : "border-slate-200"
-              }`}
+              className="bg-white rounded-2xl p-6 shadow-sm flex flex-col gap-5 border border-slate-200"
             >
               {plan.isPopular && (
                 <div className="self-start -mt-3">

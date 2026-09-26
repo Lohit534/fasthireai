@@ -13,6 +13,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const isEmailUser = user.app_metadata?.provider === "email" || user.identities?.[0]?.provider === "email";
+    if (isEmailUser && !user.email_confirmed_at) {
+      return NextResponse.json({ error: "Please verify your email address to generate cover letters." }, { status: 403 });
+    }
+
     const body = await request.json();
     const { resumeText, jobDescription, jobTitle, company } = body;
 

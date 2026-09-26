@@ -369,7 +369,7 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                                   <div className="h-5 w-5 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0">
                                     <Sparkles className="h-3 w-3 text-[#0d6e5a]" />
                                   </div>
-                                  <span className="text-[11px] font-bold text-slate-600 truncate">
+                                  <span className="text-[11px] font-bold text-slate-700 truncate">
                                     Upgrade Pro (20/mo)
                                   </span>
                                 </div>
@@ -396,7 +396,7 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                                 <div className="h-5 w-5 rounded-full bg-teal-100 border border-teal-200 flex items-center justify-center shrink-0">
                                   <Zap className="h-3 w-3 text-[#0d6e5a]" />
                                 </div>
-                                <span className="text-[11px] font-bold text-slate-600 truncate">
+                                <span className="text-[11px] font-bold text-slate-700 truncate">
                                   Pro Max (90/mo)
                                 </span>
                               </div>
@@ -405,7 +405,7 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                                 onClick={() => {
                                   setIsDropdownOpen(false);
                                   useUpgradeModalStore.getState().openModal({
-                                    badge: "PRO",
+                                    badge: "PRO MAX",
                                     title: "Upgrade to Pro Max",
                                     description: "Unlock 90 AI optimizations every month, priority ATS scoring, and high-performance resume analysis.",
                                   });

@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
         });
       }
       creditRow = newCredit;
-    } else if (isFirst50 && creditRow.paidCredits === 0) {
+    } else if (isFirst50 && creditRow.paidCredits === 0 && creditRow.billingCycle !== "admin_free" && creditRow.billingCycle !== "free") {
       // Upgrade free tier credits to Premium Pro plan (20 credits/month) for first 50 members
       const { data: updatedCredit } = await admin
         .from("Credit")
@@ -200,8 +200,15 @@ export async function GET(request: NextRequest) {
       logger.warn("[credits] Failed checking promax payment logs:", e.message);
     }
 
-    if (isPaidProMax) {
-      isFirst50 = false; // Paying Pro Max customer is NOT a free promotional user
+    const isAdminPromax = creditRow.billingCycle === "admin_promax" || creditRow.paidCredits >= 90;
+    const isAdminFree = creditRow.billingCycle === "admin_free" || creditRow.billingCycle === "free";
+    const isAdminPremium = creditRow.billingCycle === "admin_premium";
+
+    if (isPaidProMax || isAdminPromax) {
+      isFirst50 = false; // Paying or Admin Pro Max customer is NOT a free promotional user
+    }
+    if (isAdminFree) {
+      isFirst50 = false; // Explicitly set to Free by admin
     }
 
     // Check if plan has expired
@@ -234,7 +241,7 @@ export async function GET(request: NextRequest) {
       }
     } else {
       // For first 50 free promotional users ONLY, set 1 year expiry
-      if (isFirst50 && !expiresAt) {
+      if (isFirst50 && !expiresAt && !isAdminFree) {
         const signupTime = new Date(creditRow.resetAt || now);
         expiresAt = new Date(signupTime.getTime() + 365 * 24 * 60 * 60 * 1000);
         await admin
@@ -243,7 +250,7 @@ export async function GET(request: NextRequest) {
           .eq("userId", activeUserId);
       }
 
-      if (expiresAt && now > expiresAt) {
+      if (expiresAt && now > expiresAt && !isAdminPromax && !isAdminPremium) {
         // Plan expired! Revert to free plan
         paidCredits = 0;
         billingCycle = "monthly";
@@ -264,8 +271,8 @@ export async function GET(request: NextRequest) {
         logger.info(`[credits] Plan expired for user ${user.email}. Reverted to free tier.`);
       }
 
-      // Auto-heal ONLY for non-paying users: If user is isFirst50 or has legacy credits (>20 and <=365), clamp DB to 20 Pro credits
-      if (isFirst50 || (creditRow.paidCredits > 20 && creditRow.paidCredits <= 365)) {
+      // Auto-heal ONLY for non-paying users: If user has legacy abnormal credits (>20 and <90) and is not promax, clamp DB to 20 Pro credits
+      if (!isAdminPromax && creditRow.paidCredits > 20 && creditRow.paidCredits < 90) {
         if (creditRow.paidCredits !== PRO_CREDITS_PER_MONTH) {
           await admin
             .from("Credit")
@@ -286,9 +293,11 @@ export async function GET(request: NextRequest) {
 
     if (isNewMonth) {
       freeUsed = 0;
-      if (isPaidProMax || (!isFirst50 && paidCredits >= 90)) {
+      if (isPaidProMax || isAdminPromax || paidCredits >= 90) {
         paidCredits = PRO_MAX_CREDITS_PER_MONTH; // 90
-      } else if (paidCredits > 0 || isFirst50) {
+      } else if (isAdminFree) {
+        paidCredits = 0;
+      } else if (paidCredits > 0 || isFirst50 || isAdminPremium) {
         paidCredits = PRO_CREDITS_PER_MONTH; // 20
       } else {
         paidCredits = 0;
@@ -307,16 +316,20 @@ export async function GET(request: NextRequest) {
     let planId = "free";
     if (isOwner) {
       planId = "promax";
-    } else if (isPaidProMax || (!isFirst50 && paidCredits >= 90 && paidCredits < 900000)) {
+    } else if (isAdminFree) {
+      planId = "free";
+    } else if (isPaidProMax || isAdminPromax || (paidCredits >= 90 && paidCredits < 900000)) {
       planId = "promax";
-    } else if (paidCredits > 0 || isFirst50) {
+    } else if (paidCredits > 0 || isFirst50 || isAdminPremium) {
       planId = "premium";
     }
 
     if (planId === "promax" && !isOwner) {
       paidCredits = PRO_MAX_CREDITS_PER_MONTH; // 90
-    } else if (planId === "premium" || isFirst50) {
-      paidCredits = PRO_CREDITS_PER_MONTH; // 20
+    } else if (planId === "premium") {
+      paidCredits = paidCredits > 0 ? paidCredits : PRO_CREDITS_PER_MONTH; // 20
+    } else if (planId === "free") {
+      paidCredits = 0;
     }
 
     const totalAllowed = isOwner

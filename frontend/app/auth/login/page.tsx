@@ -1,74 +1,62 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, KeyRound, Mail, AlertCircle, Briefcase, Check, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import {
+  Loader2,
+  AlertCircle,
+  Briefcase,
+  Check,
+  ShieldCheck,
+  Lock,
+  Sparkles
+} from "lucide-react";
 import { toast } from "react-hot-toast";
 
-export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+export const dynamic = "force-dynamic";
+
+function LoginFormContent() {
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   React.useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("sample") !== "true" && localStorage.getItem("fastHire_pendingSample") !== "true") {
+    const errorParam = searchParams.get("error");
+    if (errorParam === "auth-code-error") {
+      setError("Authentication link expired or invalid. Please try signing in again.");
+    }
+
+    if (searchParams.get("sample") !== "true" && localStorage.getItem("fastHire_pendingSample") !== "true") {
       localStorage.removeItem("fastHire_pendingSample");
       localStorage.removeItem("fastHire_sampleResume");
       localStorage.removeItem("fastHire_sampleJD");
     }
-  }, []);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (authError) {
-        throw authError;
-      }
-
-      const params = new URLSearchParams(window.location.search);
-      const isSample = params.get("sample") === "true" || localStorage.getItem("fastHire_pendingSample") === "true";
-      router.push(isSample ? "/dashboard?sample=true" : "/dashboard");
-      router.refresh();
-    } catch (err: any) {
-      setError(err.message || "Invalid email or password.");
-      toast.error(err.message || "Login failed.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [searchParams]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
+    setError(null);
     try {
+      const isSample = searchParams.get("sample") === "true" || localStorage.getItem("fastHire_pendingSample") === "true";
+      const nextPath = isSample ? "/dashboard?sample=true" : "/dashboard";
+
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
         },
       });
+
       if (authError) {
         throw authError;
       }
     } catch (err: any) {
-      setError(err.message || "Google sign-in failed.");
-      toast.error(err.message || "Google sign-in failed.");
+      const msg = err.message || "Google sign-in failed. Please try again.";
+      setError(msg);
+      toast.error(msg);
       setLoading(false);
     }
   };
@@ -78,7 +66,7 @@ export default function LoginPage() {
       
       {/* LEFT PANE: Branding Showroom (Desktop Only) */}
       <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 bg-[#0d6e5a] relative overflow-hidden">
-        {/* Subtle pattern */}
+        {/* Subtle background glow */}
         <div className="absolute top-1/4 left-1/4 h-[300px] w-[300px] rounded-full bg-white/5 blur-[100px] -z-10" />
 
         {/* Logo */}
@@ -91,11 +79,16 @@ export default function LoginPage() {
 
         {/* Headline content */}
         <div className="space-y-6 max-w-lg my-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-green-100 text-xs font-semibold">
+            <Sparkles className="h-3.5 w-3.5 text-green-200" />
+            <span>AI Resume Tailoring</span>
+          </div>
+
           <h2 className="text-4xl font-black tracking-tight leading-tight text-white">
             Land more interviews starting today.
           </h2>
           <p className="text-sm text-green-100 font-medium leading-relaxed">
-            Tailored, ATS-optimised resumes in under 30 seconds — 2 free every month.
+            Tailored, ATS-optimised resumes in under 30 seconds — 2 free optimizations every month.
           </p>
 
           <div className="space-y-4 pt-4 font-semibold text-xs text-green-50">
@@ -117,16 +110,10 @@ export default function LoginPage() {
               </span>
               <span>Before &amp; after ATS score tracking</span>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="h-5 w-5 bg-white/15 border border-white/20 text-white rounded-md flex items-center justify-center shrink-0">
-                <Check className="h-3 w-3" />
-              </span>
-              <span>PDF &amp; DOCX export, ready to send</span>
-            </div>
           </div>
         </div>
 
-        {/* ATS Scorecard */}
+        {/* ATS Score preview */}
         <div className="max-w-[340px] bg-white/10 border border-white/20 p-5 rounded-xl space-y-4">
           <div className="flex justify-between items-center">
             <span className="text-[10px] text-green-100 font-bold uppercase tracking-wider">ATS Score</span>
@@ -144,13 +131,13 @@ export default function LoginPage() {
             </div>
           </div>
           <div className="h-2 w-full rounded-full overflow-hidden bg-white/10">
-            <div className="h-full w-[91%] rounded-full" style={{ background: 'linear-gradient(90deg, #ef4444 0%, #eab308 50%, #22c55e 100%)' }} />
+            <div className="h-full w-[91%] rounded-full" style={{ background: "linear-gradient(90deg, #ef4444 0%, #eab308 50%, #22c55e 100%)" }} />
           </div>
         </div>
       </div>
 
       {/* RIGHT PANE: Interactive Login Block */}
-      <div className="flex flex-col w-full lg:w-1/2 p-8 md:p-12 min-h-screen">
+      <div className="flex flex-col justify-between w-full lg:w-1/2 p-8 md:p-12 min-h-screen">
         
         {/* Top bar */}
         <div className="flex justify-between items-center lg:justify-end">
@@ -161,135 +148,102 @@ export default function LoginPage() {
           <p className="text-xs text-slate-500">
             Don&apos;t have an account?{" "}
             <Link
-              href={typeof window !== "undefined" && new URLSearchParams(window.location.search).get("sample") === "true" ? "/auth/signup?sample=true" : "/auth/signup"}
+              href={searchParams.get("sample") === "true" ? "/auth/signup?sample=true" : "/auth/signup"}
               className="font-bold text-[#0d6e5a] hover:underline"
             >
-              Create an account
+              Sign Up Free
             </Link>
           </p>
         </div>
 
         {/* Center welcome card */}
-        <div className="w-full max-w-[390px] mx-auto my-auto space-y-6">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-black tracking-tight text-slate-900">Welcome back</h1>
-            <p className="text-xs text-slate-500 font-semibold">Sign in to start improving your resume</p>
+        <div className="w-full max-w-[400px] mx-auto my-auto space-y-6">
+          <div className="space-y-1.5 text-center sm:text-left">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+              Welcome back
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 font-medium">
+              Sign in with your Google account to access your resumes.
+            </p>
           </div>
 
           {/* Alert Error Box */}
           {error && (
-            <div className="flex items-start gap-2 p-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start gap-2 p-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl">
               <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Continue with Google button */}
-          <Button
-            type="button"
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold h-11 flex items-center justify-center gap-2.5 rounded-xl shadow-sm"
-          >
-            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
-              <g transform="matrix(1, 0, 0, 1, 0, 0)">
-                <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.58h3.29c1.92,-1.77 3.03,-4.38 3.03,-7.39c0,-0.71 -0.06,-1.42 -0.18,-2.09Z" fill="#4285f4" />
-                <path d="M12,20.57c2.31,0 4.25,-0.77 5.67,-2.09l-3.29,-2.58c-0.91,0.61 -2.08,0.97 -3.38,0.97c-2.6,0 -4.8,-1.76 -5.59,-4.13H1.97v2.66c1.46,2.9 4.47,4.82 8.03,4.82Z" fill="#34a853" />
-                <path d="M6.41,12.74c-0.2,-0.61 -0.31,-1.27 -0.31,-1.94c0,-0.67 0.11,-1.33 0.31,-1.94V6.2H1.97C1.29,7.56 0.9,9.09 0.9,10.7c0,1.61 0.39,3.14 1.07,4.5H6.41Z" fill="#fbbc05" />
-                <path d="M12,6.13c1.26,0 2.39,0.43 3.28,1.28l2.46,-2.46c-1.48,-1.38 -3.42,-2.22 -5.74,-2.22c-3.56,0 -6.57,1.92 -8.03,4.82l4.44,3.45c0.79,-2.37 2.99,-4.13 5.59,-4.13Z" fill="#ea4335" />
-              </g>
-            </svg>
-            Continue with Google
-          </Button>
-
-          {/* Under Google Details checklist */}
-          <div className="space-y-2 pt-2 border-t border-slate-100 text-[11px] font-semibold text-slate-500">
-            <div className="flex items-center gap-2">
-              <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-              <span>ATS keyword matching for any job</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-              <span>Stronger bullet points with real impact</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-              <span>Before & after score — see the improvement</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-              <span>PDF & DOCX download, ready to send</span>
-            </div>
-          </div>
-
-          {/* Separator / Or sign in with email */}
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200"></div>
-            </div>
-            <div className="relative flex justify-center text-[10px]">
-              <span className="bg-[#f8fafc] px-2.5 text-slate-400 font-bold uppercase tracking-wider">Or email login</span>
-            </div>
-          </div>
-
-          {/* Fallback Email Login Form */}
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Email Address</label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
-                <Input
-                  type="email"
-                  placeholder="name@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                  className="pl-11 h-10 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] focus:ring-[#0d6e5a] rounded-xl"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Password</label>
-              <div className="relative">
-                <KeyRound className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
-                  className="pl-11 pr-11 h-10 border-slate-200 bg-white text-slate-900 focus:border-[#0d6e5a] focus:ring-[#0d6e5a] rounded-xl"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
+          <div className="space-y-3 pt-2">
             <Button
-              type="submit"
+              type="button"
+              onClick={handleGoogleLogin}
               disabled={loading}
-              className="w-full bg-[#0d6e5a] hover:bg-[#0a5a49] text-white font-bold h-10 rounded-xl shadow-sm"
+              className="w-full bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-200 hover:border-slate-300 text-slate-800 font-bold h-12 flex items-center justify-center gap-3 rounded-xl shadow-sm transition-all hover:shadow text-sm"
             >
-              {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : "Sign In"}
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-[#0d6e5a]" />
+                  <span>Signing in with Google...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+                    <g transform="matrix(1, 0, 0, 1, 0, 0)">
+                      <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.58h3.29c1.92,-1.77 3.03,-4.38 3.03,-7.39c0,-0.71 -0.06,-1.42 -0.18,-2.09Z" fill="#4285f4" />
+                      <path d="M12,20.57c2.31,0 4.25,-0.77 5.67,-2.09l-3.29,-2.58c-0.91,0.61 -2.08,0.97 -3.38,0.97c-2.6,0 -4.8,-1.76 -5.59,-4.13H1.97v2.66c1.46,2.9 4.47,4.82 8.03,4.82Z" fill="#34a853" />
+                      <path d="M6.41,12.74c-0.2,-0.61 -0.31,-1.27 -0.31,-1.94c0,-0.67 0.11,-1.33 0.31,-1.94V6.2H1.97C1.29,7.56 0.9,9.09 0.9,10.7c0,1.61 0.39,3.14 1.07,4.5H6.41Z" fill="#fbbc05" />
+                      <path d="M12,6.13c1.26,0 2.39,0.43 3.28,1.28l2.46,-2.46c-1.48,-1.38 -3.42,-2.22 -5.74,-2.22c-3.56,0 -6.57,1.92 -8.03,4.82l4.44,3.45c0.79,-2.37 2.99,-4.13 5.59,-4.13Z" fill="#ea4335" />
+                    </g>
+                  </svg>
+                  <span>Continue with Google</span>
+                </>
+              )}
             </Button>
-          </form>
+          </div>
+
+          {/* Security guarantee */}
+          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+              <ShieldCheck className="h-4 w-4 text-[#0d6e5a] shrink-0" />
+              <span>Fast &amp; Secure Authentication</span>
+            </div>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              FastHire AI uses official Google OAuth 2.0. We never see or store your Google password.
+            </p>
+            <div className="flex items-center gap-4 pt-1 text-[11px] font-semibold text-slate-500 border-t border-slate-200/60">
+              <span className="flex items-center gap-1.5">
+                <Lock className="h-3 w-3 text-slate-400" />
+                256-bit SSL Protected
+              </span>
+              <span>•</span>
+              <span>Instant Access</span>
+            </div>
+          </div>
         </div>
 
-        {/* Legal note */}
-        <p className="text-xs text-slate-600 text-center pt-4">
-          By signing in you agree to our <Link href="/terms" className="hover:text-slate-400 underline">Terms</Link> &amp; <Link href="/privacy" className="hover:text-slate-400 underline">Privacy</Link>.
-        </p>
-
+        {/* Footer info */}
+        <div className="text-center text-[11px] text-slate-400 select-none">
+          By signing in, you agree to our{" "}
+          <Link href="/terms" className="underline hover:text-slate-600">Terms of Service</Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="underline hover:text-slate-600">Privacy Policy</Link>.
+        </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#0d6e5a]" />
+      </div>
+    }>
+      <LoginFormContent />
+    </Suspense>
   );
 }

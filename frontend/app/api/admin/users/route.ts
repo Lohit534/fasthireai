@@ -29,19 +29,25 @@ export async function GET(request: NextRequest) {
 
     let usersList: any[] = dbUsers ? [...dbUsers] : [];
 
-    // 2. Query all real Pro Max payments (isFreeGrant=false ensures no admin grants slip in)
-    // We don't filter by status because older records may have status=null (before we added the status field)
-    const { data: proMaxPurchasers } = await admin
+    // 2. Query all real payments from PaymentLog (isFreeGrant=false ensures no admin grants slip in)
+    const { data: allPayments } = await admin
       .from("PaymentLog")
       .select("userId, email, status, planId")
-      .eq("planId", "promax")
       .or("isFreeGrant.is.null,isFreeGrant.eq.false");
 
-    const proMaxUserIds = new Set((proMaxPurchasers || []).map((p: any) => p.userId).filter(Boolean));
-    const proMaxEmails = new Set((proMaxPurchasers || []).map((p: any) => (p.email || "").toLowerCase().trim()).filter(Boolean));
+    const paymentsList = allPayments || [];
+
+    const proMaxPurchasers = paymentsList.filter((p: any) => p.planId === "promax");
+    const proMaxUserIds = new Set(proMaxPurchasers.map((p: any) => p.userId).filter(Boolean));
+    const proMaxEmails = new Set(proMaxPurchasers.map((p: any) => (p.email || "").toLowerCase().trim()).filter(Boolean));
     // Hardcode known Pro Max purchaser (Jyothika) as safety fallback
     proMaxEmails.add("payyalajyothika333@gmail.com");
     proMaxUserIds.add("d9301154-778f-45d7-91e3-873c6d5be4aa");
+
+    // Build sets for premium (paid, non-promax) purchasers
+    const premiumPurchasers = paymentsList.filter((p: any) => p.planId === "premium");
+    const premiumUserIds = new Set(premiumPurchasers.map((p: any) => p.userId).filter(Boolean));
+    const premiumEmails = new Set(premiumPurchasers.map((p: any) => (p.email || "").toLowerCase().trim()).filter(Boolean));
 
     // 3. Sync from Supabase Auth admin to ensure all registered accounts appear
     try {
@@ -122,6 +128,12 @@ export async function GET(request: NextRequest) {
       logger.warn("[admin/users] Auto-heal jyothika failed:", e.message);
     }
 
+    // Determine early promotional adopters (First 50 registered users get 1 year free Premium Pro)
+    const sortedByCreated = [...usersList].sort((a, b) => 
+      new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+    );
+    const first50UserIds = new Set(sortedByCreated.slice(0, 50).map(u => u.id));
+
     // 7. Merge users and credits
     const merged = usersList.map((u: any) => {
       const userEmail = (u.email || "").toLowerCase().trim();
@@ -131,26 +143,53 @@ export async function GET(request: NextRequest) {
       ) || {
         freeUsed: 0,
         paidCredits: 0,
+        billingCycle: "monthly",
+        expiresAt: null,
       };
 
       const isKnownProMax = userEmail === "payyalajyothika333@gmail.com" || proMaxUserIds.has(u.id) || proMaxEmails.has(userEmail);
+      const isKnownPremium = !isKnownProMax && (premiumUserIds.has(u.id) || premiumEmails.has(userEmail));
+      const isEarlyPromotional = !isOwnerEmail(u.email) && !isKnownProMax && (first50UserIds.has(u.id) || usersList.length <= 50);
 
-      // Determine plan tier
+      // Determine plan tier:
+      // Priority: Owner > Explicit Admin Downgrade > Pro Max > Premium Pro > Free Tier
       let plan = "free";
       if (isOwnerEmail(u.email)) {
         plan = "owner";
-      } else if (isKnownProMax || credit.paidCredits >= 90) {
+      } else if (credit.billingCycle === "admin_free" || credit.billingCycle === "free") {
+        // Admin explicitly set this user to Free Tier
+        plan = "free";
+      } else if (isKnownProMax || credit.paidCredits >= 90 || credit.billingCycle === "admin_promax") {
         plan = "promax";
-      } else if (credit.paidCredits > 0) {
+      } else if (isKnownPremium || credit.paidCredits > 0 || credit.billingCycle === "admin_premium" || credit.billingCycle === "yearly" || isEarlyPromotional) {
+        // First-50 promotional grant OR paid/admin Premium Pro plan
         plan = "premium";
       }
 
-      const displayCredits = (plan === "promax" && credit.paidCredits < 90) ? 90 : credit.paidCredits;
+      // If user is early promotional and had no Credit record or 0 credits, persist it
+      if (isEarlyPromotional && (!credit.id || credit.paidCredits === 0) && credit.billingCycle !== "admin_free" && credit.billingCycle !== "free") {
+        admin.from("Credit").upsert({
+          id: "credit-" + u.id.slice(0, 8),
+          userId: u.id,
+          freeUsed: credit.freeUsed ?? 0,
+          paidCredits: PRO_CREDITS_PER_MONTH,
+          billingCycle: "yearly",
+          resetAt: u.createdAt || new Date().toISOString(),
+        }, { onConflict: "userId" }).catch(() => {});
+      }
+
+      const displayCredits = plan === "owner" 
+        ? 999999 
+        : plan === "promax" 
+          ? (credit.paidCredits >= 90 ? credit.paidCredits : 90) 
+          : plan === "premium" 
+            ? (credit.paidCredits > 0 ? credit.paidCredits : PRO_CREDITS_PER_MONTH) 
+            : 0;
 
       return {
         ...u,
         plan,
-        freeUsed: credit.freeUsed,
+        freeUsed: credit.freeUsed ?? 0,
         paidCredits: displayCredits,
         billingCycle: plan === "promax" ? "monthly" : (credit.billingCycle || "monthly"),
         expiresAt: (userEmail === "payyalajyothika333@gmail.com" || plan === "promax") ? (credit.expiresAt || "2026-10-12T06:32:35.000Z") : (credit.expiresAt || null),
@@ -268,12 +307,23 @@ export async function POST(request: NextRequest) {
       }, { status: 403 });
     }
 
-    // Map planId to paidCredits
+    // Map planId to paidCredits, cycleTag, and expiration
     let paidCredits = 0;
-    if (planId === "premium") {
+    let cycleTag = "monthly";
+    let expiresAt: string | null = null;
+
+    if (planId === "free") {
+      paidCredits = 0;
+      cycleTag = "admin_free";
+      expiresAt = null;
+    } else if (planId === "premium") {
       paidCredits = PRO_CREDITS_PER_MONTH; // 20
+      cycleTag = "admin_premium";
+      expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
     } else if (planId === "promax") {
       paidCredits = PRO_MAX_CREDITS_PER_MONTH; // 90
+      cycleTag = "admin_promax";
+      expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
     }
 
     const now = new Date();
@@ -285,37 +335,42 @@ export async function POST(request: NextRequest) {
       .eq("userId", targetUserId)
       .maybeSingle();
 
-    let query;
+    let updateError: any = null;
+
     if (existingCredit) {
-      query = admin
+      const { error } = await admin
         .from("Credit")
         .update({
           paidCredits: paidCredits,
+          billingCycle: cycleTag,
           resetAt: now.toISOString(),
+          expiresAt: expiresAt,
         })
         .eq("userId", targetUserId);
+      updateError = error;
     } else {
-      const newId = "credit-" + Math.random().toString(36).substring(2, 11);
-      query = admin
+      const newId = "credit-" + targetUserId.slice(0, 8);
+      const { error } = await admin
         .from("Credit")
         .insert({
           id: newId,
           userId: targetUserId,
           freeUsed: 0,
           paidCredits: paidCredits,
+          billingCycle: cycleTag,
           resetAt: now.toISOString(),
+          expiresAt: expiresAt,
         });
+      updateError = error;
     }
 
-    const { data, error } = await query.select().single();
-
-    if (error) {
-      logger.error("[admin/users] POST update plan failed:", error.message);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (updateError) {
+      logger.error("[admin/users] POST update plan failed:", updateError.message);
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
-    logger.info(`[admin/users] Plan modified by admin: targetUserId=${targetUserId} to plan=${planId}`);
-    return NextResponse.json({ success: true, data });
+    logger.info(`[admin/users] Plan modified by admin: targetUserId=${targetUserId} to plan=${planId} (paidCredits=${paidCredits})`);
+    return NextResponse.json({ success: true, planId, paidCredits });
   } catch (error: any) {
     logger.error("[admin/users] POST unhandled error:", error.message);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
