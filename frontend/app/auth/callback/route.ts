@@ -3,9 +3,29 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
+  const token_hash = requestUrl.searchParams.get("token_hash");
+  const type = requestUrl.searchParams.get("type");
   const code = requestUrl.searchParams.get("code");
   const next = requestUrl.searchParams.get("next") ?? "/dashboard";
 
+  // Handle token_hash from OTP email template
+  if (token_hash && type) {
+    const supabase = createClient();
+    const { error } = await supabase.auth.verifyOtp({
+      type: type as any,
+      token_hash,
+    });
+    if (!error) {
+      let protocol = requestUrl.protocol;
+      if (!requestUrl.hostname.includes("localhost")) {
+        protocol = "https:";
+      }
+      const redirectUrl = `${protocol}//${requestUrl.host}${next}`;
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
+
+  // Handle code from PKCE flow
   if (code) {
     const supabase = createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);

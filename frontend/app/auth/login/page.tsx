@@ -66,6 +66,8 @@ function LoginFormContent() {
       
       {/* LEFT PANE: Branding Showroom (Desktop Only) */}
       <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 bg-[#0d6e5a] relative overflow-hidden">
+        {/* Tech Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:32px_32px] -z-10 pointer-events-none" />
         {/* Subtle background glow */}
         <div className="absolute top-1/4 left-1/4 h-[300px] w-[300px] rounded-full bg-white/5 blur-[100px] -z-10" />
 
@@ -137,7 +139,9 @@ function LoginFormContent() {
       </div>
 
       {/* RIGHT PANE: Interactive Login Block */}
-      <div className="flex flex-col justify-between w-full lg:w-1/2 p-8 md:p-12 min-h-screen">
+      <div className="flex flex-col justify-between w-full lg:w-1/2 p-8 md:p-12 min-h-screen relative overflow-hidden bg-[#f8fafc]">
+        {/* Tech Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:32px_32px] opacity-40 -z-10 pointer-events-none" />
         
         {/* Top bar */}
         <div className="flex justify-between items-center lg:justify-end">
@@ -181,7 +185,7 @@ function LoginFormContent() {
               type="button"
               onClick={handleGoogleLogin}
               disabled={loading}
-              className="w-full bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-200 hover:border-slate-300 text-slate-800 font-bold h-12 flex items-center justify-center gap-3 rounded-xl shadow-sm transition-all hover:shadow text-sm"
+              className="w-full bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-200 hover:border-slate-300 text-slate-800 font-bold h-12 flex items-center justify-center gap-3.5 rounded-xl shadow-xs hover:shadow-sm transition-all text-sm group cursor-pointer"
             >
               {loading ? (
                 <>
@@ -190,15 +194,15 @@ function LoginFormContent() {
                 </>
               ) : (
                 <>
-                  <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
-                    <g transform="matrix(1, 0, 0, 1, 0, 0)">
-                      <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.58h3.29c1.92,-1.77 3.03,-4.38 3.03,-7.39c0,-0.71 -0.06,-1.42 -0.18,-2.09Z" fill="#4285f4" />
-                      <path d="M12,20.57c2.31,0 4.25,-0.77 5.67,-2.09l-3.29,-2.58c-0.91,0.61 -2.08,0.97 -3.38,0.97c-2.6,0 -4.8,-1.76 -5.59,-4.13H1.97v2.66c1.46,2.9 4.47,4.82 8.03,4.82Z" fill="#34a853" />
-                      <path d="M6.41,12.74c-0.2,-0.61 -0.31,-1.27 -0.31,-1.94c0,-0.67 0.11,-1.33 0.31,-1.94V6.2H1.97C1.29,7.56 0.9,9.09 0.9,10.7c0,1.61 0.39,3.14 1.07,4.5H6.41Z" fill="#fbbc05" />
-                      <path d="M12,6.13c1.26,0 2.39,0.43 3.28,1.28l2.46,-2.46c-1.48,-1.38 -3.42,-2.22 -5.74,-2.22c-3.56,0 -6.57,1.92 -8.03,4.82l4.44,3.45c0.79,-2.37 2.99,-4.13 5.59,-4.13Z" fill="#ea4335" />
-                    </g>
-                  </svg>
-                  <span>Continue with Google</span>
+                  <div className="h-7 w-7 rounded-lg bg-white border border-slate-200/90 flex items-center justify-center shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+                    <svg className="h-4.5 w-4.5" viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                    </svg>
+                  </div>
+                  <span className="font-bold text-slate-800 tracking-tight">Continue with Google</span>
                 </>
               )}
             </Button>
@@ -211,7 +215,7 @@ function LoginFormContent() {
               <span>Fast &amp; Secure Authentication</span>
             </div>
             <p className="text-[11px] text-slate-500 leading-relaxed">
-              FastHire AI uses official Google OAuth 2.0. We never see or store your Google password.
+              FastHire AI uses official Google OAuth 2.0 for instant, verified, and secure account access.
             </p>
             <div className="flex items-center gap-4 pt-1 text-[11px] font-semibold text-slate-500 border-t border-slate-200/60">
               <span className="flex items-center gap-1.5">
