@@ -181,9 +181,9 @@ export default function OptimizingProgress({ onComplete, onError, resumeText, jo
                 transition-all duration-300
                 ${
                   status === 'done'
-                    ? 'bg-green-50 opacity-70'
+                    ? 'bg-teal-50/70 border border-teal-100 opacity-80'
                     : status === 'running'
-                    ? 'bg-indigo-50 border border-indigo-100'
+                    ? 'bg-teal-50 border border-teal-200'
                     : 'bg-transparent'
                 }
               `}

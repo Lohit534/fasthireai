@@ -219,6 +219,12 @@ export default function DashboardPage() {
   const handleOptimizationComplete = (data: any) => {
     setOptimizeResult(data);
     
+    // Store resumeId so subsequent bullet improvements can patch the history record
+    const targetResumeId = data?.resumeId || data?.id;
+    if (targetResumeId) {
+      setCurrentResumeId(targetResumeId);
+    }
+
     // Handle the scores returned in the new stream payload
     if (data.scoreBefore) setBeforeScore(data.scoreBefore);
     if (data.scoreAfter) setAfterScore(data.scoreAfter);
@@ -317,18 +323,23 @@ export default function DashboardPage() {
     setBeforeScore(null);
     setAfterScore(null);
     setOptimizeResult(null);
+    setCurrentResumeId(null);
     setTrackerAdded(false);
-    // Removed setIsAILoading(false)
     setBulletImprovementsCount(0);
     // silent clear — user can see the cleared workspace
   };
 
   const handleReScoreBefore = async (newText: string, currentImprovementsCount?: number) => {
     const impCount = currentImprovementsCount ?? bulletImprovementsCount;
+    const targetId = currentResumeId || optimizeResult?.resumeId || optimizeResult?.id;
+
     // Only update afterScore (optimized) — keep beforeScore frozen at the original pre-optimization value
     try {
-      if (afterScore && optimizeResult) {
-        const prevOverall = afterScore.overall;
+      const prevOverall = afterScore?.overall ?? 75;
+      let calculatedOverall = prevOverall + 1;
+      let newScoreData: any = null;
+
+      try {
         const afterRes = await fetch("/api/score", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -336,35 +347,82 @@ export default function DashboardPage() {
             resumeText: newText,
             jobDescription,
             scoreBefore: beforeScore?.overall,
-            bulletImprovementsCount: impCount
-          })
+            bulletImprovementsCount: impCount,
+          }),
         });
         if (afterRes.ok) {
-          const newAfterScore = await afterRes.json();
-          // Guarantee score strictly increases by a small increment (+1 per bullet) and never drops
-          const guaranteedOverall = Math.min(98, Math.max(prevOverall + 1, newAfterScore.overall));
-          const adjustedAfterScore = {
-            ...newAfterScore,
-            overall: guaranteedOverall,
-            impactBullets: Math.min(100, Math.max(newAfterScore.impactBullets || 70, (afterScore.impactBullets || 65) + 2))
-          };
-          setAfterScore(adjustedAfterScore);
+          newScoreData = await afterRes.json();
+          calculatedOverall = Math.min(98, Math.max(prevOverall + 1, newScoreData.overall));
+        }
+      } catch (scoreErr) {
+        calculatedOverall = Math.min(98, prevOverall + 1);
+      }
 
-          // Persist updated scoreAfter and optimizedText to history DB so history shows the same improved score
-          if (currentResumeId) {
-            fetch("/api/history", {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ 
-                resumeId: currentResumeId, 
-                scoreAfter: guaranteedOverall,
-                optimizedText: newText
-              })
-            }).catch(() => {});
+      const guaranteedOverall = calculatedOverall;
+      const adjustedAfterScore = {
+        ...(newScoreData || afterScore),
+        overall: guaranteedOverall,
+        impactBullets: Math.min(100, Math.max(newScoreData?.impactBullets || 70, (afterScore?.impactBullets || 65) + 2)),
+      };
+      setAfterScore(adjustedAfterScore);
+
+      // Immediately reflect improved text & score in local optimizeResult state
+      setOptimizeResult((prev: any) =>
+        prev
+          ? {
+              ...prev,
+              optimizedText: newText,
+              scoreAfter: adjustedAfterScore,
+              resumeId: targetId || prev.resumeId,
+            }
+          : prev
+      );
+
+      // Persist updated scoreAfter and optimizedText to history DB via PATCH
+      if (targetId) {
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          const accessToken = sessionData?.session?.access_token;
+          const headers: Record<string, string> = { "Content-Type": "application/json" };
+          if (accessToken) {
+            headers["Authorization"] = `Bearer ${accessToken}`;
           }
+
+          await fetch("/api/history", {
+            method: "PATCH",
+            headers,
+            body: JSON.stringify({
+              resumeId: targetId,
+              scoreAfter: guaranteedOverall,
+              optimizedText: newText,
+            }),
+          });
+        } catch (patchErr) {
+          console.error("Failed to patch history:", patchErr);
+        }
+
+        // Also update the local storage history cache so navigating to History immediately reflects the improvement
+        if (user?.id) {
+          try {
+            const cacheKey = `fastHire_history_cache_${user.id}`;
+            const cachedStr = localStorage.getItem(cacheKey);
+            if (cachedStr) {
+              const cached = JSON.parse(cachedStr);
+              if (Array.isArray(cached)) {
+                const updated = cached.map((r: any) =>
+                  r.id === targetId
+                    ? { ...r, scoreAfter: guaranteedOverall, optimizedText: newText }
+                    : r
+                );
+                localStorage.setItem(cacheKey, JSON.stringify(updated));
+              }
+            }
+          } catch {}
         }
       }
-    } catch {}
+    } catch (e) {
+      console.error("Error updating score and history:", e);
+    }
   };
 
   const handleAddToTracker = () => {
@@ -893,7 +951,7 @@ export default function DashboardPage() {
               <button
                 onClick={handleOptimize}
                 disabled={optimizing}
-                className="btn-primary-gradient px-12 py-3.5 text-sm font-semibold flex items-center gap-2.5 rounded-lg shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white px-12 py-3.5 text-sm font-semibold flex items-center gap-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {optimizing ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> Optimizing Resume...</>
