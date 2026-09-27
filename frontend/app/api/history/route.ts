@@ -49,21 +49,50 @@ export async function GET(request: NextRequest) {
 
     const admin = getAdminClient() as any;
 
+    // Resolve User table ID by email
+    let activeUserId = user.id;
+    try {
+      if (user.email) {
+        const { data: existingUser } = await admin
+          .from("User")
+          .select("id")
+          .eq("email", user.email.toLowerCase().trim())
+          .maybeSingle();
+        if (existingUser?.id) {
+          activeUserId = existingUser.id;
+        }
+      }
+    } catch (_e) {}
+
     // ── Determine plan tier ────────────────────────────────────────────────────
     let planTier = "free";
+    const userEmail = (user.email || "").toLowerCase().trim();
     try {
-      const { data: creditRow } = await admin
-        .from("Credit")
-        .select("paidCredits")
-        .eq("userId", user.id)
-        .maybeSingle();
-
       if (isOwnerEmail(user.email)) {
         planTier = "owner";
-      } else if (creditRow?.paidCredits > 900000) {
-        planTier = "promax";
-      } else if (creditRow?.paidCredits > 0) {
-        planTier = "premium";
+      } else {
+        const { data: creditRow } = await admin
+          .from("Credit")
+          .select("paidCredits, planId, billingCycle")
+          .or(`userId.eq.${activeUserId},userId.eq.${user.id}`)
+          .maybeSingle();
+
+        const isKnownProMax = userEmail === "payyalajyothika333@gmail.com";
+
+        if (
+          isKnownProMax ||
+          creditRow?.planId === "promax" ||
+          creditRow?.billingCycle === "admin_promax" ||
+          (creditRow?.paidCredits >= 90 && creditRow?.paidCredits < 900000)
+        ) {
+          planTier = "promax";
+        } else if (
+          creditRow?.planId === "premium" ||
+          creditRow?.billingCycle === "admin_premium" ||
+          (creditRow?.paidCredits && creditRow.paidCredits > 0)
+        ) {
+          planTier = "premium";
+        }
       }
     } catch (_e) {}
 
@@ -83,21 +112,6 @@ export async function GET(request: NextRequest) {
     cutoffDate.setMonth(cutoffDate.getMonth() - retentionMonths);
     // Owner: no cutoff restriction
     const isOwner = planTier === "owner";
-
-    // Resolve User table ID by email
-    let activeUserId = user.id;
-    try {
-      if (user.email) {
-        const { data: existingUser } = await admin
-          .from("User")
-          .select("id")
-          .eq("email", user.email.toLowerCase().trim())
-          .maybeSingle();
-        if (existingUser?.id) {
-          activeUserId = existingUser.id;
-        }
-      }
-    } catch (_e) {}
 
     // All IDs/identifiers this user's records could be stored under
     const userIds = Array.from(

@@ -22,7 +22,6 @@ import {
   ChevronRight,
   TrendingUp,
   Calendar,
-  X,
   Copy,
   Check,
   ArrowRight,
@@ -274,7 +273,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
             onClick={onDelete}
             className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 hover:text-red-700 transition-colors"
           >
-            <X className="h-3.5 w-3.5" />
+            <Trash2 className="h-3.5 w-3.5" />
             Delete
           </button>
         </div>
@@ -803,20 +802,29 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
 function HistoryRow({
   resume,
   onClick,
-  onDelete,
 }: {
   resume: ResumeRecord;
   onClick: () => void;
-  onDelete: () => void;
 }) {
   const delta = resume.scoreAfter - resume.scoreBefore;
   const beforeColor = scoreColor(resume.scoreBefore).text;
   const afterColor = scoreColor(resume.scoreAfter).text;
 
   return (
-    <div className="group w-full rounded-xl py-3 px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all duration-200 relative overflow-hidden bg-white border border-slate-200 hover:border-[#0d6e5a]/40 shadow-sm hover:shadow">
+    <div
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className="group w-full cursor-pointer rounded-xl py-3 px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all duration-200 relative overflow-hidden bg-white border border-slate-200 hover:border-[#0d6e5a]/40 shadow-sm hover:shadow"
+    >
       {/* Clickable left area */}
-      <button onClick={onClick} className="flex items-center gap-3 min-w-0 flex-1 text-left">
+      <div className="flex items-center gap-3 min-w-0 flex-1 text-left">
         {/* Score comparison pill */}
         <div className="shrink-0 flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full select-none text-[10px] font-bold">
           <span style={{ color: beforeColor }}>{resume.scoreBefore}</span>
@@ -838,20 +846,13 @@ function HistoryRow({
             <span className="text-slate-400">Tech</span>
           </div>
         </div>
-      </button>
+      </div>
 
-      {/* Right: delta pill + delete button */}
+      {/* Right: delta pill */}
       <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">
         <span className="text-[9px] font-black bg-emerald-50 border border-emerald-200 text-emerald-700 px-1.5 py-0.5 rounded-full">
           +{delta}
         </span>
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          title="Delete this optimization"
-          className="h-6 w-6 flex items-center justify-center rounded-md bg-red-50 border border-red-200 text-red-500 hover:bg-red-100 transition-colors opacity-0 group-hover:opacity-100"
-        >
-          <X className="h-3 w-3" />
-        </button>
         <ChevronRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-[#0d6e5a] group-hover:translate-x-0.5 transition-all shrink-0" />
       </div>
     </div>
@@ -944,24 +945,49 @@ export default function HistoryPage() {
           // Network error — silent
         }
 
-        // Fetch plan/credits details (only if historyLocked wasn't set by API)
+        // Fetch plan/credits details — always correct the lock state based on credits and subscription
         try {
           const creditsRes = await fetch("/api/credits");
           if (creditsRes.ok) {
             const creditsData = await creditsRes.json();
-            if (creditsData.isOwner) {
+            const userEmail = (user.email || "").toLowerCase().trim();
+            const cachedPlan = typeof window !== "undefined" ? localStorage.getItem(`fastHire_plan_${user.id}`) : null;
+            const isOwner = creditsData.isOwner || isOwnerEmail(user.email);
+            const isProMax =
+              !isOwner &&
+              (creditsData.planId === "promax" ||
+                cachedPlan === "promax" ||
+                creditsData.billingCycle === "admin_promax" ||
+                userEmail === "payyalajyothika333@gmail.com" ||
+                (creditsData.paidCredits >= 90 && creditsData.paidCredits < 900000));
+            const isPremium =
+              !isOwner &&
+              !isProMax &&
+              (creditsData.planId === "premium" ||
+                cachedPlan === "premium" ||
+                creditsData.billingCycle === "admin_premium" ||
+                creditsData.isFirst50 ||
+                (creditsData.paidCredits ?? 0) > 0);
+
+            if (isOwner) {
               setUserPlan("owner");
-            } else if (creditsData.paidCredits > 900000) {
+              setHistoryLocked(false);  // Owners always have access
+            } else if (isProMax) {
               setUserPlan("promax");
-            } else if (creditsData.paidCredits > 0) {
+              setHistoryLocked(false);  // Pro Max always has access
+            } else if (isPremium) {
               setUserPlan("premium");
+              setHistoryLocked(false);  // Premium always has access
             } else {
               setUserPlan("free");
-              setHistoryLocked(true);
+              // Only lock if the API also locked or returned no records
+              if (dbData.length === 0) {
+                setHistoryLocked(true);
+              }
             }
           }
         } catch (creditsErr) {
-          // silent — failed to load credits
+          // silent — failed to load credits, keep state as-is from API response
         }
 
         if (!active) return;
@@ -1028,21 +1054,14 @@ export default function HistoryPage() {
                     <div className="h-8 w-8 rounded-xl bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center text-[#0d6e5a]">
                       <History className="h-4.5 w-4.5" />
                     </div>
-                    <h1 className="text-xl font-black text-slate-900 tracking-tight">Resume History</h1>
+                    <h1 className="text-xl font-black text-slate-900 tracking-tight">Optimization History</h1>
                   </div>
                   <p className="text-xs text-slate-500 mt-1 ml-10">
                     {resumes.length > 0
                       ? `${resumes.length} optimization${resumes.length !== 1 ? "s" : ""} — click any row to view details`
-                      : "Your resume optimizations will appear here"}
+                      : "Your optimization history will appear here"}
                   </p>
                 </div>
-
-                <Link href="/dashboard">
-                  <Button className="h-9 px-4 bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs rounded-xl shadow-sm transition-colors">
-                    <Plus className="h-4 w-4 mr-1.5" />
-                    New Resume
-                  </Button>
-                </Link>
               </div>
 
               {/* Content list */}
@@ -1108,7 +1127,6 @@ export default function HistoryPage() {
                       <HistoryRow
                         resume={resume}
                         onClick={() => setSelected(resume)}
-                        onDelete={() => setDeleteTarget(resume)}
                       />
                     </ScrollFadeIn>
                   ))}
