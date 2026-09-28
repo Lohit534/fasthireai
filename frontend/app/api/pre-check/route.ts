@@ -6,10 +6,17 @@ import { createClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 export const maxDuration = 30; // Quick pre-check, should take < 10s
 
-function findWeakBulletsLocally(resumeText: string): Array<{ id: string; originalBullet: string; question: string }> {
+function findWeakBulletsLocally(
+  resumeText: string,
+): Array<{ id: string; originalBullet: string; question: string }> {
   const lines = (resumeText || "").split(/\r?\n/);
-  const results: Array<{ id: string; originalBullet: string; question: string }> = [];
-  const metricRegex = /(\d+%|\d+\s*(percent|million|billion|k|m|x|%|\+)|years|months|\$\d+)/i;
+  const results: Array<{
+    id: string;
+    originalBullet: string;
+    question: string;
+  }> = [];
+  const metricRegex =
+    /(\d+%|\d+\s*(percent|million|billion|k|m|x|%|\+)|years|months|\$\d+)/i;
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -18,25 +25,35 @@ function findWeakBulletsLocally(resumeText: string): Array<{ id: string; origina
     if (clean.length < 15 || clean.length > 200) continue;
 
     // Skip education or certification lines
-    if (/^(b\.?tech|bachelor|master|degree|cbse|cgpa|gpa|percentage|school|college|university|certification|certified|course|awarded)/i.test(clean)) {
+    if (
+      /^(b\.?tech|bachelor|master|degree|cbse|cgpa|gpa|percentage|school|college|university|certification|certified|course|awarded)/i.test(
+        clean,
+      )
+    ) {
       continue;
     }
 
     // If it has NO metric/number
     if (!metricRegex.test(clean)) {
-      let q = "What was the measurable outcome, scale, or percentage improvement achieved?";
+      let q =
+        "What was the measurable outcome, scale, or percentage improvement achieved?";
       if (/performance|speed|latency|load|fast|optimi/i.test(clean)) {
         q = "By what percentage or time did performance or latency improve?";
       } else if (/user|client|customer|traffic|visitor/i.test(clean)) {
-        q = "Approximately how many users, customers, or daily requests were handled?";
+        q =
+          "Approximately how many users, customers, or daily requests were handled?";
       } else if (/test|bug|fix|issue|defect|error/i.test(clean)) {
-        q = "How many issues/bugs did you resolve, or what test coverage % was reached?";
+        q =
+          "How many issues/bugs did you resolve, or what test coverage % was reached?";
       } else if (/database|data|query|pipeline|etl|storage/i.test(clean)) {
-        q = "What was the data volume processed, or by how much was query execution time reduced?";
+        q =
+          "What was the data volume processed, or by how much was query execution time reduced?";
       } else if (/api|service|backend|microservice|endpoint/i.test(clean)) {
-        q = "How many endpoints did you develop, and what throughput or uptime was achieved?";
+        q =
+          "How many endpoints did you develop, and what throughput or uptime was achieved?";
       } else if (/lead|managed|team|coordinate|collaborate/i.test(clean)) {
-        q = "What was the size of the team, or what deadline/milestone did you achieve?";
+        q =
+          "What was the size of the team, or what deadline/milestone did you achieve?";
       }
 
       results.push({
@@ -56,7 +73,9 @@ export async function POST(request: NextRequest) {
   try {
     // 1. Verify auth
     const supabase = createClient();
-    let { data: { user } } = await supabase.auth.getUser();
+    let {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       const authHeader = request.headers.get("Authorization");
@@ -108,11 +127,16 @@ Output MUST be a raw JSON array only (no markdown, no preamble):
     let questions: any[] = [];
     try {
       const aiResult = await callAIText(prompt);
-      let rawText = (aiResult || "").replace(/```json/gi, "").replace(/```/g, "").trim();
+      let rawText = (aiResult || "")
+        .replace(/```json/gi, "")
+        .replace(/```/g, "")
+        .trim();
       const parsed = JSON.parse(rawText);
-      questions = Array.isArray(parsed) ? parsed : (parsed.questions || []);
+      questions = Array.isArray(parsed) ? parsed : parsed.questions || [];
     } catch (parseErr: any) {
-      logger.warn(`[pre-check] AI call failed or unparseable: ${parseErr.message}`);
+      logger.warn(
+        `[pre-check] AI call failed or unparseable: ${parseErr.message}`,
+      );
       questions = [];
     }
 
@@ -122,7 +146,6 @@ Output MUST be a raw JSON array only (no markdown, no preamble):
     }
 
     return NextResponse.json({ questions: questions.slice(0, 4) });
-
   } catch (error: any) {
     logger.error(`[pre-check] Error: ${error.message}`);
     return NextResponse.json({ questions: [] });

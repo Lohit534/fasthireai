@@ -8,11 +8,16 @@ import Navbar from "@/components/Navbar";
 import ResumeInput from "@/components/ResumeInput";
 import JobDescriptionInput from "@/components/JobDescriptionInput";
 import KeywordBadges from "@/components/KeywordBadges";
-import { generateSkillRoadmap, generateMultiSkillRoadmap } from "@/lib/roadmap-generator";
+import {
+  generateSkillRoadmap,
+  generateMultiSkillRoadmap,
+} from "@/lib/roadmap-generator";
 import ResumeViewer from "@/components/ResumeViewer";
 import BulletImprover from "@/components/BulletImprover";
 // Removed LoadingOverlay import as user requested native background animation
-import BulletEnrichmentModal, { WeakBullet } from "@/components/BulletEnrichmentModal";
+import BulletEnrichmentModal, {
+  WeakBullet,
+} from "@/components/BulletEnrichmentModal";
 import { enrichResumeWithAnswers } from "@/lib/resume-inspector";
 import { DashboardSkeleton } from "@/components/SkeletonShimmer";
 import { Button } from "@/components/ui/button";
@@ -40,14 +45,16 @@ import {
   ChevronRight,
   Shield,
   FolderOpen,
-  Check
+  Check,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
 import CircleGauge from "@/components/CircleGauge";
 import ScrollFadeIn from "@/components/ScrollFadeIn";
 import { UseSavedResumeModal } from "@/components/UseSavedResumeModal";
-import PlaceholderFiller, { ResumePlaceholder } from "@/components/PlaceholderFiller";
+import PlaceholderFiller, {
+  ResumePlaceholder,
+} from "@/components/PlaceholderFiller";
 import OptimizingProgress from "@/components/OptimizingProgress";
 import { useUpgradeModalStore } from "@/store/useUpgradeModalStore";
 
@@ -84,20 +91,28 @@ export default function DashboardPage() {
   const [currentResumeId, setCurrentResumeId] = useState<string | null>(null);
   // Placeholder filler state
   const [showPlaceholderFiller, setShowPlaceholderFiller] = useState(false);
-  const [pendingPlaceholders, setPendingPlaceholders] = useState<ResumePlaceholder[]>([]);
+  const [pendingPlaceholders, setPendingPlaceholders] = useState<
+    ResumePlaceholder[]
+  >([]);
 
   // Roadmap & Cover letter generator states
-  const [selectedRoadmapSkills, setSelectedRoadmapSkills] = useState<string[]>([]);
+  const [selectedRoadmapSkills, setSelectedRoadmapSkills] = useState<string[]>(
+    [],
+  );
   const [roadmapContent, setRoadmapContent] = useState<string | null>(null);
   const [roadmapLoading, setRoadmapLoading] = useState(false);
-  const [coverLetterGenerated, setCoverLetterGenerated] = useState<string | null>(null);
+  const [coverLetterGenerated, setCoverLetterGenerated] = useState<
+    string | null
+  >(null);
   const [generatingLetter, setGeneratingLetter] = useState(false);
   const [pdfGenerationStatus, setPdfGenerationStatus] = useState<string>("");
   const [isPrechecking, setIsPrechecking] = useState(false);
   const [activeOptimizationText, setActiveOptimizationText] = useState("");
-  const [activeOptimizationInstructions, setActiveOptimizationInstructions] = useState("");
+  const [activeOptimizationInstructions, setActiveOptimizationInstructions] =
+    useState("");
   const [showRoadmapAccordion, setShowRoadmapAccordion] = useState(false);
-  const [showCoverLetterAccordion, setShowCoverLetterAccordion] = useState(false);
+  const [showCoverLetterAccordion, setShowCoverLetterAccordion] =
+    useState(false);
   // Removed isAILoading state
   const [isSavedResumesOpen, setIsSavedResumesOpen] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -112,10 +127,18 @@ export default function DashboardPage() {
     if (sampleLoadedRef.current) return;
 
     // Check if sample data was requested from landing page or query
-    const isPendingSample = typeof window !== "undefined" && localStorage.getItem("fastHire_pendingSample");
-    const sampleResume = typeof window !== "undefined" && localStorage.getItem("fastHire_sampleResume");
-    const sampleJD = typeof window !== "undefined" && localStorage.getItem("fastHire_sampleJD");
-    const hasSampleQuery = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("sample") === "true";
+    const isPendingSample =
+      typeof window !== "undefined" &&
+      localStorage.getItem("fastHire_pendingSample");
+    const sampleResume =
+      typeof window !== "undefined" &&
+      localStorage.getItem("fastHire_sampleResume");
+    const sampleJD =
+      typeof window !== "undefined" &&
+      localStorage.getItem("fastHire_sampleJD");
+    const hasSampleQuery =
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("sample") === "true";
 
     if (isPendingSample === "true" || hasSampleQuery) {
       sampleLoadedRef.current = true;
@@ -126,7 +149,10 @@ export default function DashboardPage() {
       localStorage.removeItem("fastHire_sampleResume");
       localStorage.removeItem("fastHire_sampleJD");
       // Clean up URL so a page refresh clears sample data
-      if (typeof window !== "undefined" && window.location.search.includes("sample")) {
+      if (
+        typeof window !== "undefined" &&
+        window.location.search.includes("sample")
+      ) {
         window.history.replaceState({}, "", "/dashboard");
       }
     } else {
@@ -141,15 +167,23 @@ export default function DashboardPage() {
         const { data, error } = await supabase.auth.getUser();
         if (error || !data?.user) {
           toast.error("Please sign in to continue.");
-          const hasSample = typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("sample") === "true" || localStorage.getItem("fastHire_pendingSample") === "true");
+          const hasSample =
+            typeof window !== "undefined" &&
+            (new URLSearchParams(window.location.search).get("sample") ===
+              "true" ||
+              localStorage.getItem("fastHire_pendingSample") === "true");
           router.push(hasSample ? "/auth/login?sample=true" : "/auth/login");
           return;
         }
 
         // Email verification guard: block unconfirmed email accounts
-        const isEmailProvider = data.user.app_metadata?.provider === "email" || data.user.identities?.[0]?.provider === "email";
+        const isEmailProvider =
+          data.user.app_metadata?.provider === "email" ||
+          data.user.identities?.[0]?.provider === "email";
         if (isEmailProvider && !data.user.email_confirmed_at) {
-          toast.error("Please verify your email address before accessing your dashboard.");
+          toast.error(
+            "Please verify your email address before accessing your dashboard.",
+          );
           await supabase.auth.signOut();
           router.push("/auth/login?error=email-not-confirmed");
           return;
@@ -157,7 +191,9 @@ export default function DashboardPage() {
 
         setUser(data.user);
         // Pre-load cached plan to prevent UI flash
-        const cachedPlan = localStorage.getItem(`fastHire_plan_${data.user.id}`);
+        const cachedPlan = localStorage.getItem(
+          `fastHire_plan_${data.user.id}`,
+        );
         if (cachedPlan) {
           setUserPlan(cachedPlan);
         }
@@ -172,12 +208,22 @@ export default function DashboardPage() {
             let plan = "free";
             if (creditsData.isOwner) {
               plan = "owner";
-            } else if (creditsData.planId === "promax" && !creditsData.isFirst50) {
+            } else if (
+              creditsData.planId === "promax" &&
+              !creditsData.isFirst50
+            ) {
               plan = "promax";
-            } else if (creditsData.planId === "premium" || creditsData.isFirst50 || creditsData.paidCredits > 0) {
+            } else if (
+              creditsData.planId === "premium" ||
+              creditsData.isFirst50 ||
+              creditsData.paidCredits > 0
+            ) {
               plan = "premium";
             } else {
-              plan = creditsData.planId || localStorage.getItem(`fastHire_plan_${data.user.id}`) || "free";
+              plan =
+                creditsData.planId ||
+                localStorage.getItem(`fastHire_plan_${data.user.id}`) ||
+                "free";
             }
             setUserPlan(plan);
             localStorage.setItem(`fastHire_plan_${data.user.id}`, plan);
@@ -192,8 +238,6 @@ export default function DashboardPage() {
     }
     checkAuth();
   }, [router]);
-
-
 
   const runAIAutoImprove = async (
     targetResumeText = resumeText,
@@ -212,7 +256,7 @@ export default function DashboardPage() {
     setOptimizeResult(null);
     setTrackerAdded(false);
     setBulletImprovementsCount(0);
-    
+
     // Clear detail view states
     setRoadmapContent(null);
     setSelectedRoadmapSkills([]);
@@ -223,7 +267,7 @@ export default function DashboardPage() {
 
   const handleOptimizationComplete = (data: any) => {
     setOptimizeResult(data);
-    
+
     // Store resumeId so subsequent bullet improvements can patch the history record
     const targetResumeId = data?.resumeId || data?.id;
     if (targetResumeId) {
@@ -233,19 +277,26 @@ export default function DashboardPage() {
     // Handle the scores returned in the new stream payload
     if (data.scoreBefore) setBeforeScore(data.scoreBefore);
     if (data.scoreAfter) setAfterScore(data.scoreAfter);
-    
-    if (data.hasPlaceholders && Array.isArray(data.placeholders) && data.placeholders.length > 0) {
+
+    if (
+      data.hasPlaceholders &&
+      Array.isArray(data.placeholders) &&
+      data.placeholders.length > 0
+    ) {
       setPendingPlaceholders(data.placeholders);
       setShowPlaceholderFiller(true);
     }
-    
+
     setOptimizing(false);
     toast.success("AI Optimization Complete!");
-    
+
     // Small delay before scrolling to results
     setTimeout(() => {
       if (resultsRef.current) {
-        resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        resultsRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
       }
     }, 100);
   };
@@ -260,11 +311,16 @@ export default function DashboardPage() {
       return;
     }
 
-    if (userPlan === "free" && userCredits && (userCredits.freeRemaining <= 0 || userCredits.freeUsed >= 2)) {
+    if (
+      userPlan === "free" &&
+      userCredits &&
+      (userCredits.freeRemaining <= 0 || userCredits.freeUsed >= 2)
+    ) {
       useUpgradeModalStore.getState().openModal({
         badge: "DOWNLOAD BLOCKED",
         title: "Your 2 free optimizations are used up",
-        description: "Your optimized resume is saved and stays in your history. Free includes the ATS score and live preview; downloading is on a paid plan.",
+        description:
+          "Your optimized resume is saved and stays in your history. Free includes the ATS score and live preview; downloading is on a paid plan.",
       });
       return;
     }
@@ -277,9 +333,9 @@ export default function DashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resumeText, jobDescription }),
       });
-      
+
       const data = await res.json();
-      
+
       if (data.questions && data.questions.length > 0) {
         setWeakBullets(data.questions);
         setPendingResumeText(resumeText);
@@ -287,7 +343,7 @@ export default function DashboardPage() {
         setIsPrechecking(false); // Pause loading overlay
         return;
       }
-      
+
       // If no weak bullets, proceed normally
       setIsPrechecking(false);
       runAIAutoImprove(resumeText);
@@ -300,14 +356,16 @@ export default function DashboardPage() {
 
   const handleBulletEnrichmentSubmit = (answers: Record<string, string>) => {
     setShowBulletModal(false);
-    
-    const enrichmentLines = weakBullets.map(b => {
-      const ans = answers[b.id]?.trim();
-      if (ans) {
-        return `[User Added Metric for "${b.originalBullet}"]: ${ans}`;
-      }
-      return null;
-    }).filter(Boolean);
+
+    const enrichmentLines = weakBullets
+      .map((b) => {
+        const ans = answers[b.id]?.trim();
+        if (ans) {
+          return `[User Added Metric for "${b.originalBullet}"]: ${ans}`;
+        }
+        return null;
+      })
+      .filter(Boolean);
 
     let enriched = pendingResumeText;
     if (enrichmentLines.length > 0) {
@@ -335,9 +393,13 @@ export default function DashboardPage() {
     // silent clear — user can see the cleared workspace
   };
 
-  const handleReScoreBefore = async (newText: string, currentImprovementsCount?: number) => {
+  const handleReScoreBefore = async (
+    newText: string,
+    currentImprovementsCount?: number,
+  ) => {
     const impCount = currentImprovementsCount ?? bulletImprovementsCount;
-    const targetId = currentResumeId || optimizeResult?.resumeId || optimizeResult?.id;
+    const targetId =
+      currentResumeId || optimizeResult?.resumeId || optimizeResult?.id;
 
     // Only update afterScore (optimized) — keep beforeScore frozen at the original pre-optimization value
     try {
@@ -358,7 +420,10 @@ export default function DashboardPage() {
         });
         if (afterRes.ok) {
           newScoreData = await afterRes.json();
-          calculatedOverall = Math.min(98, Math.max(prevOverall + 1, newScoreData.overall));
+          calculatedOverall = Math.min(
+            98,
+            Math.max(prevOverall + 1, newScoreData.overall),
+          );
         }
       } catch (scoreErr) {
         calculatedOverall = Math.min(98, prevOverall + 1);
@@ -368,7 +433,13 @@ export default function DashboardPage() {
       const adjustedAfterScore = {
         ...(newScoreData || afterScore),
         overall: guaranteedOverall,
-        impactBullets: Math.min(100, Math.max(newScoreData?.impactBullets || 70, (afterScore?.impactBullets || 65) + 2)),
+        impactBullets: Math.min(
+          100,
+          Math.max(
+            newScoreData?.impactBullets || 70,
+            (afterScore?.impactBullets || 65) + 2,
+          ),
+        ),
       };
       setAfterScore(adjustedAfterScore);
 
@@ -381,7 +452,7 @@ export default function DashboardPage() {
               scoreAfter: adjustedAfterScore,
               resumeId: targetId || prev.resumeId,
             }
-          : prev
+          : prev,
       );
 
       // Persist updated scoreAfter and optimizedText to history DB via PATCH
@@ -389,7 +460,9 @@ export default function DashboardPage() {
         try {
           const { data: sessionData } = await supabase.auth.getSession();
           const accessToken = sessionData?.session?.access_token;
-          const headers: Record<string, string> = { "Content-Type": "application/json" };
+          const headers: Record<string, string> = {
+            "Content-Type": "application/json",
+          };
           if (accessToken) {
             headers["Authorization"] = `Bearer ${accessToken}`;
           }
@@ -417,8 +490,12 @@ export default function DashboardPage() {
               if (Array.isArray(cached)) {
                 const updated = cached.map((r: any) =>
                   r.id === targetId
-                    ? { ...r, scoreAfter: guaranteedOverall, optimizedText: newText }
-                    : r
+                    ? {
+                        ...r,
+                        scoreAfter: guaranteedOverall,
+                        optimizedText: newText,
+                      }
+                    : r,
                 );
                 localStorage.setItem(cacheKey, JSON.stringify(updated));
               }
@@ -433,7 +510,8 @@ export default function DashboardPage() {
 
   const handleAddToTracker = () => {
     if (!user || !optimizeResult) return;
-    const currentJobsString = localStorage.getItem(`fastHire_jobs_${user.id}`) || "[]";
+    const currentJobsString =
+      localStorage.getItem(`fastHire_jobs_${user.id}`) || "[]";
     let currentJobs = [];
     try {
       currentJobs = JSON.parse(currentJobsString);
@@ -447,19 +525,26 @@ export default function DashboardPage() {
       title: optimizeResult.jobTitle || "Optimized Resume",
       date: new Date().toISOString().split("T")[0],
       status: "applied" as const,
-      notes: "Added automatically from optimization results screen."
+      notes: "Added automatically from optimization results screen.",
     };
 
-    localStorage.setItem(`fastHire_jobs_${user.id}`, JSON.stringify([newJob, ...currentJobs]));
+    localStorage.setItem(
+      `fastHire_jobs_${user.id}`,
+      JSON.stringify([newJob, ...currentJobs]),
+    );
     setTrackerAdded(true);
   };
 
   const toggleRoadmapSkill = (skill: string) => {
     if (selectedRoadmapSkills.includes(skill)) {
-      setSelectedRoadmapSkills(selectedRoadmapSkills.filter(s => s !== skill));
+      setSelectedRoadmapSkills(
+        selectedRoadmapSkills.filter((s) => s !== skill),
+      );
     } else {
       if (selectedRoadmapSkills.length >= 3) {
-        toast.error("You can select up to 3 skills for your comprehensive roadmap.");
+        toast.error(
+          "You can select up to 3 skills for your comprehensive roadmap.",
+        );
         return;
       }
       setSelectedRoadmapSkills([...selectedRoadmapSkills, skill]);
@@ -467,27 +552,34 @@ export default function DashboardPage() {
   };
 
   const handleGenerateRoadmap = async () => {
-    const isOwner = userPlan === "owner" || (user?.email && isOwnerEmail(user.email));
+    const isOwner =
+      userPlan === "owner" || (user?.email && isOwnerEmail(user.email));
     if (userPlan === "free" && !isOwner) {
       useUpgradeModalStore.getState().openModal({
         badge: "PRO",
         title: "Unlock AI Skill Learning Roadmaps",
-        description: "Skills learning roadmaps are a Pro & Pro Max feature. Please upgrade your plan to unlock instant career roadmaps!",
+        description:
+          "Skills learning roadmaps are a Pro & Pro Max feature. Please upgrade your plan to unlock instant career roadmaps!",
       });
       return;
     }
 
     if (selectedRoadmapSkills.length === 0) {
-      toast.error("Please select at least 1 skill (up to 3) to generate your roadmap.");
+      toast.error(
+        "Please select at least 1 skill (up to 3) to generate your roadmap.",
+      );
       return;
     }
 
     if (!isOwner) {
       const monthKey = new Date().toISOString().slice(0, 7); // "YYYY-MM"
       const limit = userPlan === "premium" ? 5 : 15;
-      const storageKey = `fastHire_roadmaps_count_${user?.id || 'anon'}_${monthKey}`;
-      const currentCount = parseInt(localStorage.getItem(storageKey) || "0", 10);
-      
+      const storageKey = `fastHire_roadmaps_count_${user?.id || "anon"}_${monthKey}`;
+      const currentCount = parseInt(
+        localStorage.getItem(storageKey) || "0",
+        10,
+      );
+
       if (currentCount >= limit) {
         useUpgradeModalStore.getState().openModal({
           badge: "PRO",
@@ -502,10 +594,12 @@ export default function DashboardPage() {
     setRoadmapLoading(true);
     setRoadmapContent(null);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise((resolve) => setTimeout(resolve, 800));
       const content = generateMultiSkillRoadmap(selectedRoadmapSkills);
       setRoadmapContent(content);
-      toast.success(`Generated 90-day roadmap for ${selectedRoadmapSkills.length} selected skill${selectedRoadmapSkills.length > 1 ? "s" : ""}!`);
+      toast.success(
+        `Generated 90-day roadmap for ${selectedRoadmapSkills.length} selected skill${selectedRoadmapSkills.length > 1 ? "s" : ""}!`,
+      );
     } catch (e) {
       toast.error("Failed to generate learning roadmap.");
     } finally {
@@ -514,13 +608,17 @@ export default function DashboardPage() {
   };
 
   const handleGenerateCoverLetter = async () => {
-    const isOwner = userPlan === "owner" || (user?.email && isOwnerEmail(user.email));
+    const isOwner =
+      userPlan === "owner" || (user?.email && isOwnerEmail(user.email));
     if (!isOwner) {
       const monthKey = new Date().toISOString().slice(0, 7); // "YYYY-MM"
       const limit = userPlan === "free" ? 1 : userPlan === "premium" ? 5 : 15;
-      const storageKey = `fastHire_coverLetters_count_${user?.id || 'anon'}_${monthKey}`;
-      const currentCount = parseInt(localStorage.getItem(storageKey) || "0", 10);
-      
+      const storageKey = `fastHire_coverLetters_count_${user?.id || "anon"}_${monthKey}`;
+      const currentCount = parseInt(
+        localStorage.getItem(storageKey) || "0",
+        10,
+      );
+
       if (currentCount >= limit) {
         useUpgradeModalStore.getState().openModal({
           badge: "PRO",
@@ -563,10 +661,9 @@ export default function DashboardPage() {
     return <DashboardSkeleton />;
   }
 
-
-
   const hasResults = !optimizing && (optimizeResult || beforeScore);
-  const delta = afterScore && beforeScore ? afterScore.overall - beforeScore.overall : 0;
+  const delta =
+    afterScore && beforeScore ? afterScore.overall - beforeScore.overall : 0;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f8fafc] text-[#0f172a] font-sans">
@@ -587,24 +684,24 @@ export default function DashboardPage() {
         <div className="absolute bottom-0 left-0 w-[600px] h-[400px] bg-slate-200/50 rounded-full blur-[120px]" />
       </div>
 
-      <Navbar refreshKey={refreshKey} hideNav={!!(hasResults && optimizeResult)} />
+      <Navbar
+        refreshKey={refreshKey}
+        hideNav={!!(hasResults && optimizeResult)}
+      />
 
       <main className="relative flex-1 mx-auto max-w-[1280px] w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-28 sm:pb-8">
-
-
-
         {/* ── LOADING OVERLAY ─────────────────────────────────────── */}
         {optimizing && (
           <div className="fixed inset-0 bg-white/95 z-50 flex flex-col items-center justify-center p-6 select-none animate-in fade-in duration-300 overflow-y-auto">
             <div className="max-w-[600px] w-full mx-auto space-y-8 pb-12 mt-12">
-              <OptimizingProgress 
+              <OptimizingProgress
                 onComplete={handleOptimizationComplete}
                 onError={(err) => {
                   toast.error(err);
                   setOptimizing(false);
                 }}
-                resumeText={activeOptimizationText || resumeText} 
-                jobDescription={jobDescription} 
+                resumeText={activeOptimizationText || resumeText}
+                jobDescription={jobDescription}
                 instructions={activeOptimizationInstructions || instructions}
               />
             </div>
@@ -618,9 +715,13 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                 Score improved{" "}
-                <span className="text-slate-500">{beforeScore?.overall ?? 0}%</span>
-                {" "}→{" "}
-                <span className="text-emerald-600">{afterScore?.overall ?? 0}%</span>
+                <span className="text-slate-500">
+                  {beforeScore?.overall ?? 0}%
+                </span>{" "}
+                →{" "}
+                <span className="text-emerald-600">
+                  {afterScore?.overall ?? 0}%
+                </span>
               </h1>
               {delta > 0 && (
                 <span className="text-xs font-black px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
@@ -631,7 +732,10 @@ export default function DashboardPage() {
             {/* Actions */}
             <div className="flex items-center gap-2 shrink-0">
               <Link href="/dashboard/history">
-                <Button size="sm" className="bg-slate-900 hover:bg-slate-700 text-white text-xs font-bold h-9 rounded-xl px-4">
+                <Button
+                  size="sm"
+                  className="bg-slate-900 hover:bg-slate-700 text-white text-xs font-bold h-9 rounded-xl px-4"
+                >
                   <History className="h-3.5 w-3.5 mr-1.5" />
                   Back to History
                 </Button>
@@ -642,10 +746,14 @@ export default function DashboardPage() {
           /* Header Title Block */
           <div className="text-center space-y-3 mb-10 select-none">
             <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-none">
-              Improve Your Resume <span className="bg-gradient-to-r from-[#0d6e5a] via-[#0f766e] to-[#134e4a] bg-clip-text text-transparent">for Any Job</span>
+              Improve Your Resume{" "}
+              <span className="bg-gradient-to-r from-[#0d6e5a] via-[#0f766e] to-[#134e4a] bg-clip-text text-transparent">
+                for Any Job
+              </span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto font-medium leading-relaxed">
-              Paste your resume and the job you want. We improve it to match &mdash; automatically. Get 2 free resumes per month.
+              Paste your resume and the job you want. We improve it to match
+              &mdash; automatically. Get 2 free resumes per month.
             </p>
             <div>
               <Badge className="bg-[#0d6e5a]/8 border border-[#0d6e5a]/20 text-[#0d6e5a] hover:bg-[#0d6e5a]/8 px-3 py-1 text-[10px] rounded-full font-bold select-none">
@@ -657,7 +765,6 @@ export default function DashboardPage() {
 
         {/* WORKSPACE CONTENT SECTION */}
         {hasResults && optimizeResult ? (
-          
           /* RESULTS WORKSPACE ROW */
           <div ref={resultsRef} className="space-y-6">
             {/* Placeholder Filler — shown when AI detects missing details */}
@@ -688,9 +795,14 @@ export default function DashboardPage() {
                     <Briefcase className="h-4 w-4 text-[#0d6e5a]" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900">Add to your tracker?</h4>
+                    <h4 className="text-xs font-bold text-slate-900">
+                      Add to your tracker?
+                    </h4>
                     <p className="text-[10px] text-slate-500 mt-0.5">
-                      <strong>{optimizeResult.company || "General Application"}</strong> &mdash; {optimizeResult.jobTitle || "Optimized Resume"}
+                      <strong>
+                        {optimizeResult.company || "General Application"}
+                      </strong>{" "}
+                      &mdash; {optimizeResult.jobTitle || "Optimized Resume"}
                     </p>
                   </div>
                 </div>
@@ -717,17 +829,23 @@ export default function DashboardPage() {
                 <TrendingUp className="h-4 w-4 text-emerald-600" />
               </div>
               <div>
-                <h2 className="text-sm font-black text-slate-900 tracking-tight">ATS Optimization Complete</h2>
-                <p className="text-[11px] text-slate-500 font-medium">Your resume has been optimized with target keywords and metrics.</p>
+                <h2 className="text-sm font-black text-slate-900 tracking-tight">
+                  ATS Optimization Complete
+                </h2>
+                <p className="text-[11px] text-slate-500 font-medium">
+                  Your resume has been optimized with target keywords and
+                  metrics.
+                </p>
               </div>
             </div>
 
             {/* Top Row: Edit & review workspace split (Score gauges & PDF Preview) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start mb-6">
-              
               {/* Left Column: ATS Score circle gauges and keywords */}
-              <ScrollFadeIn direction="left" className="lg:col-span-5 space-y-4 sm:space-y-6">
-                
+              <ScrollFadeIn
+                direction="left"
+                className="lg:col-span-5 space-y-4 sm:space-y-6"
+              >
                 {/* Score circular gauges (like in History DetailView) */}
                 <Card className="border-slate-200 bg-white shadow-sm rounded-xl overflow-hidden">
                   <CardContent className="p-3.5 sm:p-6 space-y-4 sm:space-y-5">
@@ -737,18 +855,30 @@ export default function DashboardPage() {
                     </h3>
 
                     <div className="flex items-center justify-around gap-2 sm:gap-4 bg-slate-50 border border-slate-100 rounded-xl p-3 sm:p-5">
-                      <CircleGauge value={beforeScore?.overall || 0} label="Original" size={76} />
+                      <CircleGauge
+                        value={beforeScore?.overall || 0}
+                        label="Original"
+                        size={76}
+                      />
                       <div className="flex flex-col items-center gap-1 shrink-0 select-none">
                         <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
                           <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-pulse" />
                         </div>
-                        <span className="text-[9px] sm:text-[10px] font-black text-emerald-600">+{delta} pts</span>
+                        <span className="text-[9px] sm:text-[10px] font-black text-emerald-600">
+                          +{delta} pts
+                        </span>
                       </div>
-                      <CircleGauge value={afterScore?.overall || 0} label="Optimized" size={76} />
+                      <CircleGauge
+                        value={afterScore?.overall || 0}
+                        label="Optimized"
+                        size={76}
+                      />
                     </div>
 
                     <p className="text-[10px] text-slate-500 leading-relaxed font-semibold bg-slate-50 p-2 sm:p-2.5 rounded-lg border border-slate-100 text-center select-none">
-                      Industry Standard ATS Scorer Rubric. Overlap analysis shows your keyword matching has been successfully enhanced.
+                      Industry Standard ATS Scorer Rubric. Overlap analysis
+                      shows your keyword matching has been successfully
+                      enhanced.
                     </p>
                   </CardContent>
                 </Card>
@@ -758,15 +888,22 @@ export default function DashboardPage() {
                   <div className="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-5 shadow-sm select-none">
                     <KeywordBadges
                       added={optimizeResult?.keywordsAdded || []}
-                      found={optimizeResult?.alreadyInResume || beforeScore?.foundKeywords || afterScore?.foundKeywords || []}
+                      found={
+                        optimizeResult?.alreadyInResume ||
+                        beforeScore?.foundKeywords ||
+                        afterScore?.foundKeywords ||
+                        []
+                      }
                     />
                   </div>
                 )}
-
               </ScrollFadeIn>
 
               {/* Right Column: AI Optimized styled Preview */}
-              <ScrollFadeIn direction="right" className="lg:col-span-7 space-y-4">
+              <ScrollFadeIn
+                direction="right"
+                className="lg:col-span-7 space-y-4"
+              >
                 <ResumeViewer
                   text={optimizeResult.optimizedText}
                   originalText={resumeText}
@@ -777,7 +914,6 @@ export default function DashboardPage() {
                   jobTitle={optimizeResult.jobTitle || ""}
                 />
               </ScrollFadeIn>
-
             </div>
 
             {/* BELOW PDF PREVIEW: Full-width AI Optimization Summary & Tools Box */}
@@ -786,7 +922,9 @@ export default function DashboardPage() {
                 <CardContent className="p-4 sm:p-6 space-y-3 sm:space-y-4">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-[#0d6e5a]" />
-                    <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">AI Optimization Summary</h3>
+                    <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                      AI Optimization Summary
+                    </h3>
                   </div>
                   <div className="bg-slate-50 border border-slate-100 p-3.5 sm:p-5 rounded-xl">
                     <p className="text-xs text-slate-600 leading-relaxed font-semibold">
@@ -797,14 +935,15 @@ export default function DashboardPage() {
               </Card>
             )}
 
-
             {/* Interactive Bullet Point Reviewer / Improver (Below Columns) */}
             <Card className="border-slate-200 bg-white shadow-sm rounded-xl overflow-hidden mt-6">
               <CardContent className="p-6 space-y-4 text-slate-800">
                 <div className="flex items-center justify-between select-none">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-5 w-5 text-[#0d6e5a]" />
-                    <h3 className={`text-sm font-extrabold ${userPlan === "free" ? "text-slate-600" : "text-slate-900"}`}>
+                    <h3
+                      className={`text-sm font-extrabold ${userPlan === "free" ? "text-slate-600" : "text-slate-900"}`}
+                    >
                       Interactive Bullet Point Improver
                     </h3>
                   </div>
@@ -815,7 +954,8 @@ export default function DashboardPage() {
                   )}
                 </div>
                 <p className="text-xs text-slate-500 leading-relaxed font-semibold select-none">
-                  Scan and optimize individual bullet points on your original resume text. We identify missing action verbs and metrics.
+                  Scan and optimize individual bullet points on your original
+                  resume text. We identify missing action verbs and metrics.
                 </p>
                 <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl">
                   <BulletImprover
@@ -825,7 +965,9 @@ export default function DashboardPage() {
                     userPlan={userPlan}
                     onChange={(newText, wasImproved) => {
                       // Update the optimizedText in result so the viewer shows the new text
-                      setOptimizeResult((prev: any) => prev ? { ...prev, optimizedText: newText } : prev);
+                      setOptimizeResult((prev: any) =>
+                        prev ? { ...prev, optimizedText: newText } : prev,
+                      );
                       let newCount = bulletImprovementsCount;
                       if (wasImproved) {
                         newCount += 1;
@@ -837,16 +979,12 @@ export default function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
-
           </div>
         ) : (
-          
           /* ── INPUT WORKSPACE ──────────────────────────────────── */
           <div className="space-y-5 max-w-5xl mx-auto select-none">
-
             {/* Split-panel: Resume | Job Description */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
-
               {/* Resume Column (Panel + Use Saved Resume Button below) */}
               <div className="flex flex-col space-y-3">
                 <div className="group flex-1 flex flex-col bg-white border border-slate-300 hover:border-[#0d6e5a]/50 rounded-xl p-6 space-y-4 transition-colors duration-200 shadow-sm">
@@ -856,13 +994,23 @@ export default function DashboardPage() {
                         <FileText className="h-4 w-4 text-[#0d6e5a]" />
                       </div>
                       <div>
-                        <h3 className="font-heading font-bold text-slate-900 text-base">Your Resume</h3>
-                        <p className="text-xs text-slate-400 font-normal">Paste text or upload PDF</p>
+                        <h3 className="font-heading font-bold text-slate-900 text-base">
+                          Your Resume
+                        </h3>
+                        <p className="text-xs text-slate-400 font-normal">
+                          Paste text or upload PDF
+                        </p>
                       </div>
                     </div>
-                    <span className="text-xs font-mono font-medium text-[#0d6e5a] bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 px-2.5 py-0.5 rounded-full">Step 1</span>
+                    <span className="text-xs font-mono font-medium text-[#0d6e5a] bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 px-2.5 py-0.5 rounded-full">
+                      Step 1
+                    </span>
                   </div>
-                  <ResumeInput value={resumeText} onChange={setResumeText} disabled={optimizing} />
+                  <ResumeInput
+                    value={resumeText}
+                    onChange={setResumeText}
+                    disabled={optimizing}
+                  />
                 </div>
 
                 {/* Use Saved Resume button */}
@@ -888,25 +1036,37 @@ export default function DashboardPage() {
                         <Target className="h-4 w-4 text-[#0d6e5a]" />
                       </div>
                       <div>
-                        <h3 className="font-heading font-bold text-slate-900 text-base">Job Description</h3>
-                        <p className="text-xs text-slate-400 font-normal">Paste the job post description</p>
+                        <h3 className="font-heading font-bold text-slate-900 text-base">
+                          Job Description
+                        </h3>
+                        <p className="text-xs text-slate-400 font-normal">
+                          Paste the job post description
+                        </p>
                       </div>
                     </div>
-                    <span className="text-xs font-mono font-medium text-[#0d6e5a] bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 px-2.5 py-0.5 rounded-full">Step 2</span>
+                    <span className="text-xs font-mono font-medium text-[#0d6e5a] bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 px-2.5 py-0.5 rounded-full">
+                      Step 2
+                    </span>
                   </div>
-                  <JobDescriptionInput value={jobDescription} onChange={setJobDescription} disabled={optimizing} />
+                  <JobDescriptionInput
+                    value={jobDescription}
+                    onChange={setJobDescription}
+                    disabled={optimizing}
+                  />
                 </div>
                 {/* Spacer matching button height */}
                 <div className="h-[42px] hidden md:block" />
               </div>
-
             </div>
 
             {/* Custom optimization instructions card */}
             <div className="bg-white border border-slate-300 rounded-xl p-6 space-y-4 shadow-sm">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-[#0d6e5a]" />
-                <h4 className="font-heading font-bold text-sm text-slate-900">Custom Guidance <span className="text-slate-400 font-normal">(Optional)</span></h4>
+                <h4 className="font-heading font-bold text-sm text-slate-900">
+                  Custom Guidance{" "}
+                  <span className="text-slate-400 font-normal">(Optional)</span>
+                </h4>
               </div>
               <input
                 type="text"
@@ -921,14 +1081,32 @@ export default function DashboardPage() {
             <div className="bg-white border border-slate-300 rounded-xl p-6 space-y-4 shadow-sm">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-[#0d6e5a]" />
-                <h4 className="font-heading font-bold text-sm text-slate-900">Resume Length</h4>
+                <h4 className="font-heading font-bold text-sm text-slate-900">
+                  Resume Length
+                </h4>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  { value: "Auto-detect", label: "Auto-detect", sub: "Let AI decide" },
-                  { value: "1 Page",      label: "1 Page",       sub: "Fresher / under 5 yrs" },
-                  { value: "2 Pages",     label: "2 Pages",      sub: "5-10+ yrs experience" },
-                  { value: "Academic CV", label: "Academic CV",  sub: "PhD / research / academia" },
+                  {
+                    value: "Auto-detect",
+                    label: "Auto-detect",
+                    sub: "Let AI decide",
+                  },
+                  {
+                    value: "1 Page",
+                    label: "1 Page",
+                    sub: "Fresher / under 5 yrs",
+                  },
+                  {
+                    value: "2 Pages",
+                    label: "2 Pages",
+                    sub: "5-10+ yrs experience",
+                  },
+                  {
+                    value: "Academic CV",
+                    label: "Academic CV",
+                    sub: "PhD / research / academia",
+                  },
                 ].map((opt) => (
                   <button
                     key={opt.value}
@@ -941,17 +1119,23 @@ export default function DashboardPage() {
                     }`}
                   >
                     <div>
-                      <span className={`text-xs font-bold block ${
-                        lengthOption === opt.value ? "text-[#0d6e5a]" : "text-slate-700"
-                      }`}>{opt.label}</span>
-                      <span className="text-[10px] text-slate-400 font-normal leading-tight block mt-1">{opt.sub}</span>
+                      <span
+                        className={`text-xs font-bold block ${
+                          lengthOption === opt.value
+                            ? "text-[#0d6e5a]"
+                            : "text-slate-700"
+                        }`}
+                      >
+                        {opt.label}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-normal leading-tight block mt-1">
+                        {opt.sub}
+                      </span>
                     </div>
                   </button>
                 ))}
               </div>
             </div>
-
-
 
             {/* CTA Button */}
             <div className="flex justify-center pt-2">
@@ -961,26 +1145,42 @@ export default function DashboardPage() {
                 className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white px-12 py-3.5 text-sm font-semibold flex items-center gap-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {optimizing ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Optimizing Resume...</>
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Optimizing
+                    Resume...
+                  </>
                 ) : isPrechecking ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing Resume & Missing Metrics...</>
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Analyzing
+                    Resume & Missing Metrics...
+                  </>
                 ) : (
-                  <><Zap className="h-4.5 w-4.5" /> Optimize My Resume <ChevronRight className="h-4.5 w-4.5" /></>
+                  <>
+                    <Zap className="h-4.5 w-4.5" /> Optimize My Resume{" "}
+                    <ChevronRight className="h-4.5 w-4.5" />
+                  </>
                 )}
               </button>
             </div>
 
             {/* Trust badges */}
             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 pt-2 text-[10px] text-slate-600 font-semibold select-none">
-              <span className="flex items-center gap-1.5"><Shield className="h-3 w-3 text-slate-700" /> No data sold</span>
-              <span className="flex items-center gap-1.5"><Zap className="h-3 w-3 text-slate-700" /> ~20s results</span>
-              <span className="flex items-center gap-1.5"><Target className="h-3 w-3 text-slate-700" /> ATS-Tested</span>
-              <span className="flex items-center gap-1.5"><TrendingUp className="h-3 w-3 text-slate-700" /> Score improvement guaranteed</span>
+              <span className="flex items-center gap-1.5">
+                <Shield className="h-3 w-3 text-slate-700" /> No data sold
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Zap className="h-3 w-3 text-slate-700" /> ~20s results
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Target className="h-3 w-3 text-slate-700" /> ATS-Tested
+              </span>
+              <span className="flex items-center gap-1.5">
+                <TrendingUp className="h-3 w-3 text-slate-700" /> Score
+                improvement guaranteed
+              </span>
             </div>
-
           </div>
         )}
-
       </main>
 
       {/* Loading Overlay */}

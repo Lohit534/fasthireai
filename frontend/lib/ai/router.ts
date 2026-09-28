@@ -4,8 +4,8 @@ import { logger } from "../logger";
 import type { ResumeJSON } from "@/types/resume";
 
 export interface AIResult {
-  resume: string;           // Plain text serialized from JSON (for display/scoring)
-  resumeJSON: ResumeJSON | null;  // Structured JSON (for PDF rendering)
+  resume: string; // Plain text serialized from JSON (for display/scoring)
+  resumeJSON: ResumeJSON | null; // Structured JSON (for PDF rendering)
   keywordsAdded: string[];
   changesCount: number;
   summary: string;
@@ -35,7 +35,10 @@ export function serializeResumeJSONToText(json: ResumeJSON): string {
   // Summary
   if (json.summary) {
     lines.push("PROFESSIONAL SUMMARY");
-    const cleanSummary = json.summary.replace(/^[•\-\*–—\s]+/gm, "").replace(/\n+/g, " ").trim();
+    const cleanSummary = json.summary
+      .replace(/^[•\-\*–—\s]+/gm, "")
+      .replace(/\n+/g, " ")
+      .trim();
     lines.push(cleanSummary);
     lines.push("");
   }
@@ -55,7 +58,9 @@ export function serializeResumeJSONToText(json: ResumeJSON): string {
   if (json.experience?.length) {
     lines.push("PROFESSIONAL EXPERIENCE");
     for (const exp of json.experience) {
-      lines.push(`${exp.role} | ${exp.company}${exp.location ? " | " + exp.location : ""}`);
+      lines.push(
+        `${exp.role} | ${exp.company}${exp.location ? " | " + exp.location : ""}`,
+      );
       lines.push(exp.duration);
       for (const b of exp.bullets) lines.push(`• ${b}`);
       lines.push("");
@@ -67,7 +72,9 @@ export function serializeResumeJSONToText(json: ResumeJSON): string {
     lines.push("PROJECTS");
     for (const proj of json.projects) {
       const techStr = proj.stack?.join(", ") || "";
-      lines.push(`${proj.title}${techStr ? " | " + techStr : ""}${proj.link ? " | " + proj.link : ""}`);
+      lines.push(
+        `${proj.title}${techStr ? " | " + techStr : ""}${proj.link ? " | " + proj.link : ""}`,
+      );
       for (const b of proj.bullets) lines.push(`• ${b}`);
       lines.push("");
     }
@@ -82,7 +89,8 @@ export function serializeResumeJSONToText(json: ResumeJSON): string {
       // Institution and university on next line
       const instParts: string[] = [];
       if (edu.institution) instParts.push(edu.institution);
-      if (edu.university && edu.university !== edu.institution) instParts.push(edu.university);
+      if (edu.university && edu.university !== edu.institution)
+        instParts.push(edu.university);
       if (instParts.length) lines.push(instParts.join(", "));
       // CGPA/percentage on its own line
       if (edu.cgpa) lines.push(`CGPA: ${edu.cgpa}`);
@@ -133,114 +141,134 @@ export function validateAndRepairResumeFormat(text: string): string {
   let result = text;
 
   // 1. Remove literal \n escape sequences the model occasionally emits
-  result = result.replace(/\\n/g, '\n');
-  result = result.replace(/\\t/g, ' ');
+  result = result.replace(/\\n/g, "\n");
+  result = result.replace(/\\t/g, " ");
 
   // 2. Strip all Markdown and LaTeX remnants
   result = result
-    .replace(/\\[a-zA-Z]+\{([^}]*)\}/g, '$1')
-    .replace(/\\[a-zA-Z]+/g, '')
-    .replace(/[{}]/g, '')
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/\*([^*]+)\*/g, '$1')
-    .replace(/_{2}([^_]+)_{2}/g, '$1')
-    .replace(/^#{1,6}\s+/gm, '')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+    .replace(/\\[a-zA-Z]+\{([^}]*)\}/g, "$1")
+    .replace(/\\[a-zA-Z]+/g, "")
+    .replace(/[{}]/g, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/_{2}([^_]+)_{2}/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
 
   // 3. Rejoin broken compound tech terms
   const COMPOUND_REPAIRS: [RegExp, string][] = [
-    [/My\s*\n+\s*SQL/gi, 'MySQL'],
-    [/Type\s*\n+\s*Script/gi, 'TypeScript'],
-    [/Java\s*\n+\s*Script/gi, 'JavaScript'],
-    [/Post\s*\n+\s*gre\s*SQL/gi, 'PostgreSQL'],
-    [/Spring\s*\n+\s*Boot/gi, 'Spring Boot'],
-    [/Power\s*\n+\s*BI/gi, 'Power BI'],
-    [/Node\s*\n+\s*js/gi, 'Node.js'],
-    [/React\s*\n+\s*js/gi, 'React.js'],
-    [/Next\s*\n+\s*js/gi, 'Next.js'],
-    [/Mon\s*\n+\s*go\s*DB/gi, 'MongoDB'],
-    [/Kube\s*\n+\s*rnetes/gi, 'Kubernetes'],
-    [/Ten\s*\n+\s*sor\s*Flow/gi, 'TensorFlow'],
-    [/CI\s*\n+\s*CD/gi, 'CI/CD'],
-    [/De\s*\n+\s*vOps/gi, 'DevOps'],
+    [/My\s*\n+\s*SQL/gi, "MySQL"],
+    [/Type\s*\n+\s*Script/gi, "TypeScript"],
+    [/Java\s*\n+\s*Script/gi, "JavaScript"],
+    [/Post\s*\n+\s*gre\s*SQL/gi, "PostgreSQL"],
+    [/Spring\s*\n+\s*Boot/gi, "Spring Boot"],
+    [/Power\s*\n+\s*BI/gi, "Power BI"],
+    [/Node\s*\n+\s*js/gi, "Node.js"],
+    [/React\s*\n+\s*js/gi, "React.js"],
+    [/Next\s*\n+\s*js/gi, "Next.js"],
+    [/Mon\s*\n+\s*go\s*DB/gi, "MongoDB"],
+    [/Kube\s*\n+\s*rnetes/gi, "Kubernetes"],
+    [/Ten\s*\n+\s*sor\s*Flow/gi, "TensorFlow"],
+    [/CI\s*\n+\s*CD/gi, "CI/CD"],
+    [/De\s*\n+\s*vOps/gi, "DevOps"],
   ];
   for (const [pat, rep] of COMPOUND_REPAIRS) result = result.replace(pat, rep);
 
   // 4. Rejoin broken category headers (e.g. "Languages\n: Python" -> "Programming Languages: Python")
-  result = result.replace(/^([A-Za-z &\/]+)\s*\n+\s*:\s*/gm, '$1: ');
-  result = result.replace(/^Languages\s*\n+:\s*/gim, 'Programming Languages: ');
+  result = result.replace(/^([A-Za-z &\/]+)\s*\n+\s*:\s*/gm, "$1: ");
+  result = result.replace(/^Languages\s*\n+:\s*/gim, "Programming Languages: ");
   result = result.replace(
     /^Languages:\s*(Python|Java|C\b|C\+\+|C#|JavaScript|TypeScript|Go|Ruby|PHP|Swift|Kotlin|Rust|R\b|SQL|HTML)/gim,
-    'Programming Languages: $1'
+    "Programming Languages: $1",
   );
 
   // 5. Rejoin hyphen-broken words across line breaks
-  result = result.replace(/(\b[A-Za-z]+)-\s*\r?\n+\s*([A-Za-z]+\b)/g, '$1$2');
+  result = result.replace(/(\b[A-Za-z]+)-\s*\r?\n+\s*([A-Za-z]+\b)/g, "$1$2");
 
   // 6. Rejoin lower-case sentence continuations split across lines
-  result = result.replace(/([a-z,])\r?\n([a-z])/g, '$1 $2');
+  result = result.replace(/([a-z,])\r?\n([a-z])/g, "$1 $2");
 
   // 7. Normalize bullet characters to •
-  result = result.replace(/^[\s]*[-–—·○►▪✓→]\s*/gm, '• ');
+  result = result.replace(/^[\s]*[-–—·○►▪✓→]\s*/gm, "• ");
 
   // 8. Ensure double newlines before known section headers
   const SECTION_HEADERS = [
-    'PROFESSIONAL SUMMARY', 'SUMMARY', 'OBJECTIVE',
-    'TECHNICAL SKILLS', 'SKILLS', 'CORE SKILLS', 'KEY SKILLS',
-    'PROFESSIONAL EXPERIENCE', 'WORK EXPERIENCE', 'EXPERIENCE', 'EMPLOYMENT HISTORY', 'INTERNSHIPS?',
-    'PROJECTS', 'PERSONAL PROJECTS',
-    'EDUCATION', 'ACADEMIC BACKGROUND',
-    'CERTIFICATIONS?', 'ACHIEVEMENTS?', 'AWARDS?',
-    'LANGUAGES',
+    "PROFESSIONAL SUMMARY",
+    "SUMMARY",
+    "OBJECTIVE",
+    "TECHNICAL SKILLS",
+    "SKILLS",
+    "CORE SKILLS",
+    "KEY SKILLS",
+    "PROFESSIONAL EXPERIENCE",
+    "WORK EXPERIENCE",
+    "EXPERIENCE",
+    "EMPLOYMENT HISTORY",
+    "INTERNSHIPS?",
+    "PROJECTS",
+    "PERSONAL PROJECTS",
+    "EDUCATION",
+    "ACADEMIC BACKGROUND",
+    "CERTIFICATIONS?",
+    "ACHIEVEMENTS?",
+    "AWARDS?",
+    "LANGUAGES",
   ];
   for (const sec of SECTION_HEADERS) {
-    const reg = new RegExp(`(^|\\n)\\s*(${sec})\\b`, 'gi');
-    result = result.replace(reg, '\n\n$2\n');
+    const reg = new RegExp(`(^|\\n)\\s*(${sec})\\b`, "gi");
+    result = result.replace(reg, "\n\n$2\n");
   }
 
   // 9. Strip bullet points from PROFESSIONAL SUMMARY (must be pure prose)
-  const summaryReg = /(?:^|\n)(PROFESSIONAL SUMMARY|SUMMARY|OBJECTIVE)\n([\s\S]*?)(?=\n[A-Z][A-Z\s]{3,}\n|\n*$)/i;
+  const summaryReg =
+    /(?:^|\n)(PROFESSIONAL SUMMARY|SUMMARY|OBJECTIVE)\n([\s\S]*?)(?=\n[A-Z][A-Z\s]{3,}\n|\n*$)/i;
   const summaryMatch = result.match(summaryReg);
   if (summaryMatch) {
     const cleanSummary = summaryMatch[2]
-      .split('\n')
-      .map((line) => line.replace(/^[•\-*–—\s]+/, '').trim())
+      .split("\n")
+      .map((line) => line.replace(/^[•\-*–—\s]+/, "").trim())
       .filter(Boolean)
-      .join(' ')
-      .replace(/(\b[A-Za-z]+)-\s+([A-Za-z]+\b)/g, '$1$2');
+      .join(" ")
+      .replace(/(\b[A-Za-z]+)-\s+([A-Za-z]+\b)/g, "$1$2");
     if (cleanSummary) {
       result = result.replace(
         summaryMatch[0],
-        `\n${summaryMatch[1].toUpperCase()}\n${cleanSummary}\n`
+        `\n${summaryMatch[1].toUpperCase()}\n${cleanSummary}\n`,
       );
     }
   }
 
   // 10. Consolidate multi-line skill categories onto single lines
-  const skillsReg = /(?:^|\n)(TECHNICAL SKILLS|SKILLS|CORE SKILLS|KEY SKILLS)\n([\s\S]*?)(?=\n[A-Z][A-Z\s]{3,}\n|\n*$)/i;
+  const skillsReg =
+    /(?:^|\n)(TECHNICAL SKILLS|SKILLS|CORE SKILLS|KEY SKILLS)\n([\s\S]*?)(?=\n[A-Z][A-Z\s]{3,}\n|\n*$)/i;
   const skillsMatch = result.match(skillsReg);
   if (skillsMatch) {
     const rawSkills = skillsMatch[2];
     const skillLines: string[] = [];
-    const rawLines = rawSkills.split('\n').map((l) => l.trim()).filter(Boolean);
+    const rawLines = rawSkills
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
     for (const l of rawLines) {
-      if (l.includes(':')) {
+      if (l.includes(":")) {
         skillLines.push(l);
       } else if (skillLines.length > 0) {
         const last = skillLines[skillLines.length - 1];
-        skillLines[skillLines.length - 1] = last + (last.endsWith(',') ? ' ' : ', ') + l;
+        skillLines[skillLines.length - 1] =
+          last + (last.endsWith(",") ? " " : ", ") + l;
       } else {
         skillLines.push(`Technical Skills: ${l}`);
       }
     }
     result = result.replace(
       skillsMatch[0],
-      `\n${skillsMatch[1].toUpperCase()}\n${skillLines.join('\n')}\n`
+      `\n${skillsMatch[1].toUpperCase()}\n${skillLines.join("\n")}\n`,
     );
   }
 
   // 11. Ensure LANGUAGES section has one bullet per item
-  const langReg = /(?:^|\n)(LANGUAGES)\n([\s\S]*?)(?=\n[A-Z][A-Z\s]{3,}\n|\n*$)/i;
+  const langReg =
+    /(?:^|\n)(LANGUAGES)\n([\s\S]*?)(?=\n[A-Z][A-Z\s]{3,}\n|\n*$)/i;
   const langMatch = result.match(langReg);
   if (langMatch) {
     const rawLang = langMatch[2].trim();
@@ -248,11 +276,11 @@ export function validateAndRepairResumeFormat(text: string): string {
       const items = rawLang
         .split(/[\n,–—|•]+/)
         .map((s) => s.trim())
-        .filter((s) => s && !s.toUpperCase().startsWith('LANGUAGE'));
+        .filter((s) => s && !s.toUpperCase().startsWith("LANGUAGE"));
       if (items.length > 0) {
         result = result.replace(
           langMatch[0],
-          `\nLANGUAGES\n${items.map((l) => `• ${l}`).join('\n')}\n`
+          `\nLANGUAGES\n${items.map((l) => `• ${l}`).join("\n")}\n`,
         );
       }
     }
@@ -260,8 +288,8 @@ export function validateAndRepairResumeFormat(text: string): string {
 
   // 12. Clean up excess blank lines and trailing whitespace
   result = result
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
     .trim();
 
   return result;
@@ -274,23 +302,23 @@ export function sanitizeResumeText(text: string): string {
 
   // 1. Rejoin split compound tech terms
   const COMPOUND_TERMS: [RegExp, string][] = [
-    [/My\s*\n+\s*SQL/gi, 'MySQL'],
-    [/Type\s*\n+\s*Script/gi, 'TypeScript'],
-    [/Java\s*\n+\s*Script/gi, 'JavaScript'],
-    [/Post\s*\n+\s*gre\s*SQL/gi, 'PostgreSQL'],
-    [/Spring\s*\n+\s*Boot/gi, 'Spring Boot'],
-    [/Power\s*\n+\s*BI/gi, 'Power BI'],
-    [/Node\s*\n+\s*js/gi, 'Node.js'],
-    [/React\s*\n+\s*js/gi, 'React.js'],
-    [/Next\s*\n+\s*js/gi, 'Next.js'],
-    [/Mon\s*\n+\s*go\s*DB/gi, 'MongoDB'],
-    [/Kube\s*\n+\s*rnetes/gi, 'Kubernetes'],
-    [/Ten\s*\n+\s*sor\s*Flow/gi, 'TensorFlow'],
-    [/Git\s*\n+\s*Hub/gi, 'GitHub'],
-    [/VS\s*\n+\s*Code/gi, 'VS Code'],
-    [/Chat\s*\n+\s*GPT/gi, 'ChatGPT'],
-    [/CI\s*\n+\s*CD/gi, 'CI/CD'],
-    [/De\s*\n+\s*vOps/gi, 'DevOps'],
+    [/My\s*\n+\s*SQL/gi, "MySQL"],
+    [/Type\s*\n+\s*Script/gi, "TypeScript"],
+    [/Java\s*\n+\s*Script/gi, "JavaScript"],
+    [/Post\s*\n+\s*gre\s*SQL/gi, "PostgreSQL"],
+    [/Spring\s*\n+\s*Boot/gi, "Spring Boot"],
+    [/Power\s*\n+\s*BI/gi, "Power BI"],
+    [/Node\s*\n+\s*js/gi, "Node.js"],
+    [/React\s*\n+\s*js/gi, "React.js"],
+    [/Next\s*\n+\s*js/gi, "Next.js"],
+    [/Mon\s*\n+\s*go\s*DB/gi, "MongoDB"],
+    [/Kube\s*\n+\s*rnetes/gi, "Kubernetes"],
+    [/Ten\s*\n+\s*sor\s*Flow/gi, "TensorFlow"],
+    [/Git\s*\n+\s*Hub/gi, "GitHub"],
+    [/VS\s*\n+\s*Code/gi, "VS Code"],
+    [/Chat\s*\n+\s*GPT/gi, "ChatGPT"],
+    [/CI\s*\n+\s*CD/gi, "CI/CD"],
+    [/De\s*\n+\s*vOps/gi, "DevOps"],
   ];
 
   for (const [pattern, replacement] of COMPOUND_TERMS) {
@@ -298,93 +326,125 @@ export function sanitizeResumeText(text: string): string {
   }
 
   // 2. Rejoin broken category headers in Technical Skills (e.g. "Languages\n: Python..." -> "Programming Languages: Python...")
-  result = result.replace(/^([A-Za-z &\/]+)\s*\n+\s*:\s*/gm, '$1: ');
-  result = result.replace(/^Languages\s*\n+:\s*/gim, 'Programming Languages: ');
-  result = result.replace(/^Languages:\s*(Python|Java|C\b|C\+\+|C#|JavaScript|TypeScript|Go|Ruby|PHP|Swift|Kotlin|Rust|R\b|SQL|HTML)/gim, 'Programming Languages: $1');
+  result = result.replace(/^([A-Za-z &\/]+)\s*\n+\s*:\s*/gm, "$1: ");
+  result = result.replace(/^Languages\s*\n+:\s*/gim, "Programming Languages: ");
+  result = result.replace(
+    /^Languages:\s*(Python|Java|C\b|C\+\+|C#|JavaScript|TypeScript|Go|Ruby|PHP|Swift|Kotlin|Rust|R\b|SQL|HTML)/gim,
+    "Programming Languages: $1",
+  );
 
   // 3. Remove LaTeX & Markdown artifacts safely without destroying newlines
   result = result
-    .replace(/\\[a-zA-Z]+\{([^}]*)\}/g, '$1')
-    .replace(/\\[a-zA-Z]+/g, '')
-    .replace(/\{|\}/g, '')
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/\*([^*]+)\*/g, '$1')
-    .replace(/_{2}([^_]+)_{2}/g, '$1')
-    .replace(/^#{1,6}\s+/gm, '')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+    .replace(/\\[a-zA-Z]+\{([^}]*)\}/g, "$1")
+    .replace(/\\[a-zA-Z]+/g, "")
+    .replace(/\{|\}/g, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/_{2}([^_]+)_{2}/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
 
   // 3.5 Fix words broken with hyphens across linebreaks (e.g. "Analyt-\nics" -> "Analytics")
-  result = result.replace(/(\b[A-Za-z]+)-\s*\r?\n+\s*([A-Za-z]+\b)/g, '$1$2');
+  result = result.replace(/(\b[A-Za-z]+)-\s*\r?\n+\s*([A-Za-z]+\b)/g, "$1$2");
 
   // 4. Rejoin broken words split across lines within lower-case sentence continuations
-  result = result.replace(/([a-z,])\r?\n([a-z])/g, '$1 $2');
+  result = result.replace(/([a-z,])\r?\n([a-z])/g, "$1 $2");
 
   // 5. Normalize bullets
-  result = result.replace(/^[\s]*[-–—·○►▪✓→]\s*/gm, '• ');
+  result = result.replace(/^[\s]*[-–—·○►▪✓→]\s*/gm, "• ");
 
   // 6. Section headers: Ensure double newlines before section headers ONLY when on boundary
   const SECTIONS = [
-    'PROFESSIONAL SUMMARY', 'SUMMARY', 'OBJECTIVE',
-    'TECHNICAL SKILLS', 'SKILLS', 'CORE SKILLS', 'KEY SKILLS',
-    'PROFESSIONAL EXPERIENCE', 'WORK EXPERIENCE', 'EMPLOYMENT HISTORY', 'INTERNSHIP', 'INTERNSHIPS', 'EXPERIENCE',
-    'PROJECTS', 'PERSONAL PROJECTS',
-    'EDUCATION', 'ACADEMIC BACKGROUND',
-    'CERTIFICATIONS', 'ACHIEVEMENTS', 'AWARDS',
-    'LANGUAGES'
+    "PROFESSIONAL SUMMARY",
+    "SUMMARY",
+    "OBJECTIVE",
+    "TECHNICAL SKILLS",
+    "SKILLS",
+    "CORE SKILLS",
+    "KEY SKILLS",
+    "PROFESSIONAL EXPERIENCE",
+    "WORK EXPERIENCE",
+    "EMPLOYMENT HISTORY",
+    "INTERNSHIP",
+    "INTERNSHIPS",
+    "EXPERIENCE",
+    "PROJECTS",
+    "PERSONAL PROJECTS",
+    "EDUCATION",
+    "ACADEMIC BACKGROUND",
+    "CERTIFICATIONS",
+    "ACHIEVEMENTS",
+    "AWARDS",
+    "LANGUAGES",
   ];
 
   for (const sec of SECTIONS) {
-    const reg = new RegExp(`(^|\\n)\\s*(${sec})\\b`, 'gi');
-    result = result.replace(reg, '\n\n$2\n');
+    const reg = new RegExp(`(^|\\n)\\s*(${sec})\\b`, "gi");
+    result = result.replace(reg, "\n\n$2\n");
   }
 
   // 7. Ensure PROFESSIONAL SUMMARY is pure narrative text without bullets
-  const summaryMatch = result.match(/(?:^|\n)(PROFESSIONAL SUMMARY|SUMMARY|OBJECTIVE)\n([\s\S]*?)(?=\n[A-Z\s]{4,}|\n*$)/i);
+  const summaryMatch = result.match(
+    /(?:^|\n)(PROFESSIONAL SUMMARY|SUMMARY|OBJECTIVE)\n([\s\S]*?)(?=\n[A-Z\s]{4,}|\n*$)/i,
+  );
   if (summaryMatch) {
     const rawSummaryContent = summaryMatch[2].trim();
     const cleanSummaryText = rawSummaryContent
-      .split('\n')
-      .map(line => line.replace(/^[•\-\*–—\s]+/, '').trim())
+      .split("\n")
+      .map((line) => line.replace(/^[•\-\*–—\s]+/, "").trim())
       .filter(Boolean)
-      .join(' ')
-      .replace(/(\b[A-Za-z]+)-\s+([A-Za-z]+\b)/g, '$1$2');
+      .join(" ")
+      .replace(/(\b[A-Za-z]+)-\s+([A-Za-z]+\b)/g, "$1$2");
     if (cleanSummaryText) {
-      result = result.replace(summaryMatch[0], `\n${summaryMatch[1].toUpperCase()}\n${cleanSummaryText}\n`);
+      result = result.replace(
+        summaryMatch[0],
+        `\n${summaryMatch[1].toUpperCase()}\n${cleanSummaryText}\n`,
+      );
     }
   }
 
   // 7.5 Consolidate multi-line skills under TECHNICAL SKILLS so each category is on a single line
-  const skillsMatch = result.match(/(?:^|\n)(TECHNICAL SKILLS|SKILLS|CORE SKILLS|KEY SKILLS)\n([\s\S]*?)(?=\n[A-Z\s]{4,}|\n*$)/i);
+  const skillsMatch = result.match(
+    /(?:^|\n)(TECHNICAL SKILLS|SKILLS|CORE SKILLS|KEY SKILLS)\n([\s\S]*?)(?=\n[A-Z\s]{4,}|\n*$)/i,
+  );
   if (skillsMatch) {
     const rawSkills = skillsMatch[2];
     const skillLines: string[] = [];
-    const rawLines = rawSkills.split('\n').map(l => l.trim()).filter(Boolean);
+    const rawLines = rawSkills
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
     for (const l of rawLines) {
-      if (l.includes(':')) {
+      if (l.includes(":")) {
         skillLines.push(l);
       } else if (skillLines.length > 0) {
         const last = skillLines[skillLines.length - 1];
-        const sep = last.endsWith(',') || last.endsWith('-') ? ' ' : ', ';
+        const sep = last.endsWith(",") || last.endsWith("-") ? " " : ", ";
         skillLines[skillLines.length - 1] = last + sep + l;
       } else {
         skillLines.push(`Technical Skills: ${l}`);
       }
     }
-    result = result.replace(skillsMatch[0], `\n${skillsMatch[1].toUpperCase()}\n${skillLines.join('\n')}\n`);
+    result = result.replace(
+      skillsMatch[0],
+      `\n${skillsMatch[1].toUpperCase()}\n${skillLines.join("\n")}\n`,
+    );
   }
 
   // 8. Ensure LANGUAGES section at the bottom is bullet points only
-  const langMatch = result.match(/(?:^|\n)(LANGUAGES)\n([\s\S]*?)(?=\n[A-Z\s]{4,}|\n*$)/i);
+  const langMatch = result.match(
+    /(?:^|\n)(LANGUAGES)\n([\s\S]*?)(?=\n[A-Z\s]{4,}|\n*$)/i,
+  );
   if (langMatch) {
     const rawLangContent = langMatch[2].trim();
     if (rawLangContent) {
       const items = rawLangContent
         .split(/[\n,–—|•]+/)
-        .map(s => s.trim())
-        .filter(s => s && !s.toUpperCase().startsWith("LANGUAGE"));
-      
+        .map((s) => s.trim())
+        .filter((s) => s && !s.toUpperCase().startsWith("LANGUAGE"));
+
       if (items.length > 0) {
-        const bulletLangs = items.map(l => `• ${l}`).join('\n');
+        const bulletLangs = items.map((l) => `• ${l}`).join("\n");
         result = result.replace(langMatch[0], `\nLANGUAGES\n${bulletLangs}\n`);
       }
     }
@@ -392,8 +452,8 @@ export function sanitizeResumeText(text: string): string {
 
   // 9. Clean spacing
   result = result
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
     .trim();
 
   return result;
@@ -432,25 +492,36 @@ function cleanAndExtractJSON(raw: string): any {
             .replace(/"/g, '\\"')
             .replace(/\r?\n/g, "\\n")
             .replace(/\t/g, "\\t");
-          return `"resume": "${escapedVal}", "${match.split('", "')[1] || 'keywordsAdded'}`;
-        }
+          return `"resume": "${escapedVal}", "${match.split('", "')[1] || "keywordsAdded"}`;
+        },
       );
       return JSON.parse(repaired);
     } catch (_e3) {}
 
     // 4. Regex extraction if JSON is partially malformed
     try {
-      const resumeMatch = candidate.match(/"resume"\s*:\s*"([\s\S]*?)"\s*(?:,\s*"|\})/);
-      const summaryMatch = candidate.match(/"summary(?:Changes)?"\s*:\s*"([^"]*)"/);
+      const resumeMatch = candidate.match(
+        /"resume"\s*:\s*"([\s\S]*?)"\s*(?:,\s*"|\})/,
+      );
+      const summaryMatch = candidate.match(
+        /"summary(?:Changes)?"\s*:\s*"([^"]*)"/,
+      );
       const keywordsMatch = candidate.match(/"keywordsAdded"\s*:\s*\[(.*?)\]/);
       if (resumeMatch && resumeMatch[1]) {
-        const resumeText = resumeMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
-        const keywords = keywordsMatch ? keywordsMatch[1].split(",").map(k => k.replace(/["']/g, "").trim()).filter(Boolean) : [];
+        const resumeText = resumeMatch[1]
+          .replace(/\\n/g, "\n")
+          .replace(/\\"/g, '"');
+        const keywords = keywordsMatch
+          ? keywordsMatch[1]
+              .split(",")
+              .map((k) => k.replace(/["']/g, "").trim())
+              .filter(Boolean)
+          : [];
         return {
           resume: resumeText,
           keywordsAdded: keywords,
           changesCount: keywords.length || 5,
-          summary: summaryMatch ? summaryMatch[1] : "Optimized."
+          summary: summaryMatch ? summaryMatch[1] : "Optimized.",
         };
       }
     } catch (_e4) {}
@@ -460,7 +531,8 @@ function cleanAndExtractJSON(raw: string): any {
 }
 
 function parseAIResponse(raw: string, fallbackText: string): AIResult {
-  const safeFallbackText = fallbackText && fallbackText.trim().length > 20 ? fallbackText : "";
+  const safeFallbackText =
+    fallbackText && fallbackText.trim().length > 20 ? fallbackText : "";
   const defaultFallback: AIResult = {
     resume: safeFallbackText,
     resumeJSON: null,
@@ -475,7 +547,10 @@ function parseAIResponse(raw: string, fallbackText: string): AIResult {
   try {
     parsed = cleanAndExtractJSON(raw);
   } catch (err: any) {
-    logger.warn("[router] Could not parse AI response, using fallback text:", err?.message);
+    logger.warn(
+      "[router] Could not parse AI response, using fallback text:",
+      err?.message,
+    );
     return defaultFallback;
   }
 
@@ -486,8 +561,13 @@ function parseAIResponse(raw: string, fallbackText: string): AIResult {
     return {
       resume: validated,
       resumeJSON: null,
-      keywordsAdded: Array.isArray(parsed.keywordsAdded) ? parsed.keywordsAdded : [],
-      changesCount: typeof parsed.changesCount === "number" ? parsed.changesCount : (parsed.keywordsAdded?.length || 0),
+      keywordsAdded: Array.isArray(parsed.keywordsAdded)
+        ? parsed.keywordsAdded
+        : [],
+      changesCount:
+        typeof parsed.changesCount === "number"
+          ? parsed.changesCount
+          : parsed.keywordsAdded?.length || 0,
       summary: parsed.summaryChanges || parsed.summary || "Optimized.",
       detectedJobTitle: parsed.detectedJobTitle,
       detectedCompany: parsed.detectedCompany,
@@ -503,15 +583,22 @@ function parseAIResponse(raw: string, fallbackText: string): AIResult {
     return {
       resume: validated,
       resumeJSON: json,
-      keywordsAdded: Array.isArray(json.keywordsAdded) ? json.keywordsAdded : [],
-      changesCount: typeof json.changesCount === "number" ? json.changesCount : (json.keywordsAdded?.length || 0),
+      keywordsAdded: Array.isArray(json.keywordsAdded)
+        ? json.keywordsAdded
+        : [],
+      changesCount:
+        typeof json.changesCount === "number"
+          ? json.changesCount
+          : json.keywordsAdded?.length || 0,
       summary: json.summaryChanges || "Optimized.",
       detectedJobTitle: json.detectedJobTitle,
       detectedCompany: json.detectedCompany,
     };
   }
 
-  logger.warn("[router] AI JSON response missing valid resume content, using fallback text.");
+  logger.warn(
+    "[router] AI JSON response missing valid resume content, using fallback text.",
+  );
   return defaultFallback;
 }
 
@@ -539,7 +626,10 @@ export async function callAI(prompt: string, rawText = ""): Promise<AIResult> {
         return result;
       }
     } catch (error) {
-      logger.warn("AI Router: Groq call failed, falling back to Gemini.", error);
+      logger.warn(
+        "AI Router: Groq call failed, falling back to Gemini.",
+        error,
+      );
     }
   }
 
@@ -552,7 +642,10 @@ export async function callAI(prompt: string, rawText = ""): Promise<AIResult> {
       return result;
     }
   } catch (error: any) {
-    logger.error("AI Router: Critical failure. Both Groq and Gemini calls failed.", error);
+    logger.error(
+      "AI Router: Critical failure. Both Groq and Gemini calls failed.",
+      error,
+    );
   }
 
   return defaultFallback;
@@ -560,32 +653,39 @@ export async function callAI(prompt: string, rawText = ""): Promise<AIResult> {
 
 const GROQ_MODELS = [
   process.env.GROQ_MODEL,
-  "llama-3.3-70b-versatile",   // Best Groq model for structured JSON tasks
-  "llama-3.3-70b-specdec",     // Speculative decoding — fast + accurate
-  "qwen-2.5-32b",              // Strong instruction-following
+  "llama-3.3-70b-versatile", // Best Groq model for structured JSON tasks
+  "llama-3.3-70b-specdec", // Speculative decoding — fast + accurate
+  "qwen-2.5-32b", // Strong instruction-following
   "deepseek-r1-distill-llama-70b", // Reasoning model for complex rewrites
-  "llama-3.1-8b-instant",      // Last resort only — small model
+  "llama-3.1-8b-instant", // Last resort only — small model
   "gemma2-9b-it",
 ].filter(Boolean) as string[];
 
 export async function callAIText(prompt: string): Promise<string> {
-  const apiKeyGroq = (process.env.GROQ_API_KEY || "").replace(/^["']|["']$/g, "").trim();
+  const apiKeyGroq = (process.env.GROQ_API_KEY || "")
+    .replace(/^["']|["']$/g, "")
+    .trim();
   if (apiKeyGroq) {
     for (const modelName of GROQ_MODELS) {
       try {
-        logger.info(`AI Router: Generating text response via Groq (${modelName})...`);
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKeyGroq}`,
-            "Content-Type": "application/json",
+        logger.info(
+          `AI Router: Generating text response via Groq (${modelName})...`,
+        );
+        const response = await fetch(
+          "https://api.groq.com/openai/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKeyGroq}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: modelName,
+              messages: [{ role: "user", content: prompt }],
+              temperature: 0.3,
+            }),
           },
-          body: JSON.stringify({
-            model: modelName,
-            messages: [{ role: "user", content: prompt }],
-            temperature: 0.3,
-          }),
-        });
+        );
 
         if (response.ok) {
           const json = await response.json();
@@ -593,13 +693,18 @@ export async function callAIText(prompt: string): Promise<string> {
           if (content) return content.trim();
         }
       } catch (e) {
-        logger.warn(`AI Router: Groq text call with ${modelName} failed, trying next...`, e);
+        logger.warn(
+          `AI Router: Groq text call with ${modelName} failed, trying next...`,
+          e,
+        );
       }
     }
   }
 
   // Fallback to Gemini
-  const apiKeyGemini = (process.env.GEMINI_API_KEY || "").replace(/^["']|["']$/g, "").trim();
+  const apiKeyGemini = (process.env.GEMINI_API_KEY || "")
+    .replace(/^["']|["']$/g, "")
+    .trim();
   if (apiKeyGemini) {
     const GEMINI_MODELS = [
       "gemini-3.6-flash",
@@ -615,13 +720,18 @@ export async function callAIText(prompt: string): Promise<string> {
 
     for (const modelName of GEMINI_MODELS) {
       try {
-        logger.info(`AI Router: Generating text response via Gemini (${modelName})...`);
+        logger.info(
+          `AI Router: Generating text response via Gemini (${modelName})...`,
+        );
         const model = genAI.getGenerativeModel({ model: modelName });
         const result = await model.generateContent(prompt);
         const text = result.response.text();
         if (text) return text.trim();
       } catch (e) {
-        logger.warn(`AI Router: Gemini text generation with ${modelName} failed, trying next...`, e);
+        logger.warn(
+          `AI Router: Gemini text generation with ${modelName} failed, trying next...`,
+          e,
+        );
       }
     }
   }
@@ -631,31 +741,38 @@ export async function callAIText(prompt: string): Promise<string> {
 
 // Raw Groq call returning string content (with multi-model fallback)
 async function callGroqRaw(prompt: string): Promise<string> {
-  const apiKey = (process.env.GROQ_API_KEY || "").replace(/^["']|["']$/g, "").trim();
+  const apiKey = (process.env.GROQ_API_KEY || "")
+    .replace(/^["']|["']$/g, "")
+    .trim();
   if (!apiKey) throw new Error("Groq API key is missing");
 
   let lastError: any = null;
 
   for (const modelName of GROQ_MODELS) {
     try {
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
+      const response = await fetch(
+        "https://api.groq.com/openai/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.2,
+            max_tokens: 8000,
+            response_format: { type: "json_object" },
+          }),
         },
-        body: JSON.stringify({
-          model: modelName,
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.20,
-          max_tokens: 8000,
-          response_format: { type: "json_object" },
-        }),
-      });
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Groq API (${modelName}) returned status ${response.status}: ${errorText}`);
+        throw new Error(
+          `Groq API (${modelName}) returned status ${response.status}: ${errorText}`,
+        );
       }
 
       const json = await response.json();
@@ -663,7 +780,10 @@ async function callGroqRaw(prompt: string): Promise<string> {
       if (content) return content;
     } catch (err: any) {
       lastError = err;
-      logger.warn(`Groq model ${modelName} failed, trying fallback model...`, err?.message);
+      logger.warn(
+        `Groq model ${modelName} failed, trying fallback model...`,
+        err?.message,
+      );
     }
   }
 

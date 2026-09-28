@@ -11,20 +11,32 @@ function cleanBulletOutput(value: unknown, originalBullet: string): string {
   }
 
   // Take first non-empty line
-  let cleaned = stripMarkdownAsterisks(value)
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .find((l) => l.length > 0) || "";
+  let cleaned =
+    stripMarkdownAsterisks(value)
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .find((l) => l.length > 0) || "";
 
   // Strip leading bullet characters or numbers
   cleaned = cleaned.replace(/^\s*([-*•+]|\d+\.)\s+/, "").trim();
 
   // Strip generic label prefixes like "Optimized:", "Improved:", "Rewritten:", "Bullet:"
-  cleaned = cleaned.replace(/^(?:Optimized|Improved|Rewritten|Enhanced|Revised|Updated|Bullet)[:\s–\-]+/i, "").trim();
+  cleaned = cleaned
+    .replace(
+      /^(?:Optimized|Improved|Rewritten|Enhanced|Revised|Updated|Bullet)[:\s–\-]+/i,
+      "",
+    )
+    .trim();
 
   // If the model literally just prepended "Optimized " to the original bullet, strip it
-  const lowerOriginal = originalBullet.trim().toLowerCase().replace(/^[•\-\*+\s]+/, "");
-  if (cleaned.toLowerCase().startsWith("optimized ") && cleaned.slice(10).trim().toLowerCase() === lowerOriginal) {
+  const lowerOriginal = originalBullet
+    .trim()
+    .toLowerCase()
+    .replace(/^[•\-\*+\s]+/, "");
+  if (
+    cleaned.toLowerCase().startsWith("optimized ") &&
+    cleaned.slice(10).trim().toLowerCase() === lowerOriginal
+  ) {
     cleaned = cleaned.slice(10).trim();
   }
 
@@ -35,7 +47,10 @@ export async function POST(request: NextRequest) {
   try {
     // 1. Verify Authentication
     const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
       logger.warn("Unauthorized attempt to access /api/improve-bullet");
@@ -47,13 +62,18 @@ export async function POST(request: NextRequest) {
     const { bullet, jobDescription, isSummary, type, jobTitle } = body;
 
     if (!bullet || typeof bullet !== "string" || !bullet.trim()) {
-      return NextResponse.json({ error: "Input text is required." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Input text is required." },
+        { status: 400 },
+      );
     }
 
     const jd = jobDescription || "";
     const isSummaryRequest = Boolean(isSummary || type === "summary");
 
-    logger.info(`Improving ${isSummaryRequest ? "summary" : "bullet"} for user ${user.email}...`);
+    logger.info(
+      `Improving ${isSummaryRequest ? "summary" : "bullet"} for user ${user.email}...`,
+    );
 
     if (isSummaryRequest) {
       const summaryPrompt = `
@@ -148,14 +168,27 @@ Output MUST be a valid JSON object only (do NOT include markdown fences, leading
         actionVerbUsed: parsed.actionVerbUsed || "Spearheaded",
         metricsAdded: parsed.metricsAdded || "",
         keywordsInjected: parsed.keywordsInjected || [],
-        explanation: parsed.explanation || "Rewritten with strong action verb and target job keywords.",
+        explanation:
+          parsed.explanation ||
+          "Rewritten with strong action verb and target job keywords.",
       });
     } catch (aiErr: any) {
-      logger.warn("Bullet AI improver call failed, using rule-based ATS fallback:", aiErr.message);
+      logger.warn(
+        "Bullet AI improver call failed, using rule-based ATS fallback:",
+        aiErr.message,
+      );
 
       const techTerms = extractTechTerms(jd).slice(0, 3);
-      const actionVerbs = ["Spearheaded", "Engineered", "Optimized", "Architected", "Automated", "Delivered"];
-      const actionVerb = actionVerbs[Math.floor(Math.random() * actionVerbs.length)];
+      const actionVerbs = [
+        "Spearheaded",
+        "Engineered",
+        "Optimized",
+        "Architected",
+        "Automated",
+        "Delivered",
+      ];
+      const actionVerb =
+        actionVerbs[Math.floor(Math.random() * actionVerbs.length)];
 
       const cleanInput = bullet.trim().replace(/^[-*•+\s]+/, "");
       let fallbackBullet = "";
@@ -176,15 +209,15 @@ Output MUST be a valid JSON object only (do NOT include markdown fences, leading
         actionVerbUsed: actionVerb,
         metricsAdded: "",
         keywordsInjected: techTerms,
-        explanation: "Rewritten with strong action verb and target job competencies.",
+        explanation:
+          "Rewritten with strong action verb and target job competencies.",
       });
     }
-
   } catch (error: any) {
     logger.error("Failed to process improvement request:", error);
     return NextResponse.json(
       { error: "Internal server error during optimization." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

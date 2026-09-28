@@ -1,21 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { OptimizeResult } from '@/types'; // Assuming this exists or similar
+import React, { useEffect, useState } from "react";
+import { OptimizeResult } from "@/types"; // Assuming this exists or similar
 
 const STEPS = [
-  { id: 1, label: 'Reading your resume' },
-  { id: 2, label: 'Parsing the job description' },
-  { id: 3, label: 'Finding your strongest stories' },
-  { id: 4, label: 'Rewriting your experience section' },
-  { id: 5, label: 'Aligning to ATS keywords' },
-  { id: 6, label: 'Polishing the output' },
+  { id: 1, label: "Reading your resume" },
+  { id: 2, label: "Parsing the job description" },
+  { id: 3, label: "Finding your strongest stories" },
+  { id: 4, label: "Rewriting your experience section" },
+  { id: 5, label: "Aligning to ATS keywords" },
+  { id: 6, label: "Polishing the output" },
 ];
 
 const FUN_FACTS = [
-  'Recruiters spend about 7 seconds on the first pass of a resume',
-  'Over 75% of resumes are rejected by ATS before a human reads them',
-  'Resumes with metrics are 40% more likely to get callbacks',
-  'Keywords from the job description boost ATS score by up to 60%',
-  'Single-column resumes parse 3x better in ATS systems',
+  "Recruiters spend about 7 seconds on the first pass of a resume",
+  "Over 75% of resumes are rejected by ATS before a human reads them",
+  "Resumes with metrics are 40% more likely to get callbacks",
+  "Keywords from the job description boost ATS score by up to 60%",
+  "Single-column resumes parse 3x better in ATS systems",
 ];
 
 interface OptimizingProgressProps {
@@ -33,9 +33,9 @@ export default function OptimizingProgress({
   jobDescription,
   instructions = "",
 }: OptimizingProgressProps) {
-  const [steps, setSteps] = useState<{ id: number; status: 'pending' | 'running' | 'done'; duration?: string }[]>(
-    STEPS.map(s => ({ id: s.id, status: 'pending' }))
-  );
+  const [steps, setSteps] = useState<
+    { id: number; status: "pending" | "running" | "done"; duration?: string }[]
+  >(STEPS.map((s) => ({ id: s.id, status: "pending" })));
   const [progress, setProgress] = useState(0);
   const [funFact, setFunFact] = useState(FUN_FACTS[0]);
   const [elapsedSec, setElapsedSec] = useState(0);
@@ -63,9 +63,9 @@ export default function OptimizingProgress({
 
     const runOptimization = async () => {
       try {
-        const res = await fetch('/api/optimize', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/api/optimize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ resumeText, jobDescription, instructions }),
         });
 
@@ -73,7 +73,7 @@ export default function OptimizingProgress({
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
-        let buffer = '';
+        let buffer = "";
 
         while (true) {
           const { done, value } = await reader.read();
@@ -81,13 +81,13 @@ export default function OptimizingProgress({
           if (!isMounted) break;
 
           buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
 
           for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
+            if (!line.startsWith("data: ")) continue;
             try {
-              const jsonStart = line.indexOf('{');
+              const jsonStart = line.indexOf("{");
               if (jsonStart === -1) continue;
               const jsonStr = line.slice(jsonStart);
               const data = JSON.parse(jsonStr);
@@ -98,19 +98,27 @@ export default function OptimizingProgress({
                 break;
               }
 
-              if (data.status === 'running') {
+              if (data.status === "running") {
                 stepStartTimes[data.step] = Date.now();
-                setSteps(prev =>
-                  prev.map(s => (s.id === data.step ? { ...s, status: 'running' } : s))
+                setSteps((prev) =>
+                  prev.map((s) =>
+                    s.id === data.step ? { ...s, status: "running" } : s,
+                  ),
                 );
                 setProgress(Math.round(((data.step - 1) / 6) * 100));
               }
 
-              if (data.status === 'done') {
-                const duration = ((Date.now() - (stepStartTimes[data.step] || Date.now())) / 1000).toFixed(1) + 's';
+              if (data.status === "done") {
+                const duration =
+                  (
+                    (Date.now() - (stepStartTimes[data.step] || Date.now())) /
+                    1000
+                  ).toFixed(1) + "s";
 
-                setSteps(prev =>
-                  prev.map(s => (s.id === data.step ? { ...s, status: 'done', duration } : s))
+                setSteps((prev) =>
+                  prev.map((s) =>
+                    s.id === data.step ? { ...s, status: "done", duration } : s,
+                  ),
                 );
                 setProgress(Math.round((data.step / 6) * 100));
 
@@ -127,7 +135,8 @@ export default function OptimizingProgress({
         }
       } catch (error: any) {
         console.error("Fetch error:", error);
-        if (onError) onError(error.message || "Failed to connect to the server.");
+        if (onError)
+          onError(error.message || "Failed to connect to the server.");
       }
     };
 
@@ -143,8 +152,15 @@ export default function OptimizingProgress({
       {/* Circular progress ring */}
       <div className="relative w-32 h-32 mb-8">
         <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
-                  {/* Background ring */}
-          <circle cx="60" cy="60" r="54" fill="none" stroke="#d1fae5" strokeWidth="8" />
+          {/* Background ring */}
+          <circle
+            cx="60"
+            cy="60"
+            r="54"
+            fill="none"
+            stroke="#d1fae5"
+            strokeWidth="8"
+          />
           {/* Progress ring — teal */}
           <circle
             cx="60"
@@ -167,7 +183,9 @@ export default function OptimizingProgress({
 
       {/* Current step title */}
       <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">
-        {STEPS.find(s => steps.find(st => st.id === s.id && st.status === 'running'))?.label ?? 'Almost ready'}
+        {STEPS.find((s) =>
+          steps.find((st) => st.id === s.id && st.status === "running"),
+        )?.label ?? "Almost ready"}
       </h2>
       <p className="text-gray-500 text-sm mb-8 text-center max-w-sm">
         Stay on this tab — we'll ask you a couple of things if we need them.
@@ -175,9 +193,9 @@ export default function OptimizingProgress({
 
       {/* Steps list */}
       <div className="w-full max-w-lg space-y-2">
-        {STEPS.map(step => {
-          const s = steps.find(x => x.id === step.id);
-          const status = s?.status ?? 'pending';
+        {STEPS.map((step) => {
+          const s = steps.find((x) => x.id === step.id);
+          const status = s?.status ?? "pending";
 
           return (
             <div
@@ -187,23 +205,33 @@ export default function OptimizingProgress({
                 px-5 py-3.5 rounded-xl
                 transition-all duration-300
                 ${
-                  status === 'done'
-                    ? 'bg-teal-50/70 border border-teal-100 opacity-80'
-                    : status === 'running'
-                    ? 'bg-teal-50 border border-teal-200'
-                    : 'bg-transparent'
+                  status === "done"
+                    ? "bg-teal-50/70 border border-teal-100 opacity-80"
+                    : status === "running"
+                      ? "bg-teal-50 border border-teal-200"
+                      : "bg-transparent"
                 }
               `}
             >
               <div className="flex items-center gap-3">
                 {/* Icon */}
-                {status === 'done' ? (
+                {status === "done" ? (
                   <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    <svg
+                      className="w-3.5 h-3.5 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
                   </div>
-                ) : status === 'running' ? (
+                ) : status === "running" ? (
                   <div className="w-6 h-6 rounded-full border-2 border-[#0d6e5a] border-t-transparent animate-spin flex-shrink-0" />
                 ) : (
                   <div className="w-6 h-6 rounded-full border-2 border-gray-200 flex-shrink-0" />
@@ -213,11 +241,11 @@ export default function OptimizingProgress({
                 <span
                   className={`text-sm font-medium
                   ${
-                    status === 'done'
-                      ? 'text-gray-500'
-                      : status === 'running'
-                      ? 'text-[#0d6e5a] font-semibold'
-                      : 'text-gray-400'
+                    status === "done"
+                      ? "text-gray-500"
+                      : status === "running"
+                        ? "text-[#0d6e5a] font-semibold"
+                        : "text-gray-400"
                   }
                 `}
                 >
@@ -226,8 +254,14 @@ export default function OptimizingProgress({
               </div>
 
               {/* Right side */}
-              {status === 'done' && s?.duration && <span className="text-xs text-gray-400">{s.duration}</span>}
-              {status === 'running' && <span className="text-xs text-[#0d6e5a] font-medium">running</span>}
+              {status === "done" && s?.duration && (
+                <span className="text-xs text-gray-400">{s.duration}</span>
+              )}
+              {status === "running" && (
+                <span className="text-xs text-[#0d6e5a] font-medium">
+                  running
+                </span>
+              )}
             </div>
           );
         })}

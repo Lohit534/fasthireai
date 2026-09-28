@@ -45,7 +45,7 @@ function extractJSON(text: string): any {
               .replace(/\t/g, "\\t");
             const afterKey = match.split('", "')[1] || "keywordsAdded";
             return `"resume": "${escapedVal}", "${afterKey}`;
-          }
+          },
         );
         return JSON.parse(repaired);
       } catch (_e3) {}
@@ -55,7 +55,10 @@ function extractJSON(text: string): any {
 }
 
 // Returns parsed object
-export async function callGemini(prompt: string, rawText = ""): Promise<object> {
+export async function callGemini(
+  prompt: string,
+  rawText = "",
+): Promise<object> {
   const rawKey = process.env.GEMINI_API_KEY || "";
   const apiKey = rawKey.replace(/^["']|["']$/g, "").trim();
   if (!apiKey) {
@@ -74,12 +77,14 @@ export async function callGemini(prompt: string, rawText = ""): Promise<object> 
   for (const modelName of GEMINI_MODELS) {
     // 1. Try official SDK first
     try {
-      logger.info(`[gemini] Attempting generation with SDK model: ${modelName}`);
+      logger.info(
+        `[gemini] Attempting generation with SDK model: ${modelName}`,
+      );
       const model = genAI.getGenerativeModel({
         model: modelName,
         generationConfig: {
-          temperature: 0.20,       // Lower = more deterministic, format-faithful
-          maxOutputTokens: 8192,   // Raised from 4000 → handles long resumes without truncation
+          temperature: 0.2, // Lower = more deterministic, format-faithful
+          maxOutputTokens: 8192, // Raised from 4000 → handles long resumes without truncation
           responseMimeType: "application/json", // Force JSON-only output where supported
         },
       });
@@ -88,17 +93,24 @@ export async function callGemini(prompt: string, rawText = ""): Promise<object> 
       const responseText = result.response.text();
       if (responseText && responseText.trim().length > 50) {
         const parsed = extractJSON(responseText);
-        logger.info(`[gemini] Successfully generated optimization via ${modelName} (SDK)`);
+        logger.info(
+          `[gemini] Successfully generated optimization via ${modelName} (SDK)`,
+        );
         return parsed;
       }
     } catch (sdkError: any) {
       lastError = sdkError;
-      logger.warn(`[gemini] SDK attempt failed for ${modelName}:`, sdkError?.message);
+      logger.warn(
+        `[gemini] SDK attempt failed for ${modelName}:`,
+        sdkError?.message,
+      );
     }
 
     // 2. Direct REST fallback for the same model
     try {
-      logger.info(`[gemini] Attempting generation with Direct REST endpoint: ${modelName}`);
+      logger.info(
+        `[gemini] Attempting generation with Direct REST endpoint: ${modelName}`,
+      );
       const restRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
         {
@@ -107,28 +119,37 @@ export async function callGemini(prompt: string, rawText = ""): Promise<object> 
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
-              temperature: 0.20,
+              temperature: 0.2,
               maxOutputTokens: 8192,
             },
           }),
-        }
+        },
       );
 
       if (restRes.ok) {
         const restJson = await restRes.json();
-        const candidateText = restJson.candidates?.[0]?.content?.parts?.[0]?.text;
+        const candidateText =
+          restJson.candidates?.[0]?.content?.parts?.[0]?.text;
         if (candidateText && candidateText.trim().length > 50) {
           const parsed = extractJSON(candidateText);
-          logger.info(`[gemini] Successfully generated optimization via ${modelName} (REST)`);
+          logger.info(
+            `[gemini] Successfully generated optimization via ${modelName} (REST)`,
+          );
           return parsed;
         }
       } else {
         const errBody = await restRes.text();
-        logger.warn(`[gemini] REST endpoint returned ${restRes.status} for ${modelName}:`, errBody);
+        logger.warn(
+          `[gemini] REST endpoint returned ${restRes.status} for ${modelName}:`,
+          errBody,
+        );
       }
     } catch (restError: any) {
       lastError = restError;
-      logger.warn(`[gemini] REST attempt failed for ${modelName}:`, restError?.message);
+      logger.warn(
+        `[gemini] REST attempt failed for ${modelName}:`,
+        restError?.message,
+      );
     }
   }
 
