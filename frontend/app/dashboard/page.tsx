@@ -95,6 +95,7 @@ export default function DashboardPage() {
   const [pdfGenerationStatus, setPdfGenerationStatus] = useState<string>("");
   const [isPrechecking, setIsPrechecking] = useState(false);
   const [activeOptimizationText, setActiveOptimizationText] = useState("");
+  const [activeOptimizationInstructions, setActiveOptimizationInstructions] = useState("");
   const [showRoadmapAccordion, setShowRoadmapAccordion] = useState(false);
   const [showCoverLetterAccordion, setShowCoverLetterAccordion] = useState(false);
   // Removed isAILoading state
@@ -194,13 +195,17 @@ export default function DashboardPage() {
 
 
 
-  const runAIAutoImprove = async (targetResumeText = resumeText) => {
+  const runAIAutoImprove = async (
+    targetResumeText = resumeText,
+    optimizationInstructions = instructions,
+  ) => {
     if (!targetResumeText.trim() || !jobDescription.trim()) {
       toast.error("Please provide both resume text and job description.");
       return;
     }
 
     setActiveOptimizationText(targetResumeText);
+    setActiveOptimizationInstructions(optimizationInstructions);
     setOptimizing(true);
     setBeforeScore(null);
     setAfterScore(null);
@@ -297,8 +302,9 @@ export default function DashboardPage() {
     setShowBulletModal(false);
     
     const enrichmentLines = weakBullets.map(b => {
-      if (answers[b.id]?.trim()) {
-        return `[User Added Metric for "${b.originalBullet}"]: ${answers[b.id]}`;
+      const ans = answers[b.id]?.trim();
+      if (ans) {
+        return `[User Added Metric for "${b.originalBullet}"]: ${ans}`;
       }
       return null;
     }).filter(Boolean);
@@ -308,12 +314,12 @@ export default function DashboardPage() {
       enriched += `\n\n--- USER SUPPLEMENTAL METRICS (integrate these into the exact bullets) ---\n${enrichmentLines.join("\n")}`;
     }
 
-    runAIAutoImprove(enriched);
+    runAIAutoImprove(enriched, instructions);
   };
 
   const handleBulletEnrichmentCancel = () => {
     setShowBulletModal(false);
-    runAIAutoImprove(pendingResumeText);
+    runAIAutoImprove(pendingResumeText, instructions);
   };
 
   const handleReset = () => {
@@ -599,6 +605,7 @@ export default function DashboardPage() {
                 }}
                 resumeText={activeOptimizationText || resumeText} 
                 jobDescription={jobDescription} 
+                instructions={activeOptimizationInstructions || instructions}
               />
             </div>
           </div>
@@ -950,11 +957,13 @@ export default function DashboardPage() {
             <div className="flex justify-center pt-2">
               <button
                 onClick={handleOptimize}
-                disabled={optimizing}
+                disabled={optimizing || isPrechecking}
                 className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white px-12 py-3.5 text-sm font-semibold flex items-center gap-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {optimizing ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> Optimizing Resume...</>
+                ) : isPrechecking ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing Resume & Missing Metrics...</>
                 ) : (
                   <><Zap className="h-4.5 w-4.5" /> Optimize My Resume <ChevronRight className="h-4.5 w-4.5" /></>
                 )}

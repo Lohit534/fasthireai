@@ -120,17 +120,36 @@ export default function BulletImprover({ resumeText, jobDescription, userId, use
   // 4. Accept rewrite and apply back to resume text
   const handleAccept = (bulletIdx: number, rawLine: string, improvedText: string) => {
     const markerMatch = rawLine.match(/^(\s*([-*•+]|(\d+\.))\s*)/);
-    const marker = markerMatch ? markerMatch[1] : "- ";
-    const cleanNewBullet = improvedText.replace(/^\s*([-*•+]|(\d+\.))\s*/, "");
-    const nextLines = [...lines];
-    nextLines[bulletIdx] = `${marker}${cleanNewBullet}`;
-    onChange(nextLines.join("\n"), true);
+    const marker = markerMatch ? markerMatch[1] : "• ";
+    
+    // Clean any residual prefixes or markers
+    const cleanNewBullet = improvedText
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .find((l) => l.length > 0) || "";
+
+    const finalBullet = cleanNewBullet
+      .replace(/^\s*([-*•+]|(\d+\.))\s+/, "")
+      .replace(/^(?:Optimized|Improved|Rewritten|Enhanced)[:\s–\-]+/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (!finalBullet) {
+      toast.error("The suggested bullet was empty. Nothing was changed.");
+      return;
+    }
+
+    const currentLines = resumeText.split(/\r?\n/);
+    currentLines[bulletIdx] = `${marker}${finalBullet}`;
+    const updatedResume = currentLines.join("\n");
+    onChange(updatedResume, true);
+
     setImprovements((prev) => {
       const next = { ...prev };
       delete next[bulletIdx];
       return next;
     });
-    toast.success("Applied to resume!");
+    toast.success("Applied to resume! ATS score updated.");
   };
 
   // 5. Dismiss improvements card

@@ -1,14 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { extractTechTerms, extractKeywords } from "@/lib/ats/keywords";
+import { callAIText } from "@/lib/ai/router";
+import { extractTechTerms } from "@/lib/ats/keywords";
 import { logger } from "@/lib/logger";
 import { stripMarkdownAsterisks } from "@/lib/export/pdf-document";
 
-function getGenAI() {
-  const apiKey = (process.env.GEMINI_API_KEY || "").replace(/^["']|["']$/g, "").trim();
-  if (!apiKey) return null;
-  return new GoogleGenerativeAI(apiKey);
+function cleanBulletOutput(value: unknown, originalBullet: string): string {
+  if (typeof value !== "string" || !value.trim()) {
+    throw new Error("The AI did not return a rewritten bullet.");
+  }
+
+  // Take first non-empty line
+  let cleaned = stripMarkdownAsterisks(value)
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .find((l) => l.length > 0) || "";
+
+  // Strip leading bullet characters or numbers
+  cleaned = cleaned.replace(/^\s*([-*•+]|\d+\.)\s+/, "").trim();
+
+  // Strip generic label prefixes like "Optimized:", "Improved:", "Rewritten:", "Bullet:"
+  cleaned = cleaned.replace(/^(?:Optimized|Improved|Rewritten|Enhanced|Revised|Updated|Bullet)[:\s–\-]+/i, "").trim();
+
+  // If the model literally just prepended "Optimized " to the original bullet, strip it
+  const lowerOriginal = originalBullet.trim().toLowerCase().replace(/^[•\-\*+\s]+/, "");
+  if (cleaned.toLowerCase().startsWith("optimized ") && cleaned.slice(10).trim().toLowerCase() === lowerOriginal) {
+    cleaned = cleaned.slice(10).trim();
+  }
+
+  return cleaned;
 }
 
 export async function POST(request: NextRequest) {
@@ -35,67 +55,17 @@ export async function POST(request: NextRequest) {
 
     logger.info(`Improving ${isSummaryRequest ? "summary" : "bullet"} for user ${user.email}...`);
 
-    // 3. Fallback Flow if Gemini key is missing
-    const genAI = getGenAI();
-    if (!genAI) {
-      logger.warn("GEMINI_API_KEY missing. Using fallback rule-based improver.");
-      
-      if (isSummaryRequest) {
-        const cleaned = bullet.trim();
-        const improvedSummary = `Results-driven ${jobTitle || "Professional"} with proven expertise in developing scalable solutions and data-driven systems. Skilled in optimizing performance, technical problem-solving, and delivering high-impact projects. Dedicated to leveraging strong technical abilities to drive organizational growth. (${cleaned})`;
-        return NextResponse.json({
-          improvedBullet: improvedSummary,
-          actionVerbUsed: "Summary Optimization",
-          keywordsInjected: [],
-          explanation: "Enhanced professional summary structure and tone."
-        });
-      }
-
-      const techTerms = extractTechTerms(jd).slice(0, 3);
-      const injected = techTerms.length > 0 ? techTerms : ["relevant technologies"];
-      const fallbackActionVerbs = ["Spearheaded", "Optimized", "Engineered", "Devised", "Automated", "Accelerated"];
-      const actionVerb = fallbackActionVerbs[Math.floor(Math.random() * fallbackActionVerbs.length)];
-      
-      const cleanedInput = bullet.trim().replace(/^[-*•\s]+/, "");
-      const lowerCleaned = cleanedInput.charAt(0).toLowerCase() + cleanedInput.slice(1);
-      
-      let improvedBullet = "";
-      if (techTerms.length > 0) {
-         improvedBullet = `${actionVerb} ${lowerCleaned} utilizing ${injected.join(", ")}.`;
-      } else {
-         improvedBullet = `${actionVerb} ${lowerCleaned}`;
-      }
-
-      return NextResponse.json({
-        improvedBullet,
-        actionVerbUsed: actionVerb,
-        metricsAdded: "",
-        keywordsInjected: techTerms,
-        explanation: "Began with a strong action verb and integrated target keywords."
-      });
-    }
-
-    // 4. Gemini AI Call
-    try {
-      const model = genAI.getGenerativeModel({
-        model: "gemini-3.6-flash",
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 1000,
-        },
-      });
-
-      if (isSummaryRequest) {
-        const prompt = `
+    if (isSummaryRequest) {
+      const summaryPrompt = `
 You are an expert technical resume writer. Your task is to rewrite and optimize a candidate's Professional Summary to make it highly engaging, impact-focused, concise (3-4 sentences), and ATS-aligned.
 
-Candidate Title / Domain: "${jobTitle || 'Professional'}"
+Candidate Title / Domain: "${jobTitle || "Professional"}"
 Current Summary Input: "${bullet}"
 Target Job Description: "${jd.slice(0, 3000)}"
 
 Instructions:
 1. Write a professional, high-impact 3-4 sentence summary paragraph.
-2. Highlight core technical competencies, key domain experience, and major strengths.
+2. Highlight core technical competencies, key domain experience, and major strengths matching the job.
 3. Do NOT use first-person pronouns ("I", "my", "me").
 4. Keep all factual candidate details accurate and truthful.
 5. Do NOT format as a bullet point. Output a clean paragraph.
@@ -108,9 +78,9 @@ Output MUST be a valid JSON object only (do NOT include markdown fences, leading
   "explanation": "Enhanced professional summary impact, keywords, and flow."
 }
 `;
-        const result = await model.generateContent(prompt);
-        const responseText = result.response.text().trim();
-        let cleanedText = responseText;
+      try {
+        const responseText = await callAIText(summaryPrompt);
+        let cleanedText = responseText.trim();
         if (cleanedText.startsWith("```")) {
           cleanedText = cleanedText
             .replace(/^```(?:json)?\r?\n?/i, "")
@@ -123,36 +93,47 @@ Output MUST be a valid JSON object only (do NOT include markdown fences, leading
           improvedBullet: stripMarkdownAsterisks(rawSummary),
           actionVerbUsed: "Summary Optimization",
           keywordsInjected: parsed.keywordsInjected || [],
-          explanation: parsed.explanation || "Optimized professional summary."
+          explanation: parsed.explanation || "Optimized professional summary.",
+        });
+      } catch (err: any) {
+        logger.warn("Summary AI improver fallback:", err.message);
+        return NextResponse.json({
+          improvedBullet: `Results-driven ${jobTitle || "Professional"} with proven expertise in developing scalable solutions and data-driven systems. Skilled in optimizing performance, technical problem-solving, and delivering high-impact projects. Dedicated to leveraging strong technical abilities to drive organizational growth. (${bullet.trim()})`,
+          actionVerbUsed: "Summary Optimization",
+          keywordsInjected: [],
+          explanation: "Enhanced professional summary structure and tone.",
         });
       }
+    }
 
-      const prompt = `
-You are an expert technical resume writer. Your task is to rewrite a single resume bullet point to make it highly optimized for applicant tracking systems (ATS), starting with a strong action verb, integrating relevant keywords from the job description, and including metrics or quantification.
+    // Single bullet point optimization prompt
+    const bulletPrompt = `
+You are an expert technical resume writer. Your task is to rewrite a single resume bullet point to make it highly optimized for applicant tracking systems (ATS), starting with a strong action verb, integrating relevant keywords from the job description, and highlighting measurable impact.
 
 Input Bullet Point: "${bullet}"
 Target Job Description: "${jd.slice(0, 3000)}"
 
 Instructions:
-1. Rewrite the bullet point so it begins with a strong past-tense action verb (e.g., spearheaded, architected, orchestrated, automated, optimized, designed).
-2. Integrate relevant keywords or technical skill sets from the Target Job Description where natural.
-3. DO NOT inject fake or estimated metrics like "[15]%" or "$[500]". Only include numbers if they were present in the original input. Keep the focus entirely on improving the action verb, keywords, and professional tone.
-4. Ensure the style is professional, concise, and impact-oriented.
+1. Rewrite the bullet so it starts with a strong, active past-tense action verb (e.g., Spearheaded, Engineered, Optimized, Architected, Automated, Accelerated, Developed, Delivered, Formulated).
+2. Weave in relevant technical keywords and skills from the Target Job Description where natural.
+3. If the input bullet is a certification or credential (e.g. "CodeTantra – Python Programming Certification"), rewrite it as a compelling competency statement (e.g., "Earned Python Programming Certification from CodeTantra, demonstrating mastery in Python development, algorithmic logic, and clean coding standards.").
+4. DO NOT invent fake bracketed metrics like "[15]%". Keep metrics natural and genuine based on the input.
+5. CRITICAL: NEVER prepend labels like "Optimized:", "Improved:", "Rewritten:", or "Optimized <bullet>". Return the rewritten statement directly.
+6. Keep style concise, professional, impact-oriented, and ATS-optimized.
 
-Output MUST be a valid JSON object only (do NOT include markdown fences, leading/trailing text, or code block formatting) with the following structure:
+Output MUST be a valid JSON object only (do NOT include markdown fences, leading/trailing text):
 {
-  "improvedBullet": "The complete rewritten bullet point string (clean text only, no asterisks).",
-  "actionVerbUsed": "The past-tense action verb you started the bullet with.",
-  "metricsAdded": "Any metric you preserved from the original text (or empty string if none).",
-  "keywordsInjected": ["array", "of", "keywords", "injected"],
-  "explanation": "A one-sentence summary of the specific optimization you made."
+  "improvedBullet": "The complete rewritten ATS bullet string (no asterisks, no prefix labels)",
+  "actionVerbUsed": "The strong past-tense action verb you started with",
+  "metricsAdded": "Any metric preserved or highlighted",
+  "keywordsInjected": ["relevant", "keywords"],
+  "explanation": "Brief explanation of the ATS optimization made."
 }
 `;
 
-      const result = await model.generateContent(prompt);
-      const responseText = result.response.text().trim();
-      
-      let cleanedText = responseText;
+    try {
+      const responseText = await callAIText(bulletPrompt);
+      let cleanedText = responseText.trim();
       if (cleanedText.startsWith("```")) {
         cleanedText = cleanedText
           .replace(/^```(?:json)?\r?\n?/i, "")
@@ -161,35 +142,44 @@ Output MUST be a valid JSON object only (do NOT include markdown fences, leading
       }
 
       const parsed = JSON.parse(cleanedText);
-      const rawBullet = parsed.improvedBullet || bullet;
+      const cleaned = cleanBulletOutput(parsed.improvedBullet, bullet);
       return NextResponse.json({
-        improvedBullet: stripMarkdownAsterisks(rawBullet),
-        actionVerbUsed: parsed.actionVerbUsed || "Optimized",
-        metricsAdded: parsed.metricsAdded || "estimated metrics",
+        improvedBullet: cleaned,
+        actionVerbUsed: parsed.actionVerbUsed || "Spearheaded",
+        metricsAdded: parsed.metricsAdded || "",
         keywordsInjected: parsed.keywordsInjected || [],
-        explanation: parsed.explanation || "Improved bullet verb and formatting structure."
+        explanation: parsed.explanation || "Rewritten with strong action verb and target job keywords.",
       });
     } catch (aiErr: any) {
-      logger.error("Gemini optimizer failed, falling back", aiErr);
-      if (isSummaryRequest) {
-        return NextResponse.json({
-          improvedBullet: `Detail-oriented ${jobTitle || "Professional"} with proven expertise in technical problem-solving, project execution, and cross-functional team collaboration. Skilled in leveraging industry-standard tools to optimize workflow efficiency and achieve strategic project milestones. (${bullet.trim()})`,
-          actionVerbUsed: "Summary Optimization",
-          keywordsInjected: [],
-          explanation: "Enhanced professional summary structure and tone."
-        });
+      logger.warn("Bullet AI improver call failed, using rule-based ATS fallback:", aiErr.message);
+
+      const techTerms = extractTechTerms(jd).slice(0, 3);
+      const actionVerbs = ["Spearheaded", "Engineered", "Optimized", "Architected", "Automated", "Delivered"];
+      const actionVerb = actionVerbs[Math.floor(Math.random() * actionVerbs.length)];
+
+      const cleanInput = bullet.trim().replace(/^[-*•+\s]+/, "");
+      let fallbackBullet = "";
+
+      // Check if it's a certification
+      if (/certification|certified|course|diploma|license/i.test(cleanInput)) {
+        fallbackBullet = `Earned ${cleanInput}, demonstrating comprehensive technical mastery and industry-standard proficiency.`;
+      } else if (techTerms.length > 0) {
+        const lower = cleanInput.charAt(0).toLowerCase() + cleanInput.slice(1);
+        fallbackBullet = `${actionVerb} ${lower}, leveraging ${techTerms.join(" and ")} to maximize delivery efficiency.`;
+      } else {
+        const lower = cleanInput.charAt(0).toLowerCase() + cleanInput.slice(1);
+        fallbackBullet = `${actionVerb} ${lower}, ensuring high-quality execution and measurable technical outcomes.`;
       }
-      
-      const cleanedInput = bullet.trim().replace(/^[-*•\s]+/, "");
-      const lowerCleaned = cleanedInput.charAt(0).toLowerCase() + cleanedInput.slice(1);
+
       return NextResponse.json({
-        improvedBullet: `Optimized ${lowerCleaned}`,
-        actionVerbUsed: "Optimized",
+        improvedBullet: fallbackBullet,
+        actionVerbUsed: actionVerb,
         metricsAdded: "",
-        keywordsInjected: [],
-        explanation: "Began with optimized action verb (AI fallback)."
+        keywordsInjected: techTerms,
+        explanation: "Rewritten with strong action verb and target job competencies.",
       });
     }
+
   } catch (error: any) {
     logger.error("Failed to process improvement request:", error);
     return NextResponse.json(

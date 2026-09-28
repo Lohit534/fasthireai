@@ -607,6 +607,8 @@ export async function callAIText(prompt: string): Promise<string> {
       "gemini-flash-lite-latest",
       "gemini-3.5-flash-lite",
       "gemini-3.8-flash",
+      "gemma-4-26b-a4b-it",
+      "gemma-4-31b-it",
     ];
     const { GoogleGenerativeAI } = await import("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(apiKeyGemini);

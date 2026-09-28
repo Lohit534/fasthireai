@@ -23,9 +23,16 @@ interface OptimizingProgressProps {
   onError?: (error: string) => void;
   resumeText: string;
   jobDescription: string;
+  instructions?: string;
 }
 
-export default function OptimizingProgress({ onComplete, onError, resumeText, jobDescription }: OptimizingProgressProps) {
+export default function OptimizingProgress({
+  onComplete,
+  onError,
+  resumeText,
+  jobDescription,
+  instructions = "",
+}: OptimizingProgressProps) {
   const [steps, setSteps] = useState<{ id: number; status: 'pending' | 'running' | 'done'; duration?: string }[]>(
     STEPS.map(s => ({ id: s.id, status: 'pending' }))
   );
@@ -59,7 +66,7 @@ export default function OptimizingProgress({ onComplete, onError, resumeText, jo
         const res = await fetch('/api/optimize', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ resumeText, jobDescription }),
+          body: JSON.stringify({ resumeText, jobDescription, instructions }),
         });
 
         if (!res.body) throw new Error("No response body");
