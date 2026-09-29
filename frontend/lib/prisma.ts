@@ -13,10 +13,20 @@ const inMemoryDB: {
 };
 
 const prismaClientSingleton = () => {
-  return new PrismaClient();
+  try {
+    return new PrismaClient();
+  } catch (e) {
+    logger.warn("[AI Studio] Prisma not connected — using mock proxy");
+    return {};
+  }
 };
 
-const realPrisma = (globalThis as any).prismaGlobal ?? prismaClientSingleton();
+let realPrisma: any;
+try {
+  realPrisma = (globalThis as any).prismaGlobal ?? prismaClientSingleton();
+} catch (e) {
+  realPrisma = {};
+}
 
 if (process.env.NODE_ENV !== "production") {
   (globalThis as any).prismaGlobal = realPrisma;

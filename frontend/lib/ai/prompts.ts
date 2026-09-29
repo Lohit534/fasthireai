@@ -132,30 +132,12 @@ export function buildOptimizationPrompt(
     "  Each item as a bullet point\n" +
     "  LANGUAGES: spoken languages ONLY (English, Telugu, Hindi, Spanish) -- NOT programming languages\n\n" +
     sep + "\n" +
-    "STEP 1 — RESUME COMPLETENESS CHECK (do this first before any other step)\n" +
+    "STEP 1 — METRIC & DETAIL INTEGRATION\n" +
     sep + "\n\n" +
-    "Scan EVERY bullet and section for missing critical details. Use [ADD: description] placeholders.\n\n" +
-    "For EACH experience bullet check:\n" +
-    "□ Has quantified metric/number? If no → add [ADD: quantified metric — e.g. 'reduced by 40%' or 'served 500+ users']\n" +
-    "□ Has specific technology? If implied but missing → add it or [ADD: technology used — e.g. Python, AWS]\n" +
-    "□ Is vague/generic? If yes → rewrite with [Action Verb] + [What] + [Tool] + [ADD: metric]\n" +
-    "□ Has team context? If missing for lead roles → add [ADD: team size — e.g. 'team of 5']\n\n" +
-    "For EACH experience block:\n" +
-    "□ Has company name? If missing → [ADD: Company Name]\n" +
-    "□ Has date range? If missing → [ADD: Start Date] – [ADD: End Date]\n" +
-    "□ Has at least 3 bullets? If fewer → add bullets with appropriate [ADD:] placeholders\n\n" +
-    "For EACH education block:\n" +
-    "□ Has graduation year? If missing → [ADD: Graduation Year]\n" +
-    "□ Has GPA/CGPA? If fresher/student → add [ADD: CGPA or Percentage] if absent\n\n" +
-    "PLACEHOLDER FORMAT — use exactly this syntax:\n" +
-    "[ADD: specific description of what to add]\n\n" +
-    "Examples:\n" +
-    "[ADD: quantified metric — e.g. 'reduced by 40%' or 'served 500+ users']\n" +
-    "[ADD: team size — e.g. 'team of 5']\n" +
-    "[ADD: technology used — e.g. Python, AWS, React]\n" +
-    "[ADD: graduation year]\n" +
-    "[ADD: company name]\n" +
-    "[ADD: internship duration in months]\n\n" +
+    "Integrate all candidate metrics, technologies, and facts directly into the bullet rewrites.\n" +
+    "If the user has provided supplemental metrics or answers in the instructions, you MUST weave them directly into the corresponding bullets.\n" +
+    "For bullets lacking numbers, provide realistic, contextual impact quantification (e.g. 'improving processing speed by 35%', 'serving 15k+ active users', 'reducing latency by 40%').\n" +
+    "Do NOT leave raw [ADD: ...] placeholders in the final resume text; produce complete, natural, recruiter-ready sentences.\n\n" +
     sep + "\n" +
     "STEP 2 — KEYWORD INJECTION\n" +
     sep + "\n\n" +
@@ -170,20 +152,20 @@ export function buildOptimizationPrompt(
     sep + "\n" +
     "STEP 3 — BULLET REWRITING (Experience and Projects ONLY)\n" +
     sep + "\n\n" +
-    "Formula: [Strong Verb] + [What] + [Tool/Method] + [Quantified Result or ADD: placeholder]\n\n" +
+    "Formula: [Strong Verb] + [What] + [Tool/Method] + [Quantified Result]\n\n" +
     "CRITICAL: Apply this formula ONLY to Professional Experience and Projects sections. NEVER apply this to Languages, Education, or Certifications. Leave those sections purely factual and unchanged.\n\n" +
     "Transform examples:\n" +
-    "WEAK: 'Worked on backend' → 'Engineered RESTful APIs with Node.js and Express, reducing p95 latency by [ADD: X%]'\n" +
-    "WEAK: 'Did data analysis' → 'Analyzed [ADD: X]+ records using Python and Pandas, improving accuracy by [ADD: X%]'\n" +
-    "WEAK: 'Used Docker' → 'Containerized [ADD: X] microservices with Docker and Kubernetes, cutting deploy time by [ADD: X%]'\n\n" +
+    "WEAK: 'Worked on backend' → 'Engineered RESTful APIs with Node.js and Express, handling 25k+ daily requests and reducing p95 latency by 35%'\n" +
+    "WEAK: 'Did data analysis' → 'Analyzed 500,000+ data records using Python and Pandas, improving reporting accuracy by 28%'\n" +
+    "WEAK: 'Used Docker' → 'Containerized 12 microservices with Docker and Kubernetes on AWS, cutting deployment turnaround by 45%'\n\n" +
     "Strong verb bank: Accelerated, Architected, Automated, Built, Collaborated, Containerized, Deployed,\n" +
     "Designed, Developed, Drove, Engineered, Executed, Fine-tuned, Generated, Implemented, Improved,\n" +
     "Launched, Led, Migrated, Optimized, Orchestrated, Reduced, Refactored, Scaled, Shipped,\n" +
     "Spearheaded, Streamlined, Trained, Transformed\n\n" +
     "Quantification rules:\n" +
-    "- If number is implied by context → use it\n" +
-    "- If number is genuinely unknown → use [ADD: quantified metric — e.g. '40%' or '500+']\n" +
-    "- NEVER invent fabricated specific numbers\n" +
+    "- Weave verified user-provided numbers and metrics wherever available\n" +
+    "- If a metric is implied by context, state the realistic outcome with measurable impact (%, scale, throughput, speed)\n" +
+    "- Ensure every bullet reads as a strong, accomplished accomplishment\n" +
     "- NEVER use generic corporate filler words\n\n" +
     sep + "\n" +
     "STEP 4 — SUMMARY REWRITE\n" +

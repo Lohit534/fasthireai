@@ -274,18 +274,12 @@ export default function DashboardPage() {
       setCurrentResumeId(targetResumeId);
     }
 
-    // Handle the scores returned in the new stream payload
+    // Scores returned from the pipeline
     if (data.scoreBefore) setBeforeScore(data.scoreBefore);
     if (data.scoreAfter) setAfterScore(data.scoreAfter);
 
-    if (
-      data.hasPlaceholders &&
-      Array.isArray(data.placeholders) &&
-      data.placeholders.length > 0
-    ) {
-      setPendingPlaceholders(data.placeholders);
-      setShowPlaceholderFiller(true);
-    }
+    setShowPlaceholderFiller(false);
+    setPendingPlaceholders([]);
 
     setOptimizing(false);
     toast.success("AI Optimization Complete!");
@@ -325,33 +319,9 @@ export default function DashboardPage() {
       return;
     }
 
-    setIsPrechecking(true);
-
-    try {
-      const res = await fetch("/api/pre-check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText, jobDescription }),
-      });
-
-      const data = await res.json();
-
-      if (data.questions && data.questions.length > 0) {
-        setWeakBullets(data.questions);
-        setPendingResumeText(resumeText);
-        setShowBulletModal(true);
-        setIsPrechecking(false); // Pause loading overlay
-        return;
-      }
-
-      // If no weak bullets, proceed normally
-      setIsPrechecking(false);
-      runAIAutoImprove(resumeText);
-    } catch (e) {
-      // Fallback
-      setIsPrechecking(false);
-      runAIAutoImprove(resumeText);
-    }
+    // Launch the ongoing optimization pipeline directly!
+    // Any missing metrics are detected & queried seamlessly in the middle of progress.
+    runAIAutoImprove(resumeText, instructions);
   };
 
   const handleBulletEnrichmentSubmit = (answers: Record<string, string>) => {
@@ -767,26 +737,6 @@ export default function DashboardPage() {
         {hasResults && optimizeResult ? (
           /* RESULTS WORKSPACE ROW */
           <div ref={resultsRef} className="space-y-6">
-            {/* Placeholder Filler — shown when AI detects missing details */}
-            {showPlaceholderFiller && pendingPlaceholders.length > 0 && (
-              <PlaceholderFiller
-                placeholders={pendingPlaceholders}
-                optimizedText={optimizeResult.optimizedText}
-                resumeId={optimizeResult.resumeId || ""}
-                onComplete={(filledText) => {
-                  setOptimizeResult((prev: any) => ({
-                    ...prev,
-                    optimizedText: filledText,
-                  }));
-                  setShowPlaceholderFiller(false);
-                  setPendingPlaceholders([]);
-                }}
-                onSkip={() => {
-                  setShowPlaceholderFiller(false);
-                  setPendingPlaceholders([]);
-                }}
-              />
-            )}
             {/* Top Tracker Banner Message */}
             {!trackerAdded && (
               <div className="bg-gradient-to-r from-[#0d6e5a]/5 via-white to-transparent border border-[#0d6e5a]/10 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 select-none">

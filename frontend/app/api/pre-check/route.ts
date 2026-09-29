@@ -8,12 +8,13 @@ export const maxDuration = 30; // Quick pre-check, should take < 10s
 
 function findWeakBulletsLocally(
   resumeText: string,
-): Array<{ id: string; originalBullet: string; question: string }> {
+): Array<{ id: string; originalBullet: string; question: string; hint: string }> {
   const lines = (resumeText || "").split(/\r?\n/);
   const results: Array<{
     id: string;
     originalBullet: string;
     question: string;
+    hint: string;
   }> = [];
   const metricRegex =
     /(\d+%|\d+\s*(percent|million|billion|k|m|x|%|\+)|years|months|\$\d+)/i;
@@ -37,32 +38,40 @@ function findWeakBulletsLocally(
     if (!metricRegex.test(clean)) {
       let q =
         "What was the measurable outcome, scale, or percentage improvement achieved?";
+      let h = "e.g., Improved efficiency by 35%, handled 10,000+ daily users";
       if (/performance|speed|latency|load|fast|optimi/i.test(clean)) {
         q = "By what percentage or time did performance or latency improve?";
+        h = "e.g., Reduced response latency by 45%, cut page load time from 3s to 800ms";
       } else if (/user|client|customer|traffic|visitor/i.test(clean)) {
         q =
           "Approximately how many users, customers, or daily requests were handled?";
+        h = "e.g., Scaled to 50k+ active users, handled 1M+ API calls daily";
       } else if (/test|bug|fix|issue|defect|error/i.test(clean)) {
         q =
           "How many issues/bugs did you resolve, or what test coverage % was reached?";
+        h = "e.g., Resolved 80+ critical bugs, raised unit test coverage from 60% to 92%";
       } else if (/database|data|query|pipeline|etl|storage/i.test(clean)) {
         q =
           "What was the data volume processed, or by how much was query execution time reduced?";
+        h = "e.g., Processed 2TB+ daily data, reduced query execution time by 60%";
       } else if (/api|service|backend|microservice|endpoint/i.test(clean)) {
         q =
           "How many endpoints did you develop, and what throughput or uptime was achieved?";
+        h = "e.g., Built 25+ microservice endpoints, maintained 99.9% service uptime";
       } else if (/lead|managed|team|coordinate|collaborate/i.test(clean)) {
         q =
           "What was the size of the team, or what deadline/milestone did you achieve?";
+        h = "e.g., Mentored a team of 4 engineers, delivered project 2 weeks ahead of schedule";
       }
 
       results.push({
         id: `q${results.length + 1}`,
         originalBullet: clean,
         question: q,
+        hint: h,
       });
 
-      if (results.length >= 3) break;
+      if (results.length >= 4) break;
     }
   }
 
@@ -71,7 +80,13 @@ function findWeakBulletsLocally(
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Verify auth
+    const { resumeText, jobDescription } = await request.json();
+
+    if (!resumeText || resumeText.length < 50) {
+      return NextResponse.json({ questions: [] });
+    }
+
+    // 1. Verify auth (optional fallback for guest/sample mode)
     const supabase = createClient();
     let {
       data: { user },
@@ -87,13 +102,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { resumeText, jobDescription } = await request.json();
-
-    if (!resumeText || resumeText.length < 50) {
-      return NextResponse.json({ questions: [] });
+      // For unauthenticated or preview environments, quickly return local inspection results
+      const localQuestions = findWeakBulletsLocally(resumeText);
+      return NextResponse.json({ questions: localQuestions });
     }
 
     logger.info(`[pre-check] Running AI pre-check for user: ${user.email}`);

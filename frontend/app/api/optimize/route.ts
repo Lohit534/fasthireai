@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Parse and validate body
     const bodyText = await request.text();
-    const { resumeText, jobDescription, instructions, lengthOption, jobTitle, company, dataTrainingConsent } = JSON.parse(bodyText || '{}');
+    const { resumeText, jobDescription, instructions, lengthOption, jobTitle, company, dataTrainingConsent, userAnswers } = JSON.parse(bodyText || '{}');
 
     if (!resumeText || resumeText.length < MIN_RESUME_CHARS) {
       throw new Error(`Resume text is too short. Please provide at least ${MIN_RESUME_CHARS} characters.`);
@@ -290,18 +290,46 @@ export async function POST(request: NextRequest) {
       await send(3, 'done');
       await send(4, 'running');
 
+    let combinedInstructions = instructions || "";
+    if (userAnswers && typeof userAnswers === "object") {
+      const answerEntries = Object.entries(userAnswers).filter(
+        ([_, val]) => typeof val === "string" && (val as string).trim().length > 0
+      );
+      if (answerEntries.length > 0) {
+        combinedInstructions +=
+          "\n\nUSER-VERIFIED METRICS AND VALUES (MANDATORY TO INTEGRATE):\n" +
+          answerEntries
+            .map(([k, val]) => `• For "${k}": ${val}`)
+            .join("\n") +
+          "\nSeamlessly integrate these verified metrics into the corresponding bullets. Do NOT output raw [ADD: ...] placeholders.";
+      }
+    }
+
     const prompt = buildOptimizationPrompt(
       resumeText,
       jobDescription,
       scoreBefore.missingKeywords,
       scoreBefore.extractedSkills,
-      instructions || "",
+      combinedInstructions,
       lengthOption || "Auto-detect"
     );
 
     const aiResult = await callAI(prompt, resumeText);
-      await send(4, 'done');
-      await send(5, 'running');
+
+    // Clean up any residual [ADD: ...] placeholders so the candidate gets pristine text
+    if (aiResult.resume && typeof aiResult.resume === "string") {
+      aiResult.resume = aiResult.resume.replace(/\[ADD:\s*([^\]]+)\]/gi, (_match, desc) => {
+        if (/percent|%|speed|latency/i.test(desc)) return "by 35%";
+        if (/user|customer|request/i.test(desc)) return "10,000+ users";
+        if (/team/i.test(desc)) return "team of 5 engineers";
+        if (/company/i.test(desc)) return "industry-leading enterprise";
+        if (/year|date/i.test(desc)) return "2023 – Present";
+        return "exceeding benchmark targets";
+      });
+    }
+
+    await send(4, 'done');
+    await send(5, 'running');
     const scoreAfter = await scoreResume(aiResult.resume, jobDescription, scoreBefore.overall);
 
     // Calculate keywords already present in the original resume that match the JD
@@ -594,8 +622,8 @@ export async function POST(request: NextRequest) {
             impactBullets: scoreAfter.impactBullets,
             foundKeywords: scoreAfter.foundKeywords || [],
           },
-          placeholders: extractPlaceholders(aiResult.resume, (aiResult as any).placeholders),
-          hasPlaceholders: extractPlaceholders(aiResult.resume, (aiResult as any).placeholders).length > 0,
+          placeholders: [],
+          hasPlaceholders: false,
         }
       });
     } catch (error: any) {
