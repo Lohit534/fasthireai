@@ -593,7 +593,7 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
 
     // Experience entry
     if (currentSection === 'EXPERIENCE' || currentSection === 'WORK EXPERIENCE' || currentSection === 'PROFESSIONAL EXPERIENCE' || currentSection === 'EMPLOYMENT HISTORY' || currentSection === 'INTERNSHIP' || currentSection === 'INTERNSHIPS' || currentSection === 'WORK HISTORY') {
-      const isBullet = /^[•\-\*–]\s*/.test(rawLine);
+      const isBullet = /^\s*([•\-\*–—+•\u2022\u25cf\u2043]|\d+\.)\s*/.test(rawLine);
       if (!isBullet) {
         const dateMatch = line.match(/\b\d{4}\b/);
         const hasDatePattern = dateMatch && (line.toLowerCase().includes('present') || line.toLowerCase().includes('current') || line.includes('–') || line.includes('-'));
@@ -648,7 +648,7 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
           }
         }
       } else {
-        const cleanBulletText = stripMarkdownAsterisks(rawLine.replace(/^[•\-\*–]\s*/, ''));
+        const cleanBulletText = stripMarkdownAsterisks(rawLine.replace(/^\s*([•\-\*–—+•\u2022\u25cf\u2043]|\d+\.)\s*/, ''));
         
         let lastJobIdx = -1;
         for (let i = blocks.length - 1; i >= 0; i--) {
@@ -668,7 +668,7 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
 
     // Projects block
     if (currentSection === 'PROJECTS' || currentSection === 'PERSONAL PROJECTS') {
-      const isBullet = /^[•\-\*–]\s*/.test(rawLine);
+      const isBullet = /^\s*([•\-\*–—+•\u2022\u25cf\u2043]|\d+\.)\s*/.test(rawLine);
       if (!isBullet) {
         const parts = line.split(/\s*(?:[|—–]|\s+-\s+)\s*/);
         const name = stripMarkdownAsterisks(parts[0] || "Project");
@@ -688,7 +688,7 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
           bullets: []
         });
       } else {
-        const cleanBulletText = stripMarkdownAsterisks(rawLine.replace(/^[•\-\*–]\s*/, ''));
+        const cleanBulletText = stripMarkdownAsterisks(rawLine.replace(/^\s*([•\-\*–—+•\u2022\u25cf\u2043]|\d+\.)\s*/, ''));
         
         let lastProjIdx = -1;
         for (let i = blocks.length - 1; i >= 0; i--) {
@@ -814,9 +814,10 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
     }
 
     // Default standalone items
-    const isBullet = /^[•\-\*–]\s*/.test(rawLine);
+    const isBullet = /^[•\-\*–—+•\u2022\u25cf\u2043▸►→]\s*/.test(rawLine);
     if (isBullet) {
-      blocks.push({ type: 'bullet', text: line });
+      const cleanBulletText = stripMarkdownAsterisks(rawLine.replace(/^[•\-\*–—+•\u2022\u25cf\u2043▸►→]\s*/, '')).trim();
+      blocks.push({ type: 'bullet', text: cleanBulletText });
     } else {
       const urlMatches = line.match(URL_REGEX);
       if (urlMatches && urlMatches.length > 0 && line.length < 150) {
@@ -835,21 +836,25 @@ interface BulletRowProps {
 }
 
 const BulletRow: React.FC<BulletRowProps> = ({ text }) => {
-  const urlMatches = text.match(URL_REGEX_G);
+  const clean = stripMarkdownAsterisks(text)
+    .replace(/^\s*([•\-\*–—+•\u2022\u25cf\u2043▸►→]|\d+\.)\s*/, "")
+    .trim();
+
+  const urlMatches = clean.match(URL_REGEX_G);
   
   if (urlMatches && urlMatches.length > 0) {
     const segments: React.ReactNode[] = [];
     let lastIdx = 0;
     
     urlMatches.forEach((match, idx) => {
-      const matchStart = text.indexOf(match, lastIdx);
+      const matchStart = clean.indexOf(match, lastIdx);
       if (matchStart > lastIdx) {
-        segments.push(<Text key={`text-${idx}`}>{text.substring(lastIdx, matchStart)}</Text>);
+        segments.push(<Text key={`text-${idx}`}>{clean.substring(lastIdx, matchStart)}</Text>);
       }
       
-      const clean = cleanUrl(match);
+      const cleanLink = cleanUrl(match);
       segments.push(
-        <Link key={`link-${idx}`} src={clean} style={{ color: '#0000EE', textDecoration: 'underline' }}>
+        <Link key={`link-${idx}`} src={cleanLink} style={{ color: '#0000EE', textDecoration: 'underline' }}>
           <Text style={{ color: '#0000EE', textDecoration: 'underline' }}>{match}</Text>
         </Link>
       );
@@ -857,8 +862,8 @@ const BulletRow: React.FC<BulletRowProps> = ({ text }) => {
       lastIdx = matchStart + match.length;
     });
     
-    if (lastIdx < text.length) {
-      segments.push(<Text key="text-end">{text.substring(lastIdx)}</Text>);
+    if (lastIdx < clean.length) {
+      segments.push(<Text key="text-end">{clean.substring(lastIdx)}</Text>);
     }
     
     return (
@@ -872,7 +877,7 @@ const BulletRow: React.FC<BulletRowProps> = ({ text }) => {
   return (
     <View style={styles.bulletRow}>
       <Text style={styles.bulletDot}>•</Text>
-      <Text style={styles.bulletText}>{text}</Text>
+      <Text style={styles.bulletText}>{clean}</Text>
     </View>
   );
 };

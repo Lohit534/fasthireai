@@ -22,7 +22,9 @@ const FUN_FACTS = [
 
 interface MissingQuestion {
   id: string;
-  originalBullet: string;
+  category?: "year_date" | "tech_stack" | "metrics" | "education" | "general";
+  title?: string;
+  originalBullet?: string;
   question: string;
   hint?: string;
 }
@@ -334,39 +336,56 @@ export default function OptimizingProgress({
                 ATS Boost Checkpoint • Step 3 of 6
               </div>
               <h3 className="text-base font-extrabold text-slate-900 leading-snug">
-                Strengthen Your Bullet Points
+                Provide Missing Details &amp; Metrics
               </h3>
               <p className="text-xs text-slate-600 font-normal mt-0.5 leading-relaxed">
-                Adding quantifiable outcomes (percentages, users, scale, speed) adds up to <strong>+25 ATS points</strong>. Fill what you know; leave any blank to use AI defaults.
+                Add missing dates, year values, or measurable metrics to dynamically elevate your ATS score to <strong>90+ points</strong>. Fill in what you know; leave any blank to use AI defaults.
               </p>
             </div>
           </div>
 
           {/* Questions List */}
-          <div className="space-y-3.5 max-h-[340px] overflow-y-auto pr-1 pt-1">
+          <div className="space-y-3.5 max-h-[360px] overflow-y-auto pr-1 pt-1">
             {missingQuestions.map((q, idx) => (
               <div
                 key={q.id || idx}
                 className="p-3.5 bg-slate-50 border border-slate-200/90 rounded-xl space-y-2 hover:border-teal-200 transition-colors"
               >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200/70 text-slate-700">
+                    {q.category === "year_date"
+                      ? "Dates & Year"
+                      : q.category === "education"
+                        ? "Graduation & GPA"
+                        : q.category === "tech_stack"
+                          ? "Technologies"
+                          : "Quantified Metric"}
+                  </span>
+                  {q.title && (
+                    <span className="text-xs font-bold text-slate-800">
+                      {q.title}
+                    </span>
+                  )}
+                </div>
+
                 {q.originalBullet && (
                   <div className="text-[11px] text-slate-600 font-medium italic border-l-2 border-[#0d6e5a] pl-2 line-clamp-2 bg-white/70 py-1 rounded-r">
                     &ldquo;{q.originalBullet}&rdquo;
                   </div>
                 )}
-                <label className="block text-xs font-bold text-slate-800">
+                <label className="block text-xs font-semibold text-slate-700">
                   {q.question}
                 </label>
                 <input
                   type="text"
-                  value={userAnswers[q.originalBullet || q.id] || ""}
+                  value={userAnswers[q.id] || ""}
                   onChange={(e) =>
                     setUserAnswers((prev) => ({
                       ...prev,
-                      [q.originalBullet || q.id]: e.target.value,
+                      [q.id]: e.target.value,
                     }))
                   }
-                  placeholder={q.hint || "e.g., Improved processing speed by 35%, 15,000+ users"}
+                  placeholder={q.hint || "e.g., 2021 – 2025, or improved speed by 35%"}
                   className="w-full h-9 px-3 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0d6e5a] focus:border-transparent transition-all shadow-xs"
                 />
               </div>

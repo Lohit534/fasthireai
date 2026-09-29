@@ -8,6 +8,10 @@ export interface ATSScore {
   extractedTitles: string[];
   missingKeywords: string[];
   foundKeywords: string[];
+  missingMetrics?: string[];
+  quantifiedCount?: number;
+  totalBulletsCount?: number;
+  metricCoveragePercent?: number;
 }
 
 export interface OptimizeResult {

@@ -310,12 +310,15 @@ export default function ResumeViewer({
                         <span className="font-normal italic text-slate-600 text-[9.5px] sm:text-[10px]">{renderHighlightedText(block.tech)}</span>
                       )}
                     </div>
-                    {block.bullets.map((bullet, bIdx) => (
-                      <div key={bIdx} className="flex items-start text-[9.5px] sm:text-[10px] mb-0.5 pl-2 sm:pl-3 leading-normal select-text font-serif">
-                        <span className="w-2.5 sm:w-3 shrink-0 select-none text-black font-serif">•</span>
-                        <span className="flex-1 text-slate-800 font-serif">{renderHighlightedText(bullet)}</span>
-                      </div>
-                    ))}
+                    {block.bullets.map((bullet, bIdx) => {
+                      const cleanBullet = bullet.replace(/^\s*([•\-\*–—+•\u2022\u25cf\u2043▸►→]|\d+\.)\s*/, "").trim();
+                      return (
+                        <div key={bIdx} className="flex items-start text-[9.5px] sm:text-[10px] mb-0.5 pl-2 sm:pl-3 leading-normal select-text font-serif">
+                          <span className="w-2.5 sm:w-3 shrink-0 select-none text-black font-serif">•</span>
+                          <span className="flex-1 text-slate-800 font-serif">{renderHighlightedText(cleanBullet)}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 );
 
@@ -329,12 +332,15 @@ export default function ResumeViewer({
                     <div className="text-[9.5px] sm:text-[10px] italic text-slate-700 mb-1 leading-normal select-text font-serif">
                       {renderHighlightedText(block.company)}
                     </div>
-                    {block.bullets.map((bullet, bIdx) => (
-                      <div key={bIdx} className="flex items-start text-[9.5px] sm:text-[10px] mb-0.5 pl-2 sm:pl-3 leading-normal select-text font-serif">
-                        <span className="w-2.5 sm:w-3 shrink-0 select-none text-black font-serif">•</span>
-                        <span className="flex-1 text-slate-800 font-serif">{renderHighlightedText(bullet)}</span>
-                      </div>
-                    ))}
+                    {block.bullets.map((bullet, bIdx) => {
+                      const cleanBullet = bullet.replace(/^\s*([•\-\*–—+•\u2022\u25cf\u2043▸►→]|\d+\.)\s*/, "").trim();
+                      return (
+                        <div key={bIdx} className="flex items-start text-[9.5px] sm:text-[10px] mb-0.5 pl-2 sm:pl-3 leading-normal select-text font-serif">
+                          <span className="w-2.5 sm:w-3 shrink-0 select-none text-black font-serif">•</span>
+                          <span className="flex-1 text-slate-800 font-serif">{renderHighlightedText(cleanBullet)}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               case "education":

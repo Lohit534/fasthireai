@@ -163,7 +163,7 @@ export default function BulletImprover({
     }
 
     const currentLines = resumeText.split(/\r?\n/);
-    currentLines[bulletIdx] = `${marker}${finalBullet}`;
+    currentLines[bulletIdx] = `• ${finalBullet}`;
     const updatedResume = currentLines.join("\n");
     onChange(updatedResume, true);
 

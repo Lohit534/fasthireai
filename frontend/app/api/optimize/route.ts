@@ -291,22 +291,41 @@ export async function POST(request: NextRequest) {
       await send(4, 'running');
 
     let combinedInstructions = instructions || "";
+    let enrichedResumeText = resumeText;
+
     if (userAnswers && typeof userAnswers === "object") {
       const answerEntries = Object.entries(userAnswers).filter(
         ([_, val]) => typeof val === "string" && (val as string).trim().length > 0
       );
       if (answerEntries.length > 0) {
         combinedInstructions +=
-          "\n\nUSER-VERIFIED METRICS AND VALUES (MANDATORY TO INTEGRATE):\n" +
+          "\n\nUSER-VERIFIED DATES, YEARS, TECH STACK & METRICS (MANDATORY TO INTEGRATE):\n" +
           answerEntries
-            .map(([k, val]) => `• For "${k}": ${val}`)
+            .map(([k, val]) => `• ${k}: ${val}`)
             .join("\n") +
-          "\nSeamlessly integrate these verified metrics into the corresponding bullets. Do NOT output raw [ADD: ...] placeholders.";
+          "\nSeamlessly integrate these verified dates, years, and metrics into the corresponding sections and bullets. Do NOT output raw [ADD: ...] placeholders.";
+
+        const datesVal = userAnswers["experience_dates"];
+        const eduVal = userAnswers["education_details"];
+        const techVal = userAnswers["project_tech_stack"];
+        const extraItems: string[] = [];
+        if (datesVal && typeof datesVal === "string" && datesVal.trim()) {
+          extraItems.push(`[Verified Experience Dates/Year: ${datesVal.trim()}]`);
+        }
+        if (eduVal && typeof eduVal === "string" && eduVal.trim()) {
+          extraItems.push(`[Verified Graduation Year & GPA: ${eduVal.trim()}]`);
+        }
+        if (techVal && typeof techVal === "string" && techVal.trim()) {
+          extraItems.push(`[Verified Project Technologies: ${techVal.trim()}]`);
+        }
+        if (extraItems.length > 0) {
+          enrichedResumeText += `\n\n--- USER VERIFIED DATES, YEARS & DETAILS ---\n${extraItems.join("\n")}`;
+        }
       }
     }
 
     const prompt = buildOptimizationPrompt(
-      resumeText,
+      enrichedResumeText,
       jobDescription,
       scoreBefore.missingKeywords,
       scoreBefore.extractedSkills,
@@ -314,7 +333,7 @@ export async function POST(request: NextRequest) {
       lengthOption || "Auto-detect"
     );
 
-    const aiResult = await callAI(prompt, resumeText);
+    const aiResult = await callAI(prompt, enrichedResumeText);
 
     // Clean up any residual [ADD: ...] placeholders so the candidate gets pristine text
     if (aiResult.resume && typeof aiResult.resume === "string") {
@@ -615,12 +634,22 @@ export async function POST(request: NextRequest) {
             keywordMatch: scoreBefore.keywordMatch,
             impactBullets: scoreBefore.impactBullets,
             foundKeywords: alreadyInResume,
+            missingKeywords: scoreBefore.missingKeywords || [],
+            missingMetrics: scoreBefore.missingMetrics || [],
+            quantifiedCount: scoreBefore.quantifiedCount || 0,
+            totalBulletsCount: scoreBefore.totalBulletsCount || 0,
+            metricCoveragePercent: scoreBefore.metricCoveragePercent || 0,
           },
           scoreAfter: {
             overall: scoreAfter.overall,
             keywordMatch: scoreAfter.keywordMatch,
             impactBullets: scoreAfter.impactBullets,
             foundKeywords: scoreAfter.foundKeywords || [],
+            missingKeywords: scoreAfter.missingKeywords || [],
+            missingMetrics: scoreAfter.missingMetrics || [],
+            quantifiedCount: scoreAfter.quantifiedCount || 0,
+            totalBulletsCount: scoreAfter.totalBulletsCount || 0,
+            metricCoveragePercent: scoreAfter.metricCoveragePercent || 0,
           },
           placeholders: [],
           hasPlaceholders: false,

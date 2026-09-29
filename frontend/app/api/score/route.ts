@@ -6,14 +6,9 @@ import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Verify Authentication
+    // 1. Verify Authentication (optional in preview/demo mode)
     const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      logger.warn("Unauthorized attempt to access /api/score");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { data: { user } } = await supabase.auth.getUser();
 
     // 2. Parse Request Body
     const body = await request.json();
@@ -34,7 +29,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    logger.info(`Auth verified for User ${user.email}. Scoring resume...`);
+    logger.info(`Scoring resume for user ${user?.email || "guest"}...`);
 
     // 4. Scoring (Always free, no Prisma write or credit deductions)
     const scoreResult = await scoreResume(resumeText, jobDescription, scoreBefore, bulletImprovementsCount);

@@ -171,11 +171,22 @@ const HR_FILLER_WORDS = new Set([
   "skills", "role", "responsibilities", "duties", "job", "position", "company",
   "apply", "description", "requirements", "preferred", "plus", "environment", "work",
   "day", "closely", "ideal", "passion", "passionate", "drive", "driven", "culture",
-  "inclusive", "disability", "veteran", "status", "protected", "sexual", "orientation"
+  "inclusive", "disability", "veteran", "status", "protected", "sexual", "orientation",
+  "location", "remote", "hybrid", "onsite", "office", "san", "francisco", "city", "state",
+  "build", "deliver", "seamless", "modern", "knowledge", "equivalent", "practical",
+  "overview", "minimum", "maximum", "bachelor", "bachelors", "degree", "master", "masters",
+  "high", "collaborate", "teams", "about", "key", "services", "frameworks", "experiences"
 ]);
 
 function cleanWord(w: string): string {
-  return w.replace(/^[^a-zA-Z0-9+#.]+|[^a-zA-Z0-9+#.]+$/g, "").trim().toLowerCase();
+  let cleaned = w.replace(/^[^a-zA-Z0-9+#]+|[^a-zA-Z0-9+#]+$/g, "").trim().toLowerCase();
+  // Strip trailing periods if word is not ending in a known dot-extension like .js, .net, .ts
+  if (cleaned.endsWith(".") && !cleaned.endsWith(".js") && !cleaned.endsWith(".net") && !cleaned.endsWith(".ts")) {
+    cleaned = cleaned.replace(/\.+$/, "");
+  }
+  // Strip trailing apostrophes (e.g. bachelor's -> bachelor)
+  cleaned = cleaned.replace(/'s?$/i, "");
+  return cleaned;
 }
 
 export function extractKeywords(text: string): Set<string> {

@@ -3,11 +3,11 @@ import { logger } from "../logger";
 
 // Active supported Gemini models in priority order (best quality first)
 const GEMINI_MODELS = [
-  "gemini-3.6-flash",
   "gemini-flash-latest",
+  "gemini-3.1-flash-lite",
+  "gemini-3.8-flash",
   "gemini-flash-lite-latest",
   "gemini-3.5-flash-lite",
-  "gemini-3.8-flash",
   "gemma-4-26b-a4b-it",
   "gemma-4-31b-it",
 ];

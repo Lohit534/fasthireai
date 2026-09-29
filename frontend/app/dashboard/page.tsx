@@ -46,6 +46,8 @@ import {
   Shield,
   FolderOpen,
   Check,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
@@ -371,10 +373,7 @@ export default function DashboardPage() {
     const targetId =
       currentResumeId || optimizeResult?.resumeId || optimizeResult?.id;
 
-    // Only update afterScore (optimized) — keep beforeScore frozen at the original pre-optimization value
     try {
-      const prevOverall = afterScore?.overall ?? 75;
-      let calculatedOverall = prevOverall + 1;
       let newScoreData: any = null;
 
       try {
@@ -390,43 +389,28 @@ export default function DashboardPage() {
         });
         if (afterRes.ok) {
           newScoreData = await afterRes.json();
-          calculatedOverall = Math.min(
-            98,
-            Math.max(prevOverall + 1, newScoreData.overall),
-          );
         }
       } catch (scoreErr) {
-        calculatedOverall = Math.min(98, prevOverall + 1);
+        console.error("Score refresh error:", scoreErr);
       }
 
-      const guaranteedOverall = calculatedOverall;
-      const adjustedAfterScore = {
-        ...(newScoreData || afterScore),
-        overall: guaranteedOverall,
-        impactBullets: Math.min(
-          100,
-          Math.max(
-            newScoreData?.impactBullets || 70,
-            (afterScore?.impactBullets || 65) + 2,
-          ),
-        ),
-      };
-      setAfterScore(adjustedAfterScore);
+      const dynamicScore = newScoreData || afterScore;
+      setAfterScore(dynamicScore);
 
-      // Immediately reflect improved text & score in local optimizeResult state
+      // Immediately reflect improved text & dynamic score in local optimizeResult state
       setOptimizeResult((prev: any) =>
         prev
           ? {
               ...prev,
               optimizedText: newText,
-              scoreAfter: adjustedAfterScore,
+              scoreAfter: dynamicScore,
               resumeId: targetId || prev.resumeId,
             }
           : prev,
       );
 
       // Persist updated scoreAfter and optimizedText to history DB via PATCH
-      if (targetId) {
+      if (targetId && dynamicScore?.overall) {
         try {
           const { data: sessionData } = await supabase.auth.getSession();
           const accessToken = sessionData?.session?.access_token;
@@ -442,7 +426,7 @@ export default function DashboardPage() {
             headers,
             body: JSON.stringify({
               resumeId: targetId,
-              scoreAfter: guaranteedOverall,
+              scoreAfter: dynamicScore.overall,
               optimizedText: newText,
             }),
           });
@@ -462,7 +446,7 @@ export default function DashboardPage() {
                   r.id === targetId
                     ? {
                         ...r,
-                        scoreAfter: guaranteedOverall,
+                        scoreAfter: dynamicScore.overall,
                         optimizedText: newText,
                       }
                     : r,
@@ -845,6 +829,74 @@ export default function DashboardPage() {
                         []
                       }
                     />
+                  </div>
+                )}
+
+                {/* Quantified Metrics & Missing Metrics Breakdown */}
+                {afterScore && (
+                  <div className="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-5 shadow-sm space-y-3.5 select-none">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Target className="h-4 w-4 text-[#0d6e5a]" />
+                        <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
+                          Metrics &amp; Quantification
+                        </h4>
+                      </div>
+                      <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        {afterScore.metricCoveragePercent ?? (afterScore.impactBullets > 80 ? 90 : 70)}% Quantified
+                      </span>
+                    </div>
+
+                    {/* Metric Coverage bar */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[11px] text-slate-500 font-medium">
+                        <span>Metric Impact Coverage</span>
+                        <span>
+                          {afterScore.quantifiedCount !== undefined && afterScore.totalBulletsCount !== undefined
+                            ? `${afterScore.quantifiedCount} of ${afterScore.totalBulletsCount} bullets with metrics`
+                            : "Dynamically evaluated"}
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              afterScore.metricCoveragePercent ?? (afterScore.impactBullets > 80 ? 90 : 70),
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Missing Metrics Highlights */}
+                    {afterScore.missingMetrics && afterScore.missingMetrics.length > 0 ? (
+                      <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 space-y-2">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800">
+                          <AlertCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                          <span>Missing Metrics Highlighted ({afterScore.missingMetrics.length})</span>
+                        </div>
+                        <p className="text-[11px] text-amber-700 leading-relaxed font-normal">
+                          The following bullet{afterScore.missingMetrics.length > 1 ? "s lack" : " lacks"} measurable numbers or percentages. Use the <strong>Bullet Improver</strong> below to add metrics and boost your score higher:
+                        </p>
+                        <ul className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                          {afterScore.missingMetrics.map((bullet: string, i: number) => (
+                            <li
+                              key={i}
+                              className="text-[10.5px] text-slate-700 bg-white/90 border border-amber-200/60 p-2 rounded-lg font-medium leading-snug italic border-l-2 border-l-amber-500"
+                            >
+                              &ldquo;{bullet}&rdquo;
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 flex items-center gap-2 text-xs font-bold text-emerald-800">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <span>All bullet points feature measurable metrics &amp; action verbs!</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </ScrollFadeIn>
