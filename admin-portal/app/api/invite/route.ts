@@ -30,91 +30,105 @@ export async function POST(request: NextRequest) {
     const cleanName = (name || "").trim();
     const adminClient = getAdminClient() as any;
 
-    const appUrl = (process.env.USER_APP_URL || process.env.NEXT_PUBLIC_APP_URL || "https://fasthireai.com").replace(/\/$/, "");
+    const appUrl = (
+      process.env.USER_APP_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "https://fasthire-ai.vercel.app"
+    ).replace(/\/$/, "");
     const redirectUrl = `${appUrl}/auth/confirm?next=/dashboard`;
 
     let emailSent = false;
     let actionLink: string | null = null;
     let userId: string | null = null;
+    let isExisting = false;
 
-    // 1. Try sending the invitation email through Supabase mailer
+    // 1. Check if user already exists in Supabase Auth
     try {
-      const inviteRes = await adminClient.auth.admin.inviteUserByEmail(cleanEmail, {
-        redirectTo: redirectUrl,
-        data: { name: cleanName, plan: planId },
-      });
-
-      if (inviteRes.error) {
-        throw inviteRes.error;
+      const { data: userListData } = await adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const found = userListData?.users?.find(
+        (u: any) => u.email?.toLowerCase().trim() === cleanEmail
+      );
+      if (found) {
+        isExisting = true;
+        userId = found.id;
       }
-      emailSent = true;
-      userId = inviteRes.data?.user?.id || null;
-    } catch {
-      // 2. Fallback: Generate the invite link directly (bypasses Supabase's SMTP/rate limits)
+    } catch (e) {
+      console.warn("Could not list users to check existence:", e);
+    }
+
+    if (isExisting && userId) {
+      // User exists: update user metadata & generate a direct login/magic link
+      try {
+        await adminClient.auth.admin.updateUserById(userId, {
+          user_metadata: { name: cleanName || undefined, plan: planId },
+        });
+      } catch (err) {
+        console.warn("updateUserById error:", err);
+      }
+
+      try {
+        const magicRes = await adminClient.auth.admin.generateLink({
+          type: "magiclink",
+          email: cleanEmail,
+          options: { redirectTo: redirectUrl },
+        });
+        if (magicRes.data?.properties?.action_link) {
+          actionLink = magicRes.data.properties.action_link;
+        }
+      } catch (err) {
+        console.warn("Magiclink generation error for existing user:", err);
+      }
+    } else {
+      // New user: attempt standard invitation email
+      try {
+        const inviteRes = await adminClient.auth.admin.inviteUserByEmail(cleanEmail, {
+          redirectTo: redirectUrl,
+          data: { name: cleanName, plan: planId },
+        });
+
+        if (!inviteRes.error && inviteRes.data?.user) {
+          emailSent = true;
+          userId = inviteRes.data.user.id;
+        }
+      } catch (err) {
+        console.warn("inviteUserByEmail error:", err);
+      }
+
+      // If invite email could not be sent or user was not created, create user directly
+      if (!userId) {
+        try {
+          const createRes = await adminClient.auth.admin.createUser({
+            email: cleanEmail,
+            email_confirm: true,
+            user_metadata: { name: cleanName, plan: planId },
+          });
+          if (createRes.data?.user) {
+            userId = createRes.data.user.id;
+          }
+        } catch (err) {
+          console.warn("createUser fallback error:", err);
+        }
+      }
+
+      // Generate direct activation link
       try {
         const linkRes = await adminClient.auth.admin.generateLink({
-          type: "invite",
+          type: emailSent ? "invite" : "magiclink",
           email: cleanEmail,
           options: {
             redirectTo: redirectUrl,
             data: { name: cleanName, plan: planId },
           },
         });
-
-        if (linkRes.error) {
-          // If user exists, generate magic link instead
-          const magicRes = await adminClient.auth.admin.generateLink({
-            type: "magiclink",
-            email: cleanEmail,
-            options: { redirectTo: redirectUrl },
-          });
-          if (magicRes.data?.properties?.action_link) {
-            actionLink = magicRes.data.properties.action_link;
-            userId = magicRes.data?.user?.id || null;
-          } else {
-            throw linkRes.error;
-          }
-        } else {
-          actionLink = linkRes.data?.properties?.action_link || null;
-          userId = linkRes.data?.user?.id || null;
-        }
-      } catch {
-        // If all else fails, create user directly and generate login link
-        const createRes = await adminClient.auth.admin.createUser({
-          email: cleanEmail,
-          email_confirm: true,
-          user_metadata: { name: cleanName, plan: planId },
-        });
-
-        if (createRes.data?.user) {
-          userId = createRes.data.user.id;
-          const magicRes = await adminClient.auth.admin.generateLink({
-            type: "magiclink",
-            email: cleanEmail,
-            options: { redirectTo: redirectUrl },
-          });
-          actionLink = magicRes.data?.properties?.action_link || null;
-        }
-      }
-    }
-
-    // Also get action link if emailSent was true but admin wants a copy
-    if (emailSent && !actionLink) {
-      try {
-        const linkRes = await adminClient.auth.admin.generateLink({
-          type: "invite",
-          email: cleanEmail,
-          options: { redirectTo: redirectUrl },
-        });
         if (linkRes.data?.properties?.action_link) {
           actionLink = linkRes.data.properties.action_link;
         }
-      } catch {
-        // ignore
+      } catch (err) {
+        console.warn("generateLink fallback error:", err);
       }
     }
 
-    // 3. Upsert user in public.User
+    // 2. Sync to public.User table
     if (userId) {
       try {
         await adminClient.from("User").upsert(
@@ -126,11 +140,11 @@ export async function POST(request: NextRequest) {
           },
           { onConflict: "id" }
         );
-      } catch {
-        // ignore table sync error
+      } catch (err) {
+        console.warn("User table upsert warning:", err);
       }
 
-      // 4. Provision Plan & Credits in public.Credit
+      // 3. Provision Plan & Credits in public.Credit table
       try {
         let paidCredits = 0;
         let expiresAt: string | null = null;
@@ -155,9 +169,19 @@ export async function POST(request: NextRequest) {
           },
           { onConflict: "userId" }
         );
-      } catch {
-        // ignore credit sync error
+      } catch (err) {
+        console.warn("Credit table upsert warning:", err);
       }
+    }
+
+    const planLabel = planId === "promax" ? "Pro Max" : planId === "premium" ? "Pro" : "Free";
+    let message = "";
+    if (emailSent) {
+      message = `Invitation email successfully dispatched to ${cleanEmail} with ${planLabel} plan!`;
+    } else if (isExisting) {
+      message = `Existing user upgraded to ${planLabel}! Direct login link generated below.`;
+    } else {
+      message = `Account created with ${planLabel} plan! Direct activation link is ready below to copy or share.`;
     }
 
     return NextResponse.json({
@@ -165,11 +189,10 @@ export async function POST(request: NextRequest) {
       emailSent,
       inviteLink: actionLink,
       userId,
-      message: emailSent
-        ? `Invitation email successfully dispatched to ${cleanEmail}!`
-        : `User account created! A direct invitation link was generated below.`,
+      isExistingUser: isExisting,
+      message,
     });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Failed to invite user" }, { status: 500 });
+    return NextResponse.json({ error: err.message || "Failed to process invitation" }, { status: 500 });
   }
 }

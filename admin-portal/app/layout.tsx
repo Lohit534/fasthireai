@@ -5,6 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://admin.fasthireai.com"),
   title: "FastHire AI — Admin Portal",
   description: "Secure administrator control panel — FastHire AI",
   robots: "noindex, nofollow",

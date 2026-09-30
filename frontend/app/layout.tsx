@@ -20,7 +20,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://fasthireai.vercel.app"),
   title: "FastHire-AI — Free AI Resume Builder & ATS Score Checker",
   description: "Free AI-powered resume builder and ATS checker. Score your resume against any job description, get it rewritten with missing keywords, and download a clean PDF. No credit card required.",
   keywords: [
