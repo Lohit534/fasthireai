@@ -23,9 +23,7 @@ export default function Footer() {
   const trustLinks = [
     { label: "Privacy policy", href: "/privacy" },
     { label: "Terms", href: "/terms" },
-    { label: "Refund policy", href: "/refund" },
-    { label: "Shipping & delivery", href: "/shipping" },
-    { label: "Contact support", href: "mailto:support@fasthireai.com", isExternal: true },
+    { label: "Contact support", href: "mailto:fasthireai@gmail.com", isExternal: true },
   ];
 
   const accountLinks = [

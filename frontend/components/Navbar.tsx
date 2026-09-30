@@ -486,16 +486,19 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
 
                       {/* 4. Secondary actions */}
                       <div className="space-y-0.5">
-                        <button
-                          onClick={() => {
-                            setIsDropdownOpen(false);
-                            window.dispatchEvent(new CustomEvent("open-support-chatbot", { detail: { mode: "help-center" } }));
-                          }}
-                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors text-left cursor-pointer"
-                        >
-                          <HelpCircle className="h-3.5 w-3.5 text-slate-400" />
-                          <span>Help &amp; Support</span>
-                        </button>
+                        {/* Help & Support — only shown for paid/owner users */}
+                        {(isOwner || isPremium || isProMax) && (
+                          <button
+                            onClick={() => {
+                              setIsDropdownOpen(false);
+                              window.dispatchEvent(new CustomEvent("open-support-chatbot", { detail: { mode: "help-center" } }));
+                            }}
+                            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors text-left cursor-pointer"
+                          >
+                            <HelpCircle className="h-3.5 w-3.5 text-slate-400" />
+                            <span>Help &amp; Support</span>
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setIsDropdownOpen(false);
@@ -575,8 +578,8 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
         </div>
       )}
       {user && <FeedbackBanner onOpenFeedback={() => setIsFeedbackOpen(true)} />}
-      {/* Unified Help Center, Support Tickets & 24/7 AI Chatbot */}
-      {user && <SupportChatbot />}
+      {/* Unified Help Center, Support Tickets & 24/7 AI Chatbot — paid/owner only */}
+      {user && (isOwner || isPremium || isProMax) && <SupportChatbot />}
       <FeedbackToast isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} userEmail={user?.email} />
       <ReferralModal isOpen={isReferralOpen} onClose={() => setIsReferralOpen(false)} />
       <DemoVideoModal isOpen={isDemoModalOpen} onClose={() => setIsDemoModalOpen(false)} />

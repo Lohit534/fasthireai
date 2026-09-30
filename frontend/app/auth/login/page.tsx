@@ -12,7 +12,8 @@ import {
   Check,
   ShieldCheck,
   Lock,
-  Sparkles
+  Sparkles,
+  ArrowLeft
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -72,12 +73,12 @@ function LoginFormContent() {
         <div className="absolute top-1/4 left-1/4 h-[300px] w-[300px] rounded-full bg-white/5 blur-[100px] -z-10" />
 
         {/* Logo */}
-        <div className="flex items-center gap-2.5 select-none">
+        <Link href="/" className="flex items-center gap-2.5 select-none group w-fit transition-transform hover:scale-[1.02]">
           <img src="/logo.png" alt="FastHire Logo" className="h-8 w-8 rounded-xl object-contain drop-shadow-sm" />
           <span className="font-extrabold text-xl tracking-tight text-white">
             FastHire
           </span>
-        </div>
+        </Link>
 
         {/* Headline content */}
         <div className="space-y-6 max-w-lg my-auto">
@@ -144,12 +145,15 @@ function LoginFormContent() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:32px_32px] opacity-40 -z-10 pointer-events-none" />
         
         {/* Top bar */}
-        <div className="flex justify-between items-center lg:justify-end">
-          <Link href="/" className="lg:hidden flex items-center gap-1.5 font-bold text-xs text-slate-500 hover:text-slate-900">
-            <Briefcase className="h-4 w-4 text-[#0d6e5a]" />
-            <span>FastHire</span>
+        <div className="flex justify-between items-center w-full gap-4">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors group py-1.5 px-2.5 -ml-2.5 rounded-lg hover:bg-slate-200/60"
+          >
+            <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5 text-[#0d6e5a]" />
+            <span>Back to home</span>
           </Link>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 shrink-0">
             Don&apos;t have an account?{" "}
             <Link
               href={searchParams.get("sample") === "true" ? "/auth/signup?sample=true" : "/auth/signup"}
