@@ -23,6 +23,8 @@ import CircleGauge from "@/components/CircleGauge";
 import { supabase } from "@/lib/supabase/client";
 import { DemoVideoModal } from "@/components/DemoVideoModal";
 import { SAMPLE_RESUME_TEXT, SAMPLE_JD_TEXT } from "@/lib/sample-data";
+import Footer from "@/components/Footer";
+import { DashboardSkeleton } from "@/components/SkeletonShimmer";
 
 /* ── Landing FAQ ─────────────────────────────────────────── */
 const LANDING_FAQS = [
@@ -153,23 +155,60 @@ export default function LandingPage() {
   const { setResumeText, setJobDescription } = useResumeStore();
   const [barReady, setBarReady] = useState(false);
 
+  // Fast synchronous check to eliminate landing page flash for logged-in users
+  const [checkingAuth, setCheckingAuth] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return Object.keys(localStorage).some(
+        (k) => (k.startsWith("sb-") && k.endsWith("-auth-token")) || k.includes("supabase.auth.token")
+      );
+    } catch {
+      return false;
+    }
+  });
+
   useEffect(() => {
     // Clear any leftover pending sample keys when arriving on landing page
     localStorage.removeItem("fastHire_pendingSample");
     localStorage.removeItem("fastHire_sampleResume");
     localStorage.removeItem("fastHire_sampleJD");
 
+    let isMounted = true;
+
     async function checkLoggedIn() {
       try {
-        const { data } = await supabase.auth.getUser();
-        if (data?.user) router.replace("/dashboard");
-      } catch (e) { }
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.user) {
+          router.replace("/dashboard");
+          return;
+        }
+      } catch (e) {}
+
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user) {
+          router.replace("/dashboard");
+          return;
+        }
+      } catch (e) {}
+
+      if (isMounted) {
+        setCheckingAuth(false);
+      }
     }
+
     checkLoggedIn();
 
     const t = setTimeout(() => setBarReady(true), 350);
-    return () => clearTimeout(t);
+    return () => {
+      isMounted = false;
+      clearTimeout(t);
+    };
   }, [router]);
+
+  if (checkingAuth) {
+    return <DashboardSkeleton />;
+  }
 
   const handleTrySample = async () => {
     setResumeText(SAMPLE_RESUME_TEXT);
@@ -696,6 +735,8 @@ export default function LandingPage() {
           </div>
         </div>
       </ScrollFadeIn>
+
+      <Footer />
 
       <DemoVideoModal isOpen={isDemoModalOpen} onClose={() => setIsDemoModalOpen(false)} />
     </div>
