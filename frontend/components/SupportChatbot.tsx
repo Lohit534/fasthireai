@@ -258,28 +258,31 @@ export default function SupportChatbot() {
   }, []);
 
   // Load human admin support tickets
-  const loadAdminTickets = async () => {
-    if (!userId) return;
-    setLoadingTickets(true);
+  const loadAdminTickets = async (isBackground = false) => {
+    if (!isBackground) setLoadingTickets(true);
     try {
       const res = await fetch("/api/support/messages");
       if (res.ok) {
         const data = await res.json();
-        const userTickets = data.filter((t: any) => t.userId === userId);
-        setAdminTickets(userTickets.reverse());
+        const userTickets = Array.isArray(data) ? data : [];
+        setAdminTickets(userTickets);
       }
     } catch {
       // silent
     } finally {
-      setLoadingTickets(false);
+      if (!isBackground) setLoadingTickets(false);
     }
   };
 
   useEffect(() => {
-    if (isOpen && view === "ticket" && userId) {
-      loadAdminTickets();
+    if (isOpen && view === "ticket") {
+      loadAdminTickets(false);
+      const interval = setInterval(() => {
+        loadAdminTickets(true);
+      }, 5000);
+      return () => clearInterval(interval);
     }
-  }, [isOpen, view, userId]);
+  }, [isOpen, view]);
 
   // Send AI Chat Message
   const handleSendAiMessage = async (e?: React.FormEvent) => {
@@ -635,7 +638,7 @@ export default function SupportChatbot() {
                 </div>
                 <div className="flex items-center gap-1">
                   <button
-                    onClick={loadAdminTickets}
+                    onClick={() => loadAdminTickets(false)}
                     className="h-7 w-7 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100"
                     title="Refresh tickets"
                   >
@@ -711,16 +714,16 @@ export default function SupportChatbot() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="bg-white border border-slate-200 p-2 rounded-lg text-[9px] text-slate-500 flex items-center justify-between select-none shadow-sm">
-                      <span className="flex items-center gap-1 text-slate-500">
-                        <Clock className="h-2.5 w-2.5 text-amber-600" />
-                        Auto-deletes 24h after admin reply
+                    <div className="bg-white border border-slate-200 p-2.5 rounded-xl text-[10px] text-slate-600 flex items-center justify-between select-none shadow-xs">
+                      <span className="flex items-center gap-1.5 text-slate-600 font-medium">
+                        <Clock className="h-3 w-3 text-teal-600 shrink-0" />
+                        Ticket replies retained for 7 days
                       </span>
                       <button
-                        onClick={loadAdminTickets}
-                        className="text-[#0d6e5a] hover:text-[#094d3f] flex items-center gap-1 font-bold cursor-pointer"
+                        onClick={() => loadAdminTickets(false)}
+                        className="text-[#0d6e5a] hover:text-[#094d3f] flex items-center gap-1 font-bold cursor-pointer text-xs"
                       >
-                        <RefreshCw className="h-2.5 w-2.5" /> Refresh
+                        <RefreshCw className="h-3 w-3" /> Refresh
                       </button>
                     </div>
 
@@ -728,13 +731,13 @@ export default function SupportChatbot() {
                       <div key={ticket.id} className="space-y-2.5">
                         {/* User message */}
                         <div className="flex justify-end">
-                          <div className="max-w-[85%] bg-[#0d6e5a] text-white rounded-2xl rounded-br-none px-3.5 py-2 text-xs leading-relaxed shadow-sm">
-                            <p>{ticket.message}</p>
-                            <div className="flex items-center justify-end gap-1.5 mt-1 border-t border-white/20 pt-0.5">
-                              <span className="text-[8px] text-white/80">
-                                {new Date(ticket.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          <div className="max-w-[88%] bg-[#0d6e5a] text-white rounded-2xl rounded-br-none px-3.5 py-2.5 text-xs leading-relaxed shadow-xs">
+                            <p className="whitespace-pre-wrap">{ticket.message}</p>
+                            <div className="flex items-center justify-end gap-1.5 mt-1.5 border-t border-white/20 pt-1">
+                              <span className="text-[9px] text-white/80">
+                                {new Date(ticket.createdAt).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
                               </span>
-                              <Badge className="bg-white/20 border-none text-white text-[7px] font-bold px-1 rounded">Sent</Badge>
+                              <span className="text-[8px] font-bold bg-white/20 px-1.5 py-0.5 rounded text-white">Sent</span>
                             </div>
                           </div>
                         </div>
@@ -742,25 +745,32 @@ export default function SupportChatbot() {
                         {/* Admin reply */}
                         {ticket.reply ? (
                           <div className="flex justify-start">
-                            <div className="max-w-[85%] bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-bl-none px-3.5 py-2 text-xs leading-relaxed shadow-sm">
-                              <div className="flex items-center gap-1 text-[8px] text-[#0d6e5a] font-extrabold uppercase tracking-wide mb-1">
-                                <ShieldCheck className="h-3 w-3 shrink-0 text-[#0d6e5a]" />
-                                Admin Reply
+                            <div className="max-w-[88%] bg-white border border-teal-200/90 text-slate-800 rounded-2xl rounded-bl-none p-3.5 text-xs leading-relaxed shadow-xs space-y-2">
+                              <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
+                                <div className="flex items-center gap-1.5 text-[10px] text-[#0d6e5a] font-black uppercase tracking-wider">
+                                  <ShieldCheck className="h-3.5 w-3.5 text-[#0d6e5a]" />
+                                  <span>FastHire Support Reply</span>
+                                </div>
+                                <span className="text-[9px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200/60">
+                                  Official
+                                </span>
                               </div>
-                              <p>{ticket.reply}</p>
-                              <span className="block text-[8px] text-slate-400 font-semibold text-right mt-1.5">
-                                {new Date(ticket.repliedAt || "").toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                              </span>
+                              <p className="text-slate-800 font-normal leading-relaxed whitespace-pre-wrap">{ticket.reply}</p>
+                              <div className="text-[9px] text-slate-400 font-medium text-right pt-1">
+                                Replied {ticket.repliedAt ? new Date(ticket.repliedAt).toLocaleString([], { dateStyle: "short", timeStyle: "short" }) : "Recently"}
+                              </div>
                             </div>
                           </div>
                         ) : (
                           <div className="flex justify-start">
-                            <div className="max-w-[85%] bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl rounded-bl-none px-3.5 py-2 text-xs leading-relaxed italic select-none">
-                              <div className="flex items-center gap-1.5 text-[8px] text-amber-700 font-bold uppercase tracking-wider animate-pulse mb-1">
-                                <Clock className="h-3 w-3" />
-                                Awaiting admin reply...
+                            <div className="max-w-[88%] bg-amber-50/80 border border-amber-200/90 text-amber-900 rounded-2xl rounded-bl-none p-3 text-xs leading-relaxed select-none">
+                              <div className="flex items-center gap-1.5 text-[9px] text-amber-700 font-bold uppercase tracking-wider mb-1">
+                                <Clock className="h-3.5 w-3.5 animate-spin" />
+                                <span>Awaiting Support Team Reply</span>
                               </div>
-                              Our support team will respond within 1-2 days.
+                              <p className="text-[11px] text-amber-800/90 font-normal">
+                                Your ticket has been dispatched to our engineering team. We will respond directly in this chat.
+                              </p>
                             </div>
                           </div>
                         )}

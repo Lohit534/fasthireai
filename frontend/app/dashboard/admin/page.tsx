@@ -31,12 +31,30 @@ import {
   Trash2,
   Bug,
   Lightbulb,
-  MessageCircle
+  MessageCircle,
+  UserPlus,
+  Copy,
+  Check,
+  Mail,
+  ExternalLink,
+  RefreshCw,
+  X,
+  Loader2,
+  CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "motion/react";
 import { AdminSkeleton, AdminUsersSkeleton, AdminTicketsSkeleton, Bone } from "@/components/SkeletonShimmer";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
 
 interface UserRecord {
   id: string;
@@ -90,6 +108,153 @@ export default function UnifiedAdminDashboard() {
   const [feedbackMessages, setFeedbackMessages] = useState<any[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(true);
   const [deletingFeedbackId, setDeletingFeedbackId] = useState<string | null>(null);
+
+  // Invite User Modal States
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [invitePlan, setInvitePlan] = useState<"free" | "premium" | "promax">("free");
+  const [inviting, setInviting] = useState(false);
+  const [inviteResult, setInviteResult] = useState<{
+    emailSent: boolean;
+    inviteLink: string | null;
+    message: string;
+    email: string;
+  } | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  // Recharts Client Mount Safety
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Compute Daily User Registration Growth
+  const userGrowthData = React.useMemo(() => {
+    if (!users || users.length === 0) return [];
+    const dayMap = new Map<string, number>();
+    for (const u of users) {
+      if (!u.createdAt) continue;
+      const day = new Date(u.createdAt).toISOString().slice(0, 10);
+      dayMap.set(day, (dayMap.get(day) || 0) + 1);
+    }
+    const sortedDays = Array.from(dayMap.keys()).sort();
+    if (sortedDays.length === 0) return [];
+
+    let runningTotal = 0;
+    return sortedDays.map((dayStr) => {
+      const count = dayMap.get(dayStr) || 0;
+      runningTotal += count;
+      const d = new Date(dayStr);
+      const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      return {
+        date: label,
+        fullDate: dayStr,
+        registrations: count,
+        totalUsers: runningTotal,
+      };
+    });
+  }, [users]);
+
+  // Compute Monthly Revenue Trends
+  const revenueTrendsData = React.useMemo(() => {
+    const monthMap = new Map<string, { revenue: number; orders: number }>();
+    const now = new Date();
+    for (let i = 3; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = d.toISOString().slice(0, 7);
+      monthMap.set(key, { revenue: 0, orders: 0 });
+    }
+
+    const payments = analytics?.recentPayments || [];
+    for (const p of payments) {
+      const pDate = p.createdAt ? new Date(p.createdAt) : now;
+      const key = pDate.toISOString().slice(0, 7);
+      const prev = monthMap.get(key) || { revenue: 0, orders: 0 };
+      const amt = Number(p.amount) || (p.planId === "promax" ? 199 : 99);
+      monthMap.set(key, {
+        revenue: prev.revenue + amt,
+        orders: prev.orders + 1,
+      });
+    }
+
+    if (payments.length === 0 && (analytics?.totalRevenue || 0) > 0) {
+      const curKey = now.toISOString().slice(0, 7);
+      monthMap.set(curKey, {
+        revenue: analytics.totalRevenue,
+        orders: analytics.paidCount || 1,
+      });
+    }
+
+    const sortedMonths = Array.from(monthMap.keys()).sort();
+    return sortedMonths.map((mStr) => {
+      const [year, month] = mStr.split("-");
+      const d = new Date(Number(year), Number(month) - 1, 1);
+      const label = d.toLocaleDateString("en-US", { month: "short" });
+      const item = monthMap.get(mStr) || { revenue: 0, orders: 0 };
+      return {
+        month: label,
+        revenue: item.revenue,
+        orders: item.orders,
+      };
+    });
+  }, [analytics]);
+
+  const handleInviteUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail || !inviteEmail.includes("@")) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    setInviting(true);
+    try {
+      const clientOrigin = typeof window !== "undefined" ? window.location.origin : "";
+      const res = await fetch("/api/admin/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: inviteEmail.trim(),
+          name: inviteName.trim(),
+          planId: invitePlan,
+          origin: clientOrigin,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        let displayLink = data.inviteLink;
+        if (displayLink && typeof window !== "undefined") {
+          displayLink = displayLink
+            .replace(/^https?:\/\/localhost(?::\d+)?/i, window.location.origin)
+            .replace(/^https?:\/\/127\.0\.0\.1(?::\d+)?/i, window.location.origin)
+            .replace(/redirect_to=http(?:s)?%3A%2F%2Flocalhost(?::\d+)?/gi, `redirect_to=${encodeURIComponent(window.location.origin)}`)
+            .replace(/redirect_to=http(?:s)?%3A%2F%2F127\.0\.0\.1(?::\d+)?/gi, `redirect_to=${encodeURIComponent(window.location.origin)}`);
+        }
+        setInviteResult({
+          emailSent: Boolean(data.emailSent),
+          inviteLink: displayLink,
+          message: data.message,
+          email: inviteEmail.trim(),
+        });
+        toast.success(data.emailSent ? "Invitation dispatched to email!" : "Invitation link generated!");
+        loadUsersData();
+      } else {
+        toast.error(data.error || "Failed to invite user.");
+      }
+    } catch {
+      toast.error("Connection error while sending invitation.");
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const resetInviteModal = () => {
+    setIsInviteModalOpen(false);
+    setInviteEmail("");
+    setInviteName("");
+    setInvitePlan("free");
+    setInviteResult(null);
+    setCopiedLink(false);
+  };
 
   useEffect(() => {
     async function checkAdmin() {
@@ -365,14 +530,40 @@ export default function UnifiedAdminDashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/80 text-emerald-800 px-3 py-1 rounded-full text-xs font-semibold select-none">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>System Live</span>
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/80 text-emerald-800 px-3 py-1 rounded-full text-xs font-semibold select-none">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>System Live</span>
+              </div>
+              <Badge className="bg-[#0d6e5a] text-white text-xs font-bold px-3 py-1 rounded-full select-none shadow-sm">
+                Owner Portal
+              </Badge>
             </div>
-            <Badge className="bg-[#0d6e5a] text-white text-xs font-bold px-3.5 py-1 rounded-full select-none shadow-sm">
-              Owner Portal
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => {
+                  loadUsersData();
+                  loadTicketsData();
+                  loadFeedbackData();
+                  toast.success("Metrics refreshed!");
+                }}
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs font-bold text-slate-700 hover:text-slate-900 border-slate-200 bg-white rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline">Refresh</span>
+              </Button>
+              <Button
+                onClick={() => setIsInviteModalOpen(true)}
+                size="sm"
+                className="h-8 text-xs font-bold bg-[#0d6e5a] hover:bg-[#094d3f] text-white rounded-xl flex items-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                <span>Invite User</span>
+              </Button>
+            </div>
           </div>
         </motion.div>
 
@@ -440,100 +631,194 @@ export default function UnifiedAdminDashboard() {
               className="space-y-6"
             >
             
-            {/* Financial Overview Metrics */}
-            <div className="space-y-3 select-none">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                  <Wallet className="h-3.5 w-3.5 text-[#0d6e5a]" />
-                  Monthly Financial Health
-                </h2>
-                <span className="text-[11px] text-slate-500 font-semibold">
-                  Billing cycle: Realtime Sync
-                </span>
+            {/* ── RECHARTS DYNAMIC LINE CHARTS (Users & Billing) ── */}
+            <div className="space-y-4">
+              {/* Financial Health Summary strip */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0d6e5a]">
+                    <Wallet className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-extrabold text-slate-900">Financial Growth &amp; Registrations</h2>
+                    <p className="text-[11px] text-slate-500">Live dynamic charts based on platform data</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-slate-600 font-medium overflow-x-auto py-1">
+                  <span>Collected: <strong className="text-slate-900 font-extrabold">₹{(analytics.totalRevenue || 0).toLocaleString()}</strong></span>
+                  <span className="text-slate-300">·</span>
+                  <span>Paying: <strong className="text-[#0d6e5a] font-extrabold">{analytics.paidCount || 0}</strong></span>
+                  <span className="text-slate-300">·</span>
+                  <span>Total Users: <strong className="text-slate-900 font-extrabold">{totalUsers}</strong></span>
+                  <span className="text-slate-300">·</span>
+                  <span>Conversion: <strong className="text-emerald-700 font-extrabold">{totalUsers > 0 ? (((analytics.paidCount || 0) / totalUsers) * 100).toFixed(1) : 0}%</strong></span>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                
-                {/* Real Collected Revenue Card */}
-                <Card className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-[#0d6e5a]/30 transition-all shadow-sm">
-                  <CardContent className="p-5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-600">Total Collected</span>
-                      <div className="h-8 w-8 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0d6e5a]">
-                        <TrendingUp className="h-4 w-4" />
+              {/* Two Recharts Line Charts Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {/* Chart 1: Daily User Registration Growth */}
+                <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden hover:border-slate-300 transition-colors">
+                  <CardContent className="p-5 space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                          <Users className="h-4 w-4 text-[#0d6e5a]" />
+                          <span>Daily User Registration Growth</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Cumulative users and day-by-day signups</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xl font-black text-slate-900">{totalUsers}</span>
+                        <span className="text-[10px] text-slate-500 font-medium block">Total accounts</span>
                       </div>
                     </div>
-                    <div>
-                      <div className="text-2xl font-black text-slate-900">
-                        ₹{(analytics.totalRevenue || 0).toLocaleString()}
-                      </div>
-                      <p className="text-xs text-slate-500 font-medium mt-1">
-                        Real Razorpay payments only
-                      </p>
+
+                    <div className="h-64 w-full pt-2">
+                      {isMounted && userGrowthData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={userGrowthData} margin={{ top: 10, right: 12, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                            <XAxis
+                              dataKey="date"
+                              stroke="#94a3b8"
+                              fontSize={11}
+                              tickLine={false}
+                              axisLine={{ stroke: "#e2e8f0" }}
+                            />
+                            <YAxis
+                              stroke="#94a3b8"
+                              fontSize={11}
+                              tickLine={false}
+                              axisLine={false}
+                              allowDecimals={false}
+                            />
+                            <Tooltip
+                              content={({ active, payload, label }) => {
+                                if (active && payload && payload.length) {
+                                  return (
+                                    <div className="bg-slate-900 text-white p-3 rounded-xl shadow-lg border border-slate-800 text-xs select-none">
+                                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">{label}</div>
+                                      <div className="flex items-center gap-2 font-bold text-teal-400">
+                                        <span>Cumulative Users:</span>
+                                        <span className="text-white text-sm">{payload[0]?.value}</span>
+                                      </div>
+                                      {payload[1] && (
+                                        <div className="text-[10px] text-slate-300 mt-0.5">
+                                          +{payload[1]?.value} new on this date
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="totalUsers"
+                              stroke="#0d6e5a"
+                              strokeWidth={2.5}
+                              dot={{ r: 3, fill: "#0d6e5a", stroke: "#ffffff", strokeWidth: 1.5 }}
+                              activeDot={{ r: 6, fill: "#0d6e5a", stroke: "#ffffff", strokeWidth: 2 }}
+                              name="Total Users"
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="registrations"
+                              stroke="#10b981"
+                              strokeWidth={1.5}
+                              strokeDasharray="4 4"
+                              dot={false}
+                              name="Daily Signups"
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="h-full flex items-center justify-center text-xs text-slate-400 italic">
+                          Loading registration metrics...
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Paying Customers Card */}
-                <Card className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-[#0d6e5a]/30 transition-all shadow-sm">
-                  <CardContent className="p-5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-600">Paying Customers</span>
-                      <div className="h-8 w-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 font-black text-sm">
-                        ₹
+                {/* Chart 2: Monthly Revenue Trends */}
+                <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden hover:border-slate-300 transition-colors">
+                  <CardContent className="p-5 space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                          <TrendingUp className="h-4 w-4 text-[#0f766e]" />
+                          <span>Monthly Revenue Trends</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Collected subscription revenue over time (₹)</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xl font-black text-[#0d6e5a]">₹{(analytics.totalRevenue || 0).toLocaleString()}</span>
+                        <span className="text-[10px] text-slate-500 font-medium block">Total revenue</span>
                       </div>
                     </div>
-                    <div>
-                      <div className="text-2xl font-black text-slate-900">
-                        {analytics.paidCount || 0}
-                      </div>
-                      <p className="text-xs text-slate-500 font-medium mt-1">
-                        Unique users who paid via Razorpay
-                      </p>
+
+                    <div className="h-64 w-full pt-2">
+                      {isMounted && revenueTrendsData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={revenueTrendsData} margin={{ top: 10, right: 12, left: -5, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                            <XAxis
+                              dataKey="month"
+                              stroke="#94a3b8"
+                              fontSize={11}
+                              tickLine={false}
+                              axisLine={{ stroke: "#e2e8f0" }}
+                            />
+                            <YAxis
+                              stroke="#94a3b8"
+                              fontSize={11}
+                              tickLine={false}
+                              axisLine={false}
+                              tickFormatter={(val) => `₹${val}`}
+                            />
+                            <Tooltip
+                              content={({ active, payload, label }) => {
+                                if (active && payload && payload.length) {
+                                  return (
+                                    <div className="bg-slate-900 text-white p-3 rounded-xl shadow-lg border border-slate-800 text-xs select-none">
+                                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">{label}</div>
+                                      <div className="flex items-center gap-2 font-bold text-emerald-400">
+                                        <span>Revenue:</span>
+                                        <span className="text-white text-sm">₹{Number(payload[0]?.value || 0).toLocaleString()}</span>
+                                      </div>
+                                      {payload[0]?.payload?.orders !== undefined && (
+                                        <div className="text-[10px] text-slate-300 mt-0.5">
+                                          {payload[0].payload.orders} paid transaction{payload[0].payload.orders !== 1 ? "s" : ""}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="revenue"
+                              stroke="#0f766e"
+                              strokeWidth={2.5}
+                              dot={{ r: 4, fill: "#0f766e", stroke: "#ffffff", strokeWidth: 2 }}
+                              activeDot={{ r: 7, fill: "#0d6e5a", stroke: "#ffffff", strokeWidth: 2 }}
+                              name="Monthly Revenue"
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="h-full flex items-center justify-center text-xs text-slate-400 italic">
+                          Loading revenue metrics...
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Free Grant Users Card */}
-                <Card className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-slate-300 transition-all shadow-sm">
-                  <CardContent className="p-5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-600">Free Grant Members</span>
-                      <div className="h-8 w-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600">
-                        <TrendingDown className="h-4 w-4" />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-black text-slate-900">
-                        {Math.max(0, (promaxUsers + premiumUsers) - (analytics.paidCount || 0))}
-                      </div>
-                      <p className="text-xs text-slate-500 font-medium mt-1">
-                        Admin-granted (₹0 revenue)
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Net Balance Card */}
-                <Card className="bg-gradient-to-br from-teal-50/60 to-emerald-50/60 border border-teal-200/80 rounded-2xl overflow-hidden hover:border-teal-300 transition-all shadow-sm">
-                  <CardContent className="p-5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#0d6e5a]">Net Account Balance</span>
-                      <div className="h-8 w-8 rounded-xl bg-[#0d6e5a] text-white flex items-center justify-center shadow-sm">
-                        <Wallet className="h-4 w-4" />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-black text-[#0d6e5a]">
-                        ₹{(analytics.totalRevenue || 0).toLocaleString()}
-                      </div>
-                      <p className="text-xs text-teal-700 font-medium mt-1">
-                        100% margin on software
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
               </div>
             </div>
 
@@ -826,14 +1111,14 @@ export default function UnifiedAdminDashboard() {
                           transition={{ duration: 0.15 }}
                           className="bg-slate-50 hover:bg-white border border-slate-200 rounded-2xl p-4 space-y-3.5 hover:border-slate-300 hover:shadow-md transition-all"
                         >
-                          <div className="flex items-start justify-between gap-2.5">
-                            <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex items-start justify-between gap-2 min-w-0">
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
                               <div className="h-9 w-9 rounded-xl bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center text-[#0d6e5a] font-extrabold text-xs shrink-0">
                                 {u.name ? u.name.charAt(0).toUpperCase() : u.email.charAt(0).toUpperCase()}
                               </div>
-                              <div className="min-w-0">
+                              <div className="min-w-0 flex-1">
                                 <span className="font-extrabold text-slate-900 text-xs block truncate">{u.name || "Anonymous User"}</span>
-                                <span className="text-[10px] text-slate-500 font-medium block truncate mt-0.5">{u.email}</span>
+                                <span className="text-[10px] text-slate-500 font-medium block truncate break-all mt-0.5" title={u.email}>{u.email}</span>
                               </div>
                             </div>
                             {u.plan === "owner" ? (
@@ -872,19 +1157,20 @@ export default function UnifiedAdminDashboard() {
                             )}
                           </div>
 
-                          <div className="border-t border-slate-200 pt-3 flex items-center justify-between">
-                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Plan Tier</span>
+                          <div className="border-t border-slate-200 pt-3 flex items-center justify-between gap-2 min-w-0">
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider shrink-0">Plan Tier</span>
                             {isOwnerUser ? (
-                              <span className="text-[10px] text-[#0d6e5a] font-bold uppercase">Immutable Owner</span>
+                              <span className="text-[10px] text-[#0d6e5a] font-bold uppercase truncate">👑 Owner</span>
                             ) : (
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 shrink-0">
                                 {updatingPlanId === u.id ? (
                                   <Bone width={90} height={26} borderRadius={8} duration={1.2} />
                                 ) : (
                                   <select
                                     value={u.plan}
                                     onChange={(e) => handleUpdateUserPlan(u.id, e.target.value as any)}
-                                    className="bg-white text-slate-800 border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold focus:outline-none focus:border-[#0d6e5a] cursor-pointer shadow-sm"
+                                    disabled={updatingPlanId === u.id}
+                                    className="bg-white text-slate-800 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold focus:outline-none focus:border-[#0d6e5a] cursor-pointer shadow-sm hover:border-slate-300 max-w-[130px]"
                                   >
                                     <option value="free">Free Tier</option>
                                     <option value="premium">Premium Pro</option>
@@ -999,30 +1285,31 @@ export default function UnifiedAdminDashboard() {
                       <div className="space-y-6">
                         
                         {/* Header details info */}
-                        <div className="flex items-start justify-between border-b border-slate-200 pb-4 gap-4">
-                          <div>
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between border-b border-slate-200 pb-4 gap-3">
+                          <div className="min-w-0 flex-1">
                             <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block">Client Email</span>
-                            <h3 className="text-sm font-extrabold text-slate-900 mt-0.5">{selectedTicket.userEmail}</h3>
-                            <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-1.5 font-bold">
-                              <span>Tier: {selectedTicket.userPlan.toUpperCase()}</span>
+                            <h3 className="text-sm font-extrabold text-slate-900 mt-0.5 break-all">{selectedTicket.userEmail}</h3>
+                            <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1.5 font-bold">
+                              <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-700">Tier: {selectedTicket.userPlan.toUpperCase()}</span>
                               <span>&bull;</span>
-                              <span>Credits: {selectedTicket.userCredits}</span>
+                              <span className="bg-teal-50 px-2 py-0.5 rounded text-[#0d6e5a]">Credits: {selectedTicket.userCredits}</span>
                             </div>
                           </div>
                           <Button
                             onClick={handleDeleteTicket}
                             variant="destructive"
                             size="sm"
-                            className="h-8 text-[10px] font-bold rounded-lg px-3 bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white border border-rose-200 transition-colors"
+                            className="w-full sm:w-auto h-8 text-[11px] font-bold rounded-xl px-3.5 bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white border border-rose-200 transition-colors shrink-0 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs self-start sm:self-auto"
                           >
-                            Delete Ticket
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span>Delete Ticket</span>
                           </Button>
                         </div>
 
                         {/* Message details */}
                         <div className="space-y-2">
                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block">User Query / Message</span>
-                          <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-xs text-slate-800 leading-relaxed font-medium">
+                          <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-xs text-slate-800 leading-relaxed font-medium break-words whitespace-pre-wrap">
                             {selectedTicket.message}
                           </div>
                         </div>
@@ -1038,7 +1325,7 @@ export default function UnifiedAdminDashboard() {
                                 </span>
                               )}
                             </div>
-                            <div className="bg-emerald-50/60 border border-emerald-200 p-4 rounded-xl text-xs text-emerald-900 leading-relaxed font-medium">
+                            <div className="bg-emerald-50/60 border border-emerald-200 p-4 rounded-xl text-xs text-emerald-900 leading-relaxed font-medium break-words whitespace-pre-wrap">
                               {selectedTicket.reply}
                             </div>
                           </div>
@@ -1151,10 +1438,10 @@ export default function UnifiedAdminDashboard() {
                       className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 hover:border-slate-300 transition-all shadow-sm"
                     >
                       {/* Header row */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="space-y-0.5">
-                          <p className="text-xs font-bold text-slate-900">{fb.name || "Anonymous"}</p>
-                          <p className="text-[10px] text-slate-500 font-mono">{fb.email || "—"}</p>
+                      <div className="flex items-start justify-between gap-2 min-w-0">
+                        <div className="space-y-0.5 min-w-0 flex-1">
+                          <p className="text-xs font-bold text-slate-900 truncate">{fb.name || "Anonymous"}</p>
+                          <p className="text-[10px] text-slate-500 font-mono break-all truncate">{fb.email || "—"}</p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${colorClass}`}>
@@ -1163,7 +1450,7 @@ export default function UnifiedAdminDashboard() {
                           <button
                             onClick={() => handleDeleteFeedback(fb.id)}
                             disabled={deletingFeedbackId === fb.id}
-                            className="h-6 w-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            className="h-7 w-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                             title="Delete feedback"
                           >
                             {deletingFeedbackId === fb.id ? (
@@ -1197,6 +1484,186 @@ export default function UnifiedAdminDashboard() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* ── Invite User Modal ── */}
+        {isInviteModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 shadow-2xl p-5 sm:p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150 relative">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0d6e5a] shrink-0">
+                    <UserPlus className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900">Invite New User</h3>
+                    <p className="text-[11px] text-slate-500 font-medium">Create user account &amp; assign pricing tier</p>
+                  </div>
+                </div>
+                <button
+                  onClick={resetInviteModal}
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {inviteResult ? (
+                <div className="space-y-4 py-2">
+                  <div className={`p-4 rounded-xl border text-xs ${
+                    inviteResult.emailSent
+                      ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                      : "bg-teal-50 border-teal-200 text-slate-900"
+                  }`}>
+                    <div className="flex items-center gap-2 font-bold mb-1">
+                      <CheckCircle2 className="h-4 w-4 text-[#0d6e5a]" />
+                      <span>{inviteResult.emailSent ? "Email Dispatched Successfully!" : "Account Created & Link Generated!"}</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-slate-600 font-medium">
+                      {inviteResult.message}
+                    </p>
+                  </div>
+
+                  {inviteResult.inviteLink && (
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-700 block">
+                        Direct Invitation / Activation Link:
+                      </label>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          readOnly
+                          value={inviteResult.inviteLink}
+                          className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 select-all outline-none break-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (inviteResult.inviteLink) {
+                              navigator.clipboard.writeText(inviteResult.inviteLink);
+                              setCopiedLink(true);
+                              setTimeout(() => setCopiedLink(false), 2500);
+                              toast.success("Invite link copied to clipboard!");
+                            }
+                          }}
+                          className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#0d6e5a] hover:bg-[#094d3f] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer shrink-0"
+                        >
+                          {copiedLink ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                          <span>{copiedLink ? "Copied" : "Copy"}</span>
+                        </button>
+                      </div>
+
+                      <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                        <a
+                          href={`mailto:${inviteResult.email}?subject=${encodeURIComponent("You're invited to join FastHire AI")}&body=${encodeURIComponent(
+                            `Hi ${inviteName || "there"},\n\nYou have been invited to FastHire AI — the AI resume optimizer.\n\nClick the link below to activate your account and access your dashboard:\n${inviteResult.inviteLink}\n\nBest regards,\nFastHire AI Team`
+                          )}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1 flex items-center justify-center gap-2 py-2 px-3 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-700 transition-colors cursor-pointer"
+                        >
+                          <Mail className="h-3.5 w-3.5 text-[#0d6e5a]" />
+                          <span>Open in Email App</span>
+                        </a>
+                        <button
+                          type="button"
+                          onClick={resetInviteModal}
+                          className="py-2 px-4 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors cursor-pointer"
+                        >
+                          Done
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <form onSubmit={handleInviteUser} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 block">
+                      User Email Address <span className="text-rose-500">*</span>
+                    </label>
+                    <Input
+                      type="email"
+                      required
+                      placeholder="colleague@example.com"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      className="h-10 text-xs rounded-xl border-slate-200"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 block">
+                      Full Name <span className="text-slate-400 font-normal">(optional)</span>
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Jane Doe"
+                      value={inviteName}
+                      onChange={(e) => setInviteName(e.target.value)}
+                      className="h-10 text-xs rounded-xl border-slate-200"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 block">
+                      Initial Subscription Plan
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(["free", "premium", "promax"] as const).map((plan) => {
+                        const labels: Record<string, string> = {
+                          free: "Free Tier",
+                          premium: "Premium",
+                          promax: "Pro Max",
+                        };
+                        const isSelected = invitePlan === plan;
+                        return (
+                          <button
+                            type="button"
+                            key={plan}
+                            onClick={() => setInvitePlan(plan)}
+                            className={`p-2.5 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer ${
+                              isSelected
+                                ? "bg-teal-50 border-[#0d6e5a] text-[#0d6e5a] shadow-xs"
+                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                            }`}
+                          >
+                            {labels[plan]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={resetInviteModal}
+                      className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <Button
+                      type="submit"
+                      disabled={inviting || !inviteEmail}
+                      className="h-9 px-4 text-xs font-bold bg-[#0d6e5a] hover:bg-[#094d3f] text-white rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
+                    >
+                      {inviting ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <span>Sending Invite...</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="h-3.5 w-3.5" />
+                          <span>Send Invitation</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
 
       </main>
     </div>

@@ -152,18 +152,22 @@ export async function GET(request: NextRequest) {
       const isEarlyPromotional = !isOwnerEmail(u.email) && !isKnownProMax && (first50UserIds.has(u.id) || usersList.length <= 50);
 
       // Determine plan tier:
-      // Priority: Owner > Explicit Admin Downgrade > Pro Max > Premium Pro > Free Tier
+      // Priority: Owner > Explicit Admin Selection > Pro Max > Premium Pro > Free Tier
       let plan = "free";
       if (isOwnerEmail(u.email)) {
         plan = "owner";
-      } else if (credit.billingCycle === "admin_free" || credit.billingCycle === "free") {
-        // Admin explicitly set this user to Free Tier
-        plan = "free";
-      } else if (isKnownProMax || credit.paidCredits >= 90 || credit.billingCycle === "admin_promax") {
+      } else if (credit.billingCycle === "admin_promax") {
         plan = "promax";
-      } else if (isKnownPremium || credit.paidCredits > 0 || credit.billingCycle === "admin_premium" || credit.billingCycle === "yearly" || isEarlyPromotional) {
-        // First-50 promotional grant OR paid/admin Premium Pro plan
+      } else if (credit.billingCycle === "admin_premium") {
         plan = "premium";
+      } else if (credit.billingCycle === "admin_free" || credit.billingCycle === "free") {
+        plan = "free";
+      } else if (isKnownProMax || credit.paidCredits >= 90) {
+        plan = "promax";
+      } else if (isKnownPremium || credit.paidCredits > 0 || credit.billingCycle === "yearly" || isEarlyPromotional) {
+        plan = "premium";
+      } else {
+        plan = "free";
       }
 
       // If user is early promotional and had no Credit record or 0 credits, persist it
@@ -283,27 +287,40 @@ export async function POST(request: NextRequest) {
 
     const admin = getAdminClient() as any;
 
-    // Check if target user is an immutable Pro Max user
-    const { data: targetUserData } = await admin
+    // Check if target user exists in database, or auto-sync from Supabase Auth admin
+    let targetUserData = null;
+    const { data: dbUser } = await admin
       .from("User")
       .select("id, email")
       .eq("id", targetUserId)
       .maybeSingle();
 
+    targetUserData = dbUser;
+
+    if (!targetUserData) {
+      try {
+        const { data: authUser } = await admin.auth.admin.getUserById(targetUserId);
+        if (authUser?.user) {
+          const syncUser = {
+            id: targetUserId,
+            email: authUser.user.email,
+            name: authUser.user.user_metadata?.full_name || authUser.user.email?.split("@")[0] || null,
+            createdAt: authUser.user.created_at || new Date().toISOString(),
+          };
+          await admin.from("User").upsert(syncUser, { onConflict: "id" }).catch(() => {});
+          targetUserData = syncUser;
+        }
+      } catch (lookupErr: any) {
+        logger.warn("[admin/users] User fallback lookup notice:", lookupErr?.message);
+      }
+    }
+
     const targetEmail = (targetUserData?.email || "").toLowerCase().trim();
 
-    const { data: proMaxPayment } = await admin
-      .from("PaymentLog")
-      .select("id")
-      .eq("userId", targetUserId)
-      .eq("planId", "promax")
-      .eq("status", "captured")
-      .maybeSingle();
-
-    if (targetEmail === "payyalajyothika333@gmail.com" || proMaxPayment) {
-      logger.warn(`[admin/users] Blocked attempt to change Pro Max user ${targetEmail} (${targetUserId})`);
+    if (isOwnerEmail(targetEmail)) {
+      logger.warn(`[admin/users] Blocked attempt to change Owner user ${targetEmail} (${targetUserId})`);
       return NextResponse.json({ 
-        error: "Pro Max subscribers cannot be modified from the admin portal." 
+        error: "Owner account cannot be modified." 
       }, { status: 403 });
     }
 
@@ -369,6 +386,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
+    try {
+      if (admin?.auth?.admin?.updateUserById) {
+        await admin.auth.admin.updateUserById(targetUserId, {
+          user_metadata: { plan: planId },
+        });
+      }
+    } catch (metaErr: any) {
+      logger.warn("[admin/users] updateUserById notice:", metaErr?.message);
+    }
+
     logger.info(`[admin/users] Plan modified by admin: targetUserId=${targetUserId} to plan=${planId} (paidCredits=${paidCredits})`);
     return NextResponse.json({ success: true, planId, paidCredits });
   } catch (error: any) {
@@ -376,3 +403,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export const PATCH = POST;

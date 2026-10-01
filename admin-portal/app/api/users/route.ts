@@ -145,24 +145,75 @@ export async function POST(request: NextRequest) {
       expiresAt = null;
     }
 
-    const { error } = await adminClient
+    // Ensure target user exists in User table to satisfy foreign key constraint
+    const { data: dbUser } = await adminClient
+      .from("User")
+      .select("id")
+      .eq("id", targetUserId)
+      .maybeSingle();
+
+    if (!dbUser) {
+      try {
+        const { data: authUser } = await adminClient.auth.admin.getUserById(targetUserId);
+        if (authUser?.user) {
+          await adminClient.from("User").upsert({
+            id: targetUserId,
+            email: authUser.user.email,
+            name: authUser.user.user_metadata?.full_name || authUser.user.email?.split("@")[0] || null,
+            createdAt: authUser.user.created_at || now.toISOString(),
+          }, { onConflict: "id" }).catch(() => {});
+        }
+      } catch {}
+    }
+
+    const { data: existingCredit } = await adminClient
       .from("Credit")
-      .upsert(
-        {
-          userId: targetUserId,
-          planId: planId,
+      .select("id")
+      .eq("userId", targetUserId)
+      .maybeSingle();
+
+    if (existingCredit?.id) {
+      const { error } = await adminClient
+        .from("Credit")
+        .update({
           paidCredits: paidCredits,
           billingCycle: billingCycle,
+          resetAt: now.toISOString(),
           expiresAt: expiresAt,
-          updatedAt: now.toISOString(),
-        },
-        { onConflict: "userId" }
-      );
+        })
+        .eq("userId", targetUserId);
+      if (error) throw error;
+    } else {
+      const newCreditId = "cred-" + targetUserId.slice(0, 12);
+      const { error } = await adminClient
+        .from("Credit")
+        .insert({
+          id: newCreditId,
+          userId: targetUserId,
+          freeUsed: 0,
+          paidCredits: paidCredits,
+          billingCycle: billingCycle,
+          resetAt: now.toISOString(),
+          expiresAt: expiresAt,
+        });
+      if (error) throw error;
+    }
 
-    if (error) throw error;
+    // Also update Supabase auth user_metadata so user session reflects the plan immediately
+    try {
+      if (adminClient?.auth?.admin?.updateUserById) {
+        await adminClient.auth.admin.updateUserById(targetUserId, {
+          user_metadata: { plan: planId },
+        });
+      }
+    } catch {
+      // ignore metadata update error
+    }
 
-    return NextResponse.json({ success: true, paidCredits });
+    return NextResponse.json({ success: true, planId, paidCredits });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
+
+export const PATCH = POST;
