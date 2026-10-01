@@ -880,7 +880,7 @@ export default function DashboardPage() {
                         <p className="text-[11px] text-amber-700 leading-relaxed font-normal">
                           The following bullet{afterScore.missingMetrics.length > 1 ? "s lack" : " lacks"} measurable numbers or percentages. Use the <strong>Bullet Improver</strong> below to add metrics and boost your score higher:
                         </p>
-                        <ul className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                        <ul className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
                           {afterScore.missingMetrics.map((bullet: string, i: number) => (
                             <li
                               key={i}

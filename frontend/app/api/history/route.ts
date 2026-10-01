@@ -127,6 +127,7 @@ export async function GET(request: NextRequest) {
 
     // 1. Fetch from Supabase DB across all potential user IDs using .in() query & fallback loop
     let dbData: any[] = [];
+    let inQuerySucceeded = false;
     try {
       const { data, error } = await admin
         .from("Resume")
@@ -135,26 +136,29 @@ export async function GET(request: NextRequest) {
 
       if (!error && Array.isArray(data)) {
         dbData = data;
+        inQuerySucceeded = data.length > 0;
       } else {
         if (error) logger.warn(`[history] DB .in query warning:`, error.message);
       }
     } catch (_e) {}
 
-    // Always run fallback loop to ensure no matching user record is missed
-    for (const uid of userIds) {
-      try {
-        const { data: singleData } = await admin
-          .from("Resume")
-          .select("*")
-          .eq("userId", uid);
-        if (Array.isArray(singleData)) {
-          for (const r of singleData) {
-            if (!dbData.some((d) => d.id === r.id)) {
-              dbData.push(r);
+    // Only run fallback loop if .in() returned nothing (prevents duplicates)
+    if (!inQuerySucceeded) {
+      for (const uid of userIds) {
+        try {
+          const { data: singleData } = await admin
+            .from("Resume")
+            .select("*")
+            .eq("userId", uid);
+          if (Array.isArray(singleData)) {
+            for (const r of singleData) {
+              if (!dbData.some((d) => d.id === r.id)) {
+                dbData.push(r);
+              }
             }
           }
-        }
-      } catch (_e) {}
+        } catch (_e) {}
+      }
     }
 
     // JS-side filter: exclude system records AND apply retention window

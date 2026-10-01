@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { extractActionVerbs } from "@/lib/ats/keywords";
+import { hasQuantifiedMetric } from "@/lib/ats/scorer";
 import {
   Sparkles,
   CheckCircle2,
@@ -84,11 +85,9 @@ export default function BulletImprover({
   const checkBullet = (text: string) => {
     const cleanText = text.replace(/^\s*([-*•+]|(\d+\.))\s+/, "");
     const verbs = extractActionVerbs(cleanText);
-    const hasVerb = verbs.length > 0;
-    const hasMetric =
-      /(\d+%|\d+\s*(percent|million|billion|k|m|x|%|\+)|years|months|\$\d+)/i.test(
-        cleanText,
-      );
+    const startsWithVerb = /^(built|engineered|developed|implemented|designed|created|led|managed|architected|optimized|spearheaded|accelerated|devised|automated|facilitated|orchestrated|injected|refactored|deployed|scaled|transformed|delivered|executed|launched|migrated)\b/i.test(cleanText);
+    const hasVerb = verbs.length > 0 || startsWithVerb;
+    const hasMetric = hasQuantifiedMetric(cleanText);
     return { hasVerb, hasMetric, verbsDetected: verbs, cleanText };
   };
 

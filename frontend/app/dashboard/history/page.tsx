@@ -891,19 +891,8 @@ export default function HistoryPage() {
 
         if (active) setAuthLoading(false);
 
-        // Optimistically load cached history if available
-        if (typeof window !== "undefined") {
-          const cached = localStorage.getItem(`fastHire_history_cache_${user.id}`);
-          if (cached) {
-            try {
-              const parsed = JSON.parse(cached);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                setResumes(parsed);
-                setLoading(false);
-              }
-            } catch (e) {}
-          }
-        }
+        // Note: we do NOT load from localStorage cache here to avoid stale/duplicate entries.
+        // We always fetch fresh from API and then update the cache.
 
         // Fetch history via API endpoint with Authorization Bearer token fallback
         const { data: sessionData } = await supabase.auth.getSession();
@@ -993,8 +982,13 @@ export default function HistoryPage() {
         if (!active) return;
 
         setResumes(dbData as any[]);
-        if (typeof window !== "undefined" && dbData.length > 0) {
-          localStorage.setItem(`fastHire_history_cache_${user.id}`, JSON.stringify(dbData));
+        // Always update cache with fresh data (clears stale/deleted records)
+        if (typeof window !== "undefined") {
+          if (dbData.length > 0) {
+            localStorage.setItem(`fastHire_history_cache_${user.id}`, JSON.stringify(dbData));
+          } else {
+            localStorage.removeItem(`fastHire_history_cache_${user.id}`);
+          }
         }
         setLoading(false);
       } catch (err) {
@@ -1011,10 +1005,23 @@ export default function HistoryPage() {
     try {
       const res = await fetch(`/api/history?id=${record.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete");
-      setResumes(prev => prev.filter(r => r.id !== record.id));
+      const updated = resumes.filter(r => r.id !== record.id);
+      setResumes(updated);
       setSelected(null);
+      // Immediately update localStorage cache so deleted item doesn't reappear on revisit
+      if (typeof window !== "undefined") {
+        const { data } = await supabase.auth.getUser();
+        const userId = data?.user?.id;
+        if (userId) {
+          if (updated.length > 0) {
+            localStorage.setItem(`fastHire_history_cache_${userId}`, JSON.stringify(updated));
+          } else {
+            localStorage.removeItem(`fastHire_history_cache_${userId}`);
+          }
+        }
+      }
       // Clamp page if needed
-      const newCount = resumes.length - 1;
+      const newCount = updated.length;
       const maxPage = Math.max(1, Math.ceil(newCount / PAGE_SIZE));
       setCurrentPage(prev => Math.min(prev, maxPage));
       toast.success("Optimization deleted.");

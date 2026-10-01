@@ -128,18 +128,16 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
 
   // Dynamic Keyword Match calculation:
   // Industry ATS benchmark: matches evaluated against target core skills quota (8–14 skills)
-  const targetCoreSkills = Math.max(5, Math.min(12, jdTechTerms.length || allTargetKeywords.length || 8));
+  const targetCoreSkills = Math.max(5, Math.min(14, jdTechTerms.length || allTargetKeywords.length || 8));
   const coreMatched = foundKeywords.length;
   const matchRatio = Math.min(1.0, coreMatched / targetCoreSkills);
   
-  // Dynamic scaling: higher keyword coverage produces proportionally higher scores
-  const keywordMatch = Math.min(98, Math.max(20, Math.round(
-    matchRatio * 85 + (coreMatched > 0 ? 12 : 0)
-  )));
+  // Pure ratio-based — no flat bonus just for having any match
+  const keywordMatch = Math.min(97, Math.max(10, Math.round(matchRatio * 90)));
 
   // ── 2. DYNAMIC SEMANTIC & ROLE ALIGNMENT ────────────────────────────────
   // Check target job titles against candidate resume headline/summary
-  let titleScore = 15;
+  let titleScore = 10;
   for (const title of COMMON_TITLES) {
     if (new RegExp(`\\b${title}\\b`, "i").test(jdLower)) {
       if (new RegExp(`\\b${title}\\b`, "i").test(resumeLower)) {
@@ -157,9 +155,9 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
 
   // Summary & narrative alignment
   const hasSummary = /\b(summary|objective|profile|about me)\b/i.test(resumeText);
-  const summaryScore = hasSummary ? 23 : 10;
+  const summaryScore = hasSummary ? 20 : 5;
 
-  const semanticMatch = Math.min(98, Math.max(20, Math.round(titleScore + techScore + summaryScore)));
+  const semanticMatch = Math.min(97, Math.max(15, Math.round(titleScore + techScore + summaryScore)));
 
   // ── 3. DYNAMIC IMPACT BULLETS & MISSING METRICS DETECTION ──────────────
   const rawLines = (resumeText || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
@@ -227,10 +225,10 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
 
   const totalBulletsCount = Math.max(1, bulletLines.length);
   const metricCoveragePercent = Math.round((quantifiedBulletsCount / totalBulletsCount) * 100);
-  const impactBullets = Math.min(100, Math.max(20, Math.round(scoreSum / totalBulletsCount)));
+  const impactBullets = Math.min(100, Math.max(10, Math.round(scoreSum / totalBulletsCount)));
 
   // ── 4. DYNAMIC FORMATTING & STRUCTURE ───────────────────────────────────
-  let formatting = 20;
+  let formatting = 10;
   const sectionChecks: [RegExp, number][] = [
     [/\b(experience|work history|employment|career|positions? held)\b/i, 20],
     [/\b(education|academic|college|university|degree|bachelor|master|phd)\b/i, 20],
@@ -246,10 +244,10 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
   }
   formatting = Math.min(100, formatting);
 
-  // ── 5. PURE DYNAMIC OVERALL SCORE (ZERO STATIC FLOORS) ──────────────────
-  // Mathematically synthesizes the 4 pillars:
-  // When a resume matches target keywords and has quantified metrics, it naturally achieves 80 to 95+!
-  const overall = Math.min(98, Math.max(15, Math.round(
+  // ── 5. PURE DYNAMIC OVERALL SCORE ────────────────────────────────────────
+  // Weighted composite — honest scoring, no hidden floors
+  // Poor keyword match (< 30%) will produce scores in the 35-55 range
+  const overall = Math.min(97, Math.max(10, Math.round(
     keywordMatch    * 0.35 +
     semanticMatch   * 0.25 +
     impactBullets   * 0.25 +
