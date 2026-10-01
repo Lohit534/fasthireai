@@ -509,46 +509,69 @@ export default function PricingPage() {
 
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10 pb-28 sm:pb-10 flex flex-col gap-10">
 
-        {/* Title details */}
-        <ScrollFadeIn className="text-center space-y-4">
-          <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-none">
-            Unlock Full <span className="bg-gradient-to-r from-[#0d6e5a] via-[#0f766e] to-[#134e4a] bg-clip-text text-transparent">FastHire Premium</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto font-medium leading-relaxed">
-            Gain an unfair advantage in the application process. Choose the pipeline limits that align with your search.
-          </p>
+        {/* Soft Light Teal Balloon-Curved Header Backdrop */}
+        <ScrollFadeIn className="relative mx-auto w-full max-w-5xl overflow-hidden rounded-[2.5rem] sm:rounded-[3rem] border border-teal-200/70 bg-gradient-to-b from-teal-100/70 via-teal-50/50 to-white/70 px-6 py-10 sm:py-14 text-center shadow-xs">
+          {/* Subtle Tech Grid Pattern */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(13,110,90,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(13,110,90,0.05)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none -z-10" />
+          
+          {/* Ambient Center Radial Glow */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[520px] h-[220px] bg-[#0d6e5a]/10 blur-[80px] rounded-full pointer-events-none -z-10" />
 
-          {/* Monthly / Yearly Toggle switch (2 months free yearly) */}
-          <div className="flex justify-center items-center gap-3 pt-2 select-none">
-            <button
-              onClick={() => handleBillingCycleChange("monthly")}
-              className={`text-xs font-bold px-3.5 py-1.5 rounded-full transition-all ${billingCycle === "monthly"
-                ? "bg-white text-slate-900 border border-slate-200 shadow-sm"
-                : "text-slate-500 hover:text-slate-900"
-                }`}
-            >
-              Bill Monthly
-            </button>
-            <button
-              onClick={() => handleBillingCycleChange("yearly")}
-              className={`text-xs font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 transition-all ${billingCycle === "yearly"
-                ? "bg-white text-slate-900 border border-slate-200 shadow-sm"
-                : "text-slate-500 hover:text-slate-900"
-                }`}
-            >
-              Bill Yearly
-              <Badge className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[9px] font-bold px-1.5 py-0.5 rounded-md">
-                2 Months Free
-              </Badge>
-            </button>
-          </div>
+          <div className="max-w-2xl mx-auto space-y-4">
+            {/* PRICING Tag */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 text-[#0d6e5a] text-[11px] font-extrabold uppercase tracking-widest">
+              PRICING
+            </div>
 
-          {/* Non-refundable policy notice */}
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center max-w-xl mx-auto select-none">
-            <p className="text-[11px] text-amber-700 font-semibold flex items-center justify-center gap-2">
-              <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-              <span><strong>Policy Notice:</strong> All payments &amp; plan switches are final. Money is <strong>strictly non-refundable</strong> under any circumstances.</span>
+            {/* Simple, honest pricing */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight font-heading">
+              Simple, honest{" "}
+              <span className="bg-gradient-to-r from-[#0d6e5a] via-[#0f766e] to-[#134e4a] bg-clip-text text-transparent">
+                pricing
+              </span>
+            </h1>
+
+            {/* Subtitle */}
+            <p className="text-xs sm:text-sm md:text-base text-slate-600 max-w-lg mx-auto font-medium leading-relaxed">
+              Start free. Pay only when you want to download your resume or cover letter.
             </p>
+
+            {/* Monthly / Yearly Toggle Pill (matching the pill design from screenshot) */}
+            <div className="flex justify-center items-center pt-2 select-none">
+              <div className="inline-flex items-center p-1 bg-white border border-slate-200/90 rounded-full shadow-xs gap-1">
+                <button
+                  type="button"
+                  onClick={() => handleBillingCycleChange("monthly")}
+                  className={`text-xs font-bold px-4 py-1.5 rounded-full transition-all cursor-pointer ${
+                    billingCycle === "monthly"
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBillingCycleChange("yearly")}
+                  className={`text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1.5 transition-all cursor-pointer ${
+                    billingCycle === "yearly"
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <span>Yearly</span>
+                  <span className="bg-emerald-100 text-[#0d6e5a] text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-emerald-200/60">
+                    2 months free
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Transparent Non-refundable policy notice */}
+            <div className="inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-white/70 border border-amber-300/60 text-[11px] text-amber-800 font-medium max-w-md mx-auto shadow-2xs">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+              <span><strong>Policy Notice:</strong> Strictly non-refundable. Cancel anytime.</span>
+            </div>
           </div>
         </ScrollFadeIn>
 
@@ -565,14 +588,14 @@ export default function PricingPage() {
             return (
               <Card
                 key={plan.id}
-                className={`relative flex flex-col justify-between overflow-hidden rounded-xl shadow-sm transition-all duration-300 ${
+                className={`relative flex flex-col justify-between overflow-hidden rounded-2xl shadow-sm transition-all duration-300 bg-white ${
                   isActive
-                    ? "border-[#0d6e5a]/50 ring-1 ring-[#0d6e5a]/30 bg-[#0d6e5a]/5"
+                    ? "border-2 border-[#0d6e5a] ring-2 ring-[#0d6e5a]/20"
                     : isProMax
-                    ? "border-amber-400/50 ring-1 ring-amber-400/30 bg-amber-50/50 hover:border-amber-400"
+                    ? "border-2 border-amber-400 ring-1 ring-amber-400/30 hover:border-amber-500 hover:shadow-md"
                     : isPro
-                    ? "border-[#0d6e5a]/30 ring-1 ring-[#0d6e5a]/20 scale-105 bg-white shadow-md hover:border-[#0d6e5a]/50"
-                    : "border-slate-200 bg-white hover:border-slate-300"
+                    ? "border-2 border-[#0d6e5a] ring-1 ring-[#0d6e5a]/30 scale-[1.02] shadow-md hover:border-[#0d6e5a]"
+                    : "border border-slate-200 hover:border-slate-300 hover:shadow-sm"
                 }`}
               >
                 {/* Active Plan Top Border Glow */}
