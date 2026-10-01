@@ -224,7 +224,7 @@ export default function PricingPage() {
             if (apiCredits.isOwner) setIsOwner(true);
             if (apiCredits.paidCredits >= 365 || apiCredits.isFirst50) setIsFirst50(true);
             if (apiCredits.expiresAt) setExpiresAt(apiCredits.expiresAt);
-            
+
             let plan = "free";
             if (apiCredits.isOwner) {
               plan = apiCredits.planId || "premium";
@@ -235,7 +235,7 @@ export default function PricingPage() {
             } else {
               plan = apiCredits.planId || cachedPlan || "free";
             }
-            
+
             localStorage.setItem(`fastHire_plan_${data.user.id}`, plan);
             setCurrentPlan(plan);
           } else {
@@ -513,28 +513,18 @@ export default function PricingPage() {
         <ScrollFadeIn className="relative mx-auto w-full max-w-5xl overflow-hidden rounded-[2.5rem] sm:rounded-[3rem] border border-teal-200/70 bg-gradient-to-b from-teal-100/70 via-teal-50/50 to-white/70 px-6 py-10 sm:py-14 text-center shadow-xs">
           {/* Subtle Tech Grid Pattern */}
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(13,110,90,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(13,110,90,0.05)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none -z-10" />
-          
+
           {/* Ambient Center Radial Glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[520px] h-[220px] bg-[#0d6e5a]/10 blur-[80px] rounded-full pointer-events-none -z-10" />
 
           <div className="max-w-2xl mx-auto space-y-4">
-            {/* PRICING Tag */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 text-[#0d6e5a] text-[11px] font-extrabold uppercase tracking-widest">
-              PRICING
-            </div>
+
 
             {/* Simple, honest pricing */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight font-heading">
               Simple, honest{" "}
-              <span className="bg-gradient-to-r from-[#0d6e5a] via-[#0f766e] to-[#134e4a] bg-clip-text text-transparent">
-                pricing
-              </span>
             </h1>
 
-            {/* Subtitle */}
-            <p className="text-xs sm:text-sm md:text-base text-slate-600 max-w-lg mx-auto font-medium leading-relaxed">
-              Start free. Pay only when you want to download your resume or cover letter.
-            </p>
 
             {/* Monthly / Yearly Toggle Pill (matching the pill design from screenshot) */}
             <div className="flex justify-center items-center pt-2 select-none">
@@ -542,22 +532,20 @@ export default function PricingPage() {
                 <button
                   type="button"
                   onClick={() => handleBillingCycleChange("monthly")}
-                  className={`text-xs font-bold px-4 py-1.5 rounded-full transition-all cursor-pointer ${
-                    billingCycle === "monthly"
+                  className={`text-xs font-bold px-4 py-1.5 rounded-full transition-all cursor-pointer ${billingCycle === "monthly"
                       ? "bg-slate-900 text-white shadow-xs"
                       : "text-slate-600 hover:text-slate-900"
-                  }`}
+                    }`}
                 >
                   Monthly
                 </button>
                 <button
                   type="button"
                   onClick={() => handleBillingCycleChange("yearly")}
-                  className={`text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1.5 transition-all cursor-pointer ${
-                    billingCycle === "yearly"
+                  className={`text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1.5 transition-all cursor-pointer ${billingCycle === "yearly"
                       ? "bg-slate-900 text-white shadow-xs"
                       : "text-slate-600 hover:text-slate-900"
-                  }`}
+                    }`}
                 >
                   <span>Yearly</span>
                   <span className="bg-emerald-100 text-[#0d6e5a] text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-emerald-200/60">
@@ -588,15 +576,14 @@ export default function PricingPage() {
             return (
               <Card
                 key={plan.id}
-                className={`relative flex flex-col justify-between overflow-hidden rounded-2xl shadow-sm transition-all duration-300 bg-white ${
-                  isActive
+                className={`relative flex flex-col justify-between overflow-hidden rounded-2xl shadow-sm transition-all duration-300 bg-white ${isActive
                     ? "border-2 border-[#0d6e5a] ring-2 ring-[#0d6e5a]/20"
                     : isProMax
-                    ? "border-2 border-amber-400 ring-1 ring-amber-400/30 hover:border-amber-500 hover:shadow-md"
-                    : isPro
-                    ? "border-2 border-[#0d6e5a] ring-1 ring-[#0d6e5a]/30 scale-[1.02] shadow-md hover:border-[#0d6e5a]"
-                    : "border border-slate-200 hover:border-slate-300 hover:shadow-sm"
-                }`}
+                      ? "border-2 border-amber-400 ring-1 ring-amber-400/30 hover:border-amber-500 hover:shadow-md"
+                      : isPro
+                        ? "border-2 border-[#0d6e5a] ring-1 ring-[#0d6e5a]/30 scale-[1.02] shadow-md hover:border-[#0d6e5a]"
+                        : "border border-slate-200 hover:border-slate-300 hover:shadow-sm"
+                  }`}
               >
                 {/* Active Plan Top Border Glow */}
                 {isActive && (
@@ -683,21 +670,20 @@ export default function PricingPage() {
                     )}
                     <Button
                       onClick={() => handlePlanAction(plan)}
-                      className={`w-full font-bold text-xs h-10 rounded-xl transition-all ${
-                        isActive
+                      className={`w-full font-bold text-xs h-10 rounded-xl transition-all ${isActive
                           ? "bg-emerald-50 border border-emerald-300 text-emerald-700 hover:bg-emerald-100 shadow-sm"
                           : isProMax
-                          ? "bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-extrabold shadow-sm"
-                          : isPro
-                          ? "bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-extrabold shadow-sm"
-                          : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm"
-                      }`}
+                            ? "bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-extrabold shadow-sm"
+                            : isPro
+                              ? "bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-extrabold shadow-sm"
+                              : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm"
+                        }`}
                     >
                       {isActive
                         ? (isOwner ? "✓ Active (Owner Unlimited)" : "✓ Current Plan")
                         : plan.id === "free"
-                        ? "Free Plan"
-                        : (isOwner ? `Simulate ${plan.name}` : plan.cta)}
+                          ? "Free Plan"
+                          : (isOwner ? `Simulate ${plan.name}` : plan.cta)}
                     </Button>
                   </div>
 
