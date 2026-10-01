@@ -163,9 +163,15 @@ export default function AdminDashboard() {
         const data = await res.json();
         setUsers(data.users || []);
         setAnalytics(data.analytics || { totalOptimizations: 0, totalTickets: 0 });
-      } else toast.error("Failed to load users.");
-    } catch { toast.error("Error loading users."); }
-    finally { setUsersLoading(false); }
+      } else {
+        const err = await res.json().catch(() => ({}));
+        console.warn("[admin] Users load notice:", err.error);
+      }
+    } catch (e: any) {
+      console.warn("[admin] Error loading users:", e.message);
+    } finally {
+      setUsersLoading(false);
+    }
   };
 
   const loadTickets = async (token = accessToken) => {
@@ -174,11 +180,18 @@ export default function AdminDashboard() {
       const res = await fetch("/api/tickets", { headers: authHeaders(token) });
       if (res.ok) {
         const data = await res.json();
-        setTickets(data);
-        if (data.length > 0) setSelectedTicket(data[0]);
-      } else toast.error("Failed to load tickets.");
-    } catch { toast.error("Error loading tickets."); }
-    finally { setTicketsLoading(false); }
+        const ticketsList = Array.isArray(data) ? data : [];
+        setTickets(ticketsList);
+        if (ticketsList.length > 0) setSelectedTicket(ticketsList[0]);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        console.warn("[admin] Tickets load notice:", err.error);
+      }
+    } catch (e: any) {
+      console.warn("[admin] Error loading tickets:", e.message);
+    } finally {
+      setTicketsLoading(false);
+    }
   };
 
   const loadFeedback = async (token = accessToken) => {
@@ -252,10 +265,13 @@ export default function AdminDashboard() {
         toast.success(`Plan updated to ${planId}`);
         setUsers(prev => prev.map(u =>
           u.id === targetUserId
-            ? { ...u, plan: planId, paidCredits: planId === "premium" ? 15 : planId === "promax" ? 999999 : 0 }
+            ? { ...u, plan: planId, paidCredits: planId === "premium" ? 20 : planId === "promax" ? 90 : 0 }
             : u
         ));
-      } else toast.error("Failed to update plan.");
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.error || "Failed to update plan.");
+      }
     } catch { toast.error("Connection error."); }
     finally { setUpdatingPlanId(null); }
   };

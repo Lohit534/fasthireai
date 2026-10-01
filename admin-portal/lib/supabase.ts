@@ -13,13 +13,24 @@ export function getSupabase(): SupabaseClient {
   return _client;
 }
 
-// Admin/server client using service role — created fresh per request
-export function getAdminClient(): SupabaseClient {
+// Admin/server client using service role or bearer token — created fresh per request
+export function getAdminClient(token?: string): SupabaseClient {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-service-key";
-  return createClient(url, serviceKey, {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || token || "placeholder-service-key";
+  
+  const options: any = {
     auth: { autoRefreshToken: false, persistSession: false },
-  });
+  };
+
+  if (token) {
+    options.global = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+  }
+
+  return createClient(url, serviceKey, options);
 }
 
 // Thin proxy so client components can write `supabase.auth.xxx()`
