@@ -519,12 +519,18 @@ export default function PricingPage() {
 
           <div className="max-w-2xl mx-auto space-y-4">
 
-
             {/* Simple, honest pricing */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight font-heading">
               Simple, honest{" "}
+              <span className="bg-gradient-to-r from-[#0d6e5a] via-[#0f766e] to-[#134e4a] bg-clip-text text-transparent">
+                pricing
+              </span>
             </h1>
 
+            {/* Subtitle */}
+            <p className="text-xs sm:text-sm md:text-base text-slate-600 max-w-lg mx-auto font-medium leading-relaxed">
+              Start free. Pay only when you want to download your resume or cover letter.
+            </p>
 
             {/* Monthly / Yearly Toggle Pill (matching the pill design from screenshot) */}
             <div className="flex justify-center items-center pt-2 select-none">
