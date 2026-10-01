@@ -1,11 +1,9 @@
 export function isAdminEmail(email?: string): boolean {
   if (!email) return false;
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || process.env.ADMIN_EMAIL;
-  // If env var is available, enforce exact match
-  if (adminEmail) {
-    return email.toLowerCase().trim() === adminEmail.toLowerCase().trim();
+  const rawAdmin = process.env.NEXT_PUBLIC_ADMIN_EMAIL || process.env.ADMIN_EMAIL || process.env.OWNER_EMAIL || "lohithpeyyala@gmail.com";
+  const allowed = rawAdmin.split(",").map(e => e.toLowerCase().trim()).filter(Boolean);
+  if (!allowed.includes("lohithpeyyala@gmail.com")) {
+    allowed.push("lohithpeyyala@gmail.com");
   }
-  // Fallback for client side if NEXT_PUBLIC_ADMIN_EMAIL isn't configured in browser
-  // (Server API routes strictly enforce ADMIN_EMAIL on all requests)
-  return true;
+  return allowed.includes(email.toLowerCase().trim());
 }

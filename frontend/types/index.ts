@@ -78,11 +78,14 @@ export const MAX_JD_CHARS = 5000;
 export const MIN_RESUME_CHARS = 100;
 export const MIN_JD_CHARS = 50;
 
-// Owner email is stored in environment variable only — never in source code
-export const OWNER_EMAIL = process.env.OWNER_EMAIL || process.env.ADMIN_EMAIL || "";
+// Owner email configuration with environment variable and fallback
+export const OWNER_EMAIL = process.env.OWNER_EMAIL || process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || process.env.NEXT_PUBLIC_OWNER_EMAIL || "lohithpeyyala@gmail.com";
 export const isOwnerEmail = (email?: string): boolean => {
   if (!email) return false;
-  const ownerEmail = process.env.OWNER_EMAIL || process.env.ADMIN_EMAIL || "";
-  if (!ownerEmail) return false;
-  return email.toLowerCase().trim() === ownerEmail.toLowerCase().trim();
+  const rawOwners = process.env.OWNER_EMAIL || process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || process.env.NEXT_PUBLIC_OWNER_EMAIL || "lohithpeyyala@gmail.com";
+  const ownerEmails = rawOwners.split(",").map(e => e.toLowerCase().trim()).filter(Boolean);
+  if (!ownerEmails.includes("lohithpeyyala@gmail.com")) {
+    ownerEmails.push("lohithpeyyala@gmail.com");
+  }
+  return ownerEmails.includes(email.toLowerCase().trim());
 };

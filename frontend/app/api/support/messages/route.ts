@@ -75,23 +75,56 @@ export async function GET(request: NextRequest) {
     const isOwner = isOwnerEmail(user.email);
     const adminSupabase = getAdminClient();
 
-    let query = adminSupabase
-      .from("Resume")
-      .select("*")
-      .eq("jobTitle", "SUPPORT_TICKET")
-      .order("createdAt", { ascending: false });
+    let data: any[] = [];
+    if (isOwner) {
+      const { data: allTickets, error } = await adminSupabase
+        .from("Resume")
+        .select("*")
+        .eq("jobTitle", "SUPPORT_TICKET")
+        .order("createdAt", { ascending: false });
+      if (error) throw error;
+      data = allTickets || [];
+    } else {
+      const activeId = await getActiveUserId(user);
+      const userIds = Array.from(new Set([user.id, activeId].filter(Boolean)));
 
-    if (!isOwner) {
-      query = query.eq("userId", user.id);
+      // 1. Query by known user IDs
+      const { data: idTickets, error: idErr } = await adminSupabase
+        .from("Resume")
+        .select("*")
+        .eq("jobTitle", "SUPPORT_TICKET")
+        .in("userId", userIds)
+        .order("createdAt", { ascending: false });
+
+      if (idErr) logger.warn("[messages-api] id query error:", idErr.message);
+
+      // 2. Query by userEmail in jobDescription metadata to catch all user tickets
+      let emailTickets: any[] = [];
+      if (user.email) {
+        const { data: matchedEmail } = await adminSupabase
+          .from("Resume")
+          .select("*")
+          .eq("jobTitle", "SUPPORT_TICKET")
+          .ilike("jobDescription", `%"userEmail":"${user.email.toLowerCase().trim()}"%`)
+          .order("createdAt", { ascending: false });
+        emailTickets = matchedEmail || [];
+      }
+
+      // Merge and deduplicate
+      const seen = new Set<string>();
+      for (const t of [...(idTickets || []), ...emailTickets]) {
+        if (!seen.has(t.id)) {
+          seen.add(t.id);
+          data.push(t);
+        }
+      }
+      data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
 
-    const { data, error } = await query;
-    if (error) throw error;
-
     // Map to the expected output format
-    // Auto-delete only tickets that the admin has replied to AND are older than 24 hours (post-reply)
+    // Retain replied tickets for at least 7 days so users can review admin solutions
     const now = Date.now();
-    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
     const expiredIdsToDelete: string[] = [];
 
     const formattedMessages = (data || []).map((row: any) => {
@@ -106,10 +139,10 @@ export async function GET(request: NextRequest) {
       const ticketStatus: "pending" | "replied" = hasAdminReply ? "replied" : "pending";
       const repliedAt = meta.repliedAt;
 
-      // If admin has replied AND repliedAt is older than 24 hours, mark for deletion
+      // If admin has replied AND repliedAt is older than 7 days, mark for archival
       if (ticketStatus === "replied" && repliedAt) {
         const replyTime = new Date(repliedAt).getTime();
-        if (now - replyTime > TWENTY_FOUR_HOURS) {
+        if (now - replyTime > SEVEN_DAYS) {
           expiredIdsToDelete.push(row.id);
           return null;
         }

@@ -6,6 +6,15 @@ const nextConfig: NextConfig = {
   // bundled by Turbopack/webpack. They are loaded at runtime via require() inside
   // serverless functions where Node.js is available.
   serverExternalPackages: ["pdf-parse", "mammoth"],
+  async redirects() {
+    return [
+      {
+        source: "/admin",
+        destination: "/dashboard/admin",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

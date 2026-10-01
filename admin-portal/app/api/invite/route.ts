@@ -14,6 +14,71 @@ async function verifyAdmin(request: NextRequest) {
   return data.user;
 }
 
+function getBaseAppUrl(request: NextRequest, bodyOrigin?: string): string {
+  if (bodyOrigin && typeof bodyOrigin === "string" && bodyOrigin.startsWith("http")) {
+    if (!bodyOrigin.includes("localhost") && !bodyOrigin.includes("127.0.0.1")) {
+      return bodyOrigin.replace(/\/$/, "");
+    }
+  }
+
+  const origin = request.headers.get("origin");
+  const proto = request.headers.get("x-forwarded-proto") || "https";
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const headerOrigin = origin || (host ? `${proto}://${host}` : "");
+
+  if (headerOrigin && !headerOrigin.includes("localhost") && !headerOrigin.includes("127.0.0.1")) {
+    return headerOrigin.replace(/\/$/, "");
+  }
+
+  const referer = request.headers.get("referer");
+  if (referer) {
+    try {
+      const parsed = new URL(referer);
+      if (!parsed.hostname.includes("localhost") && !parsed.hostname.includes("127.0.0.1")) {
+        return parsed.origin.replace(/\/$/, "");
+      }
+    } catch {}
+  }
+
+  const userAppUrl = process.env.USER_APP_URL || process.env.NEXT_PUBLIC_APP_URL || "";
+  if (userAppUrl && !userAppUrl.includes("localhost") && !userAppUrl.includes("127.0.0.1")) {
+    return userAppUrl.replace(/\/$/, "");
+  }
+
+  if (bodyOrigin && bodyOrigin.startsWith("http")) {
+    return bodyOrigin.replace(/\/$/, "");
+  }
+  if (headerOrigin) {
+    return headerOrigin.replace(/\/$/, "");
+  }
+
+  return "https://fasthireai.com";
+}
+
+function sanitizeInviteLink(link: string | null, targetBaseUrl: string): string | null {
+  if (!link) return null;
+  const safeBase = (!targetBaseUrl || targetBaseUrl.includes("localhost") || targetBaseUrl.includes("127.0.0.1"))
+    ? "https://fasthireai.com"
+    : targetBaseUrl.replace(/\/$/, "");
+
+  try {
+    let sanitized = link;
+    sanitized = sanitized
+      .replace(/redirect_to=http(?:s)?%3A%2F%2Flocalhost(?::\d+)?/gi, `redirect_to=${encodeURIComponent(safeBase)}`)
+      .replace(/redirect_to=http(?:s)?%3A%2F%2F127\.0\.0\.1(?::\d+)?/gi, `redirect_to=${encodeURIComponent(safeBase)}`)
+      .replace(/redirect_to=http(?:s)?:\/\/localhost(?::\d+)?/gi, `redirect_to=${safeBase}`)
+      .replace(/redirect_to=http(?:s)?:\/\/127\.0\.0\.1(?::\d+)?/gi, `redirect_to=${safeBase}`);
+
+    sanitized = sanitized
+      .replace(/^https?:\/\/localhost(?::\d+)?/i, safeBase)
+      .replace(/^https?:\/\/127\.0\.0\.1(?::\d+)?/i, safeBase);
+
+    return sanitized;
+  } catch {
+    return link;
+  }
+}
+
 export async function POST(request: NextRequest) {
   const admin_user = await verifyAdmin(request);
   if (!admin_user) {
@@ -21,7 +86,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { email, name, planId = "free" } = await request.json();
+    const { email, name, planId = "free", origin: clientOrigin } = await request.json();
     if (!email || !email.includes("@")) {
       return NextResponse.json({ error: "Valid email address is required" }, { status: 400 });
     }
@@ -30,105 +95,91 @@ export async function POST(request: NextRequest) {
     const cleanName = (name || "").trim();
     const adminClient = getAdminClient() as any;
 
-    const appUrl = (
-      process.env.USER_APP_URL ||
-      process.env.NEXT_PUBLIC_APP_URL ||
-      "https://fasthire-ai.vercel.app"
-    ).replace(/\/$/, "");
+    const appUrl = getBaseAppUrl(request, clientOrigin);
     const redirectUrl = `${appUrl}/auth/confirm?next=/dashboard`;
 
     let emailSent = false;
     let actionLink: string | null = null;
     let userId: string | null = null;
-    let isExisting = false;
 
-    // 1. Check if user already exists in Supabase Auth
+    // 1. Try sending the invitation email through Supabase mailer
     try {
-      const { data: userListData } = await adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      const found = userListData?.users?.find(
-        (u: any) => u.email?.toLowerCase().trim() === cleanEmail
-      );
-      if (found) {
-        isExisting = true;
-        userId = found.id;
-      }
-    } catch (e) {
-      console.warn("Could not list users to check existence:", e);
-    }
+      const inviteRes = await adminClient.auth.admin.inviteUserByEmail(cleanEmail, {
+        redirectTo: redirectUrl,
+        data: { name: cleanName, plan: planId },
+      });
 
-    if (isExisting && userId) {
-      // User exists: update user metadata & generate a direct login/magic link
-      try {
-        await adminClient.auth.admin.updateUserById(userId, {
-          user_metadata: { name: cleanName || undefined, plan: planId },
-        });
-      } catch (err) {
-        console.warn("updateUserById error:", err);
+      if (inviteRes.error) {
+        throw inviteRes.error;
       }
-
-      try {
-        const magicRes = await adminClient.auth.admin.generateLink({
-          type: "magiclink",
-          email: cleanEmail,
-          options: { redirectTo: redirectUrl },
-        });
-        if (magicRes.data?.properties?.action_link) {
-          actionLink = magicRes.data.properties.action_link;
-        }
-      } catch (err) {
-        console.warn("Magiclink generation error for existing user:", err);
-      }
-    } else {
-      // New user: attempt standard invitation email
-      try {
-        const inviteRes = await adminClient.auth.admin.inviteUserByEmail(cleanEmail, {
-          redirectTo: redirectUrl,
-          data: { name: cleanName, plan: planId },
-        });
-
-        if (!inviteRes.error && inviteRes.data?.user) {
-          emailSent = true;
-          userId = inviteRes.data.user.id;
-        }
-      } catch (err) {
-        console.warn("inviteUserByEmail error:", err);
-      }
-
-      // If invite email could not be sent or user was not created, create user directly
-      if (!userId) {
-        try {
-          const createRes = await adminClient.auth.admin.createUser({
-            email: cleanEmail,
-            email_confirm: true,
-            user_metadata: { name: cleanName, plan: planId },
-          });
-          if (createRes.data?.user) {
-            userId = createRes.data.user.id;
-          }
-        } catch (err) {
-          console.warn("createUser fallback error:", err);
-        }
-      }
-
-      // Generate direct activation link
+      emailSent = true;
+      userId = inviteRes.data?.user?.id || null;
+    } catch {
+      // 2. Fallback: Generate the invite link directly (bypasses Supabase's SMTP/rate limits)
       try {
         const linkRes = await adminClient.auth.admin.generateLink({
-          type: emailSent ? "invite" : "magiclink",
+          type: "invite",
           email: cleanEmail,
           options: {
             redirectTo: redirectUrl,
             data: { name: cleanName, plan: planId },
           },
         });
-        if (linkRes.data?.properties?.action_link) {
-          actionLink = linkRes.data.properties.action_link;
+
+        if (linkRes.error) {
+          // If user exists, generate magic link instead
+          const magicRes = await adminClient.auth.admin.generateLink({
+            type: "magiclink",
+            email: cleanEmail,
+            options: { redirectTo: redirectUrl },
+          });
+          if (magicRes.data?.properties?.action_link) {
+            actionLink = magicRes.data.properties.action_link;
+            userId = magicRes.data?.user?.id || null;
+          } else {
+            throw linkRes.error;
+          }
+        } else {
+          actionLink = linkRes.data?.properties?.action_link || null;
+          userId = linkRes.data?.user?.id || null;
         }
-      } catch (err) {
-        console.warn("generateLink fallback error:", err);
+      } catch {
+        // If all else fails, create user directly and generate login link
+        const createRes = await adminClient.auth.admin.createUser({
+          email: cleanEmail,
+          email_confirm: true,
+          user_metadata: { name: cleanName, plan: planId },
+        });
+
+        if (createRes.data?.user) {
+          userId = createRes.data.user.id;
+          const magicRes = await adminClient.auth.admin.generateLink({
+            type: "magiclink",
+            email: cleanEmail,
+            options: { redirectTo: redirectUrl },
+          });
+          actionLink = magicRes.data?.properties?.action_link || null;
+        }
       }
     }
 
-    // 2. Sync to public.User table
+    // Also get action link if emailSent was true but admin wants a copy
+    if (emailSent && !actionLink) {
+      try {
+        const linkRes = await adminClient.auth.admin.generateLink({
+          type: "invite",
+          email: cleanEmail,
+          options: { redirectTo: redirectUrl },
+        });
+        if (linkRes.data?.properties?.action_link) {
+          actionLink = linkRes.data.properties.action_link;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // 3. Upsert user in public.User
     if (userId) {
       try {
         await adminClient.from("User").upsert(
@@ -140,11 +191,11 @@ export async function POST(request: NextRequest) {
           },
           { onConflict: "id" }
         );
-      } catch (err) {
-        console.warn("User table upsert warning:", err);
+      } catch {
+        // ignore table sync error
       }
 
-      // 3. Provision Plan & Credits in public.Credit table
+      // 4. Provision Plan & Credits in public.Credit
       try {
         let paidCredits = 0;
         let expiresAt: string | null = null;
@@ -169,30 +220,25 @@ export async function POST(request: NextRequest) {
           },
           { onConflict: "userId" }
         );
-      } catch (err) {
-        console.warn("Credit table upsert warning:", err);
+      } catch {
+        // ignore credit sync error
       }
     }
 
-    const planLabel = planId === "promax" ? "Pro Max" : planId === "premium" ? "Pro" : "Free";
-    let message = "";
-    if (emailSent) {
-      message = `Invitation email successfully dispatched to ${cleanEmail} with ${planLabel} plan!`;
-    } else if (isExisting) {
-      message = `Existing user upgraded to ${planLabel}! Direct login link generated below.`;
-    } else {
-      message = `Account created with ${planLabel} plan! Direct activation link is ready below to copy or share.`;
-    }
+    // Sanitize link to remove any localhost domain
+    actionLink = sanitizeInviteLink(actionLink, appUrl);
 
     return NextResponse.json({
       success: true,
       emailSent,
       inviteLink: actionLink,
       userId,
-      isExistingUser: isExisting,
-      message,
+      appUrl,
+      message: emailSent
+        ? `Invitation email successfully dispatched to ${cleanEmail}!`
+        : `User account created! A direct invitation link was generated below.`,
     });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Failed to process invitation" }, { status: 500 });
+    return NextResponse.json({ error: err.message || "Failed to invite user" }, { status: 500 });
   }
 }
