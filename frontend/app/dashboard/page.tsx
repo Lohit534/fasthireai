@@ -1158,8 +1158,7 @@ export default function DashboardPage() {
                   </>
                 ) : (
                   <>
-                    <Zap className="h-4.5 w-4.5" /> Optimize My Resume{" "}
-                    <ChevronRight className="h-4.5 w-4.5" />
+                    <Sparkles className="h-4.5 w-4.5" /> Optimize My Resume
                   </>
                 )}
               </button>
