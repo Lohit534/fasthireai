@@ -1,4 +1,5 @@
 import type { ResumeJSON } from "@/types/resume";
+import { getPageBudget } from "@/lib/resume-format";
 
 /**
  * buildOptimizationPrompt
@@ -50,6 +51,9 @@ export function buildOptimizationPrompt(
       : "";
 
   const sep = "=".repeat(51);
+
+  // Dynamic page budget from the candidate's real experience dates
+  const pageBudget = getPageBudget(resumeText);
 
   return (
     "You are FastHire's elite ATS resume optimization engine.\n" +
@@ -124,9 +128,12 @@ export function buildOptimizationPrompt(
     "EDUCATION:\n" +
     "  Header: EDUCATION (ALL CAPS)\n" +
     "  For each entry:\n" +
-    "    Line 1: Degree Name | Month YYYY - Month YYYY\n" +
-    "    Line 2: Institution Name, University Name\n" +
-    "    Line 3: CGPA: X.XX  (or GPA: X.XX)\n\n" +
+    "    Line 1: Degree Name | Month YYYY - Month YYYY  (use the candidate's exact dates)\n" +
+    "    Line 2: Institution Name EXACTLY as written in the original resume (copy verbatim)\n" +
+    "    Line 3: CGPA: X.XX  (or GPA / Percentage -- only if present in the original)\n" +
+    "  NEVER append a parent/affiliating university, city, or any text the candidate did not write.\n" +
+    "  NEVER output literal placeholders such as 'University Name', 'Institution Name', 'City, Country'.\n" +
+    "  If a value (dates/CGPA) is missing in the original, simply omit it -- do NOT invent it.\n\n" +
     "CERTIFICATIONS / ACHIEVEMENTS / LANGUAGES:\n" +
     "  Header in ALL CAPS\n" +
     "  Each item as a bullet point\n" +
@@ -191,10 +198,14 @@ export function buildOptimizationPrompt(
     "✓ KEEP all URLs and links exactly\n" +
     "✓ KEEP all certifications exactly\n" +
     "✓ KEEP all project names exactly\n" +
-    "✓ NEVER fabricate companies, employers, or degrees\n" +
+    "✓ NEVER fabricate companies, employers, universities, or degrees\n" +
     "✓ NEVER change employment dates\n" +
-    "✓ NEVER remove any section or content from the original\n" +
-    "✓ Output MUST be same length or longer than original\n\n" +
+    "✓ NEVER remove any section from the original (you may tighten wording to respect the PAGE BUDGET)\n" +
+    "✓ Respect the PAGE BUDGET below -- it overrides any desire to add more text\n\n" +
+    sep + "\n" +
+    "PAGE BUDGET (decided dynamically from the candidate's experience)\n" +
+    sep + "\n" +
+    pageBudget.instructions + "\n\n" +
     userInstructionBlock + "\n" +
     "LENGTH OPTION: " + lengthOption + "\n" +
     lengthInstruction + "\n\n" +
@@ -205,7 +216,9 @@ export function buildOptimizationPrompt(
     "[ ] Contact line has email | phone | location | URLs separated by |\n" +
     "[ ] Professional Summary is exactly 3 sentences, no bullet points\n" +
     "[ ] TECHNICAL SKILLS has exactly 5 category lines, each on ONE line only\n" +
-    "[ ] Every experience bullet starts with a strong verb\n" +
+    "[ ] Every experience AND project bullet starts with a strong past-tense verb AND contains a number/metric\n" +
+    "[ ] Education institution copied verbatim -- no added university names or placeholders\n" +
+    "[ ] Resume fits the PAGE BUDGET (" + pageBudget.maxPages + " page" + (pageBudget.maxPages > 1 ? "s" : "") + " max)\n" +
     "[ ] Metrics/numbers added or [ADD:] placeholders used where missing\n" +
     "[ ] No LaTeX, no Markdown, no literal backslash-n in resume text\n" +
     "[ ] All original URLs preserved verbatim\n" +
@@ -227,7 +240,7 @@ export function buildOptimizationPrompt(
     "{\n" +
     "  \"detectedJobTitle\": \"Exact Job Title from the JD\",\n" +
     "  \"detectedCompany\": \"Exact Company Name from the JD (or General Application if not mentioned)\",\n" +
-    "  \"resume\": \"COMPLETE optimized resume -- every section, every bullet, nothing omitted. Minimum length = original resume length. [ADD: ...] placeholders shown exactly where details are missing.\",\n" +
+    "  \"resume\": \"COMPLETE optimized resume -- every section, every role and project, fitted to the PAGE BUDGET. No placeholders.\",\n" +
     "  \"keywordsAdded\": [\"keyword1\", \"keyword2\", \"keyword3\"],\n" +
     "  \"placeholders\": [\n" +
     "    {\n" +

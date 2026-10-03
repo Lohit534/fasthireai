@@ -5,6 +5,7 @@ import { logger } from "@/lib/logger";
 import { buildOptimizationPrompt } from "@/lib/ai/prompts";
 import { callAI } from "@/lib/ai/router";
 import { scoreResume } from "@/lib/ats/scorer";
+import { sanitizeOptimizedResume } from "@/lib/resume-format";
 import { extractTechTerms } from "@/lib/ats/keywords";
 import { generateUUID } from "@/lib/utils";
 import { isOwnerEmail, FREE_CREDITS_PER_MONTH, PRO_CREDITS_PER_MONTH, PRO_MAX_CREDITS_PER_MONTH } from "@/types";
@@ -341,10 +342,14 @@ export async function POST(request: NextRequest) {
         if (/percent|%|speed|latency/i.test(desc)) return "by 35%";
         if (/user|customer|request/i.test(desc)) return "10,000+ users";
         if (/team/i.test(desc)) return "team of 5 engineers";
-        if (/company/i.test(desc)) return "industry-leading enterprise";
-        if (/year|date/i.test(desc)) return "2023 – Present";
+        // Never invent company names or dates — drop the placeholder instead
+        if (/company|employer|organi[sz]ation/i.test(desc)) return "";
+        if (/year|date|month|duration/i.test(desc)) return "";
         return "exceeding benchmark targets";
       });
+
+      // Remove hallucinated university names, literal placeholders and leaked internal text
+      aiResult.resume = sanitizeOptimizedResume(aiResult.resume, enrichedResumeText);
     }
 
     await send(4, 'done');

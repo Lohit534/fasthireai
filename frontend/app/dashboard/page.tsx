@@ -14,6 +14,8 @@ import {
 } from "@/lib/roadmap-generator";
 import ResumeViewer from "@/components/ResumeViewer";
 import BulletImprover from "@/components/BulletImprover";
+import { hasQuantifiedMetric } from "@/lib/ats/scorer";
+import { hasStrongActionVerb } from "@/lib/ats/bullets";
 // Removed LoadingOverlay import as user requested native background animation
 import BulletEnrichmentModal, {
   WeakBullet,
@@ -832,73 +834,6 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                {/* Quantified Metrics & Missing Metrics Breakdown */}
-                {afterScore && (
-                  <div className="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-5 shadow-sm space-y-3.5 select-none">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Target className="h-4 w-4 text-[#0d6e5a]" />
-                        <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
-                          Metrics &amp; Quantification
-                        </h4>
-                      </div>
-                      <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        {afterScore.metricCoveragePercent ?? (afterScore.impactBullets > 80 ? 90 : 70)}% Quantified
-                      </span>
-                    </div>
-
-                    {/* Metric Coverage bar */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-[11px] text-slate-500 font-medium">
-                        <span>Metric Impact Coverage</span>
-                        <span>
-                          {afterScore.quantifiedCount !== undefined && afterScore.totalBulletsCount !== undefined
-                            ? `${afterScore.quantifiedCount} of ${afterScore.totalBulletsCount} bullets with metrics`
-                            : "Dynamically evaluated"}
-                        </span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
-                          style={{
-                            width: `${Math.min(
-                              100,
-                              afterScore.metricCoveragePercent ?? (afterScore.impactBullets > 80 ? 90 : 70),
-                            )}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Missing Metrics Highlights */}
-                    {afterScore.missingMetrics && afterScore.missingMetrics.length > 0 ? (
-                      <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 space-y-2">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800">
-                          <AlertCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                          <span>Missing Metrics Highlighted ({afterScore.missingMetrics.length})</span>
-                        </div>
-                        <p className="text-[11px] text-amber-700 leading-relaxed font-normal">
-                          The following bullet{afterScore.missingMetrics.length > 1 ? "s lack" : " lacks"} measurable numbers or percentages. Use the <strong>Bullet Improver</strong> below to add metrics and boost your score higher:
-                        </p>
-                        <ul className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
-                          {afterScore.missingMetrics.map((bullet: string, i: number) => (
-                            <li
-                              key={i}
-                              className="text-[10.5px] text-slate-700 bg-white/90 border border-amber-200/60 p-2 rounded-lg font-medium leading-snug italic border-l-2 border-l-amber-500"
-                            >
-                              &ldquo;{bullet}&rdquo;
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : (
-                      <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 flex items-center gap-2 text-xs font-bold text-emerald-800">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                        <span>All bullet points feature measurable metrics &amp; action verbs!</span>
-                      </div>
-                    )}
-                  </div>
-                )}
               </ScrollFadeIn>
 
               {/* Right Column: AI Optimized styled Preview */}
@@ -917,6 +852,87 @@ export default function DashboardPage() {
                 />
               </ScrollFadeIn>
             </div>
+
+            {/* FULL-WIDTH: Quantified Metrics & Missing Metrics Breakdown (wide on desktop) */}
+            {afterScore && (
+              <div className="w-full bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-sm space-y-4 select-none">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-[#0d6e5a]" />
+                    <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
+                      Metrics &amp; Quantification
+                    </h4>
+                  </div>
+                  <span className="self-start sm:self-auto text-[11px] font-black px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    {afterScore.metricCoveragePercent ?? 0}% Quantified
+                  </span>
+                </div>
+
+                {/* Metric Coverage bar */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[11px] text-slate-500 font-medium">
+                    <span>Metric Impact Coverage</span>
+                    <span>
+                      {afterScore.quantifiedCount !== undefined && afterScore.totalBulletsCount !== undefined
+                        ? `${afterScore.quantifiedCount} of ${afterScore.totalBulletsCount} bullets with metrics`
+                        : "Dynamically evaluated"}
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min(100, afterScore.metricCoveragePercent ?? 0)}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Highlighted bullets — same list & rules as the Bullet Improver below */}
+                {afterScore.missingMetrics && afterScore.missingMetrics.length > 0 ? (
+                  <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 sm:p-4 space-y-2.5">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800">
+                      <AlertCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                      <span>Bullets Needing Improvement ({afterScore.missingMetrics.length})</span>
+                    </div>
+                    <p className="text-[11px] text-amber-700 leading-relaxed font-normal">
+                      The following bullet{afterScore.missingMetrics.length > 1 ? "s are" : " is"} missing a strong action verb and/or a measurable number. Use the <strong>Bullet Improver</strong> below — every rewrite is guaranteed to pass both checks:
+                    </p>
+                    <ul className="grid grid-cols-1 lg:grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1">
+                      {afterScore.missingMetrics.map((bullet: string, i: number) => {
+                        const verbOk = hasStrongActionVerb(bullet);
+                        const metricOk = hasQuantifiedMetric(bullet);
+                        return (
+                          <li
+                            key={i}
+                            className="text-[11px] text-slate-700 bg-white/90 border border-amber-200/60 p-2.5 rounded-lg font-medium leading-snug border-l-2 border-l-amber-500 space-y-1.5"
+                          >
+                            <span className="italic block">&ldquo;{bullet}&rdquo;</span>
+                            <span className="flex flex-wrap gap-1 not-italic">
+                              {!verbOk && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                                  Missing action verb
+                                </span>
+                              )}
+                              {!metricOk && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                                  Missing metric
+                                </span>
+                              )}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ) : (
+                  <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 flex items-center gap-2 text-xs font-bold text-emerald-800">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <span>All bullet points feature measurable metrics &amp; action verbs!</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* BELOW PDF PREVIEW: Full-width AI Optimization Summary & Tools Box */}
             {optimizeResult?.summary && (

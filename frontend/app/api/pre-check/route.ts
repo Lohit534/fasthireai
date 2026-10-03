@@ -3,7 +3,7 @@ import { logger } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import { detectMissingFields } from "@/lib/resume-inspector";
 import { hasQuantifiedMetric, localScore } from "@/lib/ats/scorer";
-import { extractActionVerbs } from "@/lib/ats/keywords";
+import { extractScorableBullets } from "@/lib/ats/bullets";
 
 export const runtime = "nodejs";
 export const maxDuration = 30; // Quick pre-check, should take < 10s
@@ -19,28 +19,10 @@ function findWeakBulletsLocally(
     hint: string;
   }> = [];
 
-  let currentSection = "";
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    const upper = trimmed.toUpperCase();
-
-    if (["CERTIFICATIONS", "CERTIFICATION", "ACHIEVEMENTS", "AWARDS", "EDUCATION", "LANGUAGES"].some(s => upper === s || upper.startsWith(s + " "))) {
-      currentSection = upper;
-      continue;
-    }
-    if (["EXPERIENCE", "WORK EXPERIENCE", "PROFESSIONAL EXPERIENCE", "PROJECTS", "PERSONAL PROJECTS"].some(s => upper === s || upper.startsWith(s + " "))) {
-      currentSection = upper;
-    }
-
-    if (currentSection.startsWith("CERT") || currentSection.startsWith("EDU") || currentSection.startsWith("LANG") || currentSection.startsWith("ACHIEV")) {
-      continue;
-    }
-
-    const isBullet = /^\s*([•\-\*–—+•\u2022\u25cf\u2043▸►→]|\d+\.)\s*/.test(line);
-    if (!isBullet && extractActionVerbs(line).length === 0) continue;
-
-    const clean = trimmed.replace(/^\s*([•\-\*–—+•\u2022\u25cf\u2043▸►→]|\d+\.)\s*/, "").trim();
+  // Shared section-aware extractor: never asks metric questions about
+  // Certifications, Languages, Education or Skills entries.
+  for (const item of extractScorableBullets(resumeText)) {
+    const clean = item.cleanText;
     if (clean.length < 15 || clean.length > 250) continue;
 
     // Check if bullet lacks measurable metrics
@@ -100,7 +82,8 @@ export function gatherAllMissingQuestions(resumeText: string, jobDescription?: s
   const hasExpDates = datePattern.test(text);
   const hasYearsMentioned = /\b\d+\+?\s*years?\b/i.test(text);
 
-  if (!hasExpDates || !hasYearsMentioned) {
+  // Only ask when dates are genuinely missing (exact dates already present => no question)
+  if (!hasExpDates && !hasYearsMentioned) {
     questions.push({
       id: "experience_dates",
       category: "year_date",

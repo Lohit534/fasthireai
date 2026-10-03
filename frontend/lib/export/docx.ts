@@ -1,5 +1,6 @@
-import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, PageOrientation, convertInchesToTwip } from "docx";
+import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, PageOrientation, convertInchesToTwip, ExternalHyperlink, TabStopType, Tab } from "docx";
 import { logger } from "../logger";
+import { parseResumeIntoBlocks, computeDensityScale, stripMarkdownAsterisks } from "./pdf-document";
 
 function cleanText(str: string): string {
   if (!str) return "";
@@ -36,7 +37,8 @@ function isAllCapsSection(line: string): boolean {
   );
 }
 
-export async function generateDOCX(resumeText: string, watermarked = false): Promise<Buffer> {
+/** Legacy line-based DOCX renderer (kept as a safety fallback). */
+export async function generateDOCXFromLines(resumeText: string, watermarked = false): Promise<Buffer> {
   try {
     logger.info(`Initializing DOCX generation (watermarked=${watermarked})...`);
     const lines = resumeText.split(/\r?\n/).map(line => line.trim());
@@ -241,5 +243,141 @@ export async function generateDOCX(resumeText: string, watermarked = false): Pro
   } catch (error) {
     logger.error("DOCX generation failed. Returning basic fallback text.", error);
     return Buffer.from("DOCX Fallback File Content:\n\n" + resumeText);
+  }
+}
+
+// ─── Universal template DOCX (same block model as PDF + live preview) ──────────
+const A4_WIDTH = 11906;
+const A4_HEIGHT = 16838;
+
+function linkLabel(url: string, text: string): string {
+  const l = `${url} ${text}`.toLowerCase();
+  if (l.includes("linkedin")) return "LinkedIn";
+  if (l.includes("github")) return "GitHub";
+  if (l.includes("portfolio")) return "Portfolio";
+  return text.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "");
+}
+
+export async function generateDOCX(resumeText: string, watermarked = false): Promise<Buffer> {
+  try {
+    const blocks = parseResumeIntoBlocks(resumeText);
+    if (!blocks.length) return generateDOCXFromLines(resumeText, watermarked);
+
+    const scale = computeDensityScale(resumeText, blocks);
+    const hp = (pt: number) => Math.max(14, Math.round(pt * 2 * scale)); // half-points
+    const sp = (tw: number) => Math.round(tw * scale); // spacing twips
+    const marginTw = Math.round(convertInchesToTwip(scale < 0.95 ? 0.45 : 0.55));
+    const sideTw = Math.round(convertInchesToTwip(scale < 0.95 ? 0.5 : 0.6));
+    const rightTab = A4_WIDTH - sideTw * 2;
+    const FONT = "Times New Roman";
+    const BODY = hp(10.5);
+    const run = (text: string, opts: Record<string, any> = {}) =>
+      new TextRun({ text: stripMarkdownAsterisks(text || ""), font: FONT, size: BODY, ...opts });
+
+    const twoCol = (left: string, right: string, leftOpts: Record<string, any> = {}, rightOpts: Record<string, any> = {}, after = 20) =>
+      new Paragraph({
+        tabStops: [{ type: TabStopType.RIGHT, position: rightTab }],
+        children: [run(left, leftOpts), ...(right ? [new TextRun({ children: [new Tab()] }), run(right, rightOpts)] : [])],
+        spacing: { after: sp(after) },
+      });
+
+    const bullet = (text: string) =>
+      new Paragraph({
+        bullet: { level: 0 },
+        children: [run(text.replace(/^\s*([•\-\*–—+\u2022\u25cf\u2043▸►→]|\d+\.)\s*/, ""))],
+        spacing: { after: sp(20) },
+      });
+
+    const children: Paragraph[] = [];
+    if (watermarked) {
+      children.push(
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [run("FASTHIRE AI — FREE TIER PREVIEW (UPGRADE TO PRO TO DOWNLOAD)", { bold: true, color: "CC0000", size: hp(10) })],
+          spacing: { after: 120 },
+        }),
+      );
+    }
+
+    for (const b of blocks) {
+      switch (b.type) {
+        case "name":
+          children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [run(b.text, { bold: true, size: hp(22) })], spacing: { after: sp(80) } }));
+          break;
+        case "contact": {
+          const parts: (TextRun | ExternalHyperlink)[] = [];
+          b.segments.forEach((seg, i) => {
+            if (seg.isLink && seg.url) {
+              parts.push(new ExternalHyperlink({ link: seg.url, children: [run(linkLabel(seg.url, seg.text), { size: hp(10), color: "0000EE", underline: {} })] }));
+            } else {
+              parts.push(run(seg.text, { size: hp(10) }));
+            }
+            if (i < b.segments.length - 1) parts.push(run("  |  ", { size: hp(10) }));
+          });
+          children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: parts, spacing: { after: sp(120) } }));
+          break;
+        }
+        case "section":
+          children.push(
+            new Paragraph({
+              children: [run(b.text.toUpperCase(), { bold: true, size: hp(12) })],
+              border: { bottom: { color: "000000", space: 2, style: BorderStyle.SINGLE, size: 8 } },
+              spacing: { before: sp(140), after: sp(60) },
+            }),
+          );
+          break;
+        case "summary":
+        case "normal":
+          children.push(new Paragraph({ alignment: AlignmentType.JUSTIFIED, children: [run(b.text)], spacing: { after: sp(40) } }));
+          break;
+        case "skillLine":
+          children.push(new Paragraph({ children: [run(`${b.label}: `, { bold: true }), run(b.value)], spacing: { after: sp(30) } }));
+          break;
+        case "project":
+          children.push(twoCol(b.name, b.tech || "", { bold: true }, { italics: true, size: hp(10) }, 20));
+          b.bullets.forEach((x) => children.push(bullet(x)));
+          break;
+        case "job":
+          children.push(twoCol(b.title, b.dates, { bold: true }, {}, 10));
+          if (b.company) children.push(new Paragraph({ children: [run(b.company, { italics: true })], spacing: { after: sp(20) } }));
+          b.bullets.forEach((x) => children.push(bullet(x)));
+          break;
+        case "education":
+          children.push(twoCol(b.degree, b.dates, { bold: true }, {}, 10));
+          if (b.school || b.gpa) children.push(twoCol(b.school, b.gpa, {}, {}, 40));
+          break;
+        case "bullet":
+        case "cert":
+          children.push(bullet(b.text));
+          break;
+        case "link":
+          children.push(new Paragraph({ children: [new ExternalHyperlink({ link: b.url, children: [run(b.label, { color: "0000EE", underline: {} })] })], spacing: { after: sp(20) } }));
+          break;
+        case "spacer":
+          break;
+      }
+    }
+
+    const doc = new Document({
+      styles: { default: { document: { run: { font: FONT, size: BODY } } } },
+      sections: [
+        {
+          properties: {
+            page: {
+              size: { width: A4_WIDTH, height: A4_HEIGHT },
+              margin: { top: marginTw, bottom: marginTw, left: sideTw, right: sideTw },
+            },
+          },
+          children,
+        },
+      ],
+    });
+
+    const buffer = await Packer.toBuffer(doc);
+    logger.info(`Universal DOCX generated (scale=${scale}).`);
+    return buffer;
+  } catch (error) {
+    logger.error("Universal DOCX renderer failed, using legacy line renderer.", error);
+    return generateDOCXFromLines(resumeText, watermarked);
   }
 }

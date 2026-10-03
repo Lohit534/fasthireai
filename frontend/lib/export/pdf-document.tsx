@@ -1,11 +1,12 @@
 import React from "react";
 import { Font, Document, Page, Text, View, Link, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
 import { logger } from "../logger";
+import { estimateYearsOfExperience } from "../resume-format";
 
 // Register Times New Roman natively supported aliases
 Font.registerHyphenationCallback(word => [word]);
 
-const styles = StyleSheet.create({
+const baseStyleDefs: Record<string, any> = {
   page: {
     fontFamily: 'Times-Roman',
     fontSize: 10.5,
@@ -224,7 +225,103 @@ const styles = StyleSheet.create({
   spacer: {
     height: 1.5,
   },
-});
+};
+
+const styles = StyleSheet.create(baseStyleDefs) as Record<string, any>;
+
+const SCALABLE_STYLE_KEYS = new Set([
+  'fontSize', 'marginTop', 'marginBottom', 'paddingTop', 'paddingBottom', 'height', 'width', 'paddingLeft',
+]);
+
+/** Returns a density-scaled copy of the universal template styles (1 = default). */
+function getScaledStyles(scale: number): Record<string, any> {
+  if (scale >= 0.999) return styles;
+  const scaled: Record<string, any> = {};
+  for (const [name, def] of Object.entries(baseStyleDefs)) {
+    const copy: Record<string, any> = { ...def };
+    for (const key of Object.keys(copy)) {
+      if (SCALABLE_STYLE_KEYS.has(key) && typeof copy[key] === 'number') {
+        copy[key] = Math.round(copy[key] * scale * 100) / 100;
+      }
+    }
+    scaled[name] = copy;
+  }
+  // Tighter page margins in compact mode
+  scaled.page = {
+    ...scaled.page,
+    paddingTop: Math.max(24, Math.round(36 * scale)),
+    paddingBottom: Math.max(24, Math.round(36 * scale)),
+    paddingHorizontal: Math.max(30, Math.round(40 * scale)),
+  };
+  return StyleSheet.create(scaled) as Record<string, any>;
+}
+
+/** Rough rendered height (pt) of the blocks at scale 1 on A4 with the default template. */
+function estimateContentHeight(blocks: ParsedResumeBlock[]): number {
+  const LINE = 13.65; // 10.5pt * 1.3 line height
+  const lines = (text: string, charsPerLine: number) => Math.max(1, Math.ceil((text || '').length / charsPerLine));
+  let h = 0;
+  for (const b of blocks) {
+    switch (b.type) {
+      case 'name': h += 36; break;
+      case 'contact': h += 22; break;
+      case 'section': h += 28; break;
+      case 'summary': case 'normal': h += lines(b.text, 108) * 14.2 + 4; break;
+      case 'skillLine': h += lines(b.value, 70) * LINE + 3; break;
+      case 'project': h += 20 + b.bullets.reduce((s, x) => s + lines(x, 100) * LINE + 2, 0); break;
+      case 'job': h += 20 + (b.company ? 15 : 0) + b.bullets.reduce((s, x) => s + lines(x, 100) * LINE + 2, 0); break;
+      case 'education': h += 36; break;
+      case 'bullet': case 'cert': h += lines(b.text, 100) * LINE + 2; break;
+      case 'link': h += 15; break;
+      case 'spacer': h += 1.5; break;
+    }
+  }
+  return h;
+}
+
+/**
+ * Universal page-fit: fresher / <5 yrs => 1 page, 5+ yrs => up to 2 pages.
+ * Height scales ~ scale² (smaller font => more chars per line AND shorter lines).
+ */
+export function computeDensityScale(text: string, blocks: ParsedResumeBlock[]): number {
+  const years = estimateYearsOfExperience(text);
+  const maxPages = years >= 5 ? 2 : 1;
+  const capacity = 770 * maxPages; // A4 842pt - 72pt default vertical padding
+  const height = estimateContentHeight(blocks);
+  if (height <= capacity) return 1;
+  const scale = Math.sqrt(capacity / height);
+  return Math.max(0.8, Math.min(1, Math.floor(scale * 100) / 100));
+}
+
+/** Collapse runs of spacers and drop spacers directly after headers (prevents ballooning length). */
+function compactBlocks(blocks: ParsedResumeBlock[]): ParsedResumeBlock[] {
+  const out: ParsedResumeBlock[] = [];
+  for (const b of blocks) {
+    const prev = out[out.length - 1];
+    if (b.type === 'spacer' && (!prev || prev.type === 'spacer' || prev.type === 'section' || prev.type === 'name' || prev.type === 'contact')) continue;
+    out.push(b);
+  }
+  while (out.length && out[out.length - 1].type === 'spacer') out.pop();
+  return out;
+}
+
+const EDU_PLACEHOLDER = /^(?:university name|institution name|college name|school name|city,?\s*country|location|n\/a|\[[^\]]*\]|_+)$/i;
+
+/** Removes placeholder / duplicated comma segments from education text. */
+function cleanEducationText(value: string): string {
+  if (!value) return value;
+  const seen = new Set<string>();
+  return value
+    .split(/\s*,\s*/)
+    .map((s) => s.trim())
+    .filter((s) => {
+      const k = s.toLowerCase();
+      if (!s || EDU_PLACEHOLDER.test(s) || seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    })
+    .join(', ');
+}
 
 const SECTION_NAMES = [
   'PROFESSIONAL SUMMARY', 'SUMMARY', 'OBJECTIVE', 'PROFILE',
@@ -828,14 +925,24 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
     }
   }
 
-  return swapEducationAndSkillsIfNeeded(blocks);
+  // Final cleanup of education entries (no placeholder / duplicated institution text)
+  for (const b of blocks) {
+    if (b.type === 'education') {
+      b.degree = cleanEducationText(b.degree);
+      b.school = cleanEducationText(b.school);
+      if (b.school && b.degree && b.school.toLowerCase() === b.degree.toLowerCase()) b.school = '';
+    }
+  }
+
+  return compactBlocks(swapEducationAndSkillsIfNeeded(blocks));
 }
 
 interface BulletRowProps {
   text: string;
+  s?: Record<string, any>;
 }
 
-const BulletRow: React.FC<BulletRowProps> = ({ text }) => {
+const BulletRow: React.FC<BulletRowProps> = ({ text, s = styles }) => {
   const clean = stripMarkdownAsterisks(text)
     .replace(/^\s*([•\-\*–—+•\u2022\u25cf\u2043▸►→]|\d+\.)\s*/, "")
     .trim();
@@ -867,17 +974,17 @@ const BulletRow: React.FC<BulletRowProps> = ({ text }) => {
     }
     
     return (
-      <View style={styles.bulletRow}>
-        <Text style={styles.bulletDot}>•</Text>
-        <Text style={styles.bulletText}>{segments}</Text>
+      <View style={s.bulletRow}>
+        <Text style={s.bulletDot}>•</Text>
+        <Text style={s.bulletText}>{segments}</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.bulletRow}>
-      <Text style={styles.bulletDot}>•</Text>
-      <Text style={styles.bulletText}>{clean}</Text>
+    <View style={s.bulletRow}>
+      <Text style={s.bulletDot}>•</Text>
+      <Text style={s.bulletText}>{clean}</Text>
     </View>
   );
 };
@@ -889,6 +996,9 @@ interface ResumePDFProps {
 
 export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
   const blocks = parseResumeIntoBlocks(text);
+  // Universal page-fit (1 page for fresher / <5 yrs, up to 2 pages for 5+ yrs)
+  const densityScale = computeDensityScale(text, blocks);
+  const styles = getScaledStyles(densityScale);
 
   return (
     <Document>
@@ -969,7 +1079,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
                       <Text style={styles.projectTitle}>{block.name}</Text>
                       {block.projectUrl && (
                         <Link src={block.projectUrl} style={styles.projectLink}>
-                          <Text style={styles.projectLink}>{block.name}</Text>
+                          <Text style={styles.projectLink}>Link</Text>
                         </Link>
                       )}
                     </View>
@@ -978,7 +1088,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
                     )}
                   </View>
                   {block.bullets.map((bullet, bIdx) => (
-                    <BulletRow key={bIdx} text={bullet} />
+                    <BulletRow key={bIdx} text={bullet} s={styles} />
                   ))}
                 </View>
               );
@@ -992,7 +1102,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
                   </View>
                   {block.company ? <Text style={styles.jobCompany}>{block.company}</Text> : null}
                   {block.bullets.map((bullet, bIdx) => (
-                    <BulletRow key={bIdx} text={bullet} />
+                    <BulletRow key={bIdx} text={bullet} s={styles} />
                   ))}
                 </View>
               );
@@ -1010,9 +1120,9 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
                 </View>
               );
             case 'bullet':
-              return <BulletRow key={i} text={block.text} />;
+              return <BulletRow key={i} text={block.text} s={styles} />;
             case 'cert':
-              return <BulletRow key={i} text={(block.text || "").replace(/^[•\-\*–\s\u2022]+/, "")} />;
+              return <BulletRow key={i} s={styles} text={(block.text || "").replace(/^[•\-\*–\s\u2022]+/, "")} />;
             case 'normal':
               return (
                 <Text key={i} style={styles.summaryText}>

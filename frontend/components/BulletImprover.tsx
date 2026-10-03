@@ -4,8 +4,8 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { extractActionVerbs } from "@/lib/ats/keywords";
 import { hasQuantifiedMetric } from "@/lib/ats/scorer";
+import { extractScorableBullets, hasStrongActionVerb, cleanBulletText } from "@/lib/ats/bullets";
 import {
   Sparkles,
   CheckCircle2,
@@ -69,26 +69,21 @@ export default function BulletImprover({
   const remaining =
     limit === Infinity ? Infinity : Math.max(0, limit - totalUsed);
 
-  // 1. Parse text to extract bullet lines
-  const lines = resumeText.split(/\r?\n/);
+  // 1. Section-aware extraction (Experience / Internships / Projects only).
+  // Shared with the ATS scorer so the "Missing Metrics" box lists the same bullets.
+  const bulletItems = extractScorableBullets(resumeText).map((b) => ({
+    line: b.rawLine,
+    index: b.index,
+    trimmed: b.rawLine.trim(),
+    isBullet: true,
+  }));
 
-  // Find index of lines that look like bullet points
-  const bulletItems = lines
-    .map((line, index) => {
-      const trimmed = line.trim();
-      const isBullet = /^\s*([-*•+]|(\d+\.))\s+/.test(line);
-      return { line, index, isBullet, trimmed };
-    })
-    .filter((item) => item.isBullet && item.trimmed.length > 5);
-
-  // 2. Review checks for a single bullet text
+  // 2. Review checks for a single bullet text (identical rules to the scorer)
   const checkBullet = (text: string) => {
-    const cleanText = text.replace(/^\s*([-*•+]|(\d+\.))\s+/, "");
-    const verbs = extractActionVerbs(cleanText);
-    const startsWithVerb = /^(built|engineered|developed|implemented|designed|created|led|managed|architected|optimized|spearheaded|accelerated|devised|automated|facilitated|orchestrated|injected|refactored|deployed|scaled|transformed|delivered|executed|launched|migrated)\b/i.test(cleanText);
-    const hasVerb = verbs.length > 0 || startsWithVerb;
+    const cleanText = cleanBulletText(text);
+    const hasVerb = hasStrongActionVerb(cleanText);
     const hasMetric = hasQuantifiedMetric(cleanText);
-    return { hasVerb, hasMetric, verbsDetected: verbs, cleanText };
+    return { hasVerb, hasMetric, verbsDetected: [] as string[], cleanText };
   };
 
   // 3. Request auto-improvement with plan limit check
