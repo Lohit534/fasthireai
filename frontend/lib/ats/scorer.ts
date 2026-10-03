@@ -43,6 +43,51 @@ const TECH_SYNONYMS: Record<string, string[]> = {
   "mongodb": ["mongo"],
 };
 
+/** Closely related skills that earn PARTIAL (0.5) credit for a JD skill. */
+const RELATED_SKILLS: Record<string, string[]> = {
+  "typescript": ["javascript"],
+  "javascript": ["typescript"],
+  "react": ["javascript", "angular", "vue", "next.js", "react native"],
+  "react.js": ["javascript", "angular", "vue"],
+  "angular": ["react", "vue", "typescript"],
+  "vue": ["react", "angular"],
+  "next.js": ["react"],
+  "node.js": ["javascript", "express"],
+  "node": ["javascript", "express"],
+  "express": ["node.js", "node"],
+  "postgresql": ["mysql", "sql", "oracle", "sql server", "sqlite"],
+  "mysql": ["postgresql", "sql", "oracle", "sqlite"],
+  "sql": ["mysql", "postgresql", "oracle", "sqlite"],
+  "mongodb": ["nosql", "firebase", "dynamodb"],
+  "redis": ["memcached", "caching"],
+  "aws": ["azure", "gcp", "cloud"],
+  "azure": ["aws", "gcp", "cloud"],
+  "gcp": ["aws", "azure", "cloud"],
+  "docker": ["kubernetes", "containers"],
+  "kubernetes": ["docker"],
+  "ci/cd": ["jenkins", "github actions", "gitlab"],
+  "jenkins": ["ci/cd", "github actions"],
+  "rest": ["api", "apis", "graphql"],
+  "rest api": ["api", "apis"],
+  "graphql": ["rest", "api"],
+  "microservices": ["api", "backend", "distributed"],
+  "jest": ["testing", "unit test", "mocha", "junit", "pytest"],
+  "java": ["kotlin", "spring"],
+  "spring boot": ["java", "spring"],
+  "python": ["django", "flask", "pandas"],
+  "django": ["python", "flask"],
+  "flask": ["python", "django", "fastapi"],
+  "fastapi": ["python", "flask"],
+  "tensorflow": ["pytorch", "keras", "machine learning"],
+  "pytorch": ["tensorflow", "keras", "machine learning"],
+  "machine learning": ["deep learning", "scikit-learn", "tensorflow", "pytorch"],
+  "html": ["css"],
+  "css": ["html", "tailwind", "bootstrap"],
+  "tailwind": ["css", "bootstrap"],
+  "agile": ["scrum", "jira"],
+  "git": ["github", "gitlab"],
+};
+
 /**
  * Checks if a bullet contains quantifiable, measurable metrics
  */
@@ -136,17 +181,28 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
   const foundKeywords = Array.from(foundKeywordsSet);
   const missingKeywords = Array.from(missingKeywordsSet);
 
-  // Dynamic Keyword Match calculation (honest):
-  // 70% = coverage of the JD's hard technical skills, 30% = coverage of other JD phrases.
-  // Generic words matched by chance can no longer inflate the score.
-  const jdTechMatched = jdTechTerms.filter(t => foundKeywordsSet.has(t) || resumeLower.includes(t.toLowerCase())).length;
-  const techCoverage = jdTechTerms.length > 0 ? jdTechMatched / jdTechTerms.length : 0;
+  // Dynamic Keyword Match calculation (honest, ATS-style):
+  // - exact JD skill match = 1.0 credit, closely related skill = 0.5 credit
+  //   (e.g. JavaScript for TypeScript/React, MySQL for PostgreSQL)
+  // - 70% hard technical skills, 30% other JD phrases
+  // - diminishing-returns curve (sqrt) like real ATS tools: the first matches
+  //   matter most, so a resume with SOME relevant skills is not scored near zero.
+  let techCredit = 0;
+  for (const t of jdTechTerms) {
+    const tl = t.toLowerCase();
+    if (foundKeywordsSet.has(t) || resumeLower.includes(tl)) {
+      techCredit += 1;
+    } else if ((RELATED_SKILLS[tl] || []).some(r => new RegExp(`(^|[^a-z])${r.replace(/[.+#]/g, "\\$&")}([^a-z]|$)`, "i").test(resumeLower))) {
+      techCredit += 0.5;
+    }
+  }
+  const techCoverage = jdTechTerms.length > 0 ? Math.min(1, techCredit / jdTechTerms.length) : 0;
   const generalDenominator = foundKeywords.length + missingKeywords.length;
   const generalCoverage = generalDenominator > 0 ? foundKeywords.length / generalDenominator : 0;
   const keywordRatio = jdTechTerms.length >= 3
     ? techCoverage * 0.7 + generalCoverage * 0.3
     : generalCoverage;
-  const keywordMatch = Math.min(97, Math.max(5, Math.round(keywordRatio * 100)));
+  const keywordMatch = Math.min(97, Math.max(5, Math.round(Math.sqrt(keywordRatio) * 100)));
 
   // ── 2. DYNAMIC SEMANTIC & ROLE ALIGNMENT ────────────────────────────────
   // Check target job titles against candidate resume headline/summary
@@ -163,8 +219,8 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
   // Tech stack domain overlap
   const targetTechCount = Math.max(3, Math.min(10, jdTechTerms.length));
   const techMatches = jdTechTerms.filter(t => resumeLower.includes(t.toLowerCase())).length;
-  const techRatio = Math.min(1.0, techMatches / targetTechCount);
-  const techScore = Math.round(techRatio * 55);
+  const techRatio = Math.min(1.0, (techCredit || techMatches) / targetTechCount);
+  const techScore = Math.round(Math.sqrt(techRatio) * 55);
 
   // Summary & narrative alignment — a summary only earns full credit when it
   // actually speaks to the JD (mentions 3+ of the JD's technical skills).
@@ -199,9 +255,9 @@ export function localScore(resumeText: string, jobDescription: string): ATSScore
     } else {
       // Any bullet that fails EITHER check is highlighted (same rule as Bullet Improver)
       missingMetrics.push(cleanBullet);
-      if (hasMetric) scoreSum += 70;      // Quantified but weak/no action verb
-      else if (hasVerb) scoreSum += 30;   // Action verb but no measurable outcome
-      else scoreSum += 10;                // Lacks both
+      if (hasMetric) scoreSum += 75;      // Quantified but weak/no action verb
+      else if (hasVerb) scoreSum += 45;   // Action verb but no measurable outcome
+      else scoreSum += 25;                // Describes real work, but lacks both
     }
   }
 
