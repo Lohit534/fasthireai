@@ -38,7 +38,7 @@ import { DemoVideoModal } from "@/components/DemoVideoModal";
 import { DataPreferencesModal } from "@/components/DataPreferencesModal";
 import UpgradePaywallModal from "@/components/UpgradePaywallModal";
 import { useUpgradeModalStore } from "@/store/useUpgradeModalStore";
-import { NotificationBell, MonthlyNotificationModal } from "@/components/NotificationCenter";
+import { NotificationBell, MonthlyNotificationModal, hasUnreadNotifications } from "@/components/NotificationCenter";
 
 interface NavbarProps {
   refreshKey?: number;
@@ -259,9 +259,6 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
           <div className="flex items-center gap-2 sm:gap-4">
             {user ? (
               <>
-                {/* Notification Bell in top right corner of Navbar */}
-                <NotificationBell credits={credits} userEmail={user.email} />
-
                 {/* Profile Button with dots around the circle representing credits */}
                 <div className="relative" ref={dropdownRef}>
                   <button
@@ -269,6 +266,14 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                     aria-label="Open profile menu"
                     className="relative p-1 rounded-full hover:scale-105 transition-all focus:outline-none cursor-pointer group flex items-center justify-center"
                   >
+                    {/* Red indicator dot if unread message is pending in profile box */}
+                    {hasUnreadNotifications(credits, user.email) && (
+                      <span className="absolute top-0 right-0 flex h-2.5 w-2.5 z-10 pointer-events-none">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 ring-2 ring-white" />
+                      </span>
+                    )}
+
                     {/* Dotted credits ring around circular avatar */}
                     <div className="relative flex items-center justify-center">
                       <svg className="w-10 h-10 -rotate-90 pointer-events-none select-none" viewBox="0 0 44 44">
@@ -585,9 +590,13 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
           </Link>
         </div>
       )}
-      {user && <FeedbackBanner onOpenFeedback={() => setIsFeedbackOpen(true)} />}
-      {/* Unified Help Center, Support Tickets & 24/7 AI Chatbot — paid/owner only */}
-      {user && (isOwner || isPremium || isProMax) && <SupportChatbot />}
+      {user && !hideNav && pathname !== "/dashboard/history" && (
+        <FeedbackBanner onOpenFeedback={() => setIsFeedbackOpen(true)} />
+      )}
+      {/* Unified Help Center, Support Tickets & 24/7 AI Chatbot — paid/owner only (hidden in history) */}
+      {user && !hideNav && pathname !== "/dashboard/history" && (isOwner || isPremium || isProMax) && (
+        <SupportChatbot />
+      )}
       <FeedbackToast isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} userEmail={user?.email} />
       <ReferralModal isOpen={isReferralOpen} onClose={() => setIsReferralOpen(false)} />
       <DemoVideoModal isOpen={isDemoModalOpen} onClose={() => setIsDemoModalOpen(false)} />

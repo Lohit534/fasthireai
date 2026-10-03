@@ -75,12 +75,12 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
   const [coverLetterGenerated, setCoverLetterGenerated] = useState<string | null>(null);
   const [generatingLetter, setGeneratingLetter] = useState(false);
   const [showRoadmapAccordion, setShowRoadmapAccordion] = useState(false);
-  const [showCoverLetterAccordion, setShowCoverLetterAccordion] = useState(false);
   const [activeTab, setActiveTab] = useState<"resume" | "changes" | "breakdown" | "roadmap" | "cover_letter">("resume");
-  const [resumeViewMode, setResumeViewMode] = useState<"preview" | "raw">("preview");
   const [showShareModal, setShowShareModal] = useState(false);
 
   const delta = resume.scoreAfter - resume.scoreBefore;
+  const isPaidUser = userPlan === "premium" || userPlan === "promax" || userPlan === "owner";
+  const isLocked = !isPaidUser;
   
   // Dynamic keyword & tech skill extraction
   const rawKeywordsAdded = Array.isArray(resume.keywordsAdded) ? resume.keywordsAdded.filter(Boolean) : [];
@@ -236,8 +236,6 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
   const linkedinShareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://fasthire-ai.vercel.app")}`;
   const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
 
-  const isLocked = userPlan === "free";
-
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
       {/* ─── Top Header (Matching user's image) ─── */}
@@ -372,33 +370,10 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
           <div className="lg:col-span-8 space-y-4">
             {/* Toolbar above resume card */}
             <div className="flex flex-wrap items-center justify-between gap-3">
-              {/* Left: View mode toggle */}
-              <div className="inline-flex items-center p-1 bg-slate-100/90 rounded-xl border border-slate-200 select-none">
-                <button
-                  type="button"
-                  onClick={() => setResumeViewMode("preview")}
-                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                    resumeViewMode === "preview"
-                      ? "bg-white text-slate-900 shadow-xs"
-                      : "text-slate-500 hover:text-slate-800"
-                  }`}
-                >
-                  Preview
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setResumeViewMode("raw")}
-                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                    resumeViewMode === "raw"
-                      ? "bg-white text-slate-900 shadow-xs"
-                      : "text-slate-500 hover:text-slate-800"
-                  }`}
-                >
-                  <span>Raw text</span>
-                  <span className="text-[9px] font-black uppercase bg-teal-50 border border-teal-200 text-[#0d6e5a] px-1 py-0.2 rounded">
-                    PRO
-                  </span>
-                </button>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                  Resume Preview
+                </span>
               </div>
 
               {/* Right: Actions */}
@@ -420,9 +395,11 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                 >
                   {pdfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
                   <span>Download PDF</span>
-                  <span className="text-[9px] font-black uppercase bg-white/20 text-white px-1.5 py-0.2 rounded">
-                    PRO
-                  </span>
+                  {!isPaidUser && (
+                    <span className="text-[9px] font-black uppercase bg-white/20 text-white px-1.5 py-0.2 rounded">
+                      PRO
+                    </span>
+                  )}
                 </button>
 
                 <button
@@ -433,9 +410,11 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                 >
                   {docxLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5 text-[#0d6e5a]" />}
                   <span>DOCX</span>
-                  <span className="text-[9px] font-black uppercase bg-teal-50 border border-teal-200 text-[#0d6e5a] px-1.5 py-0.2 rounded">
-                    PRO
-                  </span>
+                  {!isPaidUser && (
+                    <span className="text-[9px] font-black uppercase bg-teal-50 border border-teal-200 text-[#0d6e5a] px-1.5 py-0.2 rounded">
+                      PRO
+                    </span>
+                  )}
                 </button>
               </div>
             </div>
@@ -468,71 +447,78 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                 </div>
               )}
 
-              {/* Resume Body */}
-              {resumeViewMode === "raw" ? (
-                <pre className="font-mono text-xs leading-relaxed text-slate-800 whitespace-pre-wrap select-text">
-                  {resume.optimizedText || "No text available."}
-                </pre>
-              ) : (
-                <div className="text-xs leading-relaxed select-text font-serif text-slate-900">
-                  {(() => {
-                    const SECTION_NAMES = [
-                      "PROFESSIONAL SUMMARY", "TECHNICAL SKILLS", "PROFESSIONAL EXPERIENCE",
-                      "WORK EXPERIENCE", "EMPLOYMENT HISTORY", "PERSONAL PROJECTS",
-                      "ACADEMIC PROJECTS", "ACADEMIC BACKGROUND", "CORE SKILLS", "KEY SKILLS",
-                      "SUMMARY", "OBJECTIVE", "SKILLS", "EXPERIENCE", "INTERNSHIP",
-                      "INTERNSHIPS", "PROJECTS", "EDUCATION", "CERTIFICATIONS", "ACHIEVEMENTS",
-                      "KEY ACHIEVEMENTS", "EXTRA-CURRICULAR", "AWARDS", "LANGUAGES"
-                    ];
-                    let cleanInput = resume.optimizedText || "No optimized text found.";
-                    for (const sec of SECTION_NAMES) {
-                      const reg = new RegExp(`(^|\\n)\\s*(${sec})\\b`, "gi");
-                      cleanInput = cleanInput.replace(reg, "\n\n$2\n");
-                    }
+              {/* Resume Body: Clean LaTeX/Harvard ATS format */}
+              <div className="text-xs leading-relaxed select-text font-serif text-slate-900">
+                {(() => {
+                  const SECTION_NAMES = [
+                    "PROFESSIONAL SUMMARY", "TECHNICAL SKILLS", "PROFESSIONAL EXPERIENCE",
+                    "WORK EXPERIENCE", "EMPLOYMENT HISTORY", "PERSONAL PROJECTS",
+                    "ACADEMIC PROJECTS", "ACADEMIC BACKGROUND", "CORE SKILLS", "KEY SKILLS",
+                    "SUMMARY", "OBJECTIVE", "SKILLS", "EXPERIENCE", "INTERNSHIP",
+                    "INTERNSHIPS", "PROJECTS", "EDUCATION", "CERTIFICATIONS", "ACHIEVEMENTS",
+                    "KEY ACHIEVEMENTS", "EXTRA-CURRICULAR", "AWARDS", "LANGUAGES"
+                  ];
+                  let cleanInput = resume.optimizedText || "No optimized text found.";
+                  for (const sec of SECTION_NAMES) {
+                    const reg = new RegExp(`(^|\\n)\\s*(${sec})\\b`, "gi");
+                    cleanInput = cleanInput.replace(reg, "\n\n$2\n");
+                  }
 
-                    return cleanInput.split("\n").map((line, i) => {
-                      const trimmed = line.trim();
-                      const upperLine = trimmed.toUpperCase();
-                      const isSectionHeader = SECTION_NAMES.some(
-                        sec => upperLine === sec || upperLine.includes(`${sec}:`)
-                      );
-                      const isFirstLine = i === 0 && trimmed.length > 0;
-                      if (isFirstLine && trimmed.length > 0) {
-                        return (
-                          <p key={i} className="text-base font-black text-slate-900 tracking-tight mb-2 pb-0.5">
-                            {trimmed}
-                          </p>
-                        );
-                      }
-                      const isContactLine = i <= 2 && (trimmed.includes("@") || trimmed.includes("|") || /\+?\d{7,}/.test(trimmed));
-                      if (isContactLine) {
-                        return (
-                          <p key={i} className="text-[11px] text-slate-600 mt-1 mb-3.5 leading-normal">
-                            {trimmed}
-                          </p>
-                        );
-                      }
-                      if (isSectionHeader) {
-                        return (
-                          <div key={i} className="mt-4 mb-1">
-                            <p className="text-xs font-black text-slate-900 uppercase tracking-widest border-b border-slate-300 pb-0.5">
-                              {trimmed}
-                            </p>
-                          </div>
-                        );
-                      }
-                      if (trimmed === "") {
-                        return <div key={i} className="h-1.5" />;
-                      }
+                  return cleanInput.split("\n").map((line, i) => {
+                    const trimmed = line.trim();
+                    const upperLine = trimmed.toUpperCase();
+                    const isSectionHeader = SECTION_NAMES.some(
+                      sec => upperLine === sec || upperLine.includes(`${sec}:`)
+                    );
+                    const isFirstLine = i === 0 && trimmed.length > 0;
+                    if (isFirstLine && trimmed.length > 0) {
                       return (
-                        <p key={i} className="leading-[1.48] text-slate-800">
-                          {line}
+                        <p key={i} className="text-base font-black text-slate-900 tracking-tight mb-2 pb-0.5">
+                          {trimmed}
                         </p>
                       );
-                    });
-                  })()}
-                </div>
-              )}
+                    }
+                    const isContactLine = i <= 2 && (trimmed.includes("@") || trimmed.includes("|") || /\+?\d{7,}/.test(trimmed));
+                    if (isContactLine) {
+                      return (
+                        <p key={i} className="text-[11px] text-slate-600 mt-1 mb-3.5 leading-normal">
+                          {trimmed}
+                        </p>
+                      );
+                    }
+                    if (isSectionHeader) {
+                      return (
+                        <div key={i} className="mt-4 mb-1">
+                          <p className="text-xs font-black text-slate-900 uppercase tracking-widest border-b border-slate-300 pb-0.5">
+                            {trimmed}
+                          </p>
+                        </div>
+                      );
+                    }
+                    if (trimmed === "") {
+                      return <div key={i} className="h-1.5" />;
+                    }
+
+                    // Bullet formatting
+                    const isBullet = /^[•\-*\u2022▸►→]/.test(trimmed);
+                    if (isBullet) {
+                      const bulletContent = trimmed.replace(/^[•\-*\u2022▸►→]\s*/, "");
+                      return (
+                        <div key={i} className="flex items-start gap-2 my-0.5 leading-[1.46] text-slate-800">
+                          <span className="text-slate-900 font-bold shrink-0 select-none">•</span>
+                          <span className="flex-1">{bulletContent}</span>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <p key={i} className="leading-[1.48] text-slate-800">
+                        {line}
+                      </p>
+                    );
+                  });
+                })()}
+              </div>
             </div>
           </div>
 
@@ -776,14 +762,6 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* Feedback Box */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex items-start gap-3">
-            <MessageSquare className="h-4 w-4 text-[#0d6e5a] shrink-0 mt-0.5" />
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Have feedback on this match? We read every suggestion to continually improve scoring precision.
-            </p>
           </div>
         </div>
       )}
@@ -1251,7 +1229,7 @@ export default function HistoryPage() {
 
   return (
     <div className="flex flex-col min-h-screen text-slate-900 bg-[#f8fafc]">
-      <Navbar />
+      <Navbar hideNav={true} />
 
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 pt-6 sm:pt-10 pb-28 sm:pb-10 select-text">
         <ScrollFadeIn>

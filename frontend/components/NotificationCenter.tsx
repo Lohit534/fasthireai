@@ -108,6 +108,18 @@ export function getActiveNotifications(
   return notifications;
 }
 
+export function hasUnreadNotifications(credits: CreditInfo | null, userEmail?: string | null): boolean {
+  if (!credits) return false;
+  let dismissedIds: string[] = [];
+  try {
+    const stored = typeof window !== "undefined" ? localStorage.getItem("fastHire_dismissed_notifications") : null;
+    if (stored) dismissedIds = JSON.parse(stored);
+  } catch {
+    // Ignore
+  }
+  return getActiveNotifications(credits, userEmail, dismissedIds).length > 0;
+}
+
 export function NotificationBell({ credits, userEmail, compact = false }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
@@ -180,11 +192,9 @@ export function NotificationBell({ credits, userEmail, compact = false }: Notifi
       >
         <Bell className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-60" />
-            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#0d6e5a] text-white text-[9px] font-black items-center justify-center">
-              {unreadCount}
-            </span>
+          <span className="absolute top-1 right-1 flex h-2 w-2 items-center justify-center pointer-events-none">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
           </span>
         )}
       </button>
