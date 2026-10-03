@@ -2,6 +2,8 @@ import React from "react";
 import { Font, Document, Page, Text, View, Link, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
 import { logger } from "../logger";
 import { estimateYearsOfExperience } from "../resume-format";
+import { looksLikeSentenceBullet } from "../ats/bullets";
+export { looksLikeSentenceBullet };
 
 // Register Times New Roman natively supported aliases
 Font.registerHyphenationCallback(word => [word]);
@@ -709,10 +711,14 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
           } else {
             blocks.push({ type: 'bullet', text: line });
           }
+        } else if (lastJobIdx !== -1 && looksLikeSentenceBullet(line)) {
+          // Bullet sentence that lost its "•" marker — attach to current role
+          (blocks[lastJobIdx] as JobBlock).bullets.push(line);
         } else {
           const lowerLine = line.toLowerCase();
           const TITLE_KEYWORDS = ['developer', 'engineer', 'manager', 'lead', 'architect', 'consultant', 'analyst', 'designer', 'intern', 'specialist', 'associate', 'head', 'director', 'officer'];
-          const looksLikeJobHeader = line.includes('|') || line.includes('—') || line.includes('–') || TITLE_KEYWORDS.some(kw => lowerLine.includes(kw)) || lastJobIdx === -1;
+          // Whole-word match only ("intern" must not match "internal")
+          const looksLikeJobHeader = line.includes('|') || line.includes('—') || line.includes('–') || TITLE_KEYWORDS.some(kw => new RegExp(`\\b${kw}s?\\b`).test(lowerLine)) || lastJobIdx === -1;
 
           if (looksLikeJobHeader) {
             const parts = line.split(/\s*(?:[|—–]|\s+-\s+)\s*/);
@@ -764,8 +770,9 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
     }
 
     // Projects block
-    if (currentSection === 'PROJECTS' || currentSection === 'PERSONAL PROJECTS') {
-      const isBullet = /^\s*([•\-\*–—+•\u2022\u25cf\u2043]|\d+\.)\s*/.test(rawLine);
+    if (currentSection === 'PROJECTS' || currentSection === 'PERSONAL PROJECTS' || currentSection === 'KEY PROJECTS' || currentSection === 'ACADEMIC PROJECTS') {
+      const hasProject = blocks.some(b => b.type === 'project');
+      const isBullet = /^\s*([•\-\*–—+•\u2022\u25cf\u2043]|\d+\.)\s*/.test(rawLine) || (hasProject && looksLikeSentenceBullet(line));
       if (!isBullet) {
         const parts = line.split(/\s*(?:[|—–]|\s+-\s+)\s*/);
         const name = stripMarkdownAsterisks(parts[0] || "Project");

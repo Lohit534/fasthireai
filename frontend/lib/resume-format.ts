@@ -8,7 +8,7 @@
  *    "USER VERIFIED" blocks, duplicated institution segments) before the text
  *    reaches the live preview, PDF and DOCX exporters.
  */
-import { detectSectionHeader } from "./ats/bullets";
+import { detectSectionHeader, looksLikeSentenceBullet, BULLET_MARKER_REGEX } from "./ats/bullets";
 
 const MONTHS: Record<string, number> = {
   jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11,
@@ -142,6 +142,14 @@ export function sanitizeOptimizedResume(optimized: string, original: string): st
 
     const header = detectSectionHeader(line);
     if (header) section = header.name;
+
+    // Experience / Projects: restore missing "•" on bullet sentences
+    if (!header) {
+      const sec = detectSectionHeader(section);
+      if (sec?.scorable && line.trim() && !BULLET_MARKER_REGEX.test(line) && looksLikeSentenceBullet(line)) {
+        line = `• ${line.trim()}`;
+      }
+    }
 
     const isEducation = /EDUCATION|ACADEM|QUALIFICATION/.test(section) && !header;
     if (isEducation && line.trim()) {

@@ -146,8 +146,8 @@ export function extractScorableBullets(resumeText: string): ExtractedBullet[] {
       sawAnyHeader &&
       currentScorable &&
       clean.length > 30 &&
-      !/[|@]|https?:/i.test(clean) &&
-      startsWithStrongVerb(clean)
+      !/@|https?:/i.test(clean) &&
+      looksLikeSentenceBullet(clean)
     ) {
       results.push({ index, rawLine: line, cleanText: clean, section: currentSection });
     }
@@ -169,4 +169,19 @@ export function hasStrongActionVerb(text: string): boolean {
   const clean = cleanBulletText(text);
   if (startsWithStrongVerb(clean)) return true;
   return extractActionVerbs(clean).length > 0;
+}
+
+/**
+ * True when a line WITHOUT a bullet marker is really a bullet sentence
+ * (AI output / PDF extraction often drops the "•"). Headers such as
+ * "Project Name | Python, AWS" or "Generative AI Intern" are never matched.
+ */
+export function looksLikeSentenceBullet(line: string): boolean {
+  const t = (line || "").trim();
+  if (!t || t.includes("|")) return false;
+  if (/\b(19|20)\d{2}\s*[-–—to]+\s*((19|20)\d{2}|present|current)\b/i.test(t)) return false;
+  const words = t.split(/\s+/).length;
+  if (words < 6) return false;
+  if (startsWithStrongVerb(t)) return true;
+  return words >= 9 && /[.;]$/.test(t);
 }
