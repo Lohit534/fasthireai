@@ -593,8 +593,8 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
       {user && !hideNav && pathname !== "/dashboard/history" && (
         <FeedbackBanner onOpenFeedback={() => setIsFeedbackOpen(true)} />
       )}
-      {/* Unified Help Center, Support Tickets & 24/7 AI Chatbot — paid/owner only (hidden in history) */}
-      {user && !hideNav && pathname !== "/dashboard/history" && (isOwner || isPremium || isProMax) && (
+      {/* Unified Help Center, Support Tickets & 24/7 AI Chatbot — paid/owner only */}
+      {user && !hideNav && (isOwner || isPremium || isProMax) && (
         <SupportChatbot />
       )}
       <FeedbackToast isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} userEmail={user?.email} />

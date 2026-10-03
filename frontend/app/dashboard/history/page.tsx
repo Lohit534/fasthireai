@@ -11,7 +11,16 @@ import { ResumeRecord, CreditInfo, isOwnerEmail } from "@/types";
 import { logger } from "@/lib/logger";
 import { generateSkillRoadmap, generateMultiSkillRoadmap } from "@/lib/roadmap-generator";
 import { extractTechTerms, extractKeywords } from "@/lib/ats/keywords";
+import { parseResumeIntoBlocks } from "@/lib/export/pdf-document";
 import { saveAs } from "file-saver";
+
+function getReadableLinkLabel(url: string, fallback?: string): string {
+  if (!url) return fallback || url;
+  const lower = url.toLowerCase();
+  if (lower.includes("linkedin.com")) return "LinkedIn";
+  if (lower.includes("github.com")) return "GitHub";
+  return fallback || url;
+}
 import { useUpgradeModalStore } from "@/store/useUpgradeModalStore";
 import { HistorySkeleton, HistoryListSkeleton } from "@/components/SkeletonShimmer";
 import {
@@ -406,12 +415,12 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                   type="button"
                   onClick={() => downloadFile("docx")}
                   disabled={docxLoading}
-                  className="bg-white border border-teal-200 text-[#0d6e5a] hover:bg-teal-50/50 font-bold text-xs h-9 px-4 rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                  className="bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
                 >
-                  {docxLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5 text-[#0d6e5a]" />}
+                  {docxLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5 text-slate-500" />}
                   <span>DOCX</span>
                   {!isPaidUser && (
-                    <span className="text-[9px] font-black uppercase bg-teal-50 border border-teal-200 text-[#0d6e5a] px-1.5 py-0.2 rounded">
+                    <span className="text-[9px] font-black uppercase bg-slate-100 border border-slate-200 text-slate-600 px-1.5 py-0.2 rounded">
                       PRO
                     </span>
                   )}
@@ -447,77 +456,155 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                 </div>
               )}
 
-              {/* Resume Body: Clean LaTeX/Harvard ATS format */}
-              <div className="text-xs leading-relaxed select-text font-serif text-slate-900">
-                {(() => {
-                  const SECTION_NAMES = [
-                    "PROFESSIONAL SUMMARY", "TECHNICAL SKILLS", "PROFESSIONAL EXPERIENCE",
-                    "WORK EXPERIENCE", "EMPLOYMENT HISTORY", "PERSONAL PROJECTS",
-                    "ACADEMIC PROJECTS", "ACADEMIC BACKGROUND", "CORE SKILLS", "KEY SKILLS",
-                    "SUMMARY", "OBJECTIVE", "SKILLS", "EXPERIENCE", "INTERNSHIP",
-                    "INTERNSHIPS", "PROJECTS", "EDUCATION", "CERTIFICATIONS", "ACHIEVEMENTS",
-                    "KEY ACHIEVEMENTS", "EXTRA-CURRICULAR", "AWARDS", "LANGUAGES"
-                  ];
-                  let cleanInput = resume.optimizedText || "No optimized text found.";
-                  for (const sec of SECTION_NAMES) {
-                    const reg = new RegExp(`(^|\\n)\\s*(${sec})\\b`, "gi");
-                    cleanInput = cleanInput.replace(reg, "\n\n$2\n");
+              {/* Resume Body: Standard Harvard / Tech ATS LaTeX Format (zero teal color, pure black and dark slate text) */}
+              <div className="w-full text-slate-900 font-serif select-text leading-normal">
+                {parseResumeIntoBlocks(resume.optimizedText || "").map((block, idx) => {
+                  switch (block.type) {
+                    case "name":
+                      return (
+                        <h1 key={idx} className="text-xl font-bold text-center text-black mb-2 pb-0.5 leading-normal select-text font-serif">
+                          {block.text}
+                        </h1>
+                      );
+                    case "contact":
+                      return (
+                        <div key={idx} className="flex justify-center flex-wrap text-[10px] text-center text-slate-700 mt-1 mb-4 leading-normal select-text font-serif">
+                          {block.segments.map((seg, sIdx) => {
+                            const label = seg.isLink && seg.url ? getReadableLinkLabel(seg.url, seg.text) : seg.text;
+                            const el = seg.isLink && seg.url ? (
+                              <a key={sIdx} href={seg.url} target="_blank" rel="noopener noreferrer" className="text-black underline">
+                                {label}
+                              </a>
+                            ) : (
+                              <span key={sIdx}>{seg.text}</span>
+                            );
+                            return (
+                              <React.Fragment key={sIdx}>
+                                {el}
+                                {sIdx < block.segments.length - 1 && <span className="mx-1 text-slate-400">—</span>}
+                              </React.Fragment>
+                            );
+                          })}
+                        </div>
+                      );
+                    case "section":
+                      return (
+                        <h2 key={idx} className="text-xs font-bold text-black border-b border-black mt-3.5 mb-1.5 pb-0.5 leading-normal select-text font-serif uppercase tracking-widest">
+                          {block.text}
+                        </h2>
+                      );
+                    case "summary":
+                      return (
+                        <p key={idx} className="text-[10px] mb-2 text-slate-800 leading-relaxed select-text font-serif text-justify w-full">
+                          {block.text}
+                        </p>
+                      );
+                    case "skillLine":
+                      return (
+                        <div key={idx} className="flex flex-col sm:flex-row text-[10px] sm:text-[10.5px] mb-1.5 leading-normal select-text font-serif">
+                          <span className="font-bold text-black sm:w-[180px] shrink-0">{block.label}:</span>
+                          <span className="text-slate-800 flex-1">{block.value}</span>
+                        </div>
+                      );
+                    case "project":
+                      return (
+                        <div key={idx} className="mb-2">
+                          <div className="flex flex-col sm:flex-row sm:justify-between text-[10px] sm:text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span>{block.name}</span>
+                              {block.projectUrl && (
+                                <a href={block.projectUrl} target="_blank" rel="noopener noreferrer" className="text-[9px] text-slate-700 underline font-normal">
+                                  {getReadableLinkLabel(block.projectUrl, block.name)}
+                                </a>
+                              )}
+                            </div>
+                            {block.tech && (
+                              <span className="font-normal italic text-slate-600 text-[9.5px] sm:text-[10px]">{block.tech}</span>
+                            )}
+                          </div>
+                          {block.bullets.map((bullet, bIdx) => {
+                            const cleanBullet = bullet.replace(/^\s*([•\-\*–—+•\u2022\u25cf\u2043▸►→]|\d+\.)\s*/, "").trim();
+                            return (
+                              <div key={bIdx} className="flex items-start text-[9.5px] sm:text-[10px] mb-0.5 pl-2 sm:pl-3 leading-normal select-text font-serif">
+                                <span className="w-2.5 sm:w-3 shrink-0 select-none text-black font-serif">•</span>
+                                <span className="flex-1 text-slate-800 font-serif">{cleanBullet}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    case "job":
+                      return (
+                        <div key={idx} className="mb-2">
+                          <div className="flex flex-col sm:flex-row sm:justify-between text-[10px] sm:text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span>{block.title}</span>
+                              <span className="font-normal text-slate-700">{block.company}</span>
+                            </div>
+                            {block.dates && (
+                              <span className="font-normal text-slate-600 text-[9.5px] sm:text-[10px] shrink-0">{block.dates}</span>
+                            )}
+                          </div>
+                          {block.bullets.map((bullet, bIdx) => {
+                            const cleanBullet = bullet.replace(/^\s*([•\-\*–—+•\u2022\u25cf\u2043▸►→]|\d+\.)\s*/, "").trim();
+                            return (
+                              <div key={bIdx} className="flex items-start text-[9.5px] sm:text-[10px] mb-0.5 pl-2 sm:pl-3 leading-normal select-text font-serif">
+                                <span className="w-2.5 sm:w-3 shrink-0 select-none text-black font-serif">•</span>
+                                <span className="flex-1 text-slate-800 font-serif">{cleanBullet}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    case "education":
+                      return (
+                        <div key={idx} className="mb-2">
+                          <div className="flex flex-col sm:flex-row sm:justify-between text-[10px] sm:text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span>{block.degree}</span>
+                              {block.school && <span className="font-normal text-slate-700">{block.school}</span>}
+                            </div>
+                            <div className="flex items-center gap-2 text-slate-600 text-[9.5px] sm:text-[10px] font-normal">
+                              {block.dates && <span>{block.dates}</span>}
+                              {block.gpa && <span>({block.gpa})</span>}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    case "bullet":
+                      return (
+                        <div key={idx} className="flex items-start text-[9.5px] sm:text-[10px] mb-0.5 pl-2 sm:pl-3 leading-normal select-text font-serif">
+                          <span className="w-2.5 sm:w-3 shrink-0 select-none text-black font-serif">•</span>
+                          <span className="flex-1 text-slate-800 font-serif">{block.text.replace(/^\s*([•\-\*–—+•\u2022\u25cf\u2043▸►→]|\d+\.)\s*/, "")}</span>
+                        </div>
+                      );
+                    case "cert": {
+                      const cleanCert = (block.text || "").replace(/^[•\-\*–\s\u2022]+/, "");
+                      return (
+                        <div key={idx} className="flex items-start text-[9.5px] sm:text-[10px] mb-0.5 pl-2 sm:pl-3 leading-normal font-serif">
+                          <span className="w-2.5 sm:w-3 shrink-0 select-none text-black font-serif">•</span>
+                          <span className="flex-1 text-slate-800 font-serif">{cleanCert}</span>
+                        </div>
+                      );
+                    }
+                    case "link":
+                      return (
+                        <a key={idx} href={block.url} target="_blank" rel="noopener noreferrer" className="text-[9.5px] sm:text-[10px] text-blue-600 underline mb-0.5 block leading-normal select-text font-serif">
+                          {block.label}
+                        </a>
+                      );
+                    case "spacer":
+                      return <div key={idx} className="h-1" />;
+                    case "normal":
+                      return (
+                        <p key={idx} className="text-[10px] sm:text-[10.5px] mb-1 text-slate-800 leading-normal select-text font-serif">
+                          {block.text}
+                        </p>
+                      );
+                    default:
+                      return null;
                   }
-
-                  return cleanInput.split("\n").map((line, i) => {
-                    const trimmed = line.trim();
-                    const upperLine = trimmed.toUpperCase();
-                    const isSectionHeader = SECTION_NAMES.some(
-                      sec => upperLine === sec || upperLine.includes(`${sec}:`)
-                    );
-                    const isFirstLine = i === 0 && trimmed.length > 0;
-                    if (isFirstLine && trimmed.length > 0) {
-                      return (
-                        <p key={i} className="text-base font-black text-slate-900 tracking-tight mb-2 pb-0.5">
-                          {trimmed}
-                        </p>
-                      );
-                    }
-                    const isContactLine = i <= 2 && (trimmed.includes("@") || trimmed.includes("|") || /\+?\d{7,}/.test(trimmed));
-                    if (isContactLine) {
-                      return (
-                        <p key={i} className="text-[11px] text-slate-600 mt-1 mb-3.5 leading-normal">
-                          {trimmed}
-                        </p>
-                      );
-                    }
-                    if (isSectionHeader) {
-                      return (
-                        <div key={i} className="mt-4 mb-1">
-                          <p className="text-xs font-black text-slate-900 uppercase tracking-widest border-b border-slate-300 pb-0.5">
-                            {trimmed}
-                          </p>
-                        </div>
-                      );
-                    }
-                    if (trimmed === "") {
-                      return <div key={i} className="h-1.5" />;
-                    }
-
-                    // Bullet formatting
-                    const isBullet = /^[•\-*\u2022▸►→]/.test(trimmed);
-                    if (isBullet) {
-                      const bulletContent = trimmed.replace(/^[•\-*\u2022▸►→]\s*/, "");
-                      return (
-                        <div key={i} className="flex items-start gap-2 my-0.5 leading-[1.46] text-slate-800">
-                          <span className="text-slate-900 font-bold shrink-0 select-none">•</span>
-                          <span className="flex-1">{bulletContent}</span>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <p key={i} className="leading-[1.48] text-slate-800">
-                        {line}
-                      </p>
-                    );
-                  });
-                })()}
+                })}
               </div>
             </div>
           </div>
@@ -1229,9 +1316,9 @@ export default function HistoryPage() {
 
   return (
     <div className="flex flex-col min-h-screen text-slate-900 bg-[#f8fafc]">
-      <Navbar hideNav={true} />
+      {!selected && <Navbar />}
 
-      <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 pt-6 sm:pt-10 pb-28 sm:pb-10 select-text">
+      <main className={`flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 pb-28 sm:pb-10 select-text ${selected ? "pt-6 sm:pt-8" : "pt-6 sm:pt-10"}`}>
         <ScrollFadeIn>
           {selected ? (
             /* Detailed 3-Column optimization report */
