@@ -38,6 +38,7 @@ import { DemoVideoModal } from "@/components/DemoVideoModal";
 import { DataPreferencesModal } from "@/components/DataPreferencesModal";
 import UpgradePaywallModal from "@/components/UpgradePaywallModal";
 import { useUpgradeModalStore } from "@/store/useUpgradeModalStore";
+import { NotificationBell, MonthlyNotificationModal } from "@/components/NotificationCenter";
 
 interface NavbarProps {
   refreshKey?: number;
@@ -258,6 +259,9 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
           <div className="flex items-center gap-2 sm:gap-4">
             {user ? (
               <>
+                {/* Notification Bell in top right corner of Navbar */}
+                <NotificationBell credits={credits} userEmail={user.email} />
+
                 {/* Profile Button with dots around the circle representing credits */}
                 <div className="relative" ref={dropdownRef}>
                   <button
@@ -301,24 +305,28 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                   {isDropdownOpen && (
                     <div className="absolute right-0 mt-2 w-[260px] sm:w-[275px] bg-white text-slate-800 border border-slate-200 rounded-2xl shadow-xl p-3 space-y-2.5 select-none animate-in fade-in slide-in-from-top-2 duration-150 z-50">
                       
-                      {/* 1. User Header */}
-                      <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-                        <div className="h-8 w-8 rounded-full bg-emerald-50 border-2 border-[#0d6e5a] ring-2 ring-[#0d6e5a]/25 flex items-center justify-center text-[#0d6e5a] font-black text-xs shrink-0">
-                          {user.email ? user.email.charAt(0).toUpperCase() : "U"}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-xs font-bold text-slate-900 truncate max-w-full">
-                            {user.user_metadata?.full_name || (user.email ? user.email.split("@")[0] : "User")}
+                      {/* 1. User Header with notification icon in the top right corner of the box */}
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="h-8 w-8 rounded-full bg-emerald-50 border-2 border-[#0d6e5a] ring-2 ring-[#0d6e5a]/25 flex items-center justify-center text-[#0d6e5a] font-black text-xs shrink-0">
+                            {user.email ? user.email.charAt(0).toUpperCase() : "U"}
                           </div>
-                          <div className="text-[10px] text-slate-500 font-semibold truncate flex items-center gap-1 mt-0.5">
-                            <span>{planLabel}</span>
-                            {isOwner && (
-                              <span className="bg-amber-100 text-amber-800 text-[8px] font-black uppercase px-1 py-0.2 rounded border border-amber-200">
-                                Owner
-                              </span>
-                            )}
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-bold text-slate-900 truncate max-w-full">
+                              {user.user_metadata?.full_name || (user.email ? user.email.split("@")[0] : "User")}
+                            </div>
+                            <div className="text-[10px] text-slate-500 font-semibold truncate flex items-center gap-1 mt-0.5">
+                              <span>{planLabel}</span>
+                              {isOwner && (
+                                <span className="bg-amber-100 text-amber-800 text-[8px] font-black uppercase px-1 py-0.2 rounded border border-amber-200">
+                                  Owner
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
+                        {/* Notification icon in the top right corner of the profile box */}
+                        <NotificationBell credits={credits} userEmail={user.email} compact />
                       </div>
 
                       {/* 2. Credits Box (White & Teal) */}
@@ -585,6 +593,7 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
       <DemoVideoModal isOpen={isDemoModalOpen} onClose={() => setIsDemoModalOpen(false)} />
       <DataPreferencesModal isOpen={isDataPreferencesOpen} onClose={() => setIsDataPreferencesOpen(false)} />
       <UpgradePaywallModal />
+      <MonthlyNotificationModal credits={credits} userEmail={user?.email} />
     </>
   );
 }

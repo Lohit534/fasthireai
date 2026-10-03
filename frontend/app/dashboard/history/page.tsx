@@ -76,6 +76,9 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
   const [generatingLetter, setGeneratingLetter] = useState(false);
   const [showRoadmapAccordion, setShowRoadmapAccordion] = useState(false);
   const [showCoverLetterAccordion, setShowCoverLetterAccordion] = useState(false);
+  const [activeTab, setActiveTab] = useState<"resume" | "changes" | "breakdown" | "roadmap" | "cover_letter">("resume");
+  const [resumeViewMode, setResumeViewMode] = useState<"preview" | "raw">("preview");
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const delta = resume.scoreAfter - resume.scoreBefore;
   
@@ -237,563 +240,772 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      {/* Detail view header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-        <div className="flex items-center gap-3">
+      {/* ─── Top Header (Matching user's image) ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <span>Score improved</span>
+            <span className="text-slate-900">{resume.scoreBefore}%</span>
+            <span className="text-slate-400 font-normal">→</span>
+            <span className="text-[#0d6e5a]">{resume.scoreAfter}%</span>
+          </h1>
+          <span className="inline-flex items-center bg-teal-50 border border-teal-200 text-[#0d6e5a] text-xs font-bold px-3 py-1 rounded-full shadow-xs">
+            +{delta} points
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
           <button
+            type="button"
+            onClick={() => setShowShareModal(true)}
+            className="bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <Share2 className="h-3.5 w-3.5 text-slate-500" />
+            <span>Share result</span>
+          </button>
+
+          <button
+            type="button"
             onClick={onBack}
-            className="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-colors shadow-sm"
+            className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs h-9 px-4 rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Back to History</span>
           </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#0d6e5a] bg-[#0d6e5a]/10 px-2.5 py-0.5 rounded-full">
-                Scanned History Detail
-              </span>
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                Active plan: {userPlan === "owner" ? "Unlimited Free (Owner)" : userPlan.toUpperCase()}
-              </span>
-            </div>
-            <h1 className="text-xl font-black text-slate-900 mt-1.5">{resume.jobTitle || "Resume Optimization"}</h1>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-3">
-          {/* ATS Score display */}
-          <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold px-4 py-2 rounded-full text-xs flex items-center gap-2 select-none shadow-sm">
-            <span>ATS Score:</span>
-            <span className="font-extrabold">{resume.scoreBefore}</span>
-            <ArrowRight className="h-3 w-3 text-emerald-600" />
-            <span className="font-black text-sm">{resume.scoreAfter}</span>
-            <span className="bg-emerald-200/60 text-emerald-900 text-[9px] px-1.5 py-0.5 rounded font-black">+{delta}</span>
-          </div>
-          
           <button
+            type="button"
             onClick={onDelete}
-            className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 hover:text-red-700 transition-colors"
+            title="Delete Record"
+            className="text-slate-400 hover:text-red-600 p-2 rounded-xl hover:bg-red-50 transition-colors cursor-pointer border border-transparent hover:border-red-200"
           >
-            <Trash2 className="h-3.5 w-3.5" />
-            Delete
+            <Trash2 className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      {/* Top Banner Message */}
-      <div className="bg-teal-50/60 border border-teal-200/70 rounded-2xl p-4 flex items-center gap-3 select-none">
-        <div className="h-9 w-9 rounded-xl bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center shrink-0">
-          <Sparkle className="h-4.5 w-4.5 text-[#0d6e5a]" />
-        </div>
-        <div>
-          <h4 className="text-xs font-bold text-slate-900">Your optimized resume is ready! More features coming soon.</h4>
-          <p className="text-[10px] text-slate-500 mt-0.5">Use the widgets below to generate custom cover letters and skills Roadmaps.</p>
-        </div>
+      {/* ─── TABS BAR (Matching user's image) ─── */}
+      <div className="flex items-center gap-6 border-b border-slate-200 text-sm overflow-x-auto select-none no-scrollbar pt-1">
+        <button
+          type="button"
+          onClick={() => setActiveTab("resume")}
+          className={`pb-3 font-semibold transition-all relative whitespace-nowrap cursor-pointer ${
+            activeTab === "resume"
+              ? "text-[#0d6e5a] font-bold"
+              : "text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          Resume
+          {activeTab === "resume" && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0d6e5a] rounded-full" />
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("changes")}
+          className={`pb-3 font-semibold transition-all relative flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+            activeTab === "changes"
+              ? "text-[#0d6e5a] font-bold"
+              : "text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          <span>What changed</span>
+          <span className="text-[10px] font-black bg-teal-50 border border-teal-200 text-[#0d6e5a] px-1.5 py-0.2 rounded-full">
+            {keywords.length || rewrittenBullets}
+          </span>
+          {activeTab === "changes" && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0d6e5a] rounded-full" />
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("breakdown")}
+          className={`pb-3 font-semibold transition-all relative whitespace-nowrap cursor-pointer ${
+            activeTab === "breakdown"
+              ? "text-[#0d6e5a] font-bold"
+              : "text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          Score breakdown
+          {activeTab === "breakdown" && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0d6e5a] rounded-full" />
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("roadmap")}
+          className={`pb-3 font-semibold transition-all relative whitespace-nowrap cursor-pointer ${
+            activeTab === "roadmap"
+              ? "text-[#0d6e5a] font-bold"
+              : "text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          Skill roadmap
+          {activeTab === "roadmap" && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0d6e5a] rounded-full" />
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("cover_letter")}
+          className={`pb-3 font-semibold transition-all relative whitespace-nowrap cursor-pointer ${
+            activeTab === "cover_letter"
+              ? "text-[#0d6e5a] font-bold"
+              : "text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          Cover letter
+          {activeTab === "cover_letter" && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0d6e5a] rounded-full" />
+          )}
+        </button>
       </div>
 
-      {/* 3-COLUMN EQUAL-HEIGHT LAYOUT */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-        
-        {/* Column 1: Your Optimized Resume */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5.5 shadow-sm flex flex-col justify-between h-full relative space-y-4 hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-[#0d6e5a]" />
-              Your Optimized Resume
-            </h3>
-            <button
-              onClick={handleCopy}
-              className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all text-slate-700 hover:text-slate-900 border border-slate-200 bg-slate-50 hover:bg-slate-100"
-            >
-              {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3 text-slate-400" />}
-              {copied ? "Copied!" : "Copy"}
-            </button>
-          </div>
-
-          {/* Times New Roman document container */}
-          <div
-            className="w-full bg-white text-slate-900 border border-slate-200 rounded-xl p-5 shadow-inner overflow-y-auto flex-1 min-h-[460px] max-h-[490px] font-serif select-text relative"
-            style={{ fontFamily: "'Times New Roman', Times, serif" }}
-          >
-            {/* Watermark for free plan downloads */}
-            {isLocked && (
-              <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] pointer-events-none flex flex-col items-center justify-center select-none p-6 text-center">
-                <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-lg text-slate-900 max-w-[240px] pointer-events-auto">
-                  <Lock className="h-6 w-6 text-[#0d6e5a] mx-auto mb-2" />
-                  <h5 className="text-xs font-bold text-slate-900">Document Preview</h5>
-                  <p className="text-[9px] text-slate-500 mt-1 leading-relaxed">Upgrade to a paid plan to unlock PDF and Word export downloads.</p>
-                </div>
+      {/* ─── TAB 1: RESUME (Image 2-Column Layout) ─── */}
+      {activeTab === "resume" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column (8 cols): Toolbar & Document Paper Preview */}
+          <div className="lg:col-span-8 space-y-4">
+            {/* Toolbar above resume card */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {/* Left: View mode toggle */}
+              <div className="inline-flex items-center p-1 bg-slate-100/90 rounded-xl border border-slate-200 select-none">
+                <button
+                  type="button"
+                  onClick={() => setResumeViewMode("preview")}
+                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    resumeViewMode === "preview"
+                      ? "bg-white text-slate-900 shadow-xs"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  Preview
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setResumeViewMode("raw")}
+                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                    resumeViewMode === "raw"
+                      ? "bg-white text-slate-900 shadow-xs"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  <span>Raw text</span>
+                  <span className="text-[9px] font-black uppercase bg-teal-50 border border-teal-200 text-[#0d6e5a] px-1 py-0.2 rounded">
+                    PRO
+                  </span>
+                </button>
               </div>
-            )}
-            {/* Structured resume renderer with section header highlighting */}
-            <div className="text-xs leading-relaxed select-text font-serif text-slate-900">
-              {(() => {
-                const SECTION_NAMES = ['PROFESSIONAL SUMMARY', 'TECHNICAL SKILLS', 'PROFESSIONAL EXPERIENCE', 'WORK EXPERIENCE', 'EMPLOYMENT HISTORY', 'PERSONAL PROJECTS', 'ACADEMIC PROJECTS', 'ACADEMIC BACKGROUND', 'CORE SKILLS', 'KEY SKILLS', 'SUMMARY', 'OBJECTIVE', 'SKILLS', 'EXPERIENCE', 'INTERNSHIP', 'INTERNSHIPS', 'PROJECTS', 'EDUCATION', 'CERTIFICATIONS', 'ACHIEVEMENTS', 'KEY ACHIEVEMENTS', 'EXTRA-CURRICULAR', 'AWARDS', 'LANGUAGES'];
-                let cleanInput = (resume.optimizedText || "No optimized text found.");
-                for (const sec of SECTION_NAMES) {
-                  const reg = new RegExp(`(^|\\n)\\s*(${sec})\\b`, 'gi');
-                  cleanInput = cleanInput.replace(reg, '\n\n$2\n');
-                }
-                
-                return cleanInput.split("\n").map((line, i) => {
-                  const trimmed = line.trim();
-                  const upperLine = trimmed.toUpperCase();
-                  const isSectionHeader = SECTION_NAMES.some(sec => upperLine === sec || upperLine.includes(`${sec}:`));
-                // Name header (first line, usually longest all-caps or title-case)
-                const isFirstLine = i === 0 && trimmed.length > 0;
-                if (isFirstLine && trimmed.length > 0) {
-                  return (
-                    <p key={i} className="text-sm font-black text-slate-900 tracking-tight mb-2 pb-0.5">{trimmed}</p>
-                  );
-                }
-                const isContactLine = i <= 2 && (trimmed.includes("@") || trimmed.includes("|") || /\+?\d{7,}/.test(trimmed));
-                if (isContactLine) {
-                  return (
-                    <p key={i} className="text-[10.5px] text-slate-600 mt-1 mb-3.5 leading-normal">{trimmed}</p>
-                  );
-                }
-                if (isSectionHeader) {
-                  return (
-                    <div key={i} className="mt-3 mb-0.5">
-                      <p className="text-[11px] font-black text-slate-900 uppercase tracking-widest border-b border-slate-300 pb-0.5">{trimmed}</p>
-                    </div>
-                  );
-                }
-                if (trimmed === "") {
-                  return <div key={i} className="h-1" />;
-                }
-                return (
-                  <p key={i} className="leading-[1.45] text-slate-800">{line}</p>
-                );
-              })})()}
-            </div>
-          </div>
 
-          {/* Download & Share Actions */}
-          <div className="space-y-3 pt-1">
-            {isLocked ? (
-              <Button
-                onClick={() => {
-                  useUpgradeModalStore.getState().openModal({
-                    badge: "DOWNLOAD BLOCKED",
-                    title: "Your 2 free optimizations are used up",
-                    description: "Your optimized resume is saved and stays in your history. Free includes the ATS score and live preview; downloading is on a paid plan.",
-                  });
-                }}
-                className="w-full bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-11 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
-              >
-                <Lock className="h-4 w-4" />
-                <span>Unlock PDF &amp; DOCX Download</span>
-                <span className="ml-1 px-1.5 py-0.5 text-[9px] font-black uppercase rounded bg-amber-400 text-slate-900">
-                  PRO
-                </span>
-              </Button>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <Button
+              {/* Right: Actions */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-bold text-xs h-9 px-3.5 rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-slate-400" />}
+                  <span>{copied ? "Copied" : "Copy"}</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => downloadFile("pdf")}
                   disabled={pdfLoading}
-                  className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-colors"
+                  className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-9 px-4 rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
                 >
-                  {pdfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-4 w-4" />}
-                  Download PDF
-                </Button>
-                <Button
+                  {pdfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                  <span>Download PDF</span>
+                  <span className="text-[9px] font-black uppercase bg-white/20 text-white px-1.5 py-0.2 rounded">
+                    PRO
+                  </span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => downloadFile("docx")}
                   disabled={docxLoading}
-                  variant="outline"
-                  className="border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-1.5 bg-white"
+                  className="bg-white border border-teal-200 text-[#0d6e5a] hover:bg-teal-50/50 font-bold text-xs h-9 px-4 rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
                 >
-                  {docxLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-4 w-4" />}
-                  Download DOCX
-                </Button>
+                  {docxLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5 text-[#0d6e5a]" />}
+                  <span>DOCX</span>
+                  <span className="text-[9px] font-black uppercase bg-teal-50 border border-teal-200 text-[#0d6e5a] px-1.5 py-0.2 rounded">
+                    PRO
+                  </span>
+                </button>
               </div>
-            )}
+            </div>
 
-            <div className="border-t border-slate-100 pt-3 text-center">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Share your result 🚀</span>
-              <div className="flex justify-center gap-3">
+            {/* Document Paper Container */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-10 shadow-sm min-h-[640px] relative font-serif select-text">
+              {/* Watermark for free plan downloads */}
+              {isLocked && (
+                <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] pointer-events-none flex flex-col items-center justify-center select-none p-6 text-center z-10">
+                  <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-xl text-slate-900 max-w-xs pointer-events-auto">
+                    <Lock className="h-7 w-7 text-[#0d6e5a] mx-auto mb-2" />
+                    <h5 className="text-sm font-bold text-slate-900">Document Preview</h5>
+                    <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                      Upgrade to a paid plan to unlock PDF and Word DOCX downloads.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        useUpgradeModalStore.getState().openModal({
+                          badge: "PRO",
+                          title: "Upgrade to Download",
+                          description: "Unlock full PDF & DOCX downloads and unlimited ATS optimization history.",
+                        });
+                      }}
+                      className="mt-3 w-full bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-8 rounded-lg shadow-xs transition-colors cursor-pointer"
+                    >
+                      Upgrade Now
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Resume Body */}
+              {resumeViewMode === "raw" ? (
+                <pre className="font-mono text-xs leading-relaxed text-slate-800 whitespace-pre-wrap select-text">
+                  {resume.optimizedText || "No text available."}
+                </pre>
+              ) : (
+                <div className="text-xs leading-relaxed select-text font-serif text-slate-900">
+                  {(() => {
+                    const SECTION_NAMES = [
+                      "PROFESSIONAL SUMMARY", "TECHNICAL SKILLS", "PROFESSIONAL EXPERIENCE",
+                      "WORK EXPERIENCE", "EMPLOYMENT HISTORY", "PERSONAL PROJECTS",
+                      "ACADEMIC PROJECTS", "ACADEMIC BACKGROUND", "CORE SKILLS", "KEY SKILLS",
+                      "SUMMARY", "OBJECTIVE", "SKILLS", "EXPERIENCE", "INTERNSHIP",
+                      "INTERNSHIPS", "PROJECTS", "EDUCATION", "CERTIFICATIONS", "ACHIEVEMENTS",
+                      "KEY ACHIEVEMENTS", "EXTRA-CURRICULAR", "AWARDS", "LANGUAGES"
+                    ];
+                    let cleanInput = resume.optimizedText || "No optimized text found.";
+                    for (const sec of SECTION_NAMES) {
+                      const reg = new RegExp(`(^|\\n)\\s*(${sec})\\b`, "gi");
+                      cleanInput = cleanInput.replace(reg, "\n\n$2\n");
+                    }
+
+                    return cleanInput.split("\n").map((line, i) => {
+                      const trimmed = line.trim();
+                      const upperLine = trimmed.toUpperCase();
+                      const isSectionHeader = SECTION_NAMES.some(
+                        sec => upperLine === sec || upperLine.includes(`${sec}:`)
+                      );
+                      const isFirstLine = i === 0 && trimmed.length > 0;
+                      if (isFirstLine && trimmed.length > 0) {
+                        return (
+                          <p key={i} className="text-base font-black text-slate-900 tracking-tight mb-2 pb-0.5">
+                            {trimmed}
+                          </p>
+                        );
+                      }
+                      const isContactLine = i <= 2 && (trimmed.includes("@") || trimmed.includes("|") || /\+?\d{7,}/.test(trimmed));
+                      if (isContactLine) {
+                        return (
+                          <p key={i} className="text-[11px] text-slate-600 mt-1 mb-3.5 leading-normal">
+                            {trimmed}
+                          </p>
+                        );
+                      }
+                      if (isSectionHeader) {
+                        return (
+                          <div key={i} className="mt-4 mb-1">
+                            <p className="text-xs font-black text-slate-900 uppercase tracking-widest border-b border-slate-300 pb-0.5">
+                              {trimmed}
+                            </p>
+                          </div>
+                        );
+                      }
+                      if (trimmed === "") {
+                        return <div key={i} className="h-1.5" />;
+                      }
+                      return (
+                        <p key={i} className="leading-[1.48] text-slate-800">
+                          {line}
+                        </p>
+                      );
+                    });
+                  })()}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column (4 cols): ATS MATCH & Share your win */}
+          <div className="lg:col-span-4 space-y-6">
+            {/* Card 1: ATS MATCH */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+              <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest block">
+                ATS MATCH
+              </span>
+              <div className="flex items-center justify-center gap-6 py-2">
+                <div className="text-center">
+                  <span className="text-3xl font-extrabold text-slate-400 block">
+                    {resume.scoreBefore}%
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mt-1">
+                    before
+                  </span>
+                </div>
+                <ArrowRight className="h-5 w-5 text-slate-300 shrink-0" />
+                <div className="text-center">
+                  <span className="text-4xl font-black text-[#0d6e5a] block">
+                    {resume.scoreAfter}%
+                  </span>
+                  <span className="text-[10px] text-[#0d6e5a] font-bold uppercase tracking-wider block mt-1">
+                    after
+                  </span>
+                </div>
+              </div>
+
+              {/* Teal progress bar */}
+              <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-100">
+                <div
+                  className="h-full bg-[#0d6e5a] rounded-full transition-all duration-700"
+                  style={{ width: `${Math.min(100, Math.max(0, resume.scoreAfter))}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Card 2: Share your win */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+              <h3 className="text-sm font-bold text-slate-900">
+                Share your win
+              </h3>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-600 leading-relaxed font-sans select-text">
+                &ldquo;Took my resume from {resume.scoreBefore}% to {resume.scoreAfter}% ATS match with FastHire — took under a minute: https://fasthire-ai.vercel.app&rdquo;
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
                 <a
                   href={linkedinShareUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-colors"
+                  className="flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-xs"
                 >
                   <Share2 className="h-3 w-3 text-slate-400" />
-                  LinkedIn
+                  <span>LinkedIn</span>
                 </a>
                 <a
                   href={whatsappShareUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-colors"
+                  className="flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-xs"
                 >
                   <Share2 className="h-3 w-3 text-slate-400" />
-                  WhatsApp
+                  <span>WhatsApp</span>
                 </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      `Took my resume from ${resume.scoreBefore}% to ${resume.scoreAfter}% ATS match with FastHire — took under a minute: https://fasthire-ai.vercel.app`
+                    );
+                    toast.success("Share text copied to clipboard!");
+                  }}
+                  className="flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-xs cursor-pointer"
+                >
+                  <Copy className="h-3 w-3 text-slate-400" />
+                  <span>Copy link</span>
+                </button>
               </div>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Column 2: What Changed */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5.5 shadow-sm flex flex-col justify-between h-full relative space-y-4 hover:border-slate-300 transition-all">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#0d6e5a]" />
-                What Changed
-              </h3>
-              <span className="text-[9px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full">
-                AI Optimization
-              </span>
+      {/* ─── TAB 2: WHAT CHANGED ─── */}
+      {activeTab === "changes" && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <h3 className="text-base font-black text-slate-900">Optimization Breakdown</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Details of injected keywords and bullet point improvements</p>
             </div>
-
-            {/* Metrics row */}
-            <div className="grid grid-cols-3 gap-2.5">
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
-                <span className="text-lg font-black text-emerald-600">{keywords.length}</span>
-                <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider mt-1">Keywords Added</span>
-              </div>
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
-                <span className="text-lg font-black text-[#0d6e5a]">
-                  {rewrittenBullets}
-                </span>
-                <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider mt-1">Bullets Rewritten</span>
-              </div>
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
-                <span className="text-lg font-black text-teal-600">
-                  {Math.min(100, Math.round(resume.scoreAfter * 0.95))}%
-                </span>
-                <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider mt-1">Skills Matched</span>
-              </div>
-            </div>
-
-            {/* Keywords Injected Section */}
-            <div className="space-y-2">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">ATS Keywords Injected</span>
-              <div className="flex flex-wrap gap-1.5 max-h-[90px] overflow-y-auto">
-                {keywords.length > 0 ? (
-                  keywords.map((kw, i) => (
-                    <span
-                      key={i}
-                      className="text-[10px] font-semibold bg-emerald-50 border border-emerald-200 text-emerald-700 px-2 py-0.5 rounded-md"
-                    >
-                      + {kw}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-[10px] text-slate-400 italic">No new keywords were required.</span>
-                )}
-              </div>
-            </div>
-
-            {/* Existing keywords */}
-            <div className="space-y-2">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Keywords Already Present</span>
-              <div className="flex flex-wrap gap-1.5 max-h-[90px] overflow-y-auto">
-                {existingKeywords.map((kw, i) => (
-                  <span
-                    key={i}
-                    className="text-[10px] font-semibold bg-slate-100 border border-slate-200 text-slate-700 px-2 py-0.5 rounded-md"
-                  >
-                    ✓ {kw}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* AI changes bullet points */}
-            <div className="space-y-2">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">AI Optimization Suggestions</span>
-              <ul className="space-y-2 text-[10px] text-slate-600 font-medium leading-relaxed">
-                <li className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg p-2.5">
-                  <span className="text-[#0d6e5a] font-bold">&bull;</span>
-                  <span>Expanded action verbs (e.g. replaced "worked on" with "spearheaded", "developed" with "architected").</span>
-                </li>
-                <li className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg p-2.5">
-                  <span className="text-[#0d6e5a] font-bold">&bull;</span>
-                  <span>Integrated {keywords.length} critical skills extracted from the target job description organically.</span>
-                </li>
-                <li className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg p-2.5">
-                  <span className="text-[#0d6e5a] font-bold">&bull;</span>
-                  <span>Enforced single-column layout, line breaks, and density rules for 100% parser accuracy.</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
-            <span className="text-[10px] text-slate-500 font-medium">
-              ✨ All keywords integrated naturally with zero keyword stuffing.
+            <span className="text-[10px] font-mono font-bold bg-teal-50 text-[#0d6e5a] border border-teal-200 px-2.5 py-0.5 rounded-full">
+              AI Optimization
             </span>
           </div>
-        </div>
 
-        {/* Column 3: ATS Score Breakdown */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5.5 shadow-sm flex flex-col justify-between h-full relative space-y-4 hover:border-slate-300 transition-all">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                ATS Score Breakdown
-              </h3>
-              <span className="text-[9px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full">
-                Industry Standard
-              </span>
+          {/* 3 Metric Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
+              <span className="text-2xl font-black text-emerald-600 block">{keywords.length}</span>
+              <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider mt-1">Keywords Added</span>
             </div>
-
-            {/* Score comparison visualizer */}
-            <div className="flex items-center justify-around gap-4 bg-slate-50 border border-slate-200 rounded-xl p-4">
-              <CircleGauge value={resume.scoreBefore} label="Before" size={80} />
-              <div className="flex flex-col items-center gap-1 shrink-0">
-                <div className="h-8 w-8 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
-                  <ArrowRight className="h-4 w-4" />
-                </div>
-                <span className="text-[10px] font-black text-emerald-700">+{delta} pts</span>
-              </div>
-              <CircleGauge value={resume.scoreAfter} label="After" size={80} />
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
+              <span className="text-2xl font-black text-[#0d6e5a] block">{rewrittenBullets}</span>
+              <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider mt-1">Bullets Rewritten</span>
             </div>
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
+              <span className="text-2xl font-black text-teal-600 block">{Math.min(100, Math.round(resume.scoreAfter * 0.95))}%</span>
+              <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider mt-1">Skills Matched</span>
+            </div>
+          </div>
 
-            {/* Description Rubric */}
-            <p className="text-[10px] text-slate-500 leading-relaxed font-medium bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-center">
-              Standard ATS Rubric Score &bull; Industry: Tech &bull; Multi-factor weighted match.
-            </p>
+          {/* ATS Keywords Injected */}
+          <div className="space-y-2.5">
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+              ATS Keywords Injected from Job Description
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {keywords.length > 0 ? (
+                keywords.map((kw, i) => (
+                  <span
+                    key={i}
+                    className="text-xs font-semibold bg-emerald-50 border border-emerald-200 text-emerald-700 px-2.5 py-1 rounded-lg"
+                  >
+                    + {kw}
+                  </span>
+                ))
+              ) : (
+                <span className="text-xs text-slate-400 italic">No new keywords were required.</span>
+              )}
+            </div>
+          </div>
 
-            {/* Score breakdown bars comparison */}
-            <div className="space-y-3">
-              {[
-                { label: "Parsability", before: 80, after: 95, gain: "+15%" },
-                { label: "Keyword Density", before: 30, after: 75, gain: "+45%" },
-                { label: "Title Alignment", before: 40, after: 80, gain: "+40%" },
-                { label: "Experience Match", before: 50, after: 85, gain: "+35%" }
-              ].map((item, idx) => (
-                <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
-                  <div className="flex items-center justify-between text-xs font-semibold">
-                    <span className="text-slate-800 font-bold text-[11px]">{item.label}</span>
-                    <div className="flex items-center gap-1.5 font-mono text-[11px]">
-                      <span className="text-slate-500">{item.before}%</span>
-                      <span className="text-slate-400">&rarr;</span>
-                      <span className="text-emerald-600 font-bold">{item.after}%</span>
-                      <span className="text-[9px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-bold ml-1">
-                        {item.gain}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Visual dual progress bar */}
-                  <div className="h-2 bg-slate-200 rounded-full overflow-hidden flex p-0.5 border border-slate-200">
-                    <div
-                      className="h-full bg-slate-400 rounded-l-full"
-                      style={{ width: `${item.before}%` }}
-                      title={`Baseline: ${item.before}%`}
-                    />
-                    <div
-                      className="h-full bg-[#0d6e5a] rounded-r-full"
-                      style={{ width: `${item.after - item.before}%` }}
-                      title={`Improvement: +${item.after - item.before}%`}
-                    />
-                  </div>
-                </div>
+          {/* Keywords Already Present */}
+          <div className="space-y-2.5">
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+              Keywords Already Present in Candidate Profile
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {existingKeywords.map((kw, i) => (
+                <span
+                  key={i}
+                  className="text-xs font-semibold bg-slate-100 border border-slate-200 text-slate-700 px-2.5 py-1 rounded-lg"
+                >
+                  ✓ {kw}
+                </span>
               ))}
             </div>
           </div>
 
+          {/* AI Optimization Suggestions */}
+          <div className="space-y-2.5">
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+              Key Enhancements Applied
+            </span>
+            <ul className="space-y-2 text-xs text-slate-700 font-medium leading-relaxed">
+              <li className="flex items-start gap-2.5 bg-slate-50 border border-slate-200 rounded-xl p-3">
+                <span className="text-[#0d6e5a] font-bold text-sm leading-none">•</span>
+                <span>Expanded action verbs (e.g. replaced passive phrases with high-impact executive verbs like "spearheaded", "architected", "engineered").</span>
+              </li>
+              <li className="flex items-start gap-2.5 bg-slate-50 border border-slate-200 rounded-xl p-3">
+                <span className="text-[#0d6e5a] font-bold text-sm leading-none">•</span>
+                <span>Integrated {keywords.length} critical skills extracted from target job description organically without keyword stuffing.</span>
+              </li>
+              <li className="flex items-start gap-2.5 bg-slate-50 border border-slate-200 rounded-xl p-3">
+                <span className="text-[#0d6e5a] font-bold text-sm leading-none">•</span>
+                <span>Enforced single-column layout, line breaks, and density rules for 100% ATS parser accuracy.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* ─── TAB 3: SCORE BREAKDOWN ─── */}
+      {activeTab === "breakdown" && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <h3 className="text-base font-black text-slate-900">ATS Score Breakdown</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Comprehensive multi-factor ATS evaluation comparison</p>
+            </div>
+            <span className="text-[10px] font-mono font-bold bg-teal-50 text-[#0d6e5a] border border-teal-200 px-2.5 py-0.5 rounded-full">
+              Industry Standard
+            </span>
+          </div>
+
+          {/* Score comparison visualizer */}
+          <div className="flex items-center justify-around gap-6 bg-slate-50 border border-slate-200 rounded-2xl p-6">
+            <CircleGauge value={resume.scoreBefore} label="Before" size={90} />
+            <div className="flex flex-col items-center gap-1 shrink-0">
+              <div className="h-9 w-9 rounded-full bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0d6e5a]">
+                <ArrowRight className="h-4.5 w-4.5" />
+              </div>
+              <span className="text-xs font-black text-[#0d6e5a]">+{delta} pts</span>
+            </div>
+            <CircleGauge value={resume.scoreAfter} label="After" size={90} />
+          </div>
+
+          {/* Description Rubric */}
+          <p className="text-xs text-slate-600 leading-relaxed font-medium bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
+            Standard ATS Rubric Score &bull; Industry: Tech &bull; Multi-factor weighted match including keywords, semantics, and impact metrics.
+          </p>
+
+          {/* Score breakdown bars comparison */}
+          <div className="space-y-3">
+            {[
+              { label: "Parsability", before: 80, after: 95, gain: "+15%" },
+              { label: "Keyword Density", before: 30, after: 75, gain: "+45%" },
+              { label: "Title Alignment", before: 40, after: 80, gain: "+40%" },
+              { label: "Experience Match", before: 50, after: 85, gain: "+35%" }
+            ].map((item, idx) => (
+              <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <span className="text-slate-800 font-bold text-xs">{item.label}</span>
+                  <div className="flex items-center gap-2 font-mono text-xs">
+                    <span className="text-slate-500">{item.before}%</span>
+                    <span className="text-slate-400">&rarr;</span>
+                    <span className="text-[#0d6e5a] font-bold">{item.after}%</span>
+                    <span className="text-[10px] text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded font-bold ml-1">
+                      {item.gain}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Progress bar in website teal */}
+                <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden flex p-0.5 border border-slate-200">
+                  <div
+                    className="h-full bg-slate-400 rounded-l-full"
+                    style={{ width: `${item.before}%` }}
+                    title={`Baseline: ${item.before}%`}
+                  />
+                  <div
+                    className="h-full bg-[#0d6e5a] rounded-r-full"
+                    style={{ width: `${item.after - item.before}%` }}
+                    title={`Improvement: +${item.after - item.before}%`}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
           {/* Feedback Box */}
-          {/* Feedback Box */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-start gap-2.5">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex items-start gap-3">
             <MessageSquare className="h-4 w-4 text-[#0d6e5a] shrink-0 mt-0.5" />
-            <p className="text-[10px] text-slate-500 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Have feedback on this match? We read every suggestion to continually improve scoring precision.
             </p>
           </div>
         </div>
+      )}
 
-      </div>
-
-      {/* BOTTOM ACCORDIONS */}
-      <div className="space-y-3">
-        {/* Accordion 1: Skills Learning Roadmap (PRO) */}
-        <div className="border border-slate-200 bg-white rounded-2xl overflow-hidden shadow-sm transition-all duration-300">
-          <button
-            onClick={() => setShowRoadmapAccordion(!showRoadmapAccordion)}
-            className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-50 transition-all"
-          >
+      {/* ─── TAB 4: SKILL ROADMAP ─── */}
+      {activeTab === "roadmap" && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-xl bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center text-[#0d6e5a]">
-                <GraduationCap className="h-4.5 w-4.5" />
+              <div className="h-9 w-9 rounded-xl bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 flex items-center justify-center text-[#0d6e5a]">
+                <GraduationCap className="h-5 w-5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
                   Skills Learning Roadmap
                   {userPlan === "free" && (
-                    <span className="bg-[#0d6e5a] text-[8px] text-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider">PRO</span>
+                    <span className="bg-[#0d6e5a] text-[9px] text-white px-1.5 py-0.2 rounded font-black uppercase tracking-wider">PRO</span>
                   )}
-                </span>
-                <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Select up to 3 skills to build a complete 90-day learning roadmap</p>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">Select up to 3 skills to build a complete 90-day learning curriculum</p>
               </div>
             </div>
-            <ChevronRight className={`h-4.5 w-4.5 text-slate-400 transition-transform ${showRoadmapAccordion ? "rotate-90" : ""}`} />
-          </button>
+            <span className="text-xs font-mono font-bold text-[#0d6e5a] bg-teal-50 border border-teal-200 px-2.5 py-0.5 rounded-full">
+              {selectedRoadmapSkills.length}/3 Selected
+            </span>
+          </div>
 
-          {showRoadmapAccordion && (
-            <div className="px-5 pb-5 pt-3 border-t border-slate-200 bg-slate-50 space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider block">
-                    Choose up to 3 target skills:
-                  </span>
-                  <span className="text-[10px] font-mono font-bold text-[#0d6e5a] bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full">
-                    {selectedRoadmapSkills.length}/3 Selected
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-2 max-h-[140px] overflow-y-auto pr-1">
-                  {availableSkills.length > 0 ? (
-                    availableSkills.map((skill, i) => {
-                      const isSelected = selectedRoadmapSkills.includes(skill);
-                      return (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => toggleRoadmapSkill(skill)}
-                          className={`text-[11px] font-semibold px-3 py-1.5 rounded-xl transition-all border flex items-center gap-1.5 ${
-                            isSelected
-                              ? "bg-[#0d6e5a] border-[#0d6e5a] text-white font-bold shadow-sm"
-                              : "bg-white border-slate-200 text-slate-700 hover:text-slate-900 hover:border-slate-300"
-                          }`}
-                        >
-                          {isSelected && <Check className="h-3 w-3 text-white" />}
-                          {skill}
-                        </button>
-                      );
-                    })
-                  ) : (
-                    ["Machine Learning", "Generative AI", "Python", "SQL", "Docker"].map((skill, i) => {
-                      const isSelected = selectedRoadmapSkills.includes(skill);
-                      return (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => toggleRoadmapSkill(skill)}
-                          className={`text-[11px] font-semibold px-3 py-1.5 rounded-xl transition-all border flex items-center gap-1.5 ${
-                            isSelected
-                              ? "bg-[#0d6e5a] border-[#0d6e5a] text-white font-bold shadow-sm"
-                              : "bg-white border-slate-200 text-slate-700 hover:text-slate-900 hover:border-slate-300"
-                          }`}
-                        >
-                          {isSelected && <Check className="h-3 w-3 text-white" />}
-                          {skill}
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-
-                <div className="pt-2 flex items-center justify-between gap-3">
-                  <span className="text-[10px] text-slate-500">
-                    {selectedRoadmapSkills.length === 0 
-                      ? "Click 1 to 3 skills above to build your roadmap." 
-                      : `Selected: ${selectedRoadmapSkills.join(", ")}`}
-                  </span>
-                  <Button
-                    onClick={handleGenerateRoadmap}
-                    disabled={selectedRoadmapSkills.length === 0 || roadmapLoading}
-                    className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-9 px-4 rounded-xl shadow-sm disabled:opacity-50 transition-colors"
+          {/* Skill chips */}
+          <div className="space-y-2">
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+              Choose up to 3 target skills:
+            </span>
+            <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto pr-1">
+              {(availableSkills.length > 0 ? availableSkills : ["Machine Learning", "Generative AI", "Python", "SQL", "Docker"]).map((skill, i) => {
+                const isSelected = selectedRoadmapSkills.includes(skill);
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => toggleRoadmapSkill(skill)}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-xl transition-all border flex items-center gap-1.5 cursor-pointer ${
+                      isSelected
+                        ? "bg-[#0d6e5a] border-[#0d6e5a] text-white font-bold shadow-xs"
+                        : "bg-white border-slate-200 text-slate-700 hover:text-slate-900 hover:border-slate-300"
+                    }`}
                   >
-                    {roadmapLoading ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-                    ) : (
-                      <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                    )}
-                    Generate Complete Roadmap ({selectedRoadmapSkills.length}/3)
-                  </Button>
-                </div>
+                    {isSelected && <Check className="h-3.5 w-3.5 text-white" />}
+                    {skill}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Action Row */}
+          <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-100">
+            <span className="text-xs text-slate-500">
+              {selectedRoadmapSkills.length === 0
+                ? "Click 1 to 3 skills above to build your roadmap."
+                : `Selected: ${selectedRoadmapSkills.join(", ")}`}
+            </span>
+            <Button
+              onClick={handleGenerateRoadmap}
+              disabled={selectedRoadmapSkills.length === 0 || roadmapLoading}
+              className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-9 px-4 rounded-xl shadow-xs disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              {roadmapLoading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              Generate Complete Roadmap ({selectedRoadmapSkills.length}/3)
+            </Button>
+          </div>
+
+          {/* Loading state */}
+          {roadmapLoading && (
+            <div className="flex items-center gap-2.5 text-xs text-slate-600 py-8 justify-center bg-slate-50 border border-slate-200 rounded-xl">
+              <Loader2 className="h-4 w-4 animate-spin text-[#0d6e5a]" />
+              <span>Synthesizing tailored 90-day curriculum for {selectedRoadmapSkills.join(", ")}...</span>
+            </div>
+          )}
+
+          {/* Generated roadmap output */}
+          {roadmapContent && (
+            <div className="space-y-3">
+              <div className="bg-slate-50 border border-slate-200 p-5 rounded-xl text-xs text-slate-800 leading-relaxed font-sans shadow-xs select-text">
+                <pre className="whitespace-pre-wrap font-sans select-text">{roadmapContent}</pre>
               </div>
-
-              {roadmapLoading && (
-                <div className="flex items-center gap-2 text-[10px] text-slate-500 py-6 justify-center bg-white border border-slate-200 rounded-xl">
-                  <Loader2 className="h-4 w-4 animate-spin text-[#0d6e5a]" />
-                  <span>Synthesizing tailored 90-day mastery curriculum for {selectedRoadmapSkills.join(", ")}...</span>
-                </div>
-              )}
-
-              {roadmapContent && (
-                <div className="bg-white border border-slate-200 p-4 rounded-xl text-xs text-slate-800 leading-relaxed space-y-2 select-text font-sans shadow-sm">
-                  <pre className="whitespace-pre-wrap font-sans select-text">{roadmapContent}</pre>
-                </div>
-              )}
-
-              {!roadmapLoading && !roadmapContent && (
-                <div className="text-center py-6 text-[10px] text-slate-500 italic bg-white border border-dashed border-slate-200 rounded-xl select-none">
-                  Select a skill above to generate learning roadmap.
-                </div>
-              )}
+              <Button
+                onClick={() => {
+                  navigator.clipboard.writeText(roadmapContent);
+                  toast.success("Roadmap copied to clipboard!");
+                }}
+                className="bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 text-xs h-8 rounded-lg shadow-xs cursor-pointer"
+              >
+                Copy Roadmap
+              </Button>
             </div>
           )}
         </div>
+      )}
 
-        {/* Accordion 2: Cover Letter Generator */}
-        <div className="border border-slate-200 bg-white rounded-2xl overflow-hidden shadow-sm transition-all duration-300">
-          <button
-            onClick={() => setShowCoverLetterAccordion(!showCoverLetterAccordion)}
-            className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-50 transition-all"
-          >
+      {/* ─── TAB 5: COVER LETTER ─── */}
+      {activeTab === "cover_letter" && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
-                <FileText className="h-4.5 w-4.5" />
+              <div className="h-9 w-9 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0d6e5a]">
+                <FileText className="h-5 w-5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                  Cover Letter Generator
-                </span>
-                <p className="text-[10px] text-slate-500 mt-0.5 font-medium">1 free cover letter available</p>
+                <h3 className="text-base font-black text-slate-900">Tailored Cover Letter Generator</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Generate a personalized cover letter aligned with this job specification</p>
               </div>
             </div>
-            <ChevronRight className={`h-4.5 w-4.5 text-slate-400 transition-transform ${showCoverLetterAccordion ? "rotate-90" : ""}`} />
-          </button>
+          </div>
 
-          {showCoverLetterAccordion && (
-            <div className="px-5 pb-5 pt-3 border-t border-slate-200 bg-slate-50 space-y-4">
-              <p className="text-[10px] text-slate-600 leading-relaxed font-semibold">
-                Generate a tailored cover letter using your optimized resume and the job description details.
-              </p>
+          <p className="text-xs text-slate-600 leading-relaxed font-medium">
+            FastHire uses your optimized resume highlights and the target job description to draft an executive-level cover letter.
+          </p>
 
-              {!coverLetterGenerated && !generatingLetter && (
-                <Button
-                  onClick={handleGenerateCoverLetter}
-                  className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-[10px] h-9 px-4 rounded-lg shadow-sm transition-colors"
-                >
-                  Generate Cover Letter
-                </Button>
-              )}
+          {!coverLetterGenerated && !generatingLetter && (
+            <Button
+              onClick={handleGenerateCoverLetter}
+              className="bg-[#0d6e5a] hover:bg-[#094d3f] text-white font-bold text-xs h-9 px-5 rounded-xl shadow-xs transition-colors cursor-pointer"
+            >
+              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+              Generate Cover Letter
+            </Button>
+          )}
 
-              {generatingLetter && (
-                <div className="flex items-center gap-2 text-[10px] text-slate-500 py-4 justify-center bg-white border border-slate-200 rounded-xl">
-                  <Loader2 className="h-4 w-4 animate-spin text-[#0d6e5a]" />
-                  <span>Drafting tailored cover letter...</span>
-                </div>
-              )}
+          {generatingLetter && (
+            <div className="flex items-center gap-2.5 text-xs text-slate-600 py-8 justify-center bg-slate-50 border border-slate-200 rounded-xl">
+              <Loader2 className="h-4 w-4 animate-spin text-[#0d6e5a]" />
+              <span>Drafting tailored cover letter...</span>
+            </div>
+          )}
 
-              {coverLetterGenerated && (
-                <div className="space-y-3 select-text">
-                  <div className="bg-white border border-slate-200 p-4 rounded-xl text-xs text-slate-800 leading-relaxed space-y-2 select-text font-serif shadow-sm">
-                    <pre className="whitespace-pre-wrap font-serif select-text">{coverLetterGenerated}</pre>
-                  </div>
-                  <Button
-                    onClick={() => {
-                      navigator.clipboard.writeText(coverLetterGenerated);
-                      toast.success("Cover letter copied to clipboard!");
-                    }}
-                    className="bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 text-[10px] h-8 rounded-lg shadow-sm"
-                  >
-                    Copy Cover Letter
-                  </Button>
-                </div>
-              )}
+          {coverLetterGenerated && (
+            <div className="space-y-3 select-text">
+              <div className="bg-slate-50 border border-slate-200 p-6 rounded-2xl text-xs text-slate-800 leading-relaxed font-serif shadow-xs select-text">
+                <pre className="whitespace-pre-wrap font-serif select-text">{coverLetterGenerated}</pre>
+              </div>
+              <Button
+                onClick={() => {
+                  navigator.clipboard.writeText(coverLetterGenerated);
+                  toast.success("Cover letter copied to clipboard!");
+                }}
+                className="bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 text-xs h-8 rounded-lg shadow-xs cursor-pointer"
+              >
+                Copy Cover Letter
+              </Button>
             </div>
           )}
         </div>
-      </div>
+      )}
+
+      {/* ─── SHARE RESULT POPUP MODAL ─── */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-white border border-slate-200 p-6 rounded-2xl space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150 select-none relative">
+            <button
+              type="button"
+              onClick={() => setShowShareModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              ✕
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0d6e5a]">
+                <Share2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-slate-900 text-base">Share Your Win</h3>
+                <p className="text-xs text-slate-500">Inspire your network with your ATS score gain!</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs text-slate-700 font-sans">
+              &ldquo;Took my resume from {resume.scoreBefore}% to {resume.scoreAfter}% ATS match with FastHire — took under a minute: https://fasthire-ai.vercel.app&rdquo;
+            </div>
+
+            <div className="grid grid-cols-3 gap-2.5 pt-2">
+              <a
+                href={linkedinShareUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setShowShareModal(false)}
+                className="flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-xs"
+              >
+                <Share2 className="h-3.5 w-3.5 text-slate-400" />
+                <span>LinkedIn</span>
+              </a>
+              <a
+                href={whatsappShareUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setShowShareModal(false)}
+                className="flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-xs"
+              >
+                <Share2 className="h-3.5 w-3.5 text-slate-400" />
+                <span>WhatsApp</span>
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(
+                    `Took my resume from ${resume.scoreBefore}% to ${resume.scoreAfter}% ATS match with FastHire — took under a minute: https://fasthire-ai.vercel.app`
+                  );
+                  toast.success("Share text copied to clipboard!");
+                  setShowShareModal(false);
+                }}
+                className="flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-xs cursor-pointer"
+              >
+                <Copy className="h-3.5 w-3.5 text-slate-400" />
+                <span>Copy link</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
