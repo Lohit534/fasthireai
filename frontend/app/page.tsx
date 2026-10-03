@@ -155,7 +155,6 @@ export default function LandingPage() {
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const { setResumeText, setJobDescription } = useResumeStore();
   const [barReady, setBarReady] = useState(false);
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
 
   // Fast synchronous check to eliminate landing page flash for logged-in users
   const [checkingAuth, setCheckingAuth] = useState<boolean>(() => {
@@ -514,7 +513,7 @@ export default function LandingPage() {
               { value: 1000, suffix: "+", label: "Users Optimized",  color: "#0d6e5a", sub: "Active job seekers" },
               { value: 94,   suffix: "%", label: "Success Rate",     color: "#059669", sub: "Got more callbacks" },
               { value: 57,   suffix: "+", label: "Avg. Score Lift",  color: "#0284c7", sub: "ATS points gained" },
-              { value: 800,  suffix: "+", label: "Positive Reviews", color: "#d97706", sub: "5-star feedbacks" },
+              { value: 800,  suffix: "+", label: "Positive Reviews", color: "#d97706", sub: "Verified feedbacks" },
             ].map(({ value, suffix, label, color, sub }) => (
               <div
                 key={label}
@@ -592,22 +591,17 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
-              { name: "Arjun Sharma", role: "SDE at Amazon", country: "🇮🇳 India", rating: 5, text: "My ATS score went from 42% to 89% in 25 seconds. Got interview calls from 4 companies within a week. Absolutely game-changing!" },
-              { name: "Priya Menon", role: "Data Analyst at Infosys", country: "🇮🇳 India", rating: 5, text: "FastHire AI rewrote my bullet points to match the JD perfectly. I used to get zero callbacks. Now I have 3 interviews lined up." },
-              { name: "Rohan Gupta", role: "Full Stack Dev at Flipkart", country: "🇮🇳 India", rating: 5, text: "The keyword matching is incredibly accurate. It identified 17 keywords I was missing and filled them in naturally. Highly recommended!" },
-              { name: "Sarah Chen", role: "PM at Microsoft", country: "🇸🇬 Singapore", rating: 5, text: "I was skeptical at first but the ATS score improvement was immediate and visible. Landed my dream job at Microsoft. Thank you FastHire!" },
-              { name: "Rahul Verma", role: "DevOps at Wipro", country: "🇮🇳 India", rating: 5, text: "The cover letter generator is brilliant too. I had 10 tailored cover letters ready in 30 minutes. No other tool comes close." },
-              { name: "Ayesha Khan", role: "UI/UX at Razorpay", country: "🇵🇰 Pakistan", rating: 5, text: "Went from 6 months of rejections to getting 2 offers in 3 weeks after using FastHire AI. The difference is night and day!" },
-            ].map(({ name, role, country, rating, text }, i) => (
+              { name: "Arjun Sharma", role: "SDE at Amazon", country: "🇮🇳 India", text: "My ATS score went from 42% to 89% in 25 seconds. Got interview calls from 4 companies within a week. Absolutely game-changing!" },
+              { name: "Priya Menon", role: "Data Analyst at Infosys", country: "🇮🇳 India", text: "FastHire AI rewrote my bullet points to match the JD perfectly. I used to get zero callbacks. Now I have 3 interviews lined up." },
+              { name: "Rohan Gupta", role: "Full Stack Dev at Flipkart", country: "🇮🇳 India", text: "The keyword matching is incredibly accurate. It identified 17 keywords I was missing and filled them in naturally. Highly recommended!" },
+              { name: "Sarah Chen", role: "PM at Microsoft", country: "🇸🇬 Singapore", text: "I was skeptical at first but the ATS score improvement was immediate and visible. Landed my dream job at Microsoft. Thank you FastHire!" },
+              { name: "Rahul Verma", role: "DevOps at Wipro", country: "🇮🇳 India", text: "The cover letter generator is brilliant too. I had 10 tailored cover letters ready in 30 minutes. No other tool comes close." },
+              { name: "Ayesha Khan", role: "UI/UX at Razorpay", country: "🇵🇰 Pakistan", text: "Went from 6 months of rejections to getting 2 offers in 3 weeks after using FastHire AI. The difference is night and day!" },
+            ].map(({ name, role, country, text }, i) => (
               <div
                 key={i}
                 className="relative bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4 hover:border-slate-300 shadow-sm hover:shadow-md transition-all duration-300"
               >
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: rating }).map((_, j) => (
-                    <span key={j} className="text-amber-500 text-sm">★</span>
-                  ))}
-                </div>
                 <p className="text-sm text-slate-700 leading-relaxed font-normal">"{text}"</p>
                 <div className="flex items-center gap-3 pt-2 border-t border-slate-200">
                   <div className="h-9 w-9 rounded-full bg-[#0d6e5a] flex items-center justify-center text-white font-black text-sm shrink-0">
@@ -685,174 +679,6 @@ export default function LandingPage() {
           </div>
         </div>
       </ScrollFadeIn>
-
-      {/* ── PRICING SECTION ───────────────────────────────────── */}
-      <section id="pricing" className="py-16 md:py-24 bg-[#f8fafc] border-t border-slate-200">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
-          
-          {/* Soft Light Teal Balloon-Curved Header Backdrop */}
-          <ScrollFadeIn className="relative mx-auto w-full max-w-5xl overflow-hidden rounded-[2.5rem] sm:rounded-[3rem] border border-teal-200/70 bg-gradient-to-b from-teal-100/70 via-teal-50/50 to-white/70 px-6 py-10 sm:py-14 text-center shadow-xs">
-            {/* Subtle Tech Grid Pattern */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(13,110,90,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(13,110,90,0.05)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none -z-10" />
-            
-            {/* Ambient Center Radial Glow */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[520px] h-[220px] bg-[#0d6e5a]/10 blur-[80px] rounded-full pointer-events-none -z-10" />
-
-            <div className="max-w-2xl mx-auto space-y-4">
-              {/* PRICING Tag */}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0d6e5a]/10 border border-[#0d6e5a]/20 text-[#0d6e5a] text-[11px] font-extrabold uppercase tracking-widest">
-                PRICING
-              </div>
-
-              {/* Simple, honest pricing */}
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight font-heading">
-                Simple, honest{" "}
-                <span className="bg-gradient-to-r from-[#0d6e5a] via-[#0f766e] to-[#134e4a] bg-clip-text text-transparent">
-                  pricing
-                </span>
-              </h2>
-
-              {/* Subtitle */}
-              <p className="text-xs sm:text-sm md:text-base text-slate-600 max-w-lg mx-auto font-medium leading-relaxed">
-                Start free. Pay only when you want to download your resume or cover letter.
-              </p>
-
-              {/* Monthly / Yearly Toggle Pill */}
-              <div className="flex justify-center items-center pt-2 select-none">
-                <div className="inline-flex items-center p-1 bg-white border border-slate-200/90 rounded-full shadow-xs gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setBillingCycle("monthly")}
-                    className={`text-xs font-bold px-4 py-1.5 rounded-full transition-all cursor-pointer ${
-                      billingCycle === "monthly"
-                        ? "bg-slate-900 text-white shadow-xs"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    Monthly
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setBillingCycle("yearly")}
-                    className={`text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1.5 transition-all cursor-pointer ${
-                      billingCycle === "yearly"
-                        ? "bg-slate-900 text-white shadow-xs"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    <span>Yearly</span>
-                    <span className="bg-emerald-100 text-[#0d6e5a] text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-emerald-200/60">
-                      2 months free
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </ScrollFadeIn>
-
-          {/* Pricing Cards Grid */}
-          <ScrollFadeIn className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto w-full items-stretch">
-            {/* Free Plan */}
-            <div className="flex flex-col justify-between p-6 sm:p-7 bg-white rounded-2xl border border-slate-200 shadow-sm hover:border-slate-300 transition-all space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <h3 className="font-extrabold text-base text-slate-900">Free Tier</h3>
-                  <p className="text-xs text-slate-500">Perfect to test your resume and see ATS recommendations.</p>
-                </div>
-                <div className="flex items-baseline">
-                  <span className="text-3xl font-black text-slate-900">₹0</span>
-                  <span className="text-xs text-slate-500 font-semibold ml-1.5 uppercase">/ Forever</span>
-                </div>
-                <div className="border-t border-slate-200 pt-4" />
-                <ul className="space-y-2.5 text-xs text-slate-700 font-medium">
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-[#0d6e5a] shrink-0" /> 2 AI Resume Optimizations / month</li>
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-[#0d6e5a] shrink-0" /> Instant ATS score breakdown</li>
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-[#0d6e5a] shrink-0" /> Keyword gap analysis</li>
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-[#0d6e5a] shrink-0" /> Web preview editor</li>
-                </ul>
-              </div>
-              <Link href="/auth/signup" className="w-full">
-                <button className="w-full py-2.5 px-4 text-xs font-bold rounded-xl border border-slate-200 text-slate-800 bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer">
-                  Get Started Free
-                </button>
-              </Link>
-            </div>
-
-            {/* Premium Pro - Featured */}
-            <div className="relative flex flex-col justify-between p-6 sm:p-7 bg-white rounded-2xl border-2 border-[#0d6e5a] shadow-lg scale-[1.02] space-y-6">
-              <div className="absolute top-0 right-0">
-                <span className="bg-gradient-to-r from-[#0d6e5a] to-[#0f766e] text-white text-[9px] font-extrabold uppercase px-3 py-1 rounded-bl-xl tracking-wider shadow-sm">
-                  Best Choice
-                </span>
-              </div>
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <h3 className="font-extrabold text-base text-[#0d6e5a]">FastHire Pro</h3>
-                  <p className="text-xs text-slate-500">For active job seekers who want more interviews faster.</p>
-                </div>
-                <div className="flex items-baseline">
-                  <span className="text-3xl font-black text-slate-900">
-                    {billingCycle === "monthly" ? "₹104" : "₹174"}
-                  </span>
-                  <span className="text-xs text-slate-500 font-semibold ml-1.5 uppercase">
-                    / {billingCycle === "monthly" ? "Month" : "Year"}
-                  </span>
-                </div>
-                <div className="border-t border-slate-200 pt-4" />
-                <ul className="space-y-2.5 text-xs text-slate-700 font-medium">
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-[#0d6e5a] shrink-0" /> 20 AI Resume Optimizations / month</li>
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-[#0d6e5a] shrink-0" /> Full ATS keyword matching engine</li>
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-[#0d6e5a] shrink-0" /> AI cover letter generator</li>
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-[#0d6e5a] shrink-0" /> Professional ATS-compliant PDF & DOCX</li>
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-[#0d6e5a] shrink-0" /> Job application pipeline tracker</li>
-                </ul>
-              </div>
-              <Link href="/auth/signup" className="w-full">
-                <button className="w-full py-2.5 px-4 text-xs font-bold rounded-xl bg-[#0d6e5a] hover:bg-[#094d3f] text-white shadow-sm transition-all cursor-pointer">
-                  Upgrade to Pro
-                </button>
-              </Link>
-            </div>
-
-            {/* Pro Max */}
-            <div className="relative flex flex-col justify-between p-6 sm:p-7 bg-white rounded-2xl border-2 border-amber-400 shadow-sm hover:shadow-md transition-all space-y-6">
-              <div className="absolute top-0 right-0">
-                <span className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 text-[9px] font-black uppercase px-3 py-1 rounded-bl-xl tracking-wider shadow-sm">
-                  PRO MAX
-                </span>
-              </div>
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <h3 className="font-extrabold text-base text-amber-800">Pro Max Unlimited</h3>
-                  <p className="text-xs text-slate-500">Unrestricted access for aggressive job applications.</p>
-                </div>
-                <div className="flex items-baseline">
-                  <span className="text-3xl font-black text-amber-800">
-                    {billingCycle === "monthly" ? "₹209" : "₹349"}
-                  </span>
-                  <span className="text-xs text-slate-500 font-semibold ml-1.5 uppercase">
-                    / {billingCycle === "monthly" ? "Month" : "Year"}
-                  </span>
-                </div>
-                <div className="border-t border-slate-200 pt-4" />
-                <ul className="space-y-2.5 text-xs text-slate-700 font-medium">
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-amber-600 shrink-0" /> <strong>Unlimited</strong> AI Resume Optimizations</li>
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-amber-600 shrink-0" /> <strong>Unlimited</strong> AI Cover Letters</li>
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-amber-600 shrink-0" /> Deep ATS keyword scanner & scoring</li>
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-amber-600 shrink-0" /> Priority 24/7 dedicated support</li>
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-amber-600 shrink-0" /> Instant PDF & DOCX exports</li>
-                </ul>
-              </div>
-              <Link href="/auth/signup" className="w-full">
-                <button className="w-full py-2.5 px-4 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black shadow-sm transition-all cursor-pointer">
-                  Get Pro Max
-                </button>
-              </Link>
-            </div>
-          </ScrollFadeIn>
-
-        </div>
-      </section>
 
       {/* ── FAQ SECTION ───────────────────────────────────────── */}
       <ScrollFadeIn className="py-16 md:py-20 border-t border-slate-200 bg-white">

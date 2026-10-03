@@ -34,6 +34,7 @@ import Link from "next/link";
 import ScrollFadeIn from "@/components/ScrollFadeIn";
 import GstInvoiceModal, { InvoiceData } from "@/components/GstInvoiceModal";
 import { BillingSkeleton } from "@/components/SkeletonShimmer";
+import Footer from "@/components/Footer";
 
 interface Invoice {
   id: string;
@@ -536,6 +537,7 @@ export default function BillingPage() {
         />
       )}
 
+      <Footer />
     </div>
   );
 }
