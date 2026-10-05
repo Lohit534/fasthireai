@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     // 2. Query all real payments from PaymentLog (isFreeGrant=false ensures no admin grants slip in)
     const { data: allPayments } = await admin
       .from("PaymentLog")
-      .select("userId, email, status, planId")
+      .select("userId, email, planId")
       .or("isFreeGrant.is.null,isFreeGrant.eq.false");
 
     const paymentsList = allPayments || [];

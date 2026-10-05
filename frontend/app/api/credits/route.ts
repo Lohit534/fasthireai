@@ -182,7 +182,6 @@ export async function GET(request: NextRequest) {
         .from("PaymentLog")
         .select("*")
         .or(`userId.eq.${activeUserId},userId.eq.${user.id},email.eq.${userEmail}`)
-        .eq("status", "captured")
         .eq("planId", "promax")
         .order("createdAt", { ascending: false })
         .limit(1)

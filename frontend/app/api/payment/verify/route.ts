@@ -176,7 +176,6 @@ export async function POST(request: NextRequest) {
         planId: verifiedPlanId,
         billingCycle: cycle,
         amount,
-        status: "captured",
         razorpayOrderId: razorpay_order_id,
         razorpayPaymentId: razorpay_payment_id,
         isFreeGrant: false,
