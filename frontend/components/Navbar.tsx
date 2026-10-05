@@ -266,39 +266,50 @@ export default function Navbar({ refreshKey = 0, hideNav = false }: NavbarProps)
                     aria-label="Open profile menu"
                     className="relative p-1 rounded-full hover:scale-105 transition-all focus:outline-none cursor-pointer group flex items-center justify-center"
                   >
-                    {/* Red indicator dot if unread message is pending in profile box */}
+                    {/* Small neat red indicator dot if unread message is pending */}
                     {hasUnreadNotifications(credits, user.email) && (
-                      <span className="absolute top-0 right-0 flex h-2.5 w-2.5 z-10 pointer-events-none">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 ring-2 ring-white" />
+                      <span className="absolute top-0.5 right-0.5 z-10 pointer-events-none flex items-center justify-center">
+                        <span className="h-1.5 w-1.5 rounded-full bg-red-500 ring-1 ring-white shadow-xs" />
                       </span>
                     )}
 
-                    {/* Dotted credits ring around circular avatar */}
+                    {/* Continuous teal circular credits range around circular avatar */}
                     <div className="relative flex items-center justify-center">
-                      <svg className="w-10 h-10 -rotate-90 pointer-events-none select-none" viewBox="0 0 44 44">
-                        {Array.from({ length: 16 }).map((_, i) => {
-                          const totalDots = 16;
-                          const maxVal = isOwner ? totalDots : totalFree;
-                          const currentVal = isOwner ? totalDots : freeRemaining;
-                          const filledDots = isOwner ? totalDots : Math.round((Math.min(currentVal, maxVal) / maxVal) * totalDots);
-                          const angle = (i * 360) / totalDots;
-                          const rad = (angle * Math.PI) / 180;
-                          const cx = 22 + 18 * Math.cos(rad);
-                          const cy = 22 + 18 * Math.sin(rad);
-                          const isActive = i < filledDots;
-                          return (
+                      {(() => {
+                        const maxVal = isOwner ? 100 : Math.max(1, totalFree);
+                        const currentVal = isOwner ? 100 : Math.max(0, freeRemaining);
+                        const ratio = isOwner ? 1 : Math.max(0, Math.min(1, currentVal / maxVal));
+                        const radius = 18;
+                        const circumference = 2 * Math.PI * radius; // ~113.097
+                        const offset = circumference * (1 - ratio);
+
+                        return (
+                          <svg className="w-10 h-10 -rotate-90 pointer-events-none select-none" viewBox="0 0 44 44">
+                            {/* Inactive background track */}
                             <circle
-                              key={i}
-                              cx={cx}
-                              cy={cy}
-                              r={isActive ? "2.2" : "1.4"}
-                              fill={isActive ? "#0d6e5a" : "#cbd5e1"}
-                              className="transition-colors duration-150"
+                              cx="22"
+                              cy="22"
+                              r={radius}
+                              fill="none"
+                              stroke="#e2e8f0"
+                              strokeWidth="2.5"
                             />
-                          );
-                        })}
-                      </svg>
+                            {/* Active teal credits range stroke */}
+                            <circle
+                              cx="22"
+                              cy="22"
+                              r={radius}
+                              fill="none"
+                              stroke="#0d9488"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeDasharray={circumference}
+                              strokeDashoffset={offset}
+                              className="transition-all duration-500 ease-out"
+                            />
+                          </svg>
+                        );
+                      })()}
                       {/* Centered Avatar Circle */}
                       <div className="absolute inset-0 m-auto h-7 w-7 rounded-full bg-emerald-50 border border-[#0d6e5a]/30 flex items-center justify-center text-[#0d6e5a] font-black text-xs shadow-xs select-none">
                         {user.email ? user.email.charAt(0).toUpperCase() : "U"}

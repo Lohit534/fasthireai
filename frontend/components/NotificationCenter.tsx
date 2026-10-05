@@ -192,9 +192,8 @@ export function NotificationBell({ credits, userEmail, compact = false }: Notifi
       >
         <Bell className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 flex h-2 w-2 items-center justify-center pointer-events-none">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+          <span className="absolute top-1 right-1 flex items-center justify-center pointer-events-none">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-500 ring-1 ring-white shadow-xs" />
           </span>
         )}
       </button>

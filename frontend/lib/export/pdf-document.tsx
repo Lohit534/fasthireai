@@ -1,5 +1,5 @@
 import React from "react";
-import { Font, Document, Page, Text, View, Link, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
+import { Font, Document, Page, Text, View, Link, StyleSheet, renderToBuffer, Svg, Path } from "@react-pdf/renderer";
 import { logger } from "../logger";
 import { estimateYearsOfExperience } from "../resume-format";
 import { looksLikeSentenceBullet } from "../ats/bullets";
@@ -11,7 +11,7 @@ Font.registerHyphenationCallback(word => [word]);
 const baseStyleDefs: Record<string, any> = {
   page: {
     fontFamily: 'Times-Roman',
-    fontSize: 10.5,
+    fontSize: 10,
     paddingTop: 36,
     paddingBottom: 36,
     paddingHorizontal: 40,
@@ -23,11 +23,19 @@ const baseStyleDefs: Record<string, any> = {
   // ── NAME ──
   name: {
     fontFamily: 'Times-Bold',
-    fontSize: 22,
+    fontSize: 20,
     textAlign: 'center',
-    marginBottom: 6,
-    paddingBottom: 2,
+    marginBottom: 2,
     letterSpacing: 0.5,
+    color: '#000000',
+  },
+
+  // ── SUBTITLE ROLE ──
+  subtitle: {
+    fontFamily: 'Times-Roman',
+    fontSize: 11,
+    textAlign: 'center',
+    marginBottom: 4,
     color: '#000000',
   },
 
@@ -35,97 +43,102 @@ const baseStyleDefs: Record<string, any> = {
   contactRow: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
     flexWrap: 'wrap',
     marginTop: 2,
-    marginBottom: 10,
-    fontSize: 10,
-    lineHeight: 1.3,
+    marginBottom: 8,
+  },
+  contactItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 5,
+    marginVertical: 1,
   },
   contactText: {
     fontFamily: 'Times-Roman',
-    fontSize: 10,
-    color: '#000000',
-  },
-  contactSeparator: {
-    fontFamily: 'Times-Roman',
-    fontSize: 10,
-    marginHorizontal: 5,
+    fontSize: 9.5,
     color: '#000000',
   },
   contactLink: {
     fontFamily: 'Times-Roman',
-    fontSize: 10,
+    fontSize: 9.5,
     color: '#000000',
     textDecoration: 'none',
   },
 
   // ── SECTION HEADER ──
-  sectionHeader: {
-    fontFamily: 'Times-Bold',
-    fontSize: 12,
+  sectionHeaderWrapper: {
     marginTop: 8,
     marginBottom: 4,
-    paddingBottom: 2,
-    borderBottomWidth: 1,
+  },
+  sectionHeader: {
+    fontFamily: 'Times-Bold',
+    fontSize: 11.5,
+    color: '#000000',
+    marginBottom: 2,
+  },
+  sectionUnderline: {
+    borderBottomWidth: 0.75,
     borderBottomColor: '#000000',
-    borderBottomStyle: 'solid',
-    textTransform: 'uppercase',
+    width: '100%',
   },
 
   // ── PROFESSIONAL SUMMARY ──
   summaryText: {
     fontFamily: 'Times-Roman',
-    fontSize: 10.5,
+    fontSize: 10,
     lineHeight: 1.35,
     marginBottom: 4,
     textAlign: 'justify',
   },
 
   // ── SKILLS ──
-  skillRow: {
-    flexDirection: 'row',
-    marginBottom: 3,
+  skillLine: {
+    fontFamily: 'Times-Roman',
+    fontSize: 10,
+    lineHeight: 1.35,
+    marginBottom: 2.5,
   },
   skillLabel: {
     fontFamily: 'Times-Bold',
-    fontSize: 10.5,
-    width: 175,
+    fontSize: 10,
+    color: '#000000',
   },
   skillValue: {
     fontFamily: 'Times-Roman',
-    fontSize: 10.5,
-    flex: 1,
+    fontSize: 10,
+    color: '#000000',
   },
 
   // ── PROJECT TITLE ──
   projectTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginTop: 4,
     marginBottom: 2,
-  },
-  projectTitleLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
   },
   projectTitle: {
     fontFamily: 'Times-Bold',
     fontSize: 10.5,
+    flex: 1,
   },
   projectLink: {
     fontFamily: 'Times-Roman',
-    fontSize: 10,
+    fontSize: 9.5,
     color: '#000000',
     textDecoration: 'none',
     marginLeft: 6,
   },
   projectTech: {
-    fontFamily: 'Times-Italic',
+    fontFamily: 'Times-Roman',
     fontSize: 10,
-    color: '#333333',
-    marginLeft: 8,
+    color: '#000000',
+  },
+  projectDates: {
+    fontFamily: 'Times-Roman',
+    fontSize: 10,
+    color: '#000000',
     textAlign: 'right',
   },
 
@@ -135,7 +148,7 @@ const baseStyleDefs: Record<string, any> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 4,
-    marginBottom: 2,
+    marginBottom: 1,
   },
   jobTitle: {
     fontFamily: 'Times-Bold',
@@ -144,23 +157,36 @@ const baseStyleDefs: Record<string, any> = {
   },
   jobDates: {
     fontFamily: 'Times-Roman',
-    fontSize: 10.5,
+    fontSize: 10,
     color: '#000000',
     textAlign: 'right',
   },
+  jobSubRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
   jobCompany: {
     fontFamily: 'Times-Italic',
-    fontSize: 10.5,
-    marginBottom: 2,
+    fontSize: 10,
+    color: '#000000',
+    flex: 1,
+  },
+  jobTech: {
+    fontFamily: 'Times-Italic',
+    fontSize: 9.5,
+    color: '#333333',
+    textAlign: 'right',
   },
 
   // ── EDUCATION ──
   educationRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginTop: 4,
-    marginBottom: 2,
+    alignItems: 'center',
+    marginTop: 3,
+    marginBottom: 1,
   },
   educationDegree: {
     fontFamily: 'Times-Bold',
@@ -169,26 +195,25 @@ const baseStyleDefs: Record<string, any> = {
   },
   educationDates: {
     fontFamily: 'Times-Roman',
-    fontSize: 10.5,
+    fontSize: 10,
     textAlign: 'right',
-    minWidth: 80,
   },
   educationInstitution: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 2,
   },
   educationSchool: {
-    fontFamily: 'Times-Roman',
-    fontSize: 10.5,
+    fontFamily: 'Times-Italic',
+    fontSize: 10,
     color: '#000000',
     flex: 1,
   },
   educationGPA: {
     fontFamily: 'Times-Roman',
-    fontSize: 10.5,
+    fontSize: 10,
     textAlign: 'right',
-    minWidth: 80,
   },
 
   // ── BULLET POINTS ──
@@ -199,20 +224,20 @@ const baseStyleDefs: Record<string, any> = {
   },
   bulletDot: {
     width: 10,
-    fontSize: 10.5,
+    fontSize: 10,
     fontFamily: 'Times-Roman',
   },
   bulletText: {
     flex: 1,
     fontFamily: 'Times-Roman',
-    fontSize: 10.5,
+    fontSize: 10,
     lineHeight: 1.3,
   },
 
   // ── CERTIFICATIONS / LANGUAGES ──
   certItem: {
     fontFamily: 'Times-Roman',
-    fontSize: 10.5,
+    fontSize: 10,
     marginBottom: 2,
   },
 
@@ -221,12 +246,33 @@ const baseStyleDefs: Record<string, any> = {
     color: '#000000',
     textDecoration: 'none',
     fontFamily: 'Times-Roman',
-    fontSize: 10.5,
+    fontSize: 10,
     marginBottom: 2,
   },
   spacer: {
     height: 1.5,
   },
+};
+
+const ContactIcon: React.FC<{ type: 'phone' | 'email' | 'linkedin' | 'github' | 'globe' }> = ({ type }) => {
+  let path = "";
+  if (type === 'phone') {
+    path = "M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1v3.5a1 1 0 01-1 1A19.93 19.93 0 012 3a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.24 1.01l-2.21 2.2z";
+  } else if (type === 'email') {
+    path = "M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z";
+  } else if (type === 'linkedin') {
+    path = "M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v7.6h2.79v-7.6H6.46M7.86 6.5a1.63 1.63 0 1 0 0 3.26 1.63 1.63 0 0 0 0-3.26z";
+  } else if (type === 'github') {
+    path = "M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z";
+  } else {
+    path = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z";
+  }
+
+  return (
+    <Svg width={8} height={8} viewBox="0 0 24 24" style={{ marginRight: 3 }}>
+      <Path d={path} fill="#000000" />
+    </Svg>
+  );
 };
 
 const styles = StyleSheet.create(baseStyleDefs) as Record<string, any>;
@@ -265,8 +311,9 @@ function estimateContentHeight(blocks: ParsedResumeBlock[]): number {
   let h = 0;
   for (const b of blocks) {
     switch (b.type) {
-      case 'name': h += 36; break;
-      case 'contact': h += 22; break;
+      case 'name': h += 32; break;
+      case 'subtitle': h += 16; break;
+      case 'contact': h += 20; break;
       case 'section': h += 28; break;
       case 'summary': case 'normal': h += lines(b.text, 108) * 14.2 + 4; break;
       case 'skillLine': h += lines(b.value, 70) * LINE + 3; break;
@@ -300,7 +347,7 @@ function compactBlocks(blocks: ParsedResumeBlock[]): ParsedResumeBlock[] {
   const out: ParsedResumeBlock[] = [];
   for (const b of blocks) {
     const prev = out[out.length - 1];
-    if (b.type === 'spacer' && (!prev || prev.type === 'spacer' || prev.type === 'section' || prev.type === 'name' || prev.type === 'contact')) continue;
+    if (b.type === 'spacer' && (!prev || prev.type === 'spacer' || prev.type === 'section' || prev.type === 'name' || prev.type === 'subtitle' || prev.type === 'contact')) continue;
     out.push(b);
   }
   while (out.length && out[out.length - 1].type === 'spacer') out.pop();
@@ -354,6 +401,7 @@ export interface SkillLine {
 export interface ProjectBlock {
   name: string;
   tech?: string;
+  dates?: string;
   projectUrl?: string;
   bullets: string[];
 }
@@ -362,6 +410,7 @@ export interface JobBlock {
   title: string;
   company: string;
   dates: string;
+  tech?: string;
   bullets: string[];
 }
 
@@ -379,12 +428,13 @@ export interface StandaloneLink {
 
 export type ParsedResumeBlock =
   | { type: 'name'; text: string }
+  | { type: 'subtitle'; text: string }
   | { type: 'contact'; segments: ContactSegment[] }
   | { type: 'section'; text: string }
   | { type: 'summary'; text: string }
   | { type: 'skillLine'; label: string; value: string }
-  | { type: 'project'; name: string; tech?: string; projectUrl?: string; bullets: string[] }
-  | { type: 'job'; title: string; company: string; dates: string; bullets: string[] }
+  | { type: 'project'; name: string; tech?: string; dates?: string; projectUrl?: string; bullets: string[] }
+  | { type: 'job'; title: string; company: string; dates: string; tech?: string; bullets: string[] }
   | { type: 'education'; degree: string; dates: string; school: string; gpa: string }
   | { type: 'bullet'; text: string }
   | { type: 'link'; label: string; url: string }
@@ -564,7 +614,11 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
       continue;
     }
 
-    // 2. Contact row detection (collect all contact rows before any section header)
+    // 2. Subtitle / Target Role below Name (e.g. "Java Backend Developer")
+    const hasAnySection = blocks.some(b => b.type === 'section');
+    const hasSubtitle = blocks.some(b => b.type === 'subtitle');
+    const upperLine = line.toUpperCase().replace(/[^A-Z ]/g, '').trim();
+    const isSection = SECTION_NAMES.includes(upperLine);
     const isContactLine = 
       line.includes('@') || 
       /\+?\d[\d\s\-\(\)]{7,}/.test(line) ||
@@ -573,7 +627,13 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
       line.toLowerCase().includes('linkedin') ||
       line.toLowerCase().includes('github') ||
       line.toLowerCase().includes('portfolio');
-      
+
+    if (!hasAnySection && !hasSubtitle && !isContactLine && !isSection) {
+      blocks.push({ type: 'subtitle', text: line });
+      continue;
+    }
+
+    // 3. Contact row detection (collect all contact rows before any section header)
     if (isContactLine && blocks.filter(b => b.type === 'section').length === 0) {
       const parts = line.split(/\s*(?:[|•\u2022—–]|\s+-\s+)\s*/);
       const segments: ContactSegment[] = [];
@@ -616,8 +676,6 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
     }
 
     // 3. Section Header check
-    const upperLine = line.toUpperCase().replace(/[^A-Z ]/g, '').trim();
-    const isSection = SECTION_NAMES.includes(upperLine);
     if (isSection) {
       currentSection = upperLine;
       blocks.push({ type: 'section', text: line });
@@ -721,17 +779,48 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
           const looksLikeJobHeader = line.includes('|') || line.includes('—') || line.includes('–') || TITLE_KEYWORDS.some(kw => new RegExp(`\\b${kw}s?\\b`).test(lowerLine)) || lastJobIdx === -1;
 
           if (looksLikeJobHeader) {
-            const parts = line.split(/\s*(?:[|—–]|\s+-\s+)\s*/);
-            const title = stripMarkdownAsterisks(parts[0] || line);
-            const company = stripMarkdownAsterisks(parts[1] || "");
-            
+            const parts = line.split(/\s*(?:[|—–]|\s{3,}|\s+-\s+)\s*/);
+            let title = stripMarkdownAsterisks(parts[0] || line);
+            let company = stripMarkdownAsterisks(parts[1] || "");
+            let tech = "";
             let dates = "";
+
+            if (parts.length > 1) {
+              const lastPart = parts[parts.length - 1];
+              if (/\b\d{4}\b/.test(lastPart) || /present|current/i.test(lastPart)) {
+                dates = lastPart;
+                if (parts.length === 2) {
+                  title = parts[0];
+                  company = "";
+                } else if (parts.length === 3) {
+                  title = parts[0];
+                  company = parts[1];
+                }
+              }
+            }
+
             if (idx + 1 < rawLines.length) {
               const nextLine = stripMarkdownAsterisks(rawLines[idx + 1]);
-              const nextDateMatch = nextLine.match(/\b\d{4}\b/);
-              if (nextDateMatch && (nextLine.toLowerCase().includes('present') || nextLine.toLowerCase().includes('current') || nextLine.includes('–') || nextLine.includes('-'))) {
-                dates = nextLine;
-                idx++;
+              const nextUpper = nextLine.toUpperCase().replace(/[^A-Z ]/g, '').trim();
+              const isNextBullet = /^\s*([•\-\*–—+•\u2022\u25cf\u2043]|\d+\.)\s*/.test(rawLines[idx + 1]);
+              const isNextSection = SECTION_NAMES.includes(nextUpper);
+
+              if (!isNextBullet && !isNextSection && nextLine) {
+                const nextDateMatch = nextLine.match(/\b\d{4}\b/);
+                if (!dates && nextDateMatch && (nextLine.toLowerCase().includes('present') || nextLine.toLowerCase().includes('current') || nextLine.includes('–') || nextLine.includes('-'))) {
+                  dates = nextLine;
+                  idx++;
+                } else if (!company) {
+                  const nextParts = nextLine.split(/\s*(?:[|—–]|\s{3,}|\s+-\s+)\s*/);
+                  company = nextParts[0] || nextLine;
+                  if (nextParts.length > 1) {
+                    tech = nextParts.slice(1).join(", ");
+                  }
+                  idx++;
+                } else if (company && !tech) {
+                  tech = nextLine;
+                  idx++;
+                }
               }
             }
             
@@ -740,6 +829,7 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
               title,
               company,
               dates,
+              tech: tech || undefined,
               bullets: []
             });
           } else {
@@ -774,9 +864,17 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
       const hasProject = blocks.some(b => b.type === 'project');
       const isBullet = /^\s*([•\-\*–—+•\u2022\u25cf\u2043]|\d+\.)\s*/.test(rawLine) || (hasProject && looksLikeSentenceBullet(line));
       if (!isBullet) {
-        const parts = line.split(/\s*(?:[|—–]|\s+-\s+)\s*/);
+        let lineClean = line;
+        let dates = "";
+        const dateMatch = lineClean.match(/\s+(\b20\d{2}\b.*?|\b\d{4}\b)$/);
+        if (dateMatch) {
+          dates = dateMatch[1].trim();
+          lineClean = lineClean.substring(0, lineClean.length - dateMatch[0].length).trim();
+        }
+
+        const parts = lineClean.split(/\s*(?:[|—–]|\s+-\s+)\s*/);
         const name = stripMarkdownAsterisks(parts[0] || "Project");
-        const tech = stripMarkdownAsterisks(parts[1] || "");
+        const tech = stripMarkdownAsterisks(parts.slice(1).join(" — ") || "");
         
         let projectUrl: string | undefined;
         const urlMatches = line.match(URL_REGEX);
@@ -787,7 +885,8 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
         blocks.push({
           type: 'project',
           name,
-          tech,
+          tech: tech || undefined,
+          dates: dates || undefined,
           projectUrl,
           bullets: []
         });
@@ -1018,52 +1117,48 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
                   {block.text}
                 </Text>
               );
+            case 'subtitle':
+              return (
+                <Text key={i} style={styles.subtitle}>
+                  {block.text}
+                </Text>
+              );
             case 'contact':
               return (
                 <View key={i} style={styles.contactRow}>
                   {block.segments.map((seg, sIdx) => {
-                    const elements: React.ReactNode[] = [];
-                    if (seg.isLink && seg.url) {
-                      const lowerUrl = seg.url.toLowerCase();
-                      const lowerTxt = seg.text.toLowerCase();
-                      let label = seg.text;
-                      if (lowerUrl.includes('linkedin') || lowerTxt.includes('linkedin')) {
-                        label = 'LinkedIn';
-                      } else if (lowerUrl.includes('github') || lowerTxt.includes('github')) {
-                        label = 'GitHub';
-                      } else if (lowerUrl.includes('portfolio') || lowerTxt.includes('portfolio')) {
-                        label = 'Portfolio';
-                      } else {
-                        label = seg.text.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
-                      }
-                      elements.push(
-                        <Link key={`link-${sIdx}`} src={seg.url} style={styles.contactLink}>
-                          <Text style={styles.contactLink}>{label}</Text>
-                        </Link>
-                      );
-                    } else {
-                      elements.push(
-                        <Text key={`txt-${sIdx}`} style={styles.contactText}>
-                          {seg.text}
-                        </Text>
-                      );
-                    }
-                    if (sIdx < block.segments.length - 1) {
-                      elements.push(
-                        <Text key={`sep-${sIdx}`} style={styles.contactSeparator}>
-                          |
-                        </Text>
-                      );
-                    }
-                    return elements;
+                    const lower = (seg.text || "").toLowerCase() + " " + (seg.url || "").toLowerCase();
+                    let iconType: 'phone' | 'email' | 'linkedin' | 'github' | 'globe' = 'globe';
+                    if (seg.text.includes('@') || lower.includes('@')) iconType = 'email';
+                    else if (/\+?\d[\d\s\-\(\)]{7,}/.test(seg.text)) iconType = 'phone';
+                    else if (lower.includes('linkedin')) iconType = 'linkedin';
+                    else if (lower.includes('github')) iconType = 'github';
+
+                    let displayLabel = seg.text.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
+                    if (displayLabel.startsWith('mailto:')) displayLabel = displayLabel.replace('mailto:', '');
+                    if (displayLabel.startsWith('tel:')) displayLabel = displayLabel.replace('tel:', '');
+
+                    return (
+                      <View key={sIdx} style={styles.contactItem}>
+                        <ContactIcon type={iconType} />
+                        {seg.isLink && seg.url ? (
+                          <Link src={seg.url} style={styles.contactLink}>
+                            <Text style={styles.contactLink}>{displayLabel}</Text>
+                          </Link>
+                        ) : (
+                          <Text style={styles.contactText}>{displayLabel}</Text>
+                        )}
+                      </View>
+                    );
                   })}
                 </View>
               );
             case 'section':
               return (
-                <Text key={i} style={styles.sectionHeader}>
-                  {block.text}
-                </Text>
+                <View key={i} style={styles.sectionHeaderWrapper}>
+                  <Text style={styles.sectionHeader}>{block.text}</Text>
+                  <View style={styles.sectionUnderline} />
+                </View>
               );
             case 'summary':
               return (
@@ -1073,26 +1168,22 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
               );
             case 'skillLine':
               return (
-                <View key={i} style={styles.skillRow}>
+                <Text key={i} style={styles.skillLine}>
                   <Text style={styles.skillLabel}>{block.label}: </Text>
                   <Text style={styles.skillValue}>{block.value}</Text>
-                </View>
+                </Text>
               );
             case 'project':
               return (
                 <View key={i} style={{ marginBottom: 3 }}>
                   <View style={styles.projectTitleRow}>
-                    <View style={styles.projectTitleLeft}>
-                      <Text style={styles.projectTitle}>{block.name}</Text>
-                      {block.projectUrl && (
-                        <Link src={block.projectUrl} style={styles.projectLink}>
-                          <Text style={styles.projectLink}>Link</Text>
-                        </Link>
-                      )}
-                    </View>
-                    {block.tech && (
-                      <Text style={styles.projectTech}>{block.tech}</Text>
-                    )}
+                    <Text style={styles.projectTitle}>
+                      {block.name}
+                      {block.tech ? <Text style={styles.projectTech}> — {block.tech}</Text> : null}
+                    </Text>
+                    {block.dates ? (
+                      <Text style={styles.projectDates}>{block.dates}</Text>
+                    ) : null}
                   </View>
                   {block.bullets.map((bullet, bIdx) => (
                     <BulletRow key={bIdx} text={bullet} s={styles} />
@@ -1107,7 +1198,12 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
                     <Text style={styles.jobTitle}>{block.title}</Text>
                     {block.dates ? <Text style={styles.jobDates}>{block.dates}</Text> : null}
                   </View>
-                  {block.company ? <Text style={styles.jobCompany}>{block.company}</Text> : null}
+                  {(block.company || block.tech) ? (
+                    <View style={styles.jobSubRow}>
+                      <Text style={styles.jobCompany}>{block.company || ""}</Text>
+                      {block.tech ? <Text style={styles.jobTech}>{block.tech}</Text> : null}
+                    </View>
+                  ) : null}
                   {block.bullets.map((bullet, bIdx) => (
                     <BulletRow key={bIdx} text={bullet} s={styles} />
                   ))}
@@ -1118,11 +1214,11 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
                 <View key={i} style={{ marginBottom: 3 }}>
                   <View style={styles.educationRow}>
                     <Text style={styles.educationDegree}>{block.degree}</Text>
-                    <Text style={styles.educationDates}>{block.dates}</Text>
+                    {block.dates ? <Text style={styles.educationDates}>{block.dates}</Text> : null}
                   </View>
                   <View style={styles.educationInstitution}>
                     <Text style={styles.educationSchool}>{block.school}</Text>
-                    <Text style={styles.educationGPA}>{block.gpa}</Text>
+                    {block.gpa ? <Text style={styles.educationGPA}>{block.gpa}</Text> : null}
                   </View>
                 </View>
               );

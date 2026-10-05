@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/logger";
 import { buildOptimizationPrompt } from "@/lib/ai/prompts";
-import { callAI } from "@/lib/ai/router";
+import { callAI, callAIText } from "@/lib/ai/router";
 import { scoreResume } from "@/lib/ats/scorer";
 import { sanitizeOptimizedResume } from "@/lib/resume-format";
 import { extractTechTerms } from "@/lib/ats/keywords";
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Parse and validate body
     const bodyText = await request.text();
-    const { resumeText, jobDescription, instructions, lengthOption, jobTitle, company, dataTrainingConsent, userAnswers } = JSON.parse(bodyText || '{}');
+    const { resumeText, jobDescription, instructions, lengthOption, jobTitle, company, dataTrainingConsent, userAnswers, skipDetection } = JSON.parse(bodyText || '{}');
 
     if (!resumeText || resumeText.length < MIN_RESUME_CHARS) {
       throw new Error(`Resume text is too short. Please provide at least ${MIN_RESUME_CHARS} characters.`);
@@ -282,15 +282,117 @@ export async function POST(request: NextRequest) {
 
     // Core AI optimization pipeline
     await send(1, 'done');
-      await send(2, 'running');
-      await send(2, 'done');
-      await send(3, 'running');
-      const scoreBefore = await scoreResume(resumeText, jobDescription);
-      await send(3, 'done');
-      await send(4, 'running');
+    await send(2, 'running');
+    await send(2, 'done');
+    await send(3, 'running');
+
+    // ── TASK 2: First AI call — detection only ──
+    const hasAnswers = userAnswers && typeof userAnswers === "object" && Object.keys(userAnswers).length > 0;
+    if (!skipDetection && !hasAnswers) {
+      let missingList: Array<{ field: string; section: string; question: string }> = [];
+      try {
+        const detectionPrompt = `Scan this resume. List ONLY fields that are missing or placeholder (X.XX, XXXXXXXXXX, Company Name, example.com, etc). Return JSON:
+{ "missing": [{ "field": "Company Name", "section": "EXPERIENCE", "question": "What company did you work at as Software Engineer from Sep 2024?" }] }
+If there are no missing or placeholder fields, return:
+{ "missing": [] }
+Return ONLY valid JSON.
+
+Resume text:
+${resumeText}`;
+
+        const detectionRaw = await callAIText(detectionPrompt);
+        const jsonMatch = detectionRaw.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          if (Array.isArray(parsed.missing)) {
+            missingList = parsed.missing.filter((item: any) => item && item.field && item.question);
+          }
+        }
+      } catch (err: any) {
+        logger.warn("[optimize] AI detection call error:", err?.message);
+      }
+
+      // Deterministic fallback detection for clear placeholder patterns
+      if (missingList.length === 0) {
+        const fallbacks: Array<{ field: string; section: string; question: string }> = [];
+        if (/\bCompany\s*Name\b/i.test(resumeText)) {
+          fallbacks.push({
+            field: "Company Name",
+            section: "EXPERIENCE",
+            question: "What company did you work at as Software Engineer?",
+          });
+        }
+        if (/X\.XX|GPA:\s*X|CGPA:\s*X/i.test(resumeText)) {
+          fallbacks.push({
+            field: "CGPA / GPA",
+            section: "EDUCATION",
+            question: "What is your CGPA or GPA score?",
+          });
+        }
+        if (/\b(?:College\s*Name|School\s*Name|XYZ\s*Institute)\b/i.test(resumeText)) {
+          fallbacks.push({
+            field: "College / School Name",
+            section: "EDUCATION",
+            question: "What is the name of your college or university?",
+          });
+        }
+        if (/X{6,}/.test(resumeText)) {
+          fallbacks.push({
+            field: "Contact Phone / Handle",
+            section: "CONTACT",
+            question: "What is your contact phone number or LinkedIn handle?",
+          });
+        }
+        if (fallbacks.length > 0) {
+          missingList = fallbacks;
+        }
+      }
+
+      if (missingList.length > 0) {
+        logger.info(`[optimize] AI detected ${missingList.length} missing/placeholder fields. Returning needsInput to frontend.`);
+        await writer.write(encoder.encode(`data: ${JSON.stringify({ needsInput: true, questions: missingList })}\n\n`));
+        await writer.close();
+        return;
+      }
+    }
+
+    // ── TASK 2: Second AI call — replace all placeholders with user answers first ──
+    let preparedResumeText = resumeText;
+    if (userAnswers && typeof userAnswers === "object") {
+      for (const [key, val] of Object.entries(userAnswers)) {
+        if (typeof val === "string" && val.trim()) {
+          const cleanVal = val.trim();
+          // Literal replacement if key exists in resume
+          if (key.length > 1 && preparedResumeText.includes(key)) {
+            preparedResumeText = preparedResumeText.split(key).join(cleanVal);
+          }
+          // Placeholder pattern replacements
+          const kLow = key.toLowerCase();
+          if (kLow.includes("company")) {
+            preparedResumeText = preparedResumeText.replace(/\bCompany\s*Name\b/g, cleanVal);
+          } else if (kLow.includes("gpa") || kLow.includes("cgpa")) {
+            preparedResumeText = preparedResumeText
+              .replace(/CGPA:\s*X\.XX\s*\/\s*10/gi, `CGPA: ${cleanVal}`)
+              .replace(/GPA:\s*X\.XX\s*\/\s*10/gi, `GPA: ${cleanVal}`)
+              .replace(/X\.XX/g, cleanVal);
+          } else if (kLow.includes("college") || kLow.includes("school") || kLow.includes("institution")) {
+            preparedResumeText = preparedResumeText
+              .replace(/\bCollege\s*Name\b/gi, cleanVal)
+              .replace(/\bSchool\s*Name\b/gi, cleanVal)
+              .replace(/\bXYZ\s*Institute[^\n]*/gi, cleanVal);
+          } else if (kLow.includes("phone") || kLow.includes("contact")) {
+            preparedResumeText = preparedResumeText.replace(/X{7,}/g, cleanVal);
+          }
+        }
+      }
+    }
+
+    const scoreBefore = await scoreResume(preparedResumeText, jobDescription);
+    await send(3, 'done');
+    await send(4, 'running');
 
     let combinedInstructions = instructions || "";
-    let enrichedResumeText = resumeText;
+    let enrichedResumeText = preparedResumeText;
 
     if (userAnswers && typeof userAnswers === "object") {
       const answerEntries = Object.entries(userAnswers).filter(
@@ -298,11 +400,11 @@ export async function POST(request: NextRequest) {
       );
       if (answerEntries.length > 0) {
         combinedInstructions +=
-          "\n\nUSER-VERIFIED DATES, YEARS, TECH STACK & METRICS (MANDATORY TO INTEGRATE):\n" +
+          "\n\nUSER-VERIFIED ANSWERS & DETAILS (MANDATORY TO INTEGRATE):\n" +
           answerEntries
             .map(([k, val]) => `• ${k}: ${val}`)
             .join("\n") +
-          "\nSeamlessly integrate these verified dates, years, and metrics into the corresponding sections and bullets. Do NOT output raw [ADD: ...] placeholders.";
+          "\nSeamlessly integrate these verified user details into the corresponding sections and bullets. Do NOT output raw placeholder strings or placeholders like [ADD: ...], X.XX, or Company Name.";
 
         const datesVal = userAnswers["experience_dates"];
         const eduVal = userAnswers["education_details"];

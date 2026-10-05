@@ -21,10 +21,8 @@ const FUN_FACTS = [
 ];
 
 interface MissingQuestion {
-  id: string;
-  category?: "year_date" | "tech_stack" | "metrics" | "education" | "general";
-  title?: string;
-  originalBullet?: string;
+  field: string;
+  section?: string;
   question: string;
   hint?: string;
 }
@@ -52,9 +50,10 @@ export default function OptimizingProgress({
   const [elapsedSec, setElapsedSec] = useState(0);
   const startRef = useRef<number>(Date.now());
 
-  // Interactive Question State (triggered in the middle of progress)
+  // Interactive Question State (one question at a time before rewriting)
   const [awaitingInput, setAwaitingInput] = useState(false);
   const [missingQuestions, setMissingQuestions] = useState<MissingQuestion[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
   const [isApplying, setIsApplying] = useState(false);
 
@@ -82,6 +81,43 @@ export default function OptimizingProgress({
     };
   }, []);
 
+  const processStreamChunk = (data: any) => {
+    if (data.step >= 4) {
+      if (data.status === "running") {
+        stepStartTimes.current[data.step] = Date.now();
+        setSteps((prev) =>
+          prev.map((s) =>
+            s.id === data.step ? { ...s, status: "running" } : s
+          )
+        );
+        setProgress(Math.round(((data.step - 1) / 6) * 100));
+      }
+
+      if (data.status === "done") {
+        const dur =
+          (
+            (Date.now() -
+              (stepStartTimes.current[data.step] || Date.now())) /
+            1000
+          ).toFixed(1) + "s";
+
+        setSteps((prev) =>
+          prev.map((s) =>
+            s.id === data.step ? { ...s, status: "done", duration: dur } : s
+          )
+        );
+        setProgress(Math.round((data.step / 6) * 100));
+
+        if (data.result) {
+          setProgress(100);
+          setTimeout(() => {
+            if (isMountedRef.current) onComplete(data.result);
+          }, 600);
+        }
+      }
+    }
+  };
+
   // Main optimization workflow
   useEffect(() => {
     let cancelled = false;
@@ -93,7 +129,7 @@ export default function OptimizingProgress({
         prev.map((s) => (s.id === 1 ? { ...s, status: "running" } : s))
       );
       setProgress(15);
-      await new Promise((r) => setTimeout(r, 700));
+      await new Promise((r) => setTimeout(r, 600));
       if (cancelled) return;
 
       const dur1 = ((Date.now() - stepStartTimes.current[1]) / 1000).toFixed(1) + "s";
@@ -107,7 +143,7 @@ export default function OptimizingProgress({
         prev.map((s) => (s.id === 2 ? { ...s, status: "running" } : s))
       );
       setProgress(30);
-      await new Promise((r) => setTimeout(r, 700));
+      await new Promise((r) => setTimeout(r, 600));
       if (cancelled) return;
 
       const dur2 = ((Date.now() - stepStartTimes.current[2]) / 1000).toFixed(1) + "s";
@@ -115,7 +151,7 @@ export default function OptimizingProgress({
         prev.map((s) => (s.id === 2 ? { ...s, status: "done", duration: dur2 } : s))
       );
 
-      // Step 3: Detecting missing values & metrics
+      // Step 3: Detecting missing fields & placeholders
       stepStartTimes.current[3] = Date.now();
       setSteps((prev) =>
         prev.map((s) => (s.id === 3 ? { ...s, status: "running" } : s))
@@ -123,40 +159,59 @@ export default function OptimizingProgress({
       setProgress(45);
 
       try {
-        const preCheckRes = await fetch("/api/pre-check", {
+        const res = await fetch("/api/optimize", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ resumeText, jobDescription }),
+          body: JSON.stringify({
+            resumeText,
+            jobDescription,
+            instructions,
+          }),
         });
 
-        let detected: MissingQuestion[] = [];
-        if (preCheckRes.ok) {
-          const data = await preCheckRes.json();
-          if (Array.isArray(data.questions) && data.questions.length > 0) {
-            detected = data.questions;
+        if (!res.body) throw new Error("No response body from optimization service.");
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (!isMountedRef.current || cancelled) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            try {
+              const jsonStart = line.indexOf("{");
+              if (jsonStart === -1) continue;
+              const data = JSON.parse(line.slice(jsonStart));
+
+              if (data.error) {
+                if (onError) onError(data.error);
+                return;
+              }
+
+              // Missing fields detected before rewrite!
+              if (data.needsInput && Array.isArray(data.questions) && data.questions.length > 0) {
+                setMissingQuestions(data.questions);
+                setCurrentQuestionIndex(0);
+                setAwaitingInput(true);
+                return;
+              }
+
+              processStreamChunk(data);
+            } catch (e) {
+              // Ignore incomplete chunks
+            }
           }
         }
-
-        if (cancelled) return;
-
-        // If missing values / metrics are detected, PAUSE here in the middle of progress to ask questions!
-        if (detected.length > 0) {
-          setMissingQuestions(detected);
-          setAwaitingInput(true);
-          // Wait for user interaction via handleApplyAnswers
-          return;
-        }
-
-        // If no missing items detected, mark Step 3 done and proceed directly
-        const dur3 = ((Date.now() - stepStartTimes.current[3]) / 1000).toFixed(1) + "s";
-        setSteps((prev) =>
-          prev.map((s) => (s.id === 3 ? { ...s, status: "done", duration: dur3 } : s))
-        );
-
-        proceedToOptimization({});
       } catch (err: any) {
-        // Fallback: proceed to optimization without interrupting
-        proceedToOptimization({});
+        if (onError) onError(err?.message || "Failed to start optimization.");
       }
     };
 
@@ -194,6 +249,7 @@ export default function OptimizingProgress({
           jobDescription,
           instructions,
           userAnswers: collectedAnswers,
+          skipDetection: true,
         }),
       });
 
@@ -224,41 +280,7 @@ export default function OptimizingProgress({
               return;
             }
 
-            // Map server steps 4, 5, 6 to client UI
-            if (data.step >= 4) {
-              if (data.status === "running") {
-                stepStartTimes.current[data.step] = Date.now();
-                setSteps((prev) =>
-                  prev.map((s) =>
-                    s.id === data.step ? { ...s, status: "running" } : s
-                  )
-                );
-                setProgress(Math.round(((data.step - 1) / 6) * 100));
-              }
-
-              if (data.status === "done") {
-                const dur =
-                  (
-                    (Date.now() -
-                      (stepStartTimes.current[data.step] || Date.now())) /
-                    1000
-                  ).toFixed(1) + "s";
-
-                setSteps((prev) =>
-                  prev.map((s) =>
-                    s.id === data.step ? { ...s, status: "done", duration: dur } : s
-                  )
-                );
-                setProgress(Math.round((data.step / 6) * 100));
-
-                if (data.result) {
-                  setProgress(100);
-                  setTimeout(() => {
-                    if (isMountedRef.current) onComplete(data.result);
-                  }, 600);
-                }
-              }
-            }
+            processStreamChunk(data);
           } catch (e) {
             // Ignore incomplete chunks
           }
@@ -276,6 +298,8 @@ export default function OptimizingProgress({
     proceedToOptimization(answersToSend);
   };
 
+  const currentQ = missingQuestions[currentQuestionIndex] || missingQuestions[0];
+  const isLast = currentQuestionIndex === missingQuestions.length - 1;
   const filledCount = Object.values(userAnswers).filter(
     (v) => typeof v === "string" && v.trim().length > 0
   ).length;
@@ -320,103 +344,124 @@ export default function OptimizingProgress({
       </h2>
       <p className="text-slate-500 text-xs sm:text-sm mb-6 text-center max-w-md">
         {awaitingInput
-          ? "Provide quick metrics or details below to maximize your ATS match score before generating the resume."
+          ? "Answer each targeted question below to eliminate placeholders and maximize your ATS score."
           : "Stay on this tab — our AI is engineering your ATS-optimized resume."}
       </p>
 
-      {/* ── INTERACTIVE MISSING VALUES PANEL (TRIGGERED IN MIDDLE OF PROGRESS) ── */}
-      {awaitingInput && missingQuestions.length > 0 ? (
-        <div className="w-full bg-white border border-teal-200/80 shadow-md rounded-2xl p-5 sm:p-6 space-y-4 mb-6 animate-in fade-in slide-in-from-bottom-3 duration-300">
-          <div className="flex items-start gap-3">
-            <div className="h-9 w-9 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center shrink-0 text-[#0d6e5a]">
-              <Sparkles className="h-5 w-5" />
+      {/* ── INTERACTIVE MISSING VALUES PANEL (ONE QUESTION AT A TIME) ── */}
+      {awaitingInput && missingQuestions.length > 0 && currentQ ? (
+        <div className="w-full bg-white border border-teal-200/90 shadow-xl rounded-2xl p-5 sm:p-7 space-y-5 mb-6 animate-in fade-in slide-in-from-bottom-3 duration-300">
+          {/* Header Bar with Step Counter & Progress bar */}
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-teal-50 border border-teal-200 text-[#0d6e5a] text-[10px] font-bold uppercase tracking-wider">
+                {currentQ.section || "DETAILS"}
+              </span>
+              <span className="text-xs font-semibold text-slate-500">
+                Question {currentQuestionIndex + 1} of {missingQuestions.length}
+              </span>
             </div>
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-teal-50 border border-teal-200 text-[#0d6e5a] text-[10px] font-bold uppercase tracking-wider mb-1">
-                ATS Boost Checkpoint • Step 3 of 6
-              </div>
-              <h3 className="text-base font-extrabold text-slate-900 leading-snug">
-                Provide Missing Details &amp; Metrics
-              </h3>
-              <p className="text-xs text-slate-600 font-normal mt-0.5 leading-relaxed">
-                Add missing dates, year values, or measurable metrics to dynamically elevate your ATS score to <strong>90+ points</strong>. Fill in what you know; leave any blank to use AI defaults.
-              </p>
+            {/* Step indicator pills */}
+            <div className="flex items-center gap-1">
+              {missingQuestions.map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    i === currentQuestionIndex
+                      ? "w-6 bg-[#0d6e5a]"
+                      : i < currentQuestionIndex
+                      ? "w-2.5 bg-emerald-400"
+                      : "w-2.5 bg-slate-200"
+                  }`}
+                />
+              ))}
             </div>
           </div>
 
-          {/* Questions List */}
-          <div className="space-y-3.5 max-h-[360px] overflow-y-auto pr-1 pt-1">
-            {missingQuestions.map((q, idx) => (
-              <div
-                key={q.id || idx}
-                className="p-3.5 bg-slate-50 border border-slate-200/90 rounded-xl space-y-2 hover:border-teal-200 transition-colors"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200/70 text-slate-700">
-                    {q.category === "year_date"
-                      ? "Dates & Year"
-                      : q.category === "education"
-                        ? "Graduation & GPA"
-                        : q.category === "tech_stack"
-                          ? "Technologies"
-                          : "Quantified Metric"}
-                  </span>
-                  {q.title && (
-                    <span className="text-xs font-bold text-slate-800">
-                      {q.title}
-                    </span>
-                  )}
-                </div>
-
-                {q.originalBullet && (
-                  <div className="text-[11px] text-slate-600 font-medium italic border-l-2 border-[#0d6e5a] pl-2 line-clamp-2 bg-white/70 py-1 rounded-r">
-                    &ldquo;{q.originalBullet}&rdquo;
-                  </div>
-                )}
-                <label className="block text-xs font-semibold text-slate-700">
-                  {q.question}
-                </label>
-                <input
-                  type="text"
-                  value={userAnswers[q.id] || ""}
-                  onChange={(e) =>
-                    setUserAnswers((prev) => ({
-                      ...prev,
-                      [q.id]: e.target.value,
-                    }))
+          {/* Current Question */}
+          <div className="space-y-3">
+            <div className="text-xs font-bold text-[#0d6e5a] uppercase tracking-wider">
+              {currentQ.field}
+            </div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+              {currentQ.question}
+            </h3>
+            <div className="relative">
+              <input
+                autoFocus
+                type="text"
+                value={userAnswers[currentQ.field] || ""}
+                onChange={(e) =>
+                  setUserAnswers((prev) => ({
+                    ...prev,
+                    [currentQ.field]: e.target.value,
+                  }))
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (!isLast) {
+                      setCurrentQuestionIndex((prev) => prev + 1);
+                    } else {
+                      handleApplyAnswers(false);
+                    }
                   }
-                  placeholder={q.hint || "e.g., 2021 – 2025, or improved speed by 35%"}
-                  className="w-full h-9 px-3 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0d6e5a] focus:border-transparent transition-all shadow-xs"
-                />
-              </div>
-            ))}
+                }}
+                placeholder={currentQ.hint || `Type your answer for ${currentQ.field}...`}
+                className="w-full h-11 px-3.5 text-sm bg-slate-50/80 border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0d6e5a] focus:bg-white focus:border-transparent transition-all shadow-xs"
+              />
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Press <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[10px] font-mono">Enter ↵</kbd> to save and move to the next question.
+            </p>
           </div>
 
           {/* Action buttons */}
-          <div className="pt-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => handleApplyAnswers(false)}
-              disabled={isApplying}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#0d6e5a] hover:bg-[#0f766e] active:scale-95 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer disabled:opacity-50"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>
-                {filledCount > 0
-                  ? `Apply ${filledCount} Detail${filledCount > 1 ? "s" : ""} & Continue`
-                  : "Continue Optimization"}
-              </span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </button>
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              {currentQuestionIndex > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
+                  className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition-all cursor-pointer"
+                >
+                  ← Back
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isLast) {
+                    setCurrentQuestionIndex((prev) => prev + 1);
+                  } else {
+                    handleApplyAnswers(false);
+                  }
+                }}
+                disabled={isApplying}
+                className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-[#0d6e5a] hover:bg-[#0f766e] active:scale-95 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer disabled:opacity-50"
+              >
+                <span>{isLast ? "Finish & Optimize Resume ✨" : "Next Question →"}</span>
+              </button>
+            </div>
 
-            <button
-              type="button"
-              onClick={() => handleApplyAnswers(true)}
-              disabled={isApplying}
-              className="text-xs text-slate-500 hover:text-slate-800 font-medium transition-colors cursor-pointer"
-            >
-              Skip (Use AI Estimation) &rarr;
-            </button>
+            <div className="flex items-center gap-3 text-xs">
+              {!isLast && (
+                <button
+                  type="button"
+                  onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
+                  className="text-slate-500 hover:text-slate-800 font-medium transition-colors cursor-pointer"
+                >
+                  Skip this question
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => handleApplyAnswers(true)}
+                className="text-slate-400 hover:text-slate-600 text-[11px] transition-colors cursor-pointer"
+              >
+                Skip All &amp; Optimize
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
