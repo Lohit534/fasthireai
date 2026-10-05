@@ -140,12 +140,24 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { referralCode, newUserId, newUserEmail } = body;
+    const supabase = createClient();
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
 
-    if (!referralCode || (!newUserId && !newUserEmail)) {
+    if (authError || !authUser) {
       return NextResponse.json(
-        { error: "referralCode and newUser info are required." },
+        { error: "Unauthorized. You must be signed in to claim a referral code." },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const { referralCode } = body;
+    const newUserId = authUser.id;
+    const newUserEmail = authUser.email || body.newUserEmail;
+
+    if (!referralCode) {
+      return NextResponse.json(
+        { error: "referralCode is required." },
         { status: 400 }
       );
     }

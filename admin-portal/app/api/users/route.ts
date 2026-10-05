@@ -1,55 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase";
-import { isAdminEmail } from "@/lib/auth";
+import { verifyAdmin, isAdminEmail } from "@/lib/auth";
 
 export const runtime = "nodejs";
-
-function parseJwtPayload(token: string): any {
-  try {
-    const parts = token.split(".");
-    if (parts.length < 2) return null;
-    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-    const jsonStr = Buffer.from(base64, "base64").toString("utf-8");
-    return JSON.parse(jsonStr);
-  } catch {
-    return null;
-  }
-}
-
-async function verifyAdmin(request: NextRequest): Promise<{ user: any; token: string } | null> {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  const token = authHeader.replace("Bearer ", "").trim();
-  if (!token) return null;
-
-  try {
-    const adminClient = getAdminClient(token);
-    const { data } = await adminClient.auth.getUser(token);
-    if (data?.user && isAdminEmail(data.user.email)) {
-      return { user: data.user, token };
-    }
-  } catch {
-    // Continue to JWT fallback
-  }
-
-  const payload = parseJwtPayload(token);
-  if (payload?.email && isAdminEmail(payload.email)) {
-    const isExpired = payload.exp && payload.exp * 1000 < Date.now();
-    if (!isExpired) {
-      return {
-        user: {
-          id: payload.sub || "admin-user",
-          email: payload.email,
-          user_metadata: payload.user_metadata || {},
-          role: payload.role || "authenticated",
-        },
-        token,
-      };
-    }
-  }
-
-  return null;
-}
 
 // GET /api/users — list all users with synchronized plan status and accurate pricing credits
 export async function GET(request: NextRequest) {

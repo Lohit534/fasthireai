@@ -59,7 +59,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Payment verification failed. Signature mismatch." }, { status: 400 });
     }
 
-    logger.info(`[payment/verify] Payment verified ✓ user=${user.email} plan=${planId} paymentId=${razorpay_payment_id}`);
+    logger.info(`[payment/verify] Payment signature verified ✓ user=${user.email} paymentId=${razorpay_payment_id}`);
+
+    // ── 1b. Verify order details from Razorpay to prevent planId/cycle tampering ─
+    let verifiedPlanId = planId;
+    let verifiedCycle = billingCycle || "monthly";
+
+    const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+    if (keyId && keySecret) {
+      try {
+        const rzpAuth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
+        const orderRes = await fetch(`https://api.razorpay.com/v1/orders/${razorpay_order_id}`, {
+          headers: { Authorization: `Basic ${rzpAuth}` },
+        });
+        if (orderRes.ok) {
+          const orderData = await orderRes.json();
+          // Ensure order was made for this user
+          if (orderData?.notes?.userId && orderData.notes.userId !== user.id) {
+            logger.warn(`[payment/verify] Order user mismatch! orderUser=${orderData.notes.userId} currentUser=${user.id}`);
+            return NextResponse.json({ error: "Order does not belong to current user." }, { status: 403 });
+          }
+          // Enforce plan and billingCycle from server-side created order notes
+          if (orderData?.notes?.planId) {
+            verifiedPlanId = orderData.notes.planId;
+          }
+          if (orderData?.notes?.billingCycle) {
+            verifiedCycle = orderData.notes.billingCycle;
+          }
+        }
+      } catch (err: any) {
+        logger.warn("[payment/verify] Failed to fetch Razorpay order details, continuing with signed payload:", err?.message);
+      }
+    }
 
     // ── 2. Resolve public.User ID (may differ from auth UID) ──────────────────
     const admin = getAdminClient() as any;
@@ -83,9 +114,9 @@ export async function POST(request: NextRequest) {
     }
 
     // ── 3. Upsert credits directly ─────────────────────────────────────────────
-    const paidCredits = PLAN_CREDITS[planId] ?? 0;
+    const paidCredits = PLAN_CREDITS[verifiedPlanId] ?? 0;
     const now = new Date();
-    const cycle = billingCycle || "monthly";
+    const cycle = verifiedCycle;
     const days = cycle === "yearly" ? 365 : 30;
     const expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
 
@@ -133,8 +164,8 @@ export async function POST(request: NextRequest) {
 
     // ── 4. Record payment in PaymentLog for admin revenue tracking ─────────────
     const amount = cycle === "yearly"
-      ? (PLAN_AMOUNT_YEARLY[planId] ?? 0)
-      : (PLAN_AMOUNT_MONTHLY[planId] ?? 0);
+      ? (PLAN_AMOUNT_YEARLY[verifiedPlanId] ?? 0)
+      : (PLAN_AMOUNT_MONTHLY[verifiedPlanId] ?? 0);
 
     const { error: logErr } = await admin
       .from("PaymentLog")
@@ -142,7 +173,7 @@ export async function POST(request: NextRequest) {
         id: razorpay_payment_id,
         userId: activeUserId,
         email: (user.email || "").toLowerCase().trim(),
-        planId,
+        planId: verifiedPlanId,
         billingCycle: cycle,
         amount,
         status: "captured",
@@ -156,12 +187,12 @@ export async function POST(request: NextRequest) {
       // Non-fatal — credits are already saved, just log the warning
       logger.warn("[payment/verify] PaymentLog insert failed (non-fatal):", logErr.message);
     } else {
-      logger.info(`[payment/verify] PaymentLog recorded: ₹${amount} from ${user.email} (${planId} ${cycle})`);
+      logger.info(`[payment/verify] PaymentLog recorded: ₹${amount} from ${user.email} (${verifiedPlanId} ${cycle})`);
     }
 
     return NextResponse.json({
       success: true,
-      planId,
+      planId: verifiedPlanId,
       billingCycle: cycle,
       paymentId: razorpay_payment_id,
       paidCredits,

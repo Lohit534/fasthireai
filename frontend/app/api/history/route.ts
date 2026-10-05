@@ -14,12 +14,6 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/logger";
 import { isOwnerEmail } from "@/types";
 
-import fs from "fs";
-import path from "path";
-
-const DATA_DIR = path.join(process.cwd(), "data");
-const FILE_PATH = path.join(DATA_DIR, "resumes.json");
-
 // Titles used for system/internal records — never show in user history
 const SYSTEM_TITLES = ["SUPPORT_TICKET", "USER_FEEDBACK"];
 
@@ -169,25 +163,7 @@ export async function GET(request: NextRequest) {
       return true;
     });
 
-    // 2. Fetch from local JSON fallback (local dev fallback)
-    let localData: any[] = [];
-    try {
-      if (fs.existsSync(FILE_PATH)) {
-        const fileContent = fs.readFileSync(FILE_PATH, "utf8");
-        const allResumes = JSON.parse(fileContent || "[]");
-        localData = allResumes.filter((r: any) =>
-          userIds.includes(r.userId) &&
-          !SYSTEM_TITLES.includes(r.jobTitle) &&
-          (isOwner || !r.createdAt || new Date(r.createdAt) >= cutoffDate)
-        );
-      }
-    } catch (_e) {}
-
-    // 3. Merge and deduplicate by id (DB takes priority over local)
     const combined = [...dbData];
-    for (const r of localData) {
-      if (!combined.some((d) => d.id === r.id)) combined.push(r);
-    }
 
     // 4. Sort by createdAt descending (newest first)
     combined.sort(
@@ -262,19 +238,7 @@ export async function PATCH(request: NextRequest) {
       logger.warn("[history PATCH] DB update failed:", updateErr.message);
     }
 
-    try {
-      if (fs.existsSync(FILE_PATH)) {
-        const localResumes = JSON.parse(fs.readFileSync(FILE_PATH, "utf8") || "[]");
-        const idx = localResumes.findIndex((r: any) => r.id === resumeId);
-        if (idx !== -1) {
-          if (scoreAfter !== undefined) localResumes[idx].scoreAfter = Math.round(scoreAfter);
-          if (optimizedText !== undefined) localResumes[idx].optimizedText = optimizedText;
-          fs.writeFileSync(FILE_PATH, JSON.stringify(localResumes, null, 2), "utf8");
-        }
-      }
-    } catch (e: any) {
-      logger.warn("[history PATCH] Local JSON update failed:", e.message);
-    }
+
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
@@ -340,15 +304,7 @@ export async function DELETE(request: NextRequest) {
       } catch (_e) {}
     }
 
-    try {
-      if (fs.existsSync(FILE_PATH)) {
-        const localResumes = JSON.parse(fs.readFileSync(FILE_PATH, "utf8") || "[]");
-        const filtered = localResumes.filter((r: any) => r.id !== id);
-        fs.writeFileSync(FILE_PATH, JSON.stringify(filtered, null, 2), "utf8");
-      }
-    } catch (e: any) {
-      logger.warn("[history DELETE] Local JSON delete failed:", e.message);
-    }
+
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

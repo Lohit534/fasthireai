@@ -10,8 +10,6 @@ import { extractTechTerms } from "@/lib/ats/keywords";
 import { generateUUID } from "@/lib/utils";
 import { isOwnerEmail, FREE_CREDITS_PER_MONTH, PRO_CREDITS_PER_MONTH, PRO_MAX_CREDITS_PER_MONTH } from "@/types";
 import { buildTrainingSample } from "@/lib/anonymizer";
-import fs from "fs";
-import path from "path";
 
 export const runtime = "nodejs";
 export const maxDuration = 60; // 60s timeout for AI optimization
@@ -521,36 +519,7 @@ export async function POST(request: NextRequest) {
       logger.error("[optimize] DB insert exception:", dbErr.message);
     }
 
-    // Write to local JSON file as backup/fallback
-    try {
-      const DATA_DIR = path.join(process.cwd(), "data");
-      const FILE_PATH = path.join(DATA_DIR, "resumes.json");
-      if (!fs.existsSync(DATA_DIR)) {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
-      }
-      const localResumes = fs.existsSync(FILE_PATH) ? JSON.parse(fs.readFileSync(FILE_PATH, "utf8") || "[]") : [];
-      const newRecord = {
-        id: resumeRecord?.id || generatedId,
-        userId: activeUserId,
-        originalText: resumeText,
-        jobDescription: jobDescription,
-        jobTitle: finalJobTitle,
-        company: finalCompany,
-        scoreBefore: scoreBefore.overall,
-        scoreAfter: scoreAfter.overall,
-        keywordsBefore: scoreBefore.foundKeywords.length,
-        keywordsAfter: scoreAfter.foundKeywords.length,
-        impactBefore: scoreBefore.impactBullets,
-        impactAfter: scoreAfter.impactBullets,
-        optimizedText: aiResult.resume,
-        keywordsAdded: mergedKeywordsAdded,
-        createdAt: now.toISOString(),
-      };
-      localResumes.unshift(newRecord);
-      fs.writeFileSync(FILE_PATH, JSON.stringify(localResumes, null, 2), "utf8");
-    } catch (localErr: any) {
-      logger.warn("[optimize] Local JSON file fallback failed:", localErr.message);
-    }
+    // Resume saved securely to Supabase database (no unencrypted disk persistence)
 
     // Strictly deduct credit usage in database for non-owners
     if (!isOwner) {

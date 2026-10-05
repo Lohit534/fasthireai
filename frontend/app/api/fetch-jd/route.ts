@@ -111,16 +111,83 @@ function extractJobDescription(html: string): string {
     .trim();
 }
 
+function isSafePublicUrl(urlString: string): boolean {
+  try {
+    const parsed = new URL(urlString);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return false;
+    }
+    const hostname = parsed.hostname.toLowerCase().trim();
+    if (!hostname) return false;
+
+    // Disallow localhost and special local/internal domains
+    if (
+      hostname === "localhost" ||
+      hostname.endsWith(".localhost") ||
+      hostname.endsWith(".local") ||
+      hostname.endsWith(".internal") ||
+      hostname.endsWith(".arpa") ||
+      hostname === "0.0.0.0"
+    ) {
+      return false;
+    }
+
+    // Disallow non-standard ports (must be 80, 443, or empty default)
+    if (parsed.port && parsed.port !== "80" && parsed.port !== "443") {
+      return false;
+    }
+
+    // Check for IPv4 addresses and block loopback, RFC 1918, link-local, cloud metadata
+    const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    const match = hostname.match(ipv4Regex);
+    if (match) {
+      const octets = [Number(match[1]), Number(match[2]), Number(match[3]), Number(match[4])];
+      if (octets.some((o) => o < 0 || o > 255)) return false;
+      if (octets[0] === 0) return false;
+      if (octets[0] === 127) return false;
+      if (octets[0] === 10) return false;
+      if (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) return false;
+      if (octets[0] === 192 && octets[1] === 168) return false;
+      if (octets[0] === 169 && octets[1] === 254) return false;
+      if (octets[0] === 100 && octets[1] >= 64 && octets[1] <= 127) return false;
+      if (octets[0] >= 224) return false;
+    }
+
+    // Check for IPv6 addresses
+    if (hostname.startsWith("[") || hostname.includes(":")) {
+      const cleanIpv6 = hostname.replace(/[\[\]]/g, "");
+      if (
+        cleanIpv6 === "::1" ||
+        cleanIpv6 === "::" ||
+        cleanIpv6.startsWith("fe80:") ||
+        cleanIpv6.startsWith("fc00:") ||
+        cleanIpv6.startsWith("fd00:") ||
+        cleanIpv6.includes("169.254.") ||
+        cleanIpv6.includes("127.0.0.1")
+      ) {
+        return false;
+      }
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
     const url = (body.url || "").trim();
 
-    if (!url || !url.startsWith("http")) {
-      return NextResponse.json({ error: "Invalid URL provided." }, { status: 400 });
+    if (!url || !isSafePublicUrl(url)) {
+      return NextResponse.json(
+        { error: "Invalid or restricted URL provided. Please supply a valid public HTTP/HTTPS URL." },
+        { status: 400 }
+      );
     }
 
-    logger.info(`[fetch-jd] Fetching JD from: ${url}`);
+    logger.info(`[fetch-jd] Fetching JD from safe URL: ${url}`);
 
     // Strategy 1: Direct server-side fetch (works for many public job boards)
     try {
