@@ -74,70 +74,79 @@ export function buildOptimizationPrompt(
     "GitHub GitLab VS Code Power BI CI/CD Machine Learning Deep Learning DevOps\n" +
     "REST API Microservices Cloud Native\n\n" +
     "EXACT SECTION ORDER (follow exactly):\n" +
-    "1. NAME\n" +
-    "2. contact line\n" +
-    "3. (blank line)\n" +
-    "4. PROFESSIONAL SUMMARY\n" +
-    "5. (blank line)\n" +
-    "6. TECHNICAL SKILLS\n" +
-    "7. (blank line)\n" +
-    "8. PROFESSIONAL EXPERIENCE\n" +
-    "9. (blank line)\n" +
-    "10. PROJECTS\n" +
-    "11. (blank line)\n" +
-    "12. EDUCATION\n" +
-    "13. (blank line)\n" +
-    "14. CERTIFICATIONS  (omit if candidate has none)\n" +
-    "15. ACHIEVEMENTS    (omit if candidate has none)\n" +
-    "16. LANGUAGES       (omit if candidate has none)\n\n" +
+    (pageBudget.level === "fresher"
+      ? "1. NAME\n" +
+        "2. Target Role / Subtitle (e.g. Java Backend Developer)\n" +
+        "3. contact line (phone | email | LinkedIn | GitHub | Portfolio)\n" +
+        "4. (blank line)\n" +
+        "5. PROFESSIONAL SUMMARY\n" +
+        "6. (blank line)\n" +
+        "7. TECHNICAL SKILLS\n" +
+        "8. (blank line)\n" +
+        "9. PROJECTS\n" +
+        "10. (blank line)\n" +
+        "11. CERTIFICATIONS & ACHIEVEMENTS  (omit if candidate has none)\n" +
+        "12. (blank line)\n" +
+        "13. EDUCATION\n\n"
+      : "1. NAME\n" +
+        "2. Target Role / Subtitle (e.g. Senior Java Backend Developer)\n" +
+        "3. contact line (phone | email | LinkedIn | GitHub | Portfolio)\n" +
+        "4. (blank line)\n" +
+        "5. PROFESSIONAL SUMMARY\n" +
+        "6. (blank line)\n" +
+        "7. PROFESSIONAL EXPERIENCE\n" +
+        "8. (blank line)\n" +
+        "9. TECHNICAL SKILLS\n" +
+        "10. (blank line)\n" +
+        "11. PROJECTS\n" +
+        "12. (blank line)\n" +
+        "13. CERTIFICATIONS  (omit if candidate has none)\n" +
+        "14. (blank line)\n" +
+        "15. EDUCATION\n\n") +
     "EXACT LINE FORMAT FOR EACH SECTION:\n\n" +
     "NAME LINE:\n" +
-    "  ALL CAPS exactly as in original -- e.g. PEYYALA LOHIT\n\n" +
+    "  Candidate full name -- e.g. DINESH KAARTHIK MOODE\n\n" +
+    "ROLE SUBTITLE LINE:\n" +
+    "  Target Job Title / Domain matching the JD -- e.g. Java Backend Developer\n\n" +
     "CONTACT LINE (single line, | separator):\n" +
-    "  email | phone | location | LinkedIn URL | GitHub URL\n" +
-    "  Preserve ALL URLs exactly as in original resume\n\n" +
+    "  phone | email | LinkedIn URL | GitHub URL | portfolio URL\n" +
+    "  Preserve ALL URLs exactly as in original resume. Avoid personal info (photo, father's name, marital status, full address).\n\n" +
     "PROFESSIONAL SUMMARY:\n" +
     "  Header: PROFESSIONAL SUMMARY (ALL CAPS)\n" +
-    "  Content: exactly 3 sentences, pure narrative paragraph\n" +
-    "  NO bullet points, dashes, or hyphens at start of sentences\n" +
-    "  55-80 words total\n" +
-    "  Must include 5 or more keywords from the JD\n\n" +
+    "  Content: 2-4 lines (45-70 words) pure narrative paragraph, NO bullets\n" +
+    "  Must state: candidate's target role, core technologies, type of systems built, and career value.\n" +
+    "  AVOID generic clichés: 'I am hardworking', 'Quick learner', 'Self motivated', 'Passionate'.\n" +
+    "  INSTEAD use direct impact: 'Java Backend Developer with hands-on experience building REST APIs using Spring Boot and MySQL.'\n\n" +
     "TECHNICAL SKILLS:\n" +
     "  Header: TECHNICAL SKILLS (ALL CAPS)\n" +
-    "  Exactly these 5 category lines -- each on ONE single line, never split:\n" +
-    "    Programming Languages: skill1, skill2, skill3\n" +
-    "    Frameworks & Libraries: skill1, skill2, skill3\n" +
-    "    Databases & Backend: skill1, skill2, skill3\n" +
-    "    Cloud & DevOps: skill1, skill2, skill3\n" +
-    "    Developer Tools: skill1, skill2, skill3\n" +
-    "  List JD-matching skills FIRST in each category\n" +
-    "  NEVER put spoken languages (English, Telugu) in Technical Skills\n\n" +
+    "  Organized into clean 'Category: values' lines (each on ONE single line):\n" +
+    "    Programming Languages: Java, SQL, JavaScript\n" +
+    "    Frameworks: Spring Boot, Spring MVC, Hibernate, JPA\n" +
+    "    Databases: MySQL, PostgreSQL, DynamoDB, MongoDB\n" +
+    "    Developer Tools: Git, GitHub, Maven, Postman, Docker, IntelliJ IDEA\n" +
+    "    Cloud: AWS (EC2, S3), GCP (if applicable)\n" +
+    "    Core Concepts: REST APIs, Microservices, OOP, Multithreading, JWT Authentication\n" +
+    "  List JD-matching skills FIRST in each category\n\n" +
     "PROFESSIONAL EXPERIENCE:\n" +
     "  Header: PROFESSIONAL EXPERIENCE (ALL CAPS)\n" +
     "  For each role:\n" +
-    "    Line 1: Role Title | Company Name | City, Country\n" +
+    "    Line 1: Role Title | Company Name | Tech Stack (optional)\n" +
     "    Line 2: Month YYYY - Month YYYY  (or Present)\n" +
     "    Lines 3+: bullet Strong bullet (one per line)\n" +
-    "  Each bullet MUST follow: [Action Verb] + [What] + [Tool/Method] + [Quantified Result]\n" +
-    "  Minimum 3 bullets per role, maximum 6\n\n" +
+    "  Every bullet MUST begin with a powerful past-tense action verb and quantify impact.\n\n" +
     "PROJECTS:\n" +
     "  Header: PROJECTS (ALL CAPS)\n" +
     "  For each project:\n" +
-    "    Line 1: Project Title | Technology Stack\n" +
-    "    Lines 2+: bullet for each point\n\n" +
+    "    Line 1: Project Name — Tech Stack | Year or Dates\n" +
+    "    Lines 2+: 2-4 impact-oriented bullets describing contributions, architectures, and outcomes.\n\n" +
     "EDUCATION:\n" +
     "  Header: EDUCATION (ALL CAPS)\n" +
     "  For each entry:\n" +
-    "    Line 1: Degree Name | Month YYYY - Month YYYY  (use the candidate's exact dates)\n" +
-    "    Line 2: Institution Name EXACTLY as written in the original resume (copy verbatim)\n" +
-    "    Line 3: CGPA: X.XX  (or GPA / Percentage -- only if present in the original)\n" +
-    "  NEVER append a parent/affiliating university, city, or any text the candidate did not write.\n" +
-    "  NEVER output literal placeholders such as 'University Name', 'Institution Name', 'City, Country'.\n" +
-    "  If a value (dates/CGPA) is missing in the original, simply omit it -- do NOT invent it.\n\n" +
-    "CERTIFICATIONS / ACHIEVEMENTS / LANGUAGES:\n" +
-    "  Header in ALL CAPS\n" +
-    "  Each item as a bullet point\n" +
-    "  LANGUAGES: spoken languages ONLY (English, Telugu, Hindi, Spanish) -- NOT programming languages\n\n" +
+    "    Line 1: Degree Name | Graduated: YYYY (or Month YYYY - Month YYYY)\n" +
+    "    Line 2: Institution Name | CGPA: X.XX (only if in original)\n\n" +
+    "CERTIFICATIONS & ACHIEVEMENTS:\n" +
+    "  Header: CERTIFICATIONS & ACHIEVEMENTS (or CERTIFICATIONS)\n" +
+    "  Format: • Certification Name - Issuing Body (Year): Key skills covered\n\n" +
     sep + "\n" +
     "STEP 1 — METRIC & DETAIL INTEGRATION\n" +
     sep + "\n\n" +
@@ -165,10 +174,16 @@ export function buildOptimizationPrompt(
     "WEAK: 'Worked on backend' → 'Engineered RESTful APIs with Node.js and Express, handling 25k+ daily requests and reducing p95 latency by 35%'\n" +
     "WEAK: 'Did data analysis' → 'Analyzed 500,000+ data records using Python and Pandas, improving reporting accuracy by 28%'\n" +
     "WEAK: 'Used Docker' → 'Containerized 12 microservices with Docker and Kubernetes on AWS, cutting deployment turnaround by 45%'\n\n" +
-    "Strong verb bank: Accelerated, Architected, Automated, Built, Collaborated, Containerized, Deployed,\n" +
-    "Designed, Developed, Drove, Engineered, Executed, Fine-tuned, Generated, Implemented, Improved,\n" +
-    "Launched, Led, Migrated, Optimized, Orchestrated, Reduced, Refactored, Scaled, Shipped,\n" +
-    "Spearheaded, Streamlined, Trained, Transformed\n\n" +
+    "40 POWERFUL ACTION VERBS (use these to start EVERY bullet point):\n" +
+    "Developed, Designed, Built, Implemented, Engineered, Optimized, Automated, Integrated, Improved, Reduced,\n" +
+    "Created, Configured, Deployed, Refactored, Migrated, Enhanced, Accelerated, Streamlined, Maintained,\n" +
+    "Secured, Validated, Tested, Documented, Analyzed, Solved, Led, Delivered, Collaborated, Architected,\n" +
+    "Monitored, Debugged, Scaled, Generated, Processed, Queried, Visualized, Researched, Evaluated, Simplified,\n" +
+    "Modernized.\n\n" +
+    "Transform examples:\n" +
+    "WEAK: 'Worked on backend' → 'Developed 12+ REST APIs using Spring Boot, reducing API response time by 30% through query optimization.'\n" +
+    "WEAK: 'Optimized queries' → 'Optimized MySQL queries reducing average API response latency by nearly 30% under heavy load.'\n" +
+    "WEAK: 'Did authentication' → 'Implemented JWT authentication and role-based access control, securing 20+ endpoints validated with Postman.'\n\n" +
     "Quantification rules:\n" +
     "- Weave verified user-provided numbers and metrics wherever available\n" +
     "- If a metric is implied by context, state the realistic outcome with measurable impact (%, scale, throughput, speed)\n" +

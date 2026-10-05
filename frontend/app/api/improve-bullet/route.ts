@@ -36,6 +36,43 @@ function pickMetricClause(text: string): string {
 
 const WEAK_PREFIX_REGEX = /^(?:was\s+)?(?:worked on|working on|helped (?:to |with |in )?|assisted (?:with |in )?|responsible for|in charge of|handled|involved in|participated in|tasked with|utilized|used|did|made)\s+/i;
 
+/** The 40 recommended resume action verbs. */
+const RECOMMENDED_VERBS = [
+  "Developed", "Designed", "Built", "Implemented", "Engineered", "Optimized", "Automated", "Integrated",
+  "Improved", "Reduced", "Created", "Configured", "Deployed", "Refactored", "Migrated", "Enhanced",
+  "Accelerated", "Streamlined", "Maintained", "Secured", "Validated", "Tested", "Documented", "Analyzed",
+  "Solved", "Led", "Delivered", "Collaborated", "Architected", "Monitored", "Debugged", "Scaled",
+  "Generated", "Processed", "Queried", "Visualized", "Researched", "Evaluated", "Simplified", "Modernized",
+];
+const VERB_BY_STEM = new Map(RECOMMENDED_VERBS.map((v) => [v.toLowerCase().replace(/(?:ed|d)$/, ""), v]));
+
+/** Leading adverbs / non-adjectives the AI sometimes puts before the verb. */
+const LEADING_FILLER = /^(?:successfully|effectively|efficiently|actively|independently|collaboratively|proactively|also|then)\s+/i;
+/** "-ed" words that are adjectives, not action verbs. */
+const ED_ADJECTIVES = new Set(["advanced", "distributed", "embedded", "detailed", "related", "dedicated", "experienced", "skilled", "talented", "motivated", "seasoned", "based", "proposed"]);
+
+/** Converts "Developing"/"Develops"/"Develop" style openers into past tense when possible. */
+function normalizeVerbTense(text: string): string {
+  const [first, ...rest] = text.split(" ");
+  const w = (first || "").toLowerCase().replace(/[^a-z]/g, "");
+  if (!w) return text;
+  const candidates = [w.replace(/ing$/, ""), w.replace(/ing$/, "e"), w.replace(/s$/, ""), w.replace(/es$/, ""), w.replace(/ies$/, "y"), w];
+  for (const c of candidates) {
+    const stem = c.replace(/(?:ed|d)$/, "").replace(/e$/, "");
+    for (const [vStem, verb] of VERB_BY_STEM) {
+      if (vStem.replace(/e$/, "") === stem && verb.toLowerCase() !== w) return [verb, ...rest].join(" ");
+    }
+  }
+  return text;
+}
+
+function hasLeadingActionVerb(text: string): boolean {
+  const first = (text.split(/\s+/)[0] || "").toLowerCase().replace(/[^a-z]/g, "");
+  if (ED_ADJECTIVES.has(first)) return false;
+  if (RECOMMENDED_VERBS.some((v) => v.toLowerCase() === first)) return true;
+  return startsWithStrongVerb(text);
+}
+
 /**
  * Dual-pass guarantee — validates with the SAME rules as the ATS scorer and
  * Bullet Improver, then repairs whatever is missing so BOTH checks always pass.
@@ -45,9 +82,11 @@ function enforceVerbAndMetric(improved: string, original: string): string {
   const topicSource = `${text} ${original}`;
 
   // Pass 1: strong leading action verb
-  if (!startsWithStrongVerb(text)) {
-    text = text.replace(WEAK_PREFIX_REGEX, "").trim();
-    if (!startsWithStrongVerb(text)) {
+  text = text.replace(LEADING_FILLER, "").trim();
+  text = normalizeVerbTense(text);
+  if (!hasLeadingActionVerb(text)) {
+    text = normalizeVerbTense(text.replace(WEAK_PREFIX_REGEX, "").replace(LEADING_FILLER, "").trim());
+    if (!hasLeadingActionVerb(text)) {
       const firstWord = text.split(" ")[0] || "";
       // Keep acronyms / proper nouns (e.g. "REST", "React") capitalised
       const keepCase = /^[A-Z0-9]{2,}/.test(firstWord) || /[A-Z].*[A-Z]/.test(firstWord) || /\./.test(firstWord);
@@ -82,9 +121,10 @@ function cleanBulletOutput(value: unknown, originalBullet: string): string {
   cleaned = cleaned.replace(/^\s*([-*•+]|\d+\.)\s+/, "").trim();
 
   // Strip generic label prefixes like "Optimized:", "Improved:", "Rewritten:", "Bullet:"
+  // (requires a colon/dash so real action verbs such as "Optimized MySQL…" are kept)
   cleaned = cleaned
     .replace(
-      /^(?:Optimized|Improved|Rewritten|Enhanced|Revised|Updated|Bullet)[:\s–\-]+/i,
+      /^(?:Optimized|Improved|Rewritten|Enhanced|Revised|Updated|Bullet)\s*(?:bullet)?\s*[:–\-]\s+/i,
       "",
     )
     .trim();
@@ -191,6 +231,10 @@ Target Job Description: "${jd.slice(0, 2000)}"
 CRITICAL ACCURACY & LENGTH RULES:
 1. Output EXACTLY ONE concise sentence (14 to 20 words max). NEVER write multiple sentences, paragraphs, or extra text.
 2. Structure: [Strong Past-Tense Action Verb] + [Candidate's Specific Task/Tool] + [Realistic Quantified Metric/Outcome].
+   The FIRST WORD MUST be one of these action verbs: ${RECOMMENDED_VERBS.join(", ")}.
+   Never start with an adverb ("Successfully"), a noun, an adjective, "I", or a gerund ("Developing").
+   Bad: "Worked on backend."  Good: "Developed 12+ REST APIs using Spring Boot."
+   Bad: "Optimized queries."  Good: "Optimized MySQL queries reducing API response time by nearly 30%."
 3. Retain the candidate's core task faithfully. Do NOT invent unmentioned technologies or long corporate filler phrases.
 4. If missing, weave in an accurate, realistic metric (e.g., "improving throughput by 35%", "supporting 15k+ active users", "reducing build time by 40%", "cutting error rates by 25%").
 5. Return ONLY a single rewritten bullet sentence inside the JSON.

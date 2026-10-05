@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Copy, Check, FileText, Sparkles, Phone, Mail, Globe } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { parseResumeIntoBlocks, stripMarkdownAsterisks, getCleanExportFilename, ResumeBlock } from "@/lib/export/pdf-document";
+import { parseResumeIntoBlocks, stripMarkdownAsterisks, getCleanExportFilename, ResumeBlock, toSectionTitle, splitCertText } from "@/lib/export/pdf-document";
 import { useUpgradeModalStore } from "@/store/useUpgradeModalStore";
 
 const LinkedInIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -248,24 +248,31 @@ export default function ResumeViewer({
       {/* Workspace Display Area */}
       <div className="flex-1 p-2 sm:p-4 md:p-6 overflow-y-auto max-h-[650px] bg-slate-50 select-text">
         {/* Render visual styling matching the LaTeX-style PDF engine output */}
-        <div className="w-full max-w-4xl mx-auto bg-white text-slate-900 border border-slate-200 rounded-lg sm:rounded-xl p-3.5 sm:p-6 md:p-8 shadow-md sm:shadow-2xl font-serif select-text relative leading-normal">
+        <div
+          className="w-full max-w-4xl mx-auto bg-white text-black border border-slate-200 rounded-lg sm:rounded-xl p-3.5 sm:p-6 md:p-10 shadow-md sm:shadow-2xl font-serif select-text relative leading-snug break-words"
+          style={{ fontFamily: "'Times New Roman', Times, 'Liberation Serif', serif" }}
+        >
           {blocks.map((block, idx) => {
             switch (block.type) {
               case "name":
                 return (
-                  <h1 key={idx} className="text-xl font-bold text-center text-black mb-1 pb-0.5 leading-normal select-text font-serif">
+                  <h1
+                    key={idx}
+                    className="text-[20px] sm:text-[24px] font-normal text-center text-black mb-0 leading-tight select-text tracking-wide"
+                    style={{ fontVariant: "small-caps" }}
+                  >
                     {block.text}
                   </h1>
                 );
               case "subtitle":
                 return (
-                  <div key={idx} className="text-center text-xs font-serif text-slate-800 -mt-1 mb-2 font-normal select-text">
+                  <div key={idx} className="text-center text-[11.5px] sm:text-[12.5px] font-bold text-black mb-1.5 select-text">
                     {block.text}
                   </div>
                 );
               case "contact":
                 return (
-                  <div key={idx} className="flex justify-center items-center flex-wrap gap-y-1 gap-x-3 text-[10px] text-center text-slate-700 mt-1 mb-4 leading-normal select-text font-serif">
+                  <div key={idx} className="flex justify-center items-center flex-wrap gap-y-0.5 gap-x-3 sm:gap-x-4 text-[9.5px] sm:text-[10px] text-center text-black mt-0.5 mb-2 leading-normal select-text">
                     {block.segments.map((seg, sIdx) => {
                       const lower = (seg.text || "").toLowerCase() + " " + (seg.url || "").toLowerCase();
                       let IconComponent: React.ComponentType<{ className?: string }> = Globe;
@@ -295,8 +302,8 @@ export default function ResumeViewer({
                 );
               case "section":
                 return (
-                  <h2 key={idx} className="text-xs font-bold text-black border-b border-black mt-3 mb-1.5 pb-0.5 leading-normal select-text font-serif uppercase tracking-wider">
-                    {block.text}
+                  <h2 key={idx} className="text-[11.5px] sm:text-[12px] font-bold text-black border-b border-black mt-2.5 mb-1 pb-0 leading-snug select-text">
+                    {toSectionTitle(block.text)}
                   </h2>
                 );
               case "summary": {
@@ -304,7 +311,7 @@ export default function ResumeViewer({
                 return (
                   <p
                     key={idx}
-                    className="text-[10px] mb-2 text-slate-800 leading-relaxed select-text font-serif text-justify w-full"
+                    className="text-[10px] mb-1 text-black leading-snug select-text text-justify w-full"
                     style={{ textAlign: "justify", textJustify: "inter-word", hyphens: "none" }}
                   >
                     {renderHighlightedText(cleanText)}
@@ -313,36 +320,36 @@ export default function ResumeViewer({
               }
               case "skillLine":
                 return (
-                  <div key={idx} className="text-[10px] sm:text-[10.5px] mb-1 leading-normal select-text font-serif">
+                  <div key={idx} className="text-[10px] mb-0.5 leading-snug select-text">
                     <span className="font-bold text-black">{block.label}: </span>
-                    <span className="text-slate-800" style={{ hyphens: "none" }}>{renderHighlightedText(block.value)}</span>
+                    <span className="text-black" style={{ hyphens: "none" }}>{renderHighlightedText(block.value)}</span>
                   </div>
                 );
               case "project":
                 return (
-                  <div key={idx} className="mb-2">
-                    <div className="flex flex-row justify-between items-baseline text-[10px] sm:text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
-                      <div className="flex items-center gap-1.5 flex-wrap flex-1">
+                  <div key={idx} className="mb-1.5">
+                    <div className="flex flex-row flex-wrap justify-between items-baseline gap-x-2 text-[10px] font-bold text-black mt-1 mb-0.5 leading-snug select-text">
+                      <div className="flex items-baseline gap-1.5 flex-wrap flex-1 min-w-0">
                         <span>{block.name}</span>
                         {block.tech && (
-                          <span className="font-normal text-slate-700"> — {renderHighlightedText(block.tech)}</span>
+                          <span className="font-bold text-black">&nbsp;—&nbsp;{renderHighlightedText(block.tech)}</span>
                         )}
                         {block.projectUrl && (
-                          <a href={block.projectUrl} target="_blank" rel="noopener noreferrer" className="text-[9px] sm:text-[9.5px] text-blue-600 underline font-normal break-all">
+                          <a href={block.projectUrl} target="_blank" rel="noopener noreferrer" className="text-[9.5px] text-blue-700 underline font-normal break-all">
                             {getReadableLinkLabel(block.projectUrl, block.name)}
                           </a>
                         )}
                       </div>
                       {(block as any).dates ? (
-                        <span className="font-normal text-slate-700 shrink-0 text-[9.5px] sm:text-[10px]">{(block as any).dates}</span>
+                        <span className="font-bold text-black shrink-0 ml-auto">{(block as any).dates}</span>
                       ) : null}
                     </div>
                     {block.bullets.map((bullet, bIdx) => {
                       const cleanBullet = bullet.replace(/^\s*([•\-\*–—+•\u2022\u25cf\u2043▸►→]|\d+\.)\s*/, "").trim();
                       return (
-                        <div key={bIdx} className="flex items-start text-[9.5px] sm:text-[10px] mb-0.5 pl-2 sm:pl-3 leading-normal select-text font-serif">
-                          <span className="w-2.5 sm:w-3 shrink-0 select-none text-black font-serif">•</span>
-                          <span className="flex-1 text-slate-800 font-serif">{renderHighlightedText(cleanBullet)}</span>
+                        <div key={bIdx} className="flex items-start text-[10px] mb-px pl-2 sm:pl-3 leading-snug select-text">
+                          <span className="w-2.5 sm:w-3 shrink-0 select-none text-black">•</span>
+                          <span className="flex-1 min-w-0 text-black text-justify">{renderHighlightedText(cleanBullet)}</span>
                         </div>
                       );
                     })}
@@ -351,23 +358,23 @@ export default function ResumeViewer({
 
               case "job":
                 return (
-                  <div key={idx} className="mb-2">
-                    <div className="flex flex-row justify-between items-baseline text-[10px] sm:text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
-                      <span className="flex-1">{renderHighlightedText(block.title)}</span>
-                      <span className="font-normal text-slate-700 shrink-0 text-[9.5px] sm:text-[10px]">{renderHighlightedText(block.dates)}</span>
+                  <div key={idx} className="mb-1.5">
+                    <div className="flex flex-row flex-wrap justify-between items-baseline gap-x-2 text-[10px] font-bold text-black mt-1 leading-snug select-text">
+                      <span className="flex-1 min-w-0">{renderHighlightedText(block.title)}</span>
+                      <span className="font-bold text-black shrink-0 ml-auto">{renderHighlightedText(block.dates)}</span>
                     </div>
                     {(block.company || (block as any).tech) ? (
-                      <div className="flex flex-row justify-between items-baseline text-[9.5px] sm:text-[10px] italic text-slate-700 mb-1 leading-normal select-text font-serif">
-                        <span>{renderHighlightedText(block.company || "")}</span>
-                        {(block as any).tech ? <span>{renderHighlightedText((block as any).tech)}</span> : null}
+                      <div className="flex flex-row flex-wrap justify-between items-baseline gap-x-2 text-[10px] italic text-black mb-0.5 leading-snug select-text">
+                        <span className="min-w-0">{renderHighlightedText(block.company || "")}</span>
+                        {(block as any).tech ? <span className="ml-auto">{renderHighlightedText((block as any).tech)}</span> : null}
                       </div>
                     ) : null}
                     {block.bullets.map((bullet, bIdx) => {
                       const cleanBullet = bullet.replace(/^\s*([•\-\*–—+•\u2022\u25cf\u2043▸►→]|\d+\.)\s*/, "").trim();
                       return (
-                        <div key={bIdx} className="flex items-start text-[9.5px] sm:text-[10px] mb-0.5 pl-2 sm:pl-3 leading-normal select-text font-serif">
-                          <span className="w-2.5 sm:w-3 shrink-0 select-none text-black font-serif">•</span>
-                          <span className="flex-1 text-slate-800 font-serif">{renderHighlightedText(cleanBullet)}</span>
+                        <div key={bIdx} className="flex items-start text-[10px] mb-px pl-2 sm:pl-3 leading-snug select-text">
+                          <span className="w-2.5 sm:w-3 shrink-0 select-none text-black">•</span>
+                          <span className="flex-1 min-w-0 text-black text-justify">{renderHighlightedText(cleanBullet)}</span>
                         </div>
                       );
                     })}
@@ -375,30 +382,33 @@ export default function ResumeViewer({
                 );
               case "education":
                 return (
-                  <div key={idx} className="mb-2">
-                    <div className="flex flex-row justify-between items-baseline text-[10px] sm:text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
-                      <span>{renderHighlightedText(block.degree)}</span>
-                      <span className="font-normal text-slate-700 text-[9.5px] sm:text-[10px]">{renderHighlightedText(block.dates)}</span>
+                  <div key={idx} className="mb-1">
+                    <div className="flex flex-row flex-wrap justify-between items-baseline gap-x-2 text-[10px] font-bold text-black leading-snug select-text">
+                      <span className="min-w-0">{renderHighlightedText(block.degree)}</span>
+                      <span className="font-bold text-black ml-auto">{renderHighlightedText(block.dates)}</span>
                     </div>
-                    <div className="flex justify-between items-baseline text-[9.5px] sm:text-[10px] italic text-slate-800 leading-normal select-text font-serif">
-                      <span>{renderHighlightedText(block.school)}</span>
-                      <span className="font-normal not-italic">{renderHighlightedText(block.gpa)}</span>
+                    <div className="flex flex-wrap justify-between items-baseline gap-x-2 text-[10px] italic text-black leading-snug select-text">
+                      <span className="min-w-0">{renderHighlightedText(block.school)}</span>
+                      <span className="ml-auto">{renderHighlightedText(block.gpa)}</span>
                     </div>
                   </div>
                 );
               case "bullet":
                 return (
-                  <div key={idx} className="flex items-start text-[10px] mb-0.5 pl-3 leading-normal select-text font-serif">
-                    <span className="w-3 shrink-0 select-none text-black font-serif">•</span>
-                    <span className="flex-1 text-slate-800 font-serif">{renderHighlightedText(block.text)}</span>
+                  <div key={idx} className="flex items-start text-[10px] mb-px pl-2 sm:pl-3 leading-snug select-text">
+                    <span className="w-2.5 sm:w-3 shrink-0 select-none text-black">•</span>
+                    <span className="flex-1 min-w-0 text-black">{renderHighlightedText(block.text)}</span>
                   </div>
                 );
               case "cert": {
-                const cleanCert = (block.text || "").replace(/^[•\-\*–\s\u2022]+/, "");
+                const { title, rest } = splitCertText(block.text);
                 return (
-                  <div key={idx} className="flex items-start text-[10px] mb-0.5 pl-3 leading-normal font-serif">
-                    <span className="w-3 shrink-0 select-none text-black font-serif">•</span>
-                    <span className="flex-1 text-slate-800 font-serif">{renderHighlightedText(cleanCert)}</span>
+                  <div key={idx} className="flex items-start text-[10px] mb-px pl-2 sm:pl-3 leading-snug">
+                    <span className="w-2.5 sm:w-3 shrink-0 select-none text-black">•</span>
+                    <span className="flex-1 min-w-0 text-black text-justify">
+                      {title ? <span className="font-bold">{title}</span> : null}
+                      {renderHighlightedText(rest)}
+                    </span>
                   </div>
                 );
               }

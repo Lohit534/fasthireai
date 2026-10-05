@@ -147,7 +147,8 @@ export default function BulletImprover({
 
     const finalBullet = cleanNewBullet
       .replace(/^\s*([-*•+]|(\d+\.))\s+/, "")
-      .replace(/^(?:Optimized|Improved|Rewritten|Enhanced)[:\s–\-]+/i, "")
+      // Only strip label prefixes like "Improved:" — never the real action verb ("Optimized MySQL…")
+      .replace(/^(?:Optimized|Improved|Rewritten|Enhanced|Revised|Updated|Bullet)\s*(?:bullet)?\s*[:–\-]\s+/i, "")
       .replace(/\s+/g, " ")
       .trim();
 

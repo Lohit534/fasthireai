@@ -1,6 +1,6 @@
 import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, PageOrientation, convertInchesToTwip, ExternalHyperlink, TabStopType, Tab } from "docx";
 import { logger } from "../logger";
-import { parseResumeIntoBlocks, computeDensityScale, stripMarkdownAsterisks } from "./pdf-document";
+import { parseResumeIntoBlocks, computeDensityScale, stripMarkdownAsterisks, toSectionTitle, splitCertText } from "./pdf-document";
 
 function cleanText(str: string): string {
   if (!str) return "";
@@ -302,54 +302,89 @@ export async function generateDOCX(resumeText: string, watermarked = false): Pro
     for (const b of blocks) {
       switch (b.type) {
         case "name":
-          children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [run(b.text, { bold: true, size: hp(22) })], spacing: { after: sp(80) } }));
+          children.push(
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [run(b.text, { smallCaps: true, size: hp(24) })],
+              spacing: { after: sp(20) },
+            }),
+          );
+          break;
+        case "subtitle":
+          children.push(
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [run(b.text, { bold: true, size: hp(12.5) })],
+              spacing: { after: sp(60) },
+            }),
+          );
           break;
         case "contact": {
           const parts: (TextRun | ExternalHyperlink)[] = [];
           b.segments.forEach((seg, i) => {
+            const label = (seg.text || "").replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "");
             if (seg.isLink && seg.url) {
-              parts.push(new ExternalHyperlink({ link: seg.url, children: [run(linkLabel(seg.url, seg.text), { size: hp(10), color: "0000EE", underline: {} })] }));
+              parts.push(new ExternalHyperlink({ link: seg.url, children: [run(label || linkLabel(seg.url, seg.text), { size: hp(9.5), color: "000000", underline: {} })] }));
             } else {
-              parts.push(run(seg.text, { size: hp(10) }));
+              parts.push(run(label, { size: hp(9.5) }));
             }
-            if (i < b.segments.length - 1) parts.push(run("  |  ", { size: hp(10) }));
+            if (i < b.segments.length - 1) parts.push(run("   ", { size: hp(9.5) }));
           });
-          children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: parts, spacing: { after: sp(120) } }));
+          children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: parts, spacing: { after: sp(100) } }));
           break;
         }
         case "section":
           children.push(
             new Paragraph({
-              children: [run(b.text.toUpperCase(), { bold: true, size: hp(12) })],
-              border: { bottom: { color: "000000", space: 2, style: BorderStyle.SINGLE, size: 8 } },
-              spacing: { before: sp(140), after: sp(60) },
+              children: [run(toSectionTitle(b.text), { bold: true, size: hp(12) })],
+              border: { bottom: { color: "000000", space: 2, style: BorderStyle.SINGLE, size: 6 } },
+              spacing: { before: sp(120), after: sp(40) },
             }),
           );
           break;
         case "summary":
         case "normal":
-          children.push(new Paragraph({ alignment: AlignmentType.JUSTIFIED, children: [run(b.text)], spacing: { after: sp(40) } }));
+          children.push(new Paragraph({ alignment: AlignmentType.JUSTIFIED, children: [run(b.text)], spacing: { after: sp(30) } }));
           break;
         case "skillLine":
-          children.push(new Paragraph({ children: [run(`${b.label}: `, { bold: true }), run(b.value)], spacing: { after: sp(30) } }));
+          children.push(new Paragraph({ children: [run(`${b.label}: `, { bold: true }), run(b.value)], spacing: { after: sp(20) } }));
           break;
-        case "project":
-          children.push(twoCol(b.name, b.tech || "", { bold: true }, { italics: true, size: hp(10) }, 20));
+        case "project": {
+          const projTitle = b.name + (b.tech ? ` — ${b.tech}` : "");
+          children.push(twoCol(projTitle, b.dates || "", { bold: true }, { bold: true }, 10));
           b.bullets.forEach((x) => children.push(bullet(x)));
           break;
+        }
         case "job":
-          children.push(twoCol(b.title, b.dates, { bold: true }, {}, 10));
-          if (b.company) children.push(new Paragraph({ children: [run(b.company, { italics: true })], spacing: { after: sp(20) } }));
+          children.push(twoCol(b.title, b.dates, { bold: true }, { bold: true }, 10));
+          if (b.company || b.tech) {
+            children.push(twoCol(b.company || "", b.tech || "", { italics: true }, { italics: true }, 15));
+          }
           b.bullets.forEach((x) => children.push(bullet(x)));
           break;
         case "education":
-          children.push(twoCol(b.degree, b.dates, { bold: true }, {}, 10));
-          if (b.school || b.gpa) children.push(twoCol(b.school, b.gpa, {}, {}, 40));
+          children.push(twoCol(b.degree, b.dates, { bold: true }, { bold: true }, 10));
+          if (b.school || b.gpa) {
+            children.push(twoCol(b.school || "", b.gpa || "", { italics: true }, { italics: true }, 25));
+          }
           break;
         case "bullet":
-        case "cert":
           children.push(bullet(b.text));
           break;
+        case "cert": {
+          const { title, rest } = splitCertText(b.text);
+          children.push(
+            new Paragraph({
+              bullet: { level: 0 },
+              children: [
+                ...(title ? [run(title, { bold: true })] : []),
+                run(rest),
+              ],
+              spacing: { after: sp(15) },
+            }),
+          );
+          break;
+        }
         case "link":
           children.push(new Paragraph({ children: [new ExternalHyperlink({ link: b.url, children: [run(b.label, { color: "0000EE", underline: {} })] })], spacing: { after: sp(20) } }));
           break;

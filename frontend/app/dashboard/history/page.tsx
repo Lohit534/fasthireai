@@ -11,7 +11,7 @@ import { ResumeRecord, CreditInfo, isOwnerEmail } from "@/types";
 import { logger } from "@/lib/logger";
 import { generateSkillRoadmap, generateMultiSkillRoadmap } from "@/lib/roadmap-generator";
 import { extractTechTerms, extractKeywords } from "@/lib/ats/keywords";
-import { parseResumeIntoBlocks } from "@/lib/export/pdf-document";
+import { parseResumeIntoBlocks, toSectionTitle, splitCertText } from "@/lib/export/pdf-document";
 import { saveAs } from "file-saver";
 
 function getReadableLinkLabel(url: string, fallback?: string): string {
@@ -457,77 +457,76 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
               )}
 
               {/* Resume Body: Standard Harvard / Tech ATS LaTeX Format (zero teal color, pure black and dark slate text) */}
-              <div className="w-full text-slate-900 font-serif select-text leading-normal">
+              <div className="w-full text-black font-serif select-text leading-snug break-words" style={{ fontFamily: "'Times New Roman', Times, 'Liberation Serif', serif" }}>
                 {parseResumeIntoBlocks(resume.optimizedText || "").map((block, idx) => {
                   switch (block.type) {
                     case "name":
                       return (
-                        <h1 key={idx} className="text-xl font-bold text-center text-black mb-2 pb-0.5 leading-normal select-text font-serif">
+                        <h1 key={idx} className="text-[20px] sm:text-[24px] font-normal text-center text-black mb-0 leading-tight select-text tracking-wide" style={{ fontVariant: "small-caps" }}>
                           {block.text}
                         </h1>
                       );
+                    case "subtitle":
+                      return (
+                        <div key={idx} className="text-center text-[11.5px] sm:text-[12.5px] font-bold text-black mb-1.5 select-text">
+                          {block.text}
+                        </div>
+                      );
                     case "contact":
                       return (
-                        <div key={idx} className="flex justify-center flex-wrap text-[10px] text-center text-slate-700 mt-1 mb-4 leading-normal select-text font-serif">
+                        <div key={idx} className="flex justify-center flex-wrap gap-x-3 sm:gap-x-4 gap-y-0.5 text-[9.5px] sm:text-[10px] text-center text-black mt-0.5 mb-2 leading-normal select-text">
                           {block.segments.map((seg, sIdx) => {
-                            const label = seg.isLink && seg.url ? getReadableLinkLabel(seg.url, seg.text) : seg.text;
-                            const el = seg.isLink && seg.url ? (
-                              <a key={sIdx} href={seg.url} target="_blank" rel="noopener noreferrer" className="text-black underline">
-                                {label}
+                            const label = (seg.text || "").replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "");
+                            return seg.isLink && seg.url ? (
+                              <a key={sIdx} href={seg.url} target="_blank" rel="noopener noreferrer" className="text-black hover:underline">
+                                {label || getReadableLinkLabel(seg.url, seg.text)}
                               </a>
                             ) : (
-                              <span key={sIdx}>{seg.text}</span>
-                            );
-                            return (
-                              <React.Fragment key={sIdx}>
-                                {el}
-                                {sIdx < block.segments.length - 1 && <span className="mx-1 text-slate-400">—</span>}
-                              </React.Fragment>
+                              <span key={sIdx}>{label}</span>
                             );
                           })}
                         </div>
                       );
                     case "section":
                       return (
-                        <h2 key={idx} className="text-xs font-bold text-black border-b border-black mt-3.5 mb-1.5 pb-0.5 leading-normal select-text font-serif uppercase tracking-widest">
-                          {block.text}
+                        <h2 key={idx} className="text-[11.5px] sm:text-[12px] font-bold text-black border-b border-black mt-2.5 mb-1 pb-0 leading-snug select-text">
+                          {toSectionTitle(block.text)}
                         </h2>
                       );
                     case "summary":
                       return (
-                        <p key={idx} className="text-[10px] mb-2 text-slate-800 leading-relaxed select-text font-serif text-justify w-full">
+                        <p key={idx} className="text-[10px] mb-1 text-black leading-snug select-text text-justify w-full">
                           {block.text}
                         </p>
                       );
                     case "skillLine":
                       return (
-                        <div key={idx} className="flex flex-col sm:flex-row text-[10px] sm:text-[10.5px] mb-1.5 leading-normal select-text font-serif">
-                          <span className="font-bold text-black sm:w-[180px] shrink-0">{block.label}:</span>
-                          <span className="text-slate-800 flex-1">{block.value}</span>
+                        <div key={idx} className="text-[10px] mb-0.5 leading-snug select-text">
+                          <span className="font-bold text-black">{block.label}: </span>
+                          <span className="text-black">{block.value}</span>
                         </div>
                       );
                     case "project":
                       return (
-                        <div key={idx} className="mb-2">
-                          <div className="flex flex-col sm:flex-row sm:justify-between text-[10px] sm:text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
-                            <div className="flex items-center gap-1.5 flex-wrap">
+                        <div key={idx} className="mb-1.5">
+                          <div className="flex flex-row flex-wrap justify-between items-baseline gap-x-2 text-[10px] font-bold text-black mt-1 mb-0.5 leading-snug select-text">
+                            <div className="flex items-baseline gap-1.5 flex-wrap flex-1 min-w-0">
                               <span>{block.name}</span>
+                              {block.tech && <span>&nbsp;—&nbsp;{block.tech}</span>}
                               {block.projectUrl && (
-                                <a href={block.projectUrl} target="_blank" rel="noopener noreferrer" className="text-[9px] text-slate-700 underline font-normal">
+                                <a href={block.projectUrl} target="_blank" rel="noopener noreferrer" className="text-[9.5px] text-blue-700 underline font-normal break-all">
                                   {getReadableLinkLabel(block.projectUrl, block.name)}
                                 </a>
                               )}
                             </div>
-                            {block.tech && (
-                              <span className="font-normal italic text-slate-600 text-[9.5px] sm:text-[10px]">{block.tech}</span>
-                            )}
+                            {block.dates && <span className="shrink-0 ml-auto">{block.dates}</span>}
                           </div>
                           {block.bullets.map((bullet, bIdx) => {
                             const cleanBullet = bullet.replace(/^\s*([•\-\*–—+•\u2022\u25cf\u2043▸►→]|\d+\.)\s*/, "").trim();
                             return (
-                              <div key={bIdx} className="flex items-start text-[9.5px] sm:text-[10px] mb-0.5 pl-2 sm:pl-3 leading-normal select-text font-serif">
-                                <span className="w-2.5 sm:w-3 shrink-0 select-none text-black font-serif">•</span>
-                                <span className="flex-1 text-slate-800 font-serif">{cleanBullet}</span>
+                              <div key={bIdx} className="flex items-start text-[10px] mb-px pl-2 sm:pl-3 leading-snug select-text">
+                                <span className="w-2.5 sm:w-3 shrink-0 select-none text-black">•</span>
+                                <span className="flex-1 min-w-0 text-black text-justify">{cleanBullet}</span>
                               </div>
                             );
                           })}
@@ -535,22 +534,23 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                       );
                     case "job":
                       return (
-                        <div key={idx} className="mb-2">
-                          <div className="flex flex-col sm:flex-row sm:justify-between text-[10px] sm:text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span>{block.title}</span>
-                              <span className="font-normal text-slate-700">{block.company}</span>
-                            </div>
-                            {block.dates && (
-                              <span className="font-normal text-slate-600 text-[9.5px] sm:text-[10px] shrink-0">{block.dates}</span>
-                            )}
+                        <div key={idx} className="mb-1.5">
+                          <div className="flex flex-row flex-wrap justify-between items-baseline gap-x-2 text-[10px] font-bold text-black mt-1 leading-snug select-text">
+                            <span className="flex-1 min-w-0">{block.title}</span>
+                            {block.dates && <span className="shrink-0 ml-auto">{block.dates}</span>}
                           </div>
+                          {(block.company || block.tech) && (
+                            <div className="flex flex-row flex-wrap justify-between items-baseline gap-x-2 text-[10px] italic text-black mb-0.5 leading-snug select-text">
+                              <span className="min-w-0">{block.company}</span>
+                              {block.tech && <span className="ml-auto">{block.tech}</span>}
+                            </div>
+                          )}
                           {block.bullets.map((bullet, bIdx) => {
                             const cleanBullet = bullet.replace(/^\s*([•\-\*–—+•\u2022\u25cf\u2043▸►→]|\d+\.)\s*/, "").trim();
                             return (
-                              <div key={bIdx} className="flex items-start text-[9.5px] sm:text-[10px] mb-0.5 pl-2 sm:pl-3 leading-normal select-text font-serif">
-                                <span className="w-2.5 sm:w-3 shrink-0 select-none text-black font-serif">•</span>
-                                <span className="flex-1 text-slate-800 font-serif">{cleanBullet}</span>
+                              <div key={bIdx} className="flex items-start text-[10px] mb-px pl-2 sm:pl-3 leading-snug select-text">
+                                <span className="w-2.5 sm:w-3 shrink-0 select-none text-black">•</span>
+                                <span className="flex-1 min-w-0 text-black text-justify">{cleanBullet}</span>
                               </div>
                             );
                           })}
@@ -558,38 +558,41 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                       );
                     case "education":
                       return (
-                        <div key={idx} className="mb-2">
-                          <div className="flex flex-col sm:flex-row sm:justify-between text-[10px] sm:text-[10.5px] font-bold text-black mb-0.5 leading-normal select-text font-serif">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span>{block.degree}</span>
-                              {block.school && <span className="font-normal text-slate-700">{block.school}</span>}
-                            </div>
-                            <div className="flex items-center gap-2 text-slate-600 text-[9.5px] sm:text-[10px] font-normal">
-                              {block.dates && <span>{block.dates}</span>}
-                              {block.gpa && <span>({block.gpa})</span>}
-                            </div>
+                        <div key={idx} className="mb-1">
+                          <div className="flex flex-row flex-wrap justify-between items-baseline gap-x-2 text-[10px] font-bold text-black leading-snug select-text">
+                            <span className="min-w-0">{block.degree}</span>
+                            {block.dates && <span className="ml-auto">{block.dates}</span>}
                           </div>
+                          {(block.school || block.gpa) && (
+                            <div className="flex flex-wrap justify-between items-baseline gap-x-2 text-[10px] italic text-black leading-snug select-text">
+                              <span className="min-w-0">{block.school}</span>
+                              {block.gpa && <span className="ml-auto">{block.gpa}</span>}
+                            </div>
+                          )}
                         </div>
                       );
                     case "bullet":
                       return (
-                        <div key={idx} className="flex items-start text-[9.5px] sm:text-[10px] mb-0.5 pl-2 sm:pl-3 leading-normal select-text font-serif">
-                          <span className="w-2.5 sm:w-3 shrink-0 select-none text-black font-serif">•</span>
-                          <span className="flex-1 text-slate-800 font-serif">{block.text.replace(/^\s*([•\-\*–—+•\u2022\u25cf\u2043▸►→]|\d+\.)\s*/, "")}</span>
+                        <div key={idx} className="flex items-start text-[10px] mb-px pl-2 sm:pl-3 leading-snug select-text">
+                          <span className="w-2.5 sm:w-3 shrink-0 select-none text-black">•</span>
+                          <span className="flex-1 min-w-0 text-black">{block.text.replace(/^\s*([•\-\*–—+•\u2022\u25cf\u2043▸►→]|\d+\.)\s*/, "")}</span>
                         </div>
                       );
                     case "cert": {
-                      const cleanCert = (block.text || "").replace(/^[•\-\*–\s\u2022]+/, "");
+                      const { title, rest } = splitCertText(block.text);
                       return (
-                        <div key={idx} className="flex items-start text-[9.5px] sm:text-[10px] mb-0.5 pl-2 sm:pl-3 leading-normal font-serif">
-                          <span className="w-2.5 sm:w-3 shrink-0 select-none text-black font-serif">•</span>
-                          <span className="flex-1 text-slate-800 font-serif">{cleanCert}</span>
+                        <div key={idx} className="flex items-start text-[10px] mb-px pl-2 sm:pl-3 leading-snug">
+                          <span className="w-2.5 sm:w-3 shrink-0 select-none text-black">•</span>
+                          <span className="flex-1 min-w-0 text-black text-justify">
+                            {title && <span className="font-bold">{title}</span>}
+                            {rest}
+                          </span>
                         </div>
                       );
                     }
                     case "link":
                       return (
-                        <a key={idx} href={block.url} target="_blank" rel="noopener noreferrer" className="text-[9.5px] sm:text-[10px] text-blue-600 underline mb-0.5 block leading-normal select-text font-serif">
+                        <a key={idx} href={block.url} target="_blank" rel="noopener noreferrer" className="text-[9.5px] sm:text-[10px] text-blue-700 underline mb-0.5 block leading-normal select-text font-serif">
                           {block.label}
                         </a>
                       );
@@ -597,7 +600,7 @@ function DetailView({ resume, userPlan, onBack, onDelete }: DetailViewProps) {
                       return <div key={idx} className="h-1" />;
                     case "normal":
                       return (
-                        <p key={idx} className="text-[10px] sm:text-[10.5px] mb-1 text-slate-800 leading-normal select-text font-serif">
+                        <p key={idx} className="text-[10px] mb-1 text-black leading-snug select-text font-serif">
                           {block.text}
                         </p>
                       );

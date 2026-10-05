@@ -12,30 +12,35 @@ const baseStyleDefs: Record<string, any> = {
   page: {
     fontFamily: 'Times-Roman',
     fontSize: 10,
-    paddingTop: 36,
-    paddingBottom: 36,
-    paddingHorizontal: 40,
+    paddingTop: 34,
+    paddingBottom: 34,
+    paddingHorizontal: 44,
     color: '#000000',
-    lineHeight: 1.3,
+    lineHeight: 1.22,
     backgroundColor: '#FFFFFF',
   },
 
-  // ── NAME ──
+  // ── NAME (LaTeX \scshape small caps) ──
   name: {
-    fontFamily: 'Times-Bold',
-    fontSize: 20,
+    fontFamily: 'Times-Roman',
+    fontSize: 24,
     textAlign: 'center',
-    marginBottom: 2,
-    letterSpacing: 0.5,
+    marginBottom: 1,
+    letterSpacing: 0.6,
     color: '#000000',
+    lineHeight: 1.1,
+  },
+  nameSmallCaps: {
+    fontFamily: 'Times-Roman',
+    fontSize: 19,
   },
 
   // ── SUBTITLE ROLE ──
   subtitle: {
-    fontFamily: 'Times-Roman',
-    fontSize: 11,
+    fontFamily: 'Times-Bold',
+    fontSize: 12.5,
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 5,
     color: '#000000',
   },
 
@@ -45,13 +50,13 @@ const baseStyleDefs: Record<string, any> = {
     justifyContent: 'center',
     alignItems: 'center',
     flexWrap: 'wrap',
-    marginTop: 2,
-    marginBottom: 8,
+    marginTop: 0,
+    marginBottom: 6,
   },
   contactItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 5,
+    marginHorizontal: 7,
     marginVertical: 1,
   },
   contactText: {
@@ -66,19 +71,19 @@ const baseStyleDefs: Record<string, any> = {
     textDecoration: 'none',
   },
 
-  // ── SECTION HEADER ──
+  // ── SECTION HEADER (bold, Title Case, full-width rule) ──
   sectionHeaderWrapper: {
-    marginTop: 8,
-    marginBottom: 4,
+    marginTop: 7,
+    marginBottom: 3,
   },
   sectionHeader: {
     fontFamily: 'Times-Bold',
-    fontSize: 11.5,
+    fontSize: 12,
     color: '#000000',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   sectionUnderline: {
-    borderBottomWidth: 0.75,
+    borderBottomWidth: 0.6,
     borderBottomColor: '#000000',
     width: '100%',
   },
@@ -87,8 +92,8 @@ const baseStyleDefs: Record<string, any> = {
   summaryText: {
     fontFamily: 'Times-Roman',
     fontSize: 10,
-    lineHeight: 1.35,
-    marginBottom: 4,
+    lineHeight: 1.25,
+    marginBottom: 2,
     textAlign: 'justify',
   },
 
@@ -96,8 +101,8 @@ const baseStyleDefs: Record<string, any> = {
   skillLine: {
     fontFamily: 'Times-Roman',
     fontSize: 10,
-    lineHeight: 1.35,
-    marginBottom: 2.5,
+    lineHeight: 1.25,
+    marginBottom: 1,
   },
   skillLabel: {
     fontFamily: 'Times-Bold',
@@ -110,17 +115,17 @@ const baseStyleDefs: Record<string, any> = {
     color: '#000000',
   },
 
-  // ── PROJECT TITLE ──
+  // ── PROJECT TITLE (Name — Tech, all bold; year bold right) ──
   projectTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 4,
-    marginBottom: 2,
+    alignItems: 'flex-start',
+    marginTop: 3,
+    marginBottom: 1,
   },
   projectTitle: {
     fontFamily: 'Times-Bold',
-    fontSize: 10.5,
+    fontSize: 10,
     flex: 1,
   },
   projectLink: {
@@ -131,40 +136,42 @@ const baseStyleDefs: Record<string, any> = {
     marginLeft: 6,
   },
   projectTech: {
-    fontFamily: 'Times-Roman',
+    fontFamily: 'Times-Bold',
     fontSize: 10,
     color: '#000000',
   },
   projectDates: {
-    fontFamily: 'Times-Roman',
+    fontFamily: 'Times-Bold',
     fontSize: 10,
     color: '#000000',
     textAlign: 'right',
+    marginLeft: 8,
   },
 
   // ── EXPERIENCE / INTERNSHIP ──
   jobTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 4,
-    marginBottom: 1,
+    alignItems: 'flex-start',
+    marginTop: 3,
+    marginBottom: 0,
   },
   jobTitle: {
     fontFamily: 'Times-Bold',
-    fontSize: 10.5,
+    fontSize: 10,
     flex: 1,
   },
   jobDates: {
-    fontFamily: 'Times-Roman',
+    fontFamily: 'Times-Bold',
     fontSize: 10,
     color: '#000000',
     textAlign: 'right',
+    marginLeft: 8,
   },
   jobSubRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 2,
   },
   jobCompany: {
@@ -175,33 +182,35 @@ const baseStyleDefs: Record<string, any> = {
   },
   jobTech: {
     fontFamily: 'Times-Italic',
-    fontSize: 9.5,
-    color: '#333333',
+    fontSize: 10,
+    color: '#000000',
     textAlign: 'right',
+    marginLeft: 8,
   },
 
   // ── EDUCATION ──
   educationRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 3,
-    marginBottom: 1,
+    alignItems: 'flex-start',
+    marginTop: 2,
+    marginBottom: 0,
   },
   educationDegree: {
     fontFamily: 'Times-Bold',
-    fontSize: 10.5,
+    fontSize: 10,
     flex: 1,
   },
   educationDates: {
-    fontFamily: 'Times-Roman',
+    fontFamily: 'Times-Bold',
     fontSize: 10,
     textAlign: 'right',
+    marginLeft: 8,
   },
   educationInstitution: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 2,
   },
   educationSchool: {
@@ -211,16 +220,17 @@ const baseStyleDefs: Record<string, any> = {
     flex: 1,
   },
   educationGPA: {
-    fontFamily: 'Times-Roman',
+    fontFamily: 'Times-Italic',
     fontSize: 10,
     textAlign: 'right',
+    marginLeft: 8,
   },
 
   // ── BULLET POINTS ──
   bulletRow: {
     flexDirection: 'row',
-    marginBottom: 2,
-    paddingLeft: 10,
+    marginBottom: 1,
+    paddingLeft: 8,
   },
   bulletDot: {
     width: 10,
@@ -231,14 +241,18 @@ const baseStyleDefs: Record<string, any> = {
     flex: 1,
     fontFamily: 'Times-Roman',
     fontSize: 10,
-    lineHeight: 1.3,
+    lineHeight: 1.22,
+    textAlign: 'justify',
+  },
+  bulletBold: {
+    fontFamily: 'Times-Bold',
   },
 
   // ── CERTIFICATIONS / LANGUAGES ──
   certItem: {
     fontFamily: 'Times-Roman',
     fontSize: 10,
-    marginBottom: 2,
+    marginBottom: 1,
   },
 
   // ── STANDALONE LINK ──
@@ -247,10 +261,10 @@ const baseStyleDefs: Record<string, any> = {
     textDecoration: 'none',
     fontFamily: 'Times-Roman',
     fontSize: 10,
-    marginBottom: 2,
+    marginBottom: 1,
   },
   spacer: {
-    height: 1.5,
+    height: 1,
   },
 };
 
@@ -297,49 +311,98 @@ function getScaledStyles(scale: number): Record<string, any> {
   // Tighter page margins in compact mode
   scaled.page = {
     ...scaled.page,
-    paddingTop: Math.max(24, Math.round(36 * scale)),
-    paddingBottom: Math.max(24, Math.round(36 * scale)),
-    paddingHorizontal: Math.max(30, Math.round(40 * scale)),
+    paddingTop: Math.max(22, Math.round(34 * scale)),
+    paddingBottom: Math.max(22, Math.round(34 * scale)),
+    paddingHorizontal: Math.max(32, Math.round(44 * scale)),
   };
   return StyleSheet.create(scaled) as Record<string, any>;
 }
 
 /** Rough rendered height (pt) of the blocks at scale 1 on A4 with the default template. */
 function estimateContentHeight(blocks: ParsedResumeBlock[]): number {
-  const LINE = 13.65; // 10.5pt * 1.3 line height
+  const LINE = 12.2; // 10pt * 1.22 line height
   const lines = (text: string, charsPerLine: number) => Math.max(1, Math.ceil((text || '').length / charsPerLine));
   let h = 0;
   for (const b of blocks) {
     switch (b.type) {
-      case 'name': h += 32; break;
-      case 'subtitle': h += 16; break;
-      case 'contact': h += 20; break;
-      case 'section': h += 28; break;
-      case 'summary': case 'normal': h += lines(b.text, 108) * 14.2 + 4; break;
-      case 'skillLine': h += lines(b.value, 70) * LINE + 3; break;
-      case 'project': h += 20 + b.bullets.reduce((s, x) => s + lines(x, 100) * LINE + 2, 0); break;
-      case 'job': h += 20 + (b.company ? 15 : 0) + b.bullets.reduce((s, x) => s + lines(x, 100) * LINE + 2, 0); break;
-      case 'education': h += 36; break;
-      case 'bullet': case 'cert': h += lines(b.text, 100) * LINE + 2; break;
-      case 'link': h += 15; break;
-      case 'spacer': h += 1.5; break;
+      case 'name': h += 28; break;
+      case 'subtitle': h += 20; break;
+      case 'contact': h += Math.ceil(b.segments.length / 3) * 13 + 6; break;
+      case 'section': h += 24; break;
+      case 'summary': case 'normal': h += lines(b.text, 112) * 12.5 + 2; break;
+      case 'skillLine': h += lines(`${b.label}: ${b.value}`, 110) * 12.5 + 1; break;
+      case 'project': h += 16 + b.bullets.reduce((s, x) => s + lines(x, 104) * LINE + 1, 0); break;
+      case 'job': h += 15 + (b.company || b.tech ? 14 : 0) + b.bullets.reduce((s, x) => s + lines(x, 104) * LINE + 1, 0); break;
+      case 'education': h += 30; break;
+      case 'bullet': case 'cert': h += lines(b.text, 104) * LINE + 1; break;
+      case 'link': h += 13; break;
+      case 'spacer': h += 1; break;
     }
   }
   return h;
 }
+
+/** Fresher = less than 1 year of professional (non-internship) experience. */
+export function isFresherResume(text: string): boolean {
+  return estimateYearsOfExperience(text) < 1;
+}
+
+/** Max pages: fresher / <5 yrs => 1 page, 5+ yrs => up to 2 pages. */
+export function getMaxPages(text: string): 1 | 2 {
+  return estimateYearsOfExperience(text) >= 5 ? 2 : 1;
+}
+
+/** Minimum density scale allowed (single-page resumes may shrink more to stay on one page). */
+export const MIN_DENSITY_SCALE = 0.7;
 
 /**
  * Universal page-fit: fresher / <5 yrs => 1 page, 5+ yrs => up to 2 pages.
  * Height scales ~ scale² (smaller font => more chars per line AND shorter lines).
  */
 export function computeDensityScale(text: string, blocks: ParsedResumeBlock[]): number {
-  const years = estimateYearsOfExperience(text);
-  const maxPages = years >= 5 ? 2 : 1;
-  const capacity = 770 * maxPages; // A4 842pt - 72pt default vertical padding
+  const maxPages = getMaxPages(text);
+  const capacity = 774 * maxPages; // A4 842pt - 68pt vertical padding
   const height = estimateContentHeight(blocks);
   if (height <= capacity) return 1;
   const scale = Math.sqrt(capacity / height);
-  return Math.max(0.8, Math.min(1, Math.floor(scale * 100) / 100));
+  const floor = maxPages === 1 ? MIN_DENSITY_SCALE : 0.8;
+  return Math.max(floor, Math.min(1, Math.floor(scale * 100) / 100));
+}
+
+const SMALL_TITLE_WORDS = new Set(['and', 'or', 'of', 'the', 'in', 'on', 'for', 'to', 'a', 'an', 'with']);
+
+/** "AWARDS & CERTIFICATIONS" -> "Awards & Certifications" (LaTeX-style section titles). */
+export function toSectionTitle(text: string): string {
+  const clean = stripMarkdownAsterisks(text || '').replace(/^#+\s*/, '').replace(/:\s*$/, '').trim();
+  return clean
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w, i) => (i > 0 && SMALL_TITLE_WORDS.has(w) ? w : w.replace(/(^|[-/(])([a-z])/g, (_m, p, c) => p + c.toUpperCase())))
+    .join(' ');
+}
+
+/** Splits a name into small-caps runs: [{ text, big }] where big = first letter of each word. */
+export function toSmallCapsRuns(name: string): { text: string; big: boolean }[] {
+  const runs: { text: string; big: boolean }[] = [];
+  (name || '').trim().split(/(\s+)/).forEach((part) => {
+    if (!part) return;
+    if (/^\s+$/.test(part)) { runs.push({ text: ' ', big: false }); return; }
+    runs.push({ text: part.charAt(0).toUpperCase(), big: true });
+    if (part.length > 1) runs.push({ text: part.slice(1).toUpperCase(), big: false });
+  });
+  return runs;
+}
+
+/**
+ * Certification / award line => bold title + regular remainder.
+ * "Oracle Certified Professional: Java SE Developer – Oracle (2025): Validated..." =>
+ *   { title: "Oracle Certified Professional: Java SE Developer", rest: " – Oracle (2025): Validated..." }
+ */
+export function splitCertText(text: string): { title: string; rest: string } {
+  const clean = stripMarkdownAsterisks(text || '').replace(/^[•\-\*–\s\u2022]+/, '').trim();
+  const m = clean.match(/^(.{3,90}?)(\s[–—-]\s.*|\s\(\d{4}\).*)$/);
+  if (m) return { title: m[1].trim(), rest: ' ' + m[2].trim() };
+  return { title: '', rest: clean };
 }
 
 /** Collapse runs of spacers and drop spacers directly after headers (prevents ballooning length). */
@@ -497,7 +560,7 @@ export function stripMarkdownAsterisks(str: string): string {
     .trim();
 }
 
-function swapEducationAndSkillsIfNeeded(blocks: ParsedResumeBlock[]): ParsedResumeBlock[] {
+function swapEducationAndSkillsIfNeeded(blocks: ParsedResumeBlock[], isFresher = false): ParsedResumeBlock[] {
   const sectionGroups: { category: string; blocks: ParsedResumeBlock[] }[] = [];
   let currentGroup: { category: string; blocks: ParsedResumeBlock[] } = { category: 'HEADER', blocks: [] };
 
@@ -528,9 +591,12 @@ function swapEducationAndSkillsIfNeeded(blocks: ParsedResumeBlock[]): ParsedResu
     sectionGroups.push(currentGroup);
   }
 
-  // Strict section priority order:
-  // HEADER -> SUMMARY -> SKILLS -> EXPERIENCE -> PROJECTS -> EDUCATION -> CERTIFICATIONS -> ACHIEVEMENTS -> LANGUAGES
-  const priorityOrder = ['HEADER', 'SUMMARY', 'SKILLS', 'EXPERIENCE', 'PROJECTS', 'EDUCATION', 'CERTIFICATIONS', 'ACHIEVEMENTS', 'LANGUAGES'];
+  // Recommended resume structure:
+  //   Fresher:     Header -> Summary -> Skills -> (Internships) -> Projects -> Certifications & Achievements -> Education
+  //   Experienced: Header -> Summary -> Experience -> Skills -> Projects -> Certifications -> Education
+  const priorityOrder = isFresher
+    ? ['HEADER', 'SUMMARY', 'SKILLS', 'EXPERIENCE', 'PROJECTS', 'CERTIFICATIONS', 'ACHIEVEMENTS', 'EDUCATION', 'LANGUAGES']
+    : ['HEADER', 'SUMMARY', 'EXPERIENCE', 'SKILLS', 'PROJECTS', 'CERTIFICATIONS', 'ACHIEVEMENTS', 'EDUCATION', 'LANGUAGES'];
 
   sectionGroups.sort((a, b) => {
     const idxA = priorityOrder.indexOf(a.category);
@@ -1040,7 +1106,7 @@ export function parseResumeIntoBlocks(text: string): ParsedResumeBlock[] {
     }
   }
 
-  return compactBlocks(swapEducationAndSkillsIfNeeded(blocks));
+  return compactBlocks(swapEducationAndSkillsIfNeeded(blocks, isFresherResume(text)));
 }
 
 interface BulletRowProps {
@@ -1098,12 +1164,14 @@ const BulletRow: React.FC<BulletRowProps> = ({ text, s = styles }) => {
 interface ResumePDFProps {
   text: string;
   watermarked?: boolean;
+  /** Forces a specific density scale (used by the page-fit verification loop). */
+  scaleOverride?: number;
 }
 
-export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
+export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text, scaleOverride }) => {
   const blocks = parseResumeIntoBlocks(text);
   // Universal page-fit (1 page for fresher / <5 yrs, up to 2 pages for 5+ yrs)
-  const densityScale = computeDensityScale(text, blocks);
+  const densityScale = scaleOverride ?? computeDensityScale(text, blocks);
   const styles = getScaledStyles(densityScale);
 
   return (
@@ -1114,7 +1182,9 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
             case 'name':
               return (
                 <Text key={i} style={styles.name}>
-                  {block.text}
+                  {toSmallCapsRuns(block.text).map((r, rIdx) =>
+                    r.big ? <Text key={rIdx}>{r.text}</Text> : <Text key={rIdx} style={styles.nameSmallCaps}>{r.text}</Text>
+                  )}
                 </Text>
               );
             case 'subtitle':
@@ -1156,7 +1226,7 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
             case 'section':
               return (
                 <View key={i} style={styles.sectionHeaderWrapper}>
-                  <Text style={styles.sectionHeader}>{block.text}</Text>
+                  <Text style={styles.sectionHeader}>{toSectionTitle(block.text)}</Text>
                   <View style={styles.sectionUnderline} />
                 </View>
               );
@@ -1224,8 +1294,18 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
               );
             case 'bullet':
               return <BulletRow key={i} text={block.text} s={styles} />;
-            case 'cert':
-              return <BulletRow key={i} s={styles} text={(block.text || "").replace(/^[•\-\*–\s\u2022]+/, "")} />;
+            case 'cert': {
+              const { title, rest } = splitCertText(block.text);
+              return (
+                <View key={i} style={styles.bulletRow}>
+                  <Text style={styles.bulletDot}>•</Text>
+                  <Text style={styles.bulletText}>
+                    {title ? <Text style={styles.bulletBold}>{title}</Text> : null}
+                    {rest}
+                  </Text>
+                </View>
+              );
+            }
             case 'normal':
               return (
                 <Text key={i} style={styles.summaryText}>
@@ -1249,17 +1329,37 @@ export const ResumePDFDocument: React.FC<ResumePDFProps> = ({ text }) => {
   );
 };
 
+/** Counts pages in a rendered PDF buffer ("/Type /Page" objects, excluding "/Pages"). */
+function countPdfPages(buffer: Buffer): number {
+  const matches = buffer.toString('latin1').match(/\/Type\s*\/Page(?!s)/g);
+  return matches ? matches.length : 1;
+}
+
 export async function generatePDF(resumeText: string, watermarked = false): Promise<Buffer> {
   try {
     logger.info(`Generating react-pdf document (watermarked=${watermarked})...`);
-    
-    const element = React.createElement(ResumePDFDocument, {
-      text: resumeText,
-      watermarked
-    });
-    
-    const buffer = await renderToBuffer(element as any);
-    logger.info(`PDF generated successfully via react-pdf: ${buffer.length} bytes`);
+
+    const blocks = parseResumeIntoBlocks(resumeText);
+    const maxPages = getMaxPages(resumeText);
+    let scale = computeDensityScale(resumeText, blocks);
+    let buffer: Buffer = Buffer.alloc(0);
+
+    // Render, verify page count, and shrink until it fits the page budget
+    // (freshers / <5 yrs => exactly 1 page).
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const element = React.createElement(ResumePDFDocument, {
+        text: resumeText,
+        watermarked,
+        scaleOverride: scale,
+      });
+      buffer = await renderToBuffer(element as any);
+      const pages = countPdfPages(buffer);
+      if (pages <= maxPages || scale <= MIN_DENSITY_SCALE) break;
+      scale = Math.max(MIN_DENSITY_SCALE, Math.round((scale - 0.05) * 100) / 100);
+      logger.info(`PDF overflowed to ${pages} pages (budget ${maxPages}); retrying at scale ${scale}`);
+    }
+
+    logger.info(`PDF generated successfully via react-pdf: ${buffer.length} bytes (scale=${scale})`);
     return buffer;
   } catch (err: any) {
     logger.error("react-pdf generation failed:", err.message);
